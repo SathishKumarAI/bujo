@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 import { cn } from '../../lib/cn'
 
 /**
@@ -19,10 +19,53 @@ import { cn } from '../../lib/cn'
  * chart palette, and one pinned ink value would break all five. The rules are
  * the identity, which is what the handoff itself says.
  */
+/**
+ * Set by `BandRow` so a `Band` nested inside one knows to render as a CELL
+ * rather than as another full-width section.
+ *
+ * This exists so pairing two sections side by side costs nothing at the call
+ * sites. Reading and Collections are each five or six components that own
+ * their own `<Band>`, and the alternative was threading a `cell` prop through
+ * all eleven — eleven signatures changed, eleven chances to forget one, for a
+ * decision that belongs to the page and not to the component. A section does
+ * not know whether it is sharing a row; the row does.
+ */
+const InBandRow = createContext(false)
+
 export function Band({ children, className, id }: { children: ReactNode; className?: string; id?: string }) {
   // `id` so a jump link can target a band directly — the Index on Collections
   // scrolls to one. A wrapper span with the id would work and is what the old
   // page did; the band already exists, so it can carry its own name.
+  const inRow = useContext(InBandRow)
+
+  // Inside a row this is a cell: the row owns the 2px closing rule, and the
+  // cell carries the 1px divider and the flush-left alignment. The incoming
+  // `className` is still applied so a caller’s `py-6` keeps working either
+  // way — what changes is the structure, not the spacing it asked for.
+  // `id` FORWARDED, and its absence was a real regression. A band may carry
+  // a jump-link target — Collections’ Index scrolls to `bujo-tags` and
+  // `bujo-collections` — and the first version of this branch dropped it, so
+  // pairing two bands silently broke the links that pointed at them. Nothing
+  // failed: the element still rendered, `scrollIntoView` just had nothing to
+  // find. Same family as every other "renders fine, does nothing" entry in
+  // CLAUDE.md.
+  // `basis-[22rem]` IS LOAD-BEARING, and leaving it out is a clipping bug.
+  //
+  // `BandCell` is `flex-1`, i.e. `flex: 1 1 0%` — a basis of ZERO. A flex row
+  // only wraps when its items’ base sizes exceed the container, so cells with
+  // no basis never overflow and therefore NEVER WRAP: on a 390px phone two of
+  // them split the screen in half instead of stacking. `npm run clipped`
+  // caught it as "The third-shot drop, explained — 66px shown, 181px needed".
+  //
+  // Every hand-written `<BandCell>` in the app already passes a basis for
+  // exactly this reason (20–26rem at each site). This path had no call site to
+  // pass one, so it carries the default. 22rem pairs with the 44rem container
+  // query in the cell below — two cells need 44rem to sit side by side, which
+  // is the same threshold that drops their column styling.
+  //
+  // A caller’s own basis still wins: `className` is merged after.
+  if (inRow) return <BandCell id={id} className={cn('basis-[22rem]', className)}>{children}</BandCell>
+
   return <section id={id} className={cn('border-b-2 border-line', className)}>{children}</section>
 }
 
@@ -48,7 +91,9 @@ export function BandRow({
   className?: string
 }) {
   return (
-    <div className={cn('@container/band flex', wrap ? 'flex-wrap' : 'flex-nowrap', className)}>{children}</div>
+    <InBandRow.Provider value={true}>
+      <div className={cn('@container/band flex', wrap ? 'flex-wrap' : 'flex-nowrap', className)}>{children}</div>
+    </InBandRow.Provider>
   )
 }
 
@@ -82,9 +127,9 @@ export function BandRow({
  * lands while the stray rule silently stays — which is exactly what the first
  * attempt did. Same family as the `.zone-act :is(input…)` trap in CLAUDE.md.
  */
-export function BandCell({ children, className }: { children: ReactNode; className?: string }) {
+export function BandCell({ children, className, id }: { children: ReactNode; className?: string; id?: string }) {
   return (
-    <div className={cn('min-w-0 flex-1 border-line py-6 pr-6 pl-6 first:pl-0 last:border-r-0 last:pr-0 [&:not(:last-child)]:border-r @max-[44rem]/band:px-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0', className)}>
+    <div id={id} className={cn('min-w-0 flex-1 border-line py-6 pr-6 pl-6 first:pl-0 last:border-r-0 last:pr-0 [&:not(:last-child)]:border-r @max-[44rem]/band:px-0 @max-[44rem]/band:[&:not(:last-child)]:border-r-0', className)}>
       {children}
     </div>
   )

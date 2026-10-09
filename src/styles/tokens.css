@@ -176,8 +176,14 @@
      They are the reason `rounded-none` still appears in the tree at all; every
      other occurrence was a Modernist migration artifact and has been swept back
      onto these three names. */
-  --radius-control: 0.375rem; /* 6px · buttons, inputs, segments, steppers */
-  --radius-card: 0.5rem;      /* 8px · cards, sheets, modals, panels */
+  --radius-control: 0.5rem;   /* 8px · buttons, inputs, segments, steppers */
+  --radius-card: 0.75rem;     /* 12px · cards, sheets, modals, panels */
+  /* Phase 4 set these to 6/8 citing Linear, which is right for a dense
+     engineering tool read all day. Asked for something softer here, and a
+     journal is a different object: 8/12 is still a long way from the 16px
+     the redesign started from, and it keeps the two steps distinguishable —
+     a control is visibly tighter than the surface it sits on, which is what
+     stops a button reading as a small card. */
   --radius-pill: 9999px;      /* full · chips, tags, meters, avatars */
 
   /* ── Elevation ────────────────────────────────────────────────────────────

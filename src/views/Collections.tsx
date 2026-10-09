@@ -1,3 +1,4 @@
+import { Band, BandRow } from '../components/mod'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Page } from '../components/shell/Page'
@@ -53,7 +54,24 @@ export function Collections() {
         }}
       />
 
-      <InboxBand entries={inboxEntries(data.entries)} />
+      {/* INBOX AND TAG PAGES SHARE A ROW.
+
+          Measured at a 1368px shell: Inbox is 1368x105 at **41% fill** and
+          Tag pages 1368x121 — two short bands each spending the full width of
+          the page on a row’s worth of content, which `npm run space` reports
+          as "1 thin". Neither is a long list, so the container-query fix that
+          took Mindset from 4.2 to 3.7 screens has nothing to work on here.
+
+          Paired because they are the same KIND of thing — two indexes into
+          entries that have no date of their own — so reading them side by
+          side is how you would ask the question. `BandRow` wraps below 44rem,
+          so a phone still gets them stacked. */}
+      <Band>
+        <BandRow>
+          <InboxBand entries={inboxEntries(data.entries)} />
+          <TagPages tags={tags} openTag={openTag} onOpen={setOpenTag} />
+        </BandRow>
+      </Band>
 
       <CustomCollections
         collections={data.collections}
@@ -67,7 +85,6 @@ export function Collections() {
 
       <FutureAndMemories future={future} memories={memoryBullets(data.entries)} />
 
-      <TagPages tags={tags} openTag={openTag} onOpen={setOpenTag} />
 
       <People />
     </Page>

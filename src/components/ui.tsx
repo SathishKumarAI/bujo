@@ -35,7 +35,8 @@ export const CARD = {
   // being too small; the column thresholds in `CardGrid` widen the box and
   // this is the other half — a wider card with the old inset reads as a
   // wider box of the same content rather than a bigger card.
-  container: 'card-3d group/card min-w-0 rounded-card bg-card p-5 sm:p-6 lg:p-7',
+  container:
+    'card-3d group/card min-w-0 rounded-card bg-card p-5 sm:p-6 lg:p-7 border border-transparent transition-colors hover:border-line-strong',
   /**
    * The band container — the same card, unboxed.
    *
@@ -65,7 +66,22 @@ export const CARD = {
   // returned ZERO elements on Insights, Pickleball, Gym and Monthly — the
   // pages the report was about. A band has no box, so its size IS its
   // vertical rhythm: 5/6 → 6/7.
-  band: 'group/card min-w-0 border-b border-line py-6 transition-colors duration-200 hover:border-line-strong sm:py-7',
+  // THE HOVER SURFACE IS WHY THERE IS PADDING AND A NEGATIVE MARGIN HERE.
+  //
+  // A band has no box — it is a bottom rule and nothing else — so asking for
+  // “rounded cards that highlight on hover” could not be answered by a radius:
+  // 196 of this app's 248 cards are bands, and there was no shape to round.
+  // Turning them all into boxes would have added four-sided padding to every
+  // one and thrown away the document rhythm the bands exist for.
+  //
+  // So the shape appears ON HOVER instead. `-mx-3 px-3` bleeds the fill three
+  // pixels past the text on each side so the highlight frames the content
+  // rather than hugging it, and `rounded-card` gives that fill the same
+  // corner as a real card — the band reads as one when you point at it and
+  // stays a rule when you do not. Zero layout shift: the negative margin
+  // cancels the padding at rest.
+  band:
+    'group/card min-w-0 -mx-3 rounded-card border-b border-line px-3 py-6 transition-colors duration-200 hover:border-line-strong hover:bg-ink-1 sm:py-7',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',
