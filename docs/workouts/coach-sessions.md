@@ -3,9 +3,15 @@
 **Source:** a WhatsApp thread, 2024-02-24, from a coach. Pasted into this repo
 on 2026-10-09 so it stops living in a chat export. **29 sessions.**
 
-Nothing here has been entered into the app yet. This file is the *record*;
-COD-302 is the work of turning it into `PULLUP_WORKOUTS`-style data under
-`src/lib/`.
+**Now encoded as `src/lib/coachSessions.ts`** — 282 moves, 127 distinct
+movements, 7 supersets, 12 cardio finishers, 771 working sets, guarded by
+`coachSessions.test.ts`. This file remains the *record*: every move in the
+module carries a `raw` field holding the coach's own words, so each reading of
+the ambiguous notation below can be checked against the original without
+leaving the code.
+
+**No view imports the module yet.** That is deliberate and is the second half
+of COD-302 — see the ticket for why Program was the wrong home.
 
 ---
 
