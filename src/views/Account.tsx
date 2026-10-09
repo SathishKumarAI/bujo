@@ -9,23 +9,28 @@ import { AccountCard } from '../components/account/AccountCard'
 import { SecurityCard } from '../components/account/SecurityCard'
 import { ProjectLinks } from '../components/account/ProjectLinks'
 import { useNav } from '../components/shell/nav'
+import { useAuthUser } from '../lib/authUser'
+import { useAccountStatus } from '../lib/accountStatus'
+import { identityOf, phaseCopy } from '../lib/account'
 
 /**
  * Account — who this journal belongs to, and how (or whether) it travels.
  *
- * **There is no sign-in here, and there is no longer one anywhere in the app.**
- * This page used to be a centred auth card: email, password, "Continue with
- * Google", and the local option as grey text below a divider. That was Path B's
- * front door on a product that committed to Path A, and it was the first thing
- * a new user saw. `docs/AUTH.md` records why it was removed rather than
- * deprecated, and what each remaining mechanism actually is.
+ * **The one sign-in in the app lives here, and nowhere else.** This page used to
+ * be a centred auth card — email, password, "Continue with Google", the local
+ * option as grey text below a divider — which was Path B's front door on a
+ * product that committed to Path A, and the first thing a new user saw. That
+ * form was deleted; `AccountCard` is its replacement, one card in a grid rather
+ * than a gate, and `lib/auth.contract.test.ts` holds the count at one.
+ * `docs/AUTH.md` records what each remaining mechanism actually is.
  *
- * The page is now three answers to three different questions, in the order
- * people ask them:
+ * The page is four answers to four different questions, in the order people ask
+ * them:
  *
- *   1. Who is this?           → the local profile (a name, nothing checked)
- *   2. Does it leave here?    → the sync passphrase (opt-in, E2E, no accounts)
- *   3. Something is wrong     → the issue tracker, which is the whole channel
+ *   1. Who is this?           → the account, else the local profile
+ *   2. Does it leave here?    → the account's sync phase, or the passphrase
+ *   3. What exactly leaves?   → the uploaded/withheld lists in `AccountCard`
+ *   4. Something is wrong     → the issue tracker, which is the whole channel
  *
  * `CloudSyncCard` is the same component Settings renders, not a copy of it. It
  * was moved out of `views/Settings.tsx` verbatim — the rendered card was
@@ -37,7 +42,24 @@ export function Account() {
   const { data } = useJournal()
   const nav = useNav()
   const profile = data.settings.profile
+  const { user } = useAuthUser()
+  const status = useAccountStatus()
+  const who = identityOf(user)
+  /**
+   * Zone 1 used to read the LOCAL profile and `localStorage['bujo:sync']` — so
+   * the page titled "Account" answered "who is this?" with a nickname and
+   * "does it leave here?" with the blob-sync passphrase, and a signed-in user
+   * saw "not set up · this device only" on the very page they had just signed
+   * in on (COD-291).
+   *
+   * The account answer wins when there is one, and the local profile is the
+   * fallback rather than the other way round: an account is checked and a
+   * nickname is not.
+   */
   const syncing = typeof localStorage !== 'undefined' && !!localStorage.getItem('bujo:sync')
+  const journal = user
+    ? phaseCopy(status.phase, status.lastSyncedAt).short
+    : syncing ? 'synced (passphrase)' : 'this device only'
 
   return (
     <PageLayout
@@ -49,8 +71,8 @@ export function Account() {
       zone1={
         <StatBar
           facts={[
-            { label: 'account', value: profile ? profile.name : 'not set up' },
-            { label: 'journal', value: syncing ? 'synced' : 'this device only' },
+            { label: 'account', value: who?.name ?? profile?.name ?? 'not set up', prose: true },
+            { label: 'journal', value: journal, prose: true },
             { label: 'entries', value: String(data.entries.length) },
           ]}
         />
@@ -60,7 +82,7 @@ export function Account() {
           {/* Renders nothing unless this build has a Supabase project, so the
               no-account app is unchanged. First in the grid when it does
               render: it is the thing the page is named after. */}
-          <AccountCard />
+          <AccountCard onNavigate={nav} />
           <LocalAccountCard />
           <CloudSyncCard />
           {/* Both halves, and the second one is not optional. */}
