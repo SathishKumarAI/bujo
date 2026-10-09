@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { isConfigured, onAuthChange, pullAccount, pushAccount } from '../lib/supabase'
 import { mayPush, onAccountChange, afterPull, isDemo, initialState, MISMATCH_MESSAGE, type AccountSyncState } from '../lib/accountSync'
+import { setAccountStatus, markSynced } from '../lib/accountStatus'
 import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
 import { useConfirm } from './ConfirmDialog'
 import { migrate, emptyJournal } from '../lib/storage'
@@ -51,15 +52,21 @@ export function AccountSync() {
     return onAuthChange((user) => {
       const { state: next, discardLocal } = onAccountChange(stateRef.current, user?.id ?? null)
       setState(next)
-      if (!user) return
+      if (!user) { setAccountStatus({ phase: 'signed-out' }); return }
       // A DIFFERENT account on the same device. The local journal belongs to
       // whoever was signed in before, and merging it into this account is
       // COD-135 — which shipped. Drop it, then read the new account's row.
       if (discardLocal) replaceAll(emptyJournal())
 
       const p = pass()
-      if (!p) return // nothing to decrypt with; the card explains
+      // Nothing to encrypt with, so NOTHING IS UPLOADED and nothing will be.
+      // This used to be a bare `return` whose comment said "the card explains",
+      // and the card did not: it said "Signed in — your journal syncs to your
+      // account" either way. Publishing the phase is what makes the three
+      // surfaces able to say the true thing instead (COD-291).
+      if (!p) { setAccountStatus({ phase: 'no-passphrase' }); return }
 
+      setAccountStatus({ phase: 'checking' })
       void (async () => {
         try {
           const remote = await pullAccount(p)
@@ -67,6 +74,9 @@ export function AccountSync() {
             // Row empty: first sign-in for this account. The local journal is
             // the only copy, so it is the one to keep and upload.
             setState((s) => afterPull(s, { row: 'empty' }))
+            // Not `markSynced` — nothing has crossed the wire yet. The push
+            // effect below is what will, and it is what stamps the clock.
+            setAccountStatus({ phase: 'uploading' })
             return
           }
           const merged = discardLocal
@@ -75,10 +85,12 @@ export function AccountSync() {
             : await resolveIncoming(latest.current, migrate(remote), askRef.current)
           if (merged) replaceAll(merged)
           setState((s) => afterPull(s, { row: 'read' }))
+          markSynced()
         } catch {
           // `pullAccount` throws on a failed decrypt, and that is NOT "the
           // remote is broken" — it is "this row is not mine to overwrite".
           setState((s) => afterPull(s, { row: 'unreadable' }))
+          setAccountStatus({ phase: 'locked' })
           notify.error('Journal locked', MISMATCH_MESSAGE)
         }
       })()
@@ -90,17 +102,29 @@ export function AccountSync() {
   useEffect(() => {
     if (!isConfigured()) return
     const p = pass()
-    if (!mayPush(state, { hasPassphrase: !!p, isDemo: isDemo(data) })) return
+    if (!mayPush(state, { hasPassphrase: !!p, isDemo: isDemo(data) })) {
+      // Every refusal here is silent by design — `mayPush` answers "no" to
+      // every unknown — and silence is exactly what made this feature look
+      // broken. Name the two refusals a signed-in user can actually sit in, so
+      // the card stops claiming a sync that is not happening. `mismatch` has
+      // already set `locked` on the pull path.
+      if (state.userId && !p) setAccountStatus({ phase: 'no-passphrase' })
+      else if (state.userId && isDemo(data)) setAccountStatus({ phase: 'demo' })
+      return
+    }
     const snapshot = JSON.stringify(data)
     if (snapshot === lastPushed.current) return // echo guard: we just applied this
     const id = setTimeout(async () => {
       try {
+        setAccountStatus({ phase: 'uploading' })
         lastPushed.current = JSON.stringify(latest.current)
         await pushAccount(p!, latest.current)
+        markSynced()
       } catch {
         // Offline, or the token expired past its refresh. The whole journal is
         // the payload, so the next change IS the retry queue — no queue needed.
         lastPushed.current = ''
+        setAccountStatus({ phase: 'error' })
       }
     }, 4000)
     return () => clearTimeout(id)

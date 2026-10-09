@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
 import { Card } from '../ui'
 import { Button } from '../ui/button'
-import { isConfigured, currentUser, onAuthChange, signInGoogle, signOut, type User } from '../../lib/supabase'
+import { isConfigured, signInGoogle, signOut } from '../../lib/supabase'
+import { useAuthUser } from '../../lib/authUser'
+import { useAccountStatus } from '../../lib/accountStatus'
+import { identityOf, phaseCopy, SYNCED, WITHHELD, type AccountPhase } from '../../lib/account'
 import { notify } from '../../lib/notify'
+import { useState } from 'react'
 
 /**
  * THE ONLY SIGN-IN SURFACE IN THIS APP, and it is kept to one on purpose.
@@ -21,6 +24,15 @@ import { notify } from '../../lib/notify'
  * public; most clones will never set `VITE_SUPABASE_URL`, and a sign-in button
  * that throws on click is a worse first run than no button at all.
  *
+ * ── It no longer owns the session ──────────────────────────────────────────
+ *
+ * The user comes from `lib/authUser.ts` and the sync phase from
+ * `lib/accountStatus.ts`, not from a `useState` in here. That is COD-291: while
+ * this card held the only copy, signing in changed this card and nothing else —
+ * the header avatar still said "No name set", the Account page's orientation bar
+ * still said "this device only", and the sync pill never lit. Reported, exactly,
+ * as "able to sign in, but it's not showing any kind of updates on my UI".
+ *
  * ── The sentence this card exists to say ───────────────────────────────────
  *
  * **The account is recoverable. The journal is not.** Signing in gets you back
@@ -30,25 +42,32 @@ import { notify } from '../../lib/notify'
  * your data back to you", and this one cannot. That is a deliberate trade — see
  * `docs/security/account-sync-plan.md` §0 — and a card that offers the button
  * without the sentence would be misrepresenting it.
+ *
+ * ── And the second sentence, which is newer and was being contradicted ─────
+ *
+ * **Signed in is not synced.** `AccountSync` cannot upload without a sync
+ * passphrase and returns early when there is none; this card's subtitle used to
+ * read "Signed in — your journal syncs to your account" regardless. So the
+ * commonest state of a brand-new account — signed in, no passphrase, nothing
+ * uploaded, nothing ever going to be — was reported as a working sync. The
+ * status row below is driven by the phase the sync component publishes, so the
+ * card can only say what is actually happening.
  */
-export function AccountCard() {
-  const [user, setUser] = useState<User | null>(null)
+export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') => void } = {}) {
   const [busy, setBusy] = useState(false)
   const configured = isConfigured()
-
-  useEffect(() => {
-    if (!configured) return
-    // Seed from the current session, then follow changes. Both halves are
-    // needed: `currentUser()` alone is how the old `AccountMenu` ended up
-    // disagreeing with the page until a reload (COD-134), and the subscription
-    // alone would miss a session restored from storage on this very mount.
-    let alive = true
-    void currentUser().then((u) => { if (alive) setUser(u) })
-    const off = onAuthChange((u) => setUser(u))
-    return () => { alive = false; off() }
-  }, [configured])
+  const { user, ready } = useAuthUser()
+  const status = useAccountStatus()
+  const who = identityOf(user)
 
   if (!configured) return null
+
+  // `status.phase` is the sync component's view of the world and this is the
+  // card's view of the *session*; they can disagree for a tick after a sign-in
+  // (the subscription fires in both, in whatever order React flushes them). The
+  // session wins, because it is the thing the user just did.
+  const phase: AccountPhase = !ready ? 'checking' : user ? (status.phase === 'signed-out' ? 'checking' : status.phase) : 'signed-out'
+  const copy = phaseCopy(phase, status.lastSyncedAt)
 
   async function connect() {
     setBusy(true)
@@ -76,13 +95,69 @@ export function AccountCard() {
     <Card
       band
       title="Account"
-      subtitle={user ? 'Signed in — your journal syncs to your account' : 'Sign in to reach this journal from any device'}
+      /* The phase, not the email. The email is the identity line in the body,
+         and `Card` also feeds the subtitle to the ⓘ popover — so repeating it
+         here put the same address on screen twice and in the tooltip. */
+      subtitle={who ? `Signed in with ${who.provider} · ${copy.short}` : 'Sign in to reach this journal from any device'}
     >
-      {user ? (
-        <div className="space-y-3">
-          <p className="text-body text-fg-1">
-            Signed in as <strong className="text-fg-1">{user.email ?? 'your Google account'}</strong>.
-          </p>
+      {who ? (
+        <div className="space-y-4">
+          {/* Who, with the provider's own name and picture. The picture is the
+              fastest possible answer to "did that sign-in work" — it cannot be
+              produced by a signed-out app. `referrerPolicy` because Google
+              serves avatars from a host that 403s on a cross-origin referrer,
+              and `onError` hides a broken frame rather than drawing one. */}
+          <div className="flex items-center gap-3">
+            {who.avatarUrl ? (
+              <img
+                src={who.avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-10 w-10 shrink-0 rounded-pill object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            ) : null}
+            <div className="min-w-0">
+              <p className="truncate text-body font-medium text-fg-1">{who.name}</p>
+              {who.email ? <p className="truncate text-label text-fg-2">{who.email}</p> : null}
+            </div>
+          </div>
+
+          {/* The status row. A dot carries the tone and the sentence carries the
+              meaning — never the other way round, because a colour alone is not
+              readable to everyone and `short` has to stand on its own. */}
+          <div className="flex items-start gap-2">
+            <span aria-hidden className={`mt-1.5 h-2 w-2 shrink-0 rounded-pill ${TONE[copy.tone]}`} />
+            <p className="text-body text-fg-2">
+              <strong className="font-medium text-fg-1">{copy.short}</strong> — {copy.detail}
+            </p>
+          </div>
+
+          {/* The one actionable state. `no-passphrase` is where a new account
+              sits by default and it is the state in which nothing syncs, so it
+              gets the button rather than a line of prose to act on. */}
+          {phase === 'no-passphrase' && onNavigate ? (
+            <Button onClick={() => onNavigate('settings')}>Set a sync passphrase</Button>
+          ) : null}
+
+          {/* "What kind of data is being synced" had no answer anywhere on
+              screen. Both lists, because the withheld one is the half a reader
+              cannot verify for themselves. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-label font-medium text-fg-1">Uploaded, encrypted</p>
+              <ul className="mt-1 space-y-1 text-label text-fg-2">
+                {SYNCED.map((s) => <li key={s}>{s}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="text-label font-medium text-fg-1">Never uploaded</p>
+              <ul className="mt-1 space-y-1 text-label text-fg-2">
+                {WITHHELD.map((s) => <li key={s}>{s}</li>)}
+              </ul>
+            </div>
+          </div>
+
           <p className="text-body text-fg-2">
             Your journal is encrypted on this device before it is uploaded, so the server stores
             ciphertext and nothing else. Signing in on another device finds your journal; your sync
@@ -115,4 +190,20 @@ export function AccountCard() {
       )}
     </Card>
   )
+}
+
+/**
+ * Tone → a `bg-*` utility, spelled out rather than interpolated.
+ *
+ * Tailwind cannot see `bg-${tone}`, and a class it cannot see is a class it does
+ * not emit — the Tailwind-v4 trap in `CLAUDE.md`: no error, no CSS, the dot just
+ * inherits and the status loses its colour silently. And these are backgrounds
+ * on purpose: an accent as *text* is the `cat('crust')` family of contrast bugs,
+ * and the sentence beside the dot is what actually carries the meaning.
+ */
+const TONE: Record<string, string> = {
+  green: 'bg-green',
+  peach: 'bg-peach',
+  red: 'bg-red',
+  'fg-2': 'bg-fg-2',
 }

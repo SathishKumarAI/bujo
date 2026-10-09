@@ -11,6 +11,9 @@ import { useSuggestionCount } from './topbar/useSuggestionCount'
 import { FeedbackButton } from '../feedback/FeedbackButton'
 import { useState } from 'react'
 import { useJournal } from '../../store'
+import { useAuthUser } from '../../lib/authUser'
+import { useAccountStatus } from '../../lib/accountStatus'
+import { identityOf, phaseCopy } from '../../lib/account'
 import { notify } from '../../lib/notify'
 import type { ViewId } from './viewChrome'
 
@@ -66,7 +69,32 @@ export function AccountMenu({
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const profile = data.settings.profile
   const syncing = autoSyncEnabled()
-  const label = profile ? profile.name : 'No name set'
+  const { user } = useAuthUser()
+  const status = useAccountStatus()
+  const who = identityOf(user)
+  /**
+   * The account's name beats the local nickname, and this is the fix COD-134
+   * was filed for and did not get.
+   *
+   * That ticket was "AccountMenu fetches the user once and never hears about
+   * sign-in"; it was closed by adding `onAuthChange` to `lib/supabase.ts` and
+   * calling it from `AccountCard`. This component — the avatar in the corner,
+   * the thing a person actually looks at to find out who they are signed in as
+   * — was never given the subscription, so after a successful Google sign-in it
+   * still read "No name set · This device only" with the yellow not-set-up dot
+   * still on the trigger. COD-291.
+   */
+  const label = who?.name ?? profile?.name ?? 'No name set'
+  // Signed in, or a local profile exists: either way this journal is set up, so
+  // the yellow "finish setting this up" dot has nothing left to ask for.
+  const setUp = !!who || !!profile
+  // `phaseCopy().short` is lower case because its other two call sites are
+  // StatBar facts, which are. Sentence-cased here rather than carrying a second
+  // casing in the copy table — one string, two presentations.
+  const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+  const syncLine = user
+    ? sentence(phaseCopy(status.phase, status.lastSyncedAt).short)
+    : syncing ? 'Syncing with your passphrase' : 'This device only'
   const zoom = data.settings.zoom ?? 1
   const suggestions = useSuggestionCount()
   const reminderOn = !!data.settings.reminderEnabled
@@ -84,7 +112,15 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-sm" aria-label="Account and app menu" title={`Account, ${label}`} className="relative">
-          {profile ? (
+          {/* The provider's own picture when there is one. It is the cheapest
+              possible confirmation that a sign-in landed — a signed-out app
+              cannot produce it — and it is why this trigger is the first place
+              the fix had to reach. `no-referrer` because Google's avatar host
+              403s on a cross-origin referrer; `onError` hides a broken frame
+              rather than drawing one. */}
+          {who?.avatarUrl ? (
+            <img src={who.avatarUrl} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-pill object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+          ) : profile ? (
             <span aria-hidden className="text-base leading-none">{profile.emoji}</span>
           ) : (
             <Icon as={UserCircle} size="md" />
@@ -95,19 +131,23 @@ export function AccountMenu({
           {suggestions > 0 ? (
             <span className="absolute -top-0.5 -right-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-pill bg-yellow px-0.5 text-micro font-medium text-crust">{suggestions}</span>
           ) : (
-            !profile && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-pill bg-yellow" />
+            !setUp && <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-pill bg-yellow" />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <div className="px-2 py-1.5">
           <p className="truncate text-body font-medium text-fg-1">{label}</p>
-          <p className="text-label text-fg-2">{syncing ? 'Syncing with your passphrase' : 'This device only'}</p>
+          {/* The email, when signed in. Two people's Google accounts can share
+              a display name and a user who has switched accounts needs to know
+              WHICH one is live — the name alone cannot tell them. */}
+          {who?.email ? <p className="truncate text-label text-fg-2">{who.email}</p> : null}
+          <p className="text-label text-fg-2">{syncLine}</p>
         </div>
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={() => onNavigate('account')}>
-          <Icon as={UserCircle} size="sm" className="mr-2" /> {profile ? 'Account & sync' : 'Set up this journal'}
+          <Icon as={UserCircle} size="sm" className="mr-2" /> {setUp ? 'Account & sync' : 'Set up this journal'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={share}>
           <Icon as={ShareNetwork} size="sm" className="mr-2" /> Share app
