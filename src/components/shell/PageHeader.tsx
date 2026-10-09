@@ -4,6 +4,7 @@ import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 /**
  * The page's own title strip, **inside the content column** — desktop only.
+ * One line: the title, then the subtitle beside it.
  *
  * ── Why it is here and not in the rail ─────────────────────────────────────
  *
@@ -53,7 +54,26 @@ export function PageHeader({
           which of the two renders, so they cannot both appear. */}
       {railHidden && <RailToggle hidden onToggle={onToggleRail} />}
 
-      <div className="flex min-w-0 flex-1 flex-col justify-center">
+      {/* ── ONE LINE, NOT TWO ────────────────────────────────────────────
+          Reported as "it takes more space — move the description to the side".
+          Measured on Strength at 1707: the strip was **60px**, and the two
+          things in it were a 14-character title and a 28-character subtitle,
+          **stacked**, each stretched across 1481px. A `truncate` on a string
+          using 9% of its box is a line of text wearing a column's clothes.
+
+          Side by side it is **42px** — 30% of the strip back on every desktop
+          page, for free, in the horizontal space the title was already
+          occupying and not using.
+
+          `items-baseline`, so a 22px serif and a 13px sans sit on one line
+          rather than being centred against each other. The subtitle takes
+          `min-w-0` and truncates on its own, and the title keeps a sane
+          minimum so a long subtitle can never squeeze the page's name into an
+          ellipsis — the title is the one thing here that has to stay
+          readable. Below `lg` the subtitle drops entirely rather than fighting
+          for a narrow content column; the height does not change when it
+          does, because the title sets it. */}
+      <div className="flex min-w-0 flex-1 items-baseline gap-2">
         {/* THE ONE FRAUNCES MOMENT ON A DESKTOP — COD-283.
 
             Measured across 20 views: the display serif was on **0% of
@@ -77,8 +97,16 @@ export function PageHeader({
             It stays exactly one place. 11 of 12 headings in Fraunces was the
             original diagnosis this pass existed to fix; the card headings
             stay sans. */}
-        <h1 className="truncate font-display text-title leading-tight font-medium text-foreground">{chrome.title}</h1>
-        {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
+        <h1 className="min-w-0 shrink-0 truncate font-display text-title leading-tight font-medium text-foreground">{chrome.title}</h1>
+        {chrome.subtitle && (
+          <>
+            {/* A separator, not punctuation: the two are one statement
+                ("Strength tools, which is logging, anatomy & analytics"), and
+                a screen reader should not read a bullet into it. */}
+            <span aria-hidden className="hidden shrink-0 text-label text-fg-3 lg:inline">·</span>
+            <p className="hidden min-w-0 truncate text-label text-muted-foreground lg:block">{chrome.subtitle}</p>
+          </>
+        )}
       </div>
 
       {/* The date cursor qualifies the title — "Fitness, this week" is one
