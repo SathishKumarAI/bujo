@@ -125,7 +125,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 12
+export const DEMO_VERSION = 14
 
 /**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
@@ -966,11 +966,27 @@ export function generateDemoData(today = todayISO()): JournalData {
   // and the demo looked two-thirds right. A habit’s polarity is now declared
   // in `seedJournal`, which this builds on, so all three arrive correct and
   // this table is only about goals again.
+  //
+  // AND THE POSITIVES CARRY ONE TOO, which they did not until now. With only
+  // Exercise and Read above the floor, "Weekly goals" on Today drew **two**
+  // rings — and the two caps it also found (Caffeine, Sugar) are filtered out
+  // there, because an arc filling toward a cap says "keep going". A card about
+  // the week you are having is worth the width when it covers the week: the
+  // five below are the demo's positive check and numeric habits, at goals a
+  // real person would set rather than seven-of-seven for everything, so the
+  // rings show a spread instead of a row of full circles.
   const WEEKLY_GOALS: Record<string, number> = {
     Caffeine: 5, // at most 5 coffees a week
     Sugar: 2,
     Exercise: 4,
     Read: 6,
+    Vegetables: 6,
+    'Water 2L': 7,
+    Vitamins: 7,
+    // Water and Meditation are NOT here. They are pushed below as `shaped`,
+    // after this loop has run, so a name key for either matches nothing and
+    // fails silently — the goal just never appears. Theirs are set on the
+    // object literals instead, which cannot be ordered wrong.
   }
   j.habits.forEach((h) => {
     const g = WEEKLY_GOALS[h.name]
@@ -1009,8 +1025,12 @@ export function generateDemoData(today = todayISO()): JournalData {
   // turns on.
   const shaped: Habit[] = [
     { id: uid('habit'), name: 'Doomscrolling', category: 'wellness', color: 'red', startedOn: addDays(today, -(HIST_DAYS - 1)), avoid: true, emoji: '📱', timeOfDay: 'evening', cue: 'In bed' },
-    { id: uid('habit'), name: 'Water', category: 'food', color: 'sky', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'count', target: 8, floor: 4, unit: 'glasses', timeOfDay: 'anytime' },
-    { id: uid('habit'), name: 'Meditation', category: 'wellness', color: 'lavender', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'timer', target: 15, floor: 5, unit: 'min', timeOfDay: 'morning', cue: 'Before the first meeting' },
+    // `weeklyGoal` on a numeric habit is a count of DAYS that hit the target —
+    // `habitDoneOn` scores the day, so 7 glasses-days and 5 sat-down-days read
+    // the same way as a check habit's week. Both are positives, so both draw a
+    // ring on Today; `Coffee` below is a `limit` and deliberately does not.
+    { id: uid('habit'), name: 'Water', category: 'food', color: 'sky', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'count', target: 8, floor: 4, unit: 'glasses', weeklyGoal: 7, timeOfDay: 'anytime' },
+    { id: uid('habit'), name: 'Meditation', category: 'wellness', color: 'lavender', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'timer', target: 15, floor: 5, unit: 'min', weeklyGoal: 5, timeOfDay: 'morning', cue: 'Before the first meeting' },
     { id: uid('habit'), name: 'Coffee', category: 'stimulant', color: 'peach', startedOn: addDays(today, -(HIST_DAYS - 1)), type: 'limit', target: 2, unit: 'cups', emoji: '☕', timeOfDay: 'morning', cue: 'With breakfast' },
   ]
   j.habits.push(...shaped)

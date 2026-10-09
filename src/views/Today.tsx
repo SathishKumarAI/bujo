@@ -96,8 +96,19 @@ function TodayFocused() {
       <DayHeader date={date} />
 
       <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[340px_minmax(0,1fr)_380px]">
-        <div className="lg:col-start-1 lg:row-start-1">
+        <div className="lg:col-start-1 lg:row-start-1 flex flex-col gap-4 sm:gap-5">
           <DayLogCard date={date} />
+          {/* THE WEEK, IN THE HOLE THE GRID LEAVES.
+
+              Measured at 1512x950 on `?demo=1`: the log ends at y 254 and
+              "Write one line" starts at y 532, because the middle column spans
+              both rows and is 636px tall while the log is 218. That is
+              **278 x 340px of nothing** in the first screen of the page — and
+              the one card that answers "how is this week going" was rendering
+              only in `TodayClassic`, a layout this one replaced. So the
+              question had no answer on the default Today at any width, and the
+              space to answer it in was already paid for. */}
+          <WeeklyGoalRings date={date} />
         </div>
 
         {/* Habits spans both rows: it is the tallest card and the one whose
@@ -342,29 +353,48 @@ function AtRiskNudge({ date }: { date: string }) {
 /** Weekly-goal completion rings for habits that set a weeklyGoal. */
 function WeeklyGoalRings({ date }: { date: string }) {
   const { data } = useJournal()
-  const habits = data.habits.filter((h) => !h.archived && h.weeklyGoal && h.weeklyGoal > 0)
+  // A GOAL HERE IS A FLOOR, SO ONLY HABITS WITH A FLOOR BELONG.
+  //
+  // `weeklyGoal` is offered on every habit, including the ones you are trying
+  // NOT to do — the demo sets it on Caffeine (5) and Sugar (2), both `avoid`.
+  // An arc filling toward a target says "keep going": Caffeine drew **4/5 in
+  // peach, 80% full**, which is the picture of a good week when it is in fact
+  // the fourth coffee against a cap of five. A limit needs the opposite
+  // reading and a different mark; until there is one, a ring is the wrong
+  // instrument and this card does not draw it.
+  const habits = data.habits.filter((h) => !h.archived && !h.avoid && h.type !== 'limit' && h.weeklyGoal && h.weeklyGoal > 0)
   if (habits.length === 0) return null
-  const R = 16
+  // 64px of ring, against 48 before. The old size was set when this card lived
+  // in `TodayClassic`'s 380px rail among nine others; it now leads a 340px
+  // column of its own, and a 16px radius under a 10px label read as decoration
+  // rather than as the week's score — reported as "very very low". The arc is
+  // the number here, so it gets the size: 26px radius at 6px stroke, which is
+  // also what lets the done/goal pair inside it be `text-label` instead of
+  // `text-caption`.
+  const R = 26
   const C = 2 * Math.PI * R
   return (
     <Card band title="Weekly goals" subtitle="This week's completions vs your goal" hideInfo collapsible>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-x-2 gap-y-4">
         {habits.map((h) => {
           const { done, goal, pct } = weeklyGoalProgress(data, h, date, data.settings.weekStart ?? 0)
           const hit = done >= goal
           return (
-            <div key={h.id} className="flex flex-col items-center gap-1" style={{ width: 64 }}>
-              <span className="relative grid h-12 w-12 place-items-center">
-                <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden>
-                  <circle cx="24" cy="24" r={R} fill="none" stroke={cat('surface1')} strokeWidth="4" />
+            <div key={h.id} className="flex min-w-0 max-w-28 flex-1 basis-20 flex-col items-center gap-1.5">
+              <span className="relative grid h-16 w-16 place-items-center">
+                <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden>
+                  {/* `surface0`, not `surface1`: the track is the part of the
+                      week you have not done yet, and at 6px it is a wide band.
+                      One step quieter keeps the arc the thing you see first. */}
+                  <circle cx="32" cy="32" r={R} fill="none" stroke={cat('surface0')} strokeWidth="6" />
                   <circle
-                    cx="24" cy="24" r={R} fill="none"
-                    stroke={cat(hit ? 'green' : h.color)} strokeWidth="4" strokeLinecap="round"
+                    cx="32" cy="32" r={R} fill="none"
+                    stroke={cat(hit ? 'green' : h.color)} strokeWidth="6" strokeLinecap="round"
                     strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)}
-                    transform="rotate(-90 24 24)" style={{ transition: 'stroke-dashoffset 0.3s' }}
+                    transform="rotate(-90 32 32)" style={{ transition: 'stroke-dashoffset 0.3s' }}
                   />
                 </svg>
-                <span className="absolute text-caption font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
+                <span className="absolute text-label font-medium tabular-nums" style={{ color: hit ? cat('green') : cat('subtext1') }}>{done}/{goal}</span>
               </span>
               <span className="max-w-full truncate text-center text-caption text-fg-2" title={h.name}>{h.emoji ? `${h.emoji} ` : ''}{h.name}</span>
             </div>
