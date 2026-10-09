@@ -5,6 +5,8 @@ import { formatMinutes } from '../../lib/focus'
 import { prettyDay } from '../../lib/date'
 import type { DevSession } from '../../lib/types'
 import { notify } from '../../lib/notify'
+import { ShowMore } from '../ShowMore'
+import { useCappedList } from '../../lib/useCappedList'
 
 /**
  * Every logged deep-work session, newest first, editable in place.
@@ -29,15 +31,27 @@ export function SessionHistory({
   onSave: (id: string, patch: Partial<DevSession>) => void
   onDelete: (id: string) => void
 }) {
+  const history = useCappedList(sessions)
   if (sessions.length === 0) {
     return <p className="text-label text-fg-2">No sessions yet. Log your first block with the form beside this one.</p>
   }
   return (
+    <>
     <ul>
-      {sessions.map((s) => (
+      {/* Capped. This list had no limit at all — every Focus session ever
+          logged, in a card whose subtitle already prints the count, so the
+          number was on screen twice and the rows pushed the rest of the group
+          off the page (COD-303). */}
+      {history.shown.map((s) => (
         <SessionRow key={s.id} s={s} onSave={(p) => onSave(s.id, p)} onDelete={() => onDelete(s.id)} />
       ))}
     </ul>
+    {/* Below the list rather than in the card header: this component does not
+        own the header — `views/Focus.tsx` does — and a control that lives in
+        one file while the thing it controls lives in another is the drift this
+        sweep was cleaning up. */}
+    <ShowMore list={history} className="mt-2" />
+    </>
   )
 }
 

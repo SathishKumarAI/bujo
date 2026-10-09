@@ -19,6 +19,8 @@ import {
   PULLUP_ABILITY, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_FORM,
   PULLUP_PRINCIPLES, PULLUP_EQUIPMENT, PULLUP_METHODS, type PullupMethod,
 } from '../lib/pullups'
+import { ShowMore } from '../components/ShowMore'
+import { useCappedList } from '../lib/useCappedList'
 
 /**
  * PULL-UPS · the training manual, and the place a pull-up session is recorded.
@@ -85,6 +87,10 @@ export function Pullups() {
   ]
 
   const totalReps = sessions.reduce((a, s) => a + repsOf(s.sets), 0)
+  // Was `slice(0, 12)` with no affordance — row 13 was unreachable, and
+  // nothing on screen said so (COD-303).
+  const history = useCappedList(sessions)
+
   const heat = useMemo(
     () => sessions.map((s) => ({ date: s.date, value: repsOf(s.sets) })),
     [sessions],
@@ -110,12 +116,15 @@ export function Pullups() {
               and it reads better at 722px than at 442. */}
           <ProgramTracker only="pullup-zero" />
           <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">History</h2>
+            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
+              <h2 className="text-label text-fg-2">History</h2>
+              <ShowMore list={history} />
+            </div>
             {sessions.length === 0 ? (
               <EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame>
             ) : (
               <ul>
-                {sessions.slice(0, 12).map((w) => (
+                {history.shown.map((w) => (
                   <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
                     <span className="flex min-w-0 flex-1 items-baseline gap-2">
                       <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>

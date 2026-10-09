@@ -5,6 +5,8 @@ import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
+import { ShowMore } from '../components/ShowMore'
+import { useCappedList } from '../lib/useCappedList'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { useConfirm } from '../components/ConfirmDialog'
 import {
@@ -90,7 +92,6 @@ export function Fitness() {
     return initialActivity ? { ...base, activity: initialActivity } : base
   })
   const [editing, setEditing] = useState<Workout | null>(null)
-  const [showAll, setShowAll] = useState(false)
 
   const unit = data.settings.distanceUnit
   const today = todayISO()
@@ -171,7 +172,10 @@ export function Fitness() {
     setDraft({ ...draftOf(last, unit), date: today, rpe: '', notes: '' })
   }
 
-  const shown = showAll ? sessions : sessions.slice(0, 8)
+  // Was 8 rows with its own `showAll` — the right shape and the wrong number.
+  // Four other history lists each had a different rule, and two of them sliced
+  // at 12 with no way to reach row 13 (COD-303).
+  const history = useCappedList(sessions)
 
   return (
     <PageLayout
@@ -210,17 +214,13 @@ export function Fitness() {
           <section>
             <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
               <h2 className="text-label text-fg-2">History</h2>
-              {sessions.length > 8 && (
-                <Button variant="ghost" onClick={() => setShowAll((v) => !v)} className="h-auto p-0 text-label">
-                  {showAll ? 'Show less' : `Show all (${sessions.length})`}
-                </Button>
-              )}
+              <ShowMore list={history} />
             </div>
             {sessions.length === 0 ? (
               <EmptyFrame>Log a session to start your history.</EmptyFrame>
             ) : (
               <ul>
-                {shown.map((w) => (
+                {history.shown.map((w) => (
                   <li
                     key={w.id}
                     {...justCapturedProps(justCaptured.has(WORKOUT_KEY(w.id)))}
