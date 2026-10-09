@@ -54,7 +54,30 @@ export function PageHeader({
       {railHidden && <RailToggle hidden onToggle={onToggleRail} />}
 
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <h1 className="truncate text-heading leading-tight font-medium text-foreground">{chrome.title}</h1>
+        {/* THE ONE FRAUNCES MOMENT ON A DESKTOP — COD-283.
+
+            Measured across 20 views: the display serif was on **0% of
+            rendered text on 16 of them**, highest anywhere 2.4%. Phase 2 of
+            the design pass said "Fraunces keeps the wordmark and the page
+            title" — retreat to one brand moment, not vanish. Two later
+            changes removed both homes without either noticing it was the
+            last: this title block was written in Instrument Sans during the
+            rail work, and the wordmark left the rail when it was reported as
+            eating 44px. So the Fraunces + Instrument Sans pairing the doc
+            calls the thing separating this from generic output was, on a
+            desktop, one typeface.
+
+            `text-title` and not `text-heading`, and that is forced rather
+            than chosen: `npm run design` fails `font-display` below
+            `text-title`, because a serif at 17px reads as a mistake rather
+            than a decision. 22px is the floor for the face, so taking the
+            serif back means taking the size with it — which is the right
+            answer anyway for the one heading that names the page.
+
+            It stays exactly one place. 11 of 12 headings in Fraunces was the
+            original diagnosis this pass existed to fix; the card headings
+            stay sans. */}
+        <h1 className="truncate font-display text-title leading-tight font-medium text-foreground">{chrome.title}</h1>
         {chrome.subtitle && <p className="truncate text-label text-muted-foreground">{chrome.subtitle}</p>}
       </div>
 
