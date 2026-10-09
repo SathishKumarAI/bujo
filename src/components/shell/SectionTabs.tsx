@@ -73,10 +73,58 @@ export function SectionTabs({
   //
   // Rect maths is position-aware, so running it twice is idempotent rather than
   // cumulative.
+  /**
+   * The VERTICAL counterpart. COD-298.
+   *
+   * The rail stacks the section nav and this list in one `overflow-y-auto`
+   * column, and Body is the section that does not fit: eleven tabs plus five
+   * sections. Matching the nav's 38px rhythm (see the row's className) made it
+   * fit at 1440x900 — it had overflowed by 102px, which put **Cycle**, the last
+   * tab, off the bottom — but a 1280x720 laptop is still 56px short, and there
+   * the hidden pair is Recovery and Cycle.
+   *
+   * So the rhythm is the fix and this is the floor under it: when the list
+   * cannot fit, the one tab that must never be the hidden one is the tab you
+   * are on. Otherwise the page says Cycle and the rail shows Fitness…Nutrition,
+   * which is the same defect the horizontal effect above exists to prevent,
+   * turned ninety degrees.
+   *
+   * Adjusts `scrollTop` on the rail's own scroller, found by walking up, for
+   * the reason the horizontal one sets `scrollLeft`: `scrollIntoView` walks
+   * EVERY scrollable ancestor, so it would also scroll the page and throw the
+   * header away. Rect maths, so running it twice is idempotent.
+   */
+  useEffect(() => {
+    if (!vertical) return
+    const a = activeRef.current
+    if (!a) return
+    let sc: HTMLElement | null = a.parentElement
+    while (sc && sc !== document.body) {
+      const cs = getComputedStyle(sc)
+      if (/auto|scroll/.test(cs.overflowY) && sc.scrollHeight > sc.clientHeight + 1) break
+      sc = sc.parentElement
+    }
+    if (!sc || sc === document.body) return
+    const reveal = () => {
+      const sr = sc!.getBoundingClientRect()
+      const ar = a.getBoundingClientRect()
+      if (ar.top >= sr.top && ar.bottom <= sr.bottom) return // already in view
+      // `block: 'nearest'` semantics by hand: move the minimum distance.
+      sc!.scrollTop += ar.top < sr.top ? ar.top - sr.top : ar.bottom - sr.bottom
+    }
+    const id = requestAnimationFrame(reveal)
+    let live = true
+    // Same font race as the horizontal effect: row heights settle late.
+    void document.fonts?.ready.then(() => { if (live) reveal() })
+    const ro = new ResizeObserver(reveal)
+    ro.observe(sc)
+    return () => { live = false; cancelAnimationFrame(id); ro.disconnect() }
+  }, [vertical, view, gates.cycle, gates.nofap])
+
   useEffect(() => {
     const row = rowRef.current
     const a = activeRef.current
-    if (!row || !a) return
+    if (!row || !a || vertical) return
     const centre = () => {
       const rr = row.getBoundingClientRect()
       const ar = a.getBoundingClientRect()
@@ -95,7 +143,7 @@ export function SectionTabs({
     const ro = new ResizeObserver(centre)
     ro.observe(row)
     return () => { live = false; cancelAnimationFrame(id); ro.disconnect() }
-  }, [view, gates.cycle, gates.nofap])
+  }, [vertical, view, gates.cycle, gates.nofap])
 
   const section = sectionOf(view)
   if (!section) return null
@@ -146,7 +194,30 @@ export function SectionTabs({
               e.preventDefault()
               onNavigate(t.view)
             }}
-            // 44px minimum touch target (WCAG 2.5.5) via `min-h-11`.
+            // ── Two rhythms in one column, and only one of them was right ──
+            //
+            // The horizontal row is the PHONE's tab strip, so it keeps the
+            // 44px minimum touch target (WCAG 2.5.5) via `min-h-11`, plus
+            // `my-1` so the pills do not touch the scroll edges.
+            //
+            // The vertical rail is `hidden md:flex` in `SideRail` — desktop,
+            // pointer — and it sits directly under `SectionNav`, which uses
+            // `min-h-9` and no margin. Carrying the phone's spacing into it
+            // made the SUB-navigation 42% looser than the primary navigation
+            // above it: measured on Body at 1440x849, section rows ran at a
+            // 38px pitch and tab rows at 54px (`my-1` 8 + `min-h-11` 44 +
+            // `gap-0.5` 2).
+            //
+            // Eleven tabs at 54px is 601px where the nav's own rhythm would be
+            // 418px, and the rail's scroller overflowed by exactly **102px** —
+            // which put **Cycle, the last tab, off the bottom**. Reported as
+            // "when I click on Body, why do I need to scroll down to get to
+            // Cycle". Matching the rhythm reclaims 183px and leaves 81px of
+            // headroom, so the list fits with room for another tab or two.
+            //
+            // The fix is the rhythm, not a smaller number: two lists stacked in
+            // one column that disagree about row height read as two unrelated
+            // things, which is the second half of why this looked wrong.
             //
             // A NEUTRAL fill, deliberately one step quieter than the accent
             // pill the section nav above it uses. Two rows of navigation both
@@ -168,7 +239,9 @@ export function SectionTabs({
             // resolve to 0 the moment free space is negative; `justify-center`
             // does not. Reach for the margins if you ever centre an
             // overflowing row again.
-            className={`my-1 inline-flex min-h-11 flex-none items-center rounded-control px-3 text-body font-medium whitespace-nowrap transition-colors ${
+            className={`inline-flex flex-none items-center rounded-control px-3 text-body font-medium whitespace-nowrap transition-colors ${
+              vertical ? 'min-h-9' : 'my-1 min-h-11'
+            } ${
               active
                 ? 'bg-ink-2 text-foreground shadow-raise'
                 : 'text-fg-2 hover:bg-ink-2 hover:text-fg-1'
