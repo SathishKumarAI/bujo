@@ -6,6 +6,8 @@ import { ExerciseLibrary, Manual, SessionCard, type SessionItem } from '../compo
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import { HOME_EXERCISES, type HomeExercise } from '../lib/homeExercises'
 import { notify } from '../lib/notify'
+import { ShowMore } from '../components/ShowMore'
+import { useCappedList } from '../lib/useCappedList'
 
 /**
  * HOME WORKOUT · an 83-movement training library, and the place a home session
@@ -56,6 +58,10 @@ export function HomeWorkout() {
 
   const last = sessions[0]
   const totalExercises = sessions.reduce((a, s) => a + s.sets.length, 0)
+  // Was `slice(0, 12)` with no affordance — row 13 was unreachable, and
+  // nothing on screen said so (COD-303).
+  const history = useCappedList(sessions)
+
   const heat = useMemo(() => sessions.map((s) => ({ date: s.date, value: s.sets.length })), [sessions])
 
   function add(ex: HomeExercise) {
@@ -110,12 +116,15 @@ export function HomeWorkout() {
           </section>
 
           <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">History</h2>
+            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
+              <h2 className="text-label text-fg-2">History</h2>
+              <ShowMore list={history} />
+            </div>
             {sessions.length === 0 ? (
               <EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame>
             ) : (
               <ul>
-                {sessions.slice(0, 12).map((w) => {
+                {history.shown.map((w) => {
                   const open = openId === w.id
                   return (
                     <li key={w.id} className="group border-b border-line py-2 text-body last:border-b-0">
