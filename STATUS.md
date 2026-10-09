@@ -5,6 +5,20 @@ session** (#348–#352). `npm run verify`: 124 files, **1740 tests**, exit 0.
 `a11y` 173/173 with no serious or critical, `smoke` 24/24, `clipped` clean at
 1440/1024/390, `design` 419 files, `contrast` 5 themes — all green on `main`.
 
+## Security, as of 2026-10-09
+
+| | |
+|---|---|
+| **COD-228** | **Closed.** The passcode lock had a back door: the sync passphrase sat in plaintext at `bujo:sync`, and because the cloud copy is encrypted with the *same* passphrase and its path *derived* from it, a locked device handed over a byte-identical journal without the passcode being attacked. `lib/syncSecret.ts` seals it under the passcode now. Cost: auto-sync does not run while locked, which is the feature being honest. |
+| **CSP** | `connect-src` had no `supabase.co`. Vercel headers do not apply to `vite preview`, so accounts worked locally and would have been **dead in production** — every call blocked, console warning only. Fixed. |
+| **Key guard** | A test failing the build on a hardcoded project URL or `service_role` existed only in an agent worktree, i.e. not at all. Now in `auth.contract.test.ts`, proven to fail on a planted canary. |
+| **Secret audit** | History, not just the tree: no env file ever committed except `.env.example`; no tracked secret-shaped files; `dist/` untracked; 0 hits for `sb_secret_`, `vercel_blob_rw_`, `GOCSPX-`, private keys. All 24 `service_role` hits are prose warning against it. |
+
+**Still open and yours:** turn off `anonymous_users` in Supabase (anyone can
+mint a session with no email; nothing in the app uses it), and drop the
+`?code=` arm of `api/sync.ts` one release on — that is the path that put a
+secret in a query string.
+
 ## What this session did
 
 Started as "the design pass, phase 5" and became a shell rebuild plus a domain
@@ -80,9 +94,13 @@ was, so the container-query treatment should transfer.
 - **The toggle icon is 3.47 (latte) / 3.58 (dawn)** against the header. Above
   the 3.0 floor for a graphic, under 4.5, and exactly where the microphone
   button beside it already sits. Not made worse; worth its own pass.
-- **Nothing has run against a real Supabase project** — unchanged from the last
-  session. The account guards are proven as logic, not behaviour. The
-  second-account RLS check is still owed.
+- **Supabase is live and half-verified.** The project is up (auth health 200),
+  `schema.sql` is applied, Google is enabled, and the sign-in surface renders.
+  Verified by probe: anon `SELECT` and anon `INSERT` spoofing another `owner`
+  both return **401 permission denied** — the grants hold before RLS is even
+  consulted. **What is still owed is the two-account test** (COD-282): sign in
+  as a second Google account and confirm it cannot read the first’s row. That
+  needs two real accounts and is the only thing that proves multi-tenancy.
 
 ## First thing, still: 18 worktrees
 

@@ -1,3 +1,4 @@
+import { getSyncPassphrase } from './lib/syncSecret'
 import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
@@ -79,7 +80,7 @@ export default function App() {
   const syncReady = useRef(false)
   // Cloud auto-sync (opt-in): pull once on load, push (debounced) on change.
   useEffect(() => {
-    const pass = localStorage.getItem('bujo:sync')
+    const pass = getSyncPassphrase()
     if (!pass) { syncReady.current = true; return }
     pullCloud(pass)
       .then(async (remote) => { if (remote) { const next = await resolveIncoming(dataRef.current, migrate(remote), askConflictRef.current); if (next) replaceAll(next) } })
@@ -88,7 +89,7 @@ export default function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const cloudLastSync = useRef('')
   useEffect(() => {
-    const pass = localStorage.getItem('bujo:sync')
+    const pass = getSyncPassphrase()
     if (!pass || !syncReady.current) return
     const snapshot = JSON.stringify(data)
     if (snapshot === cloudLastSync.current) return // echo-guard: we just applied a remote change

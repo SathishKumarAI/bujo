@@ -1,3 +1,4 @@
+import { getSyncPassphrase } from '../lib/syncSecret'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { isConfigured, onAuthChange, pullAccount, pushAccount } from '../lib/supabase'
@@ -42,7 +43,7 @@ export function AccountSync() {
   const askRef = useRef(askConflict)
   useEffect(() => { askRef.current = askConflict }, [askConflict])
 
-  const pass = () => (typeof localStorage === 'undefined' ? null : localStorage.getItem('bujo:sync'))
+  const pass = () => getSyncPassphrase()
 
   // ── Sign-in / sign-out / account switch ──────────────────────────────────
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { TooltipProvider } from '../ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { TopBar } from './TopBar'
+import { PageHeader } from './PageHeader'
 import { BottomNav } from './BottomNav'
 import { CaptureBar } from '../CaptureBar'
 import { MilestoneToast } from '../MilestoneToast'
@@ -147,7 +148,7 @@ export function AppShell({
           Below `md` this is unchanged: the rail is `hidden md:flex`, so the
           row has one child and the header spans it exactly as before. */}
       <div className="flex min-h-screen">
-        {!railHidden && <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} onToggleRail={toggleRail} />}
+        {!railHidden && <SideRail view={view} gates={gates} onNavigate={onNavigate} onCommand={onCommand} onToggleRail={toggleRail} onQuickAdd={() => setQuickOpen(true)} onTalk={() => setTalkOpen(true)} />}
 
         {/* `min-w-0` is load-bearing and was not needed before this row
             existed. A flex item’s `min-width: auto` resolves to its
@@ -174,6 +175,12 @@ export function AppShell({
               the page it wrote it to. Outside `main` so it is not inside
               whichever view the capture sent us to — it belongs to the shell,
               like the banners. */}
+          {/* Desktop only, and INSIDE the content column — the top bar above
+              is `md:hidden` now. It carries the page title, the date cursor
+              and, while the rail is away, the control that brings it back.
+              See docs/SHELL-ONE-CHROME.md. */}
+          <PageHeader view={view} railHidden={railHidden} onToggleRail={toggleRail} />
+
           <CaptureReceipt />
 
           {/* `overflow-x-clip`, NOT `overflow-x-hidden`. `hidden` on one axis

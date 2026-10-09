@@ -84,7 +84,7 @@ export function TopBar({
     // thing that earns a blur. `--shadow-raise` puts the bar a rung in front of
     // whatever is sliding under it; the hairline stays because a translucent
     // surface over arbitrary content cannot rely on colour alone to end.
-    <header className="app-header sticky top-0 z-30 border-b border-line bg-card/75 pt-2.5 shadow-raise backdrop-blur-lg">
+    <header className="app-header sticky top-0 z-30 border-b border-line bg-card/75 pt-2.5 shadow-raise backdrop-blur-lg md:hidden">
       {/* ── Row 1 · who, and the controls that are not about this page ───── */}
       <HeaderRail collapsed={collapsed}>
         {/* ONE ROW on desktop. The brand is in the rail’s head, the page

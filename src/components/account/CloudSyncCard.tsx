@@ -1,3 +1,4 @@
+import { autoSyncEnabled, clearSyncPassphrase } from '../../lib/syncSecret'
 import { Download, Upload } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
@@ -26,7 +27,7 @@ import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
  */
 export function CloudSyncCard() {
   const confirm = useConfirm()
-  const { data, replaceAll, encrypted } = useJournal()
+  const { data, replaceAll, encrypted, saveSyncPassphrase } = useJournal()
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
@@ -62,7 +63,7 @@ export function CloudSyncCard() {
     finally { setBusy('') }
   }
 
-  const [auto, setAuto] = useState(() => !!localStorage.getItem('bujo:sync'))
+  const [auto, setAuto] = useState(() => autoSyncEnabled())
 
   /**
    * Auto-sync has to keep the passphrase to run unattended, and it keeps it in
@@ -92,19 +93,24 @@ export function CloudSyncCard() {
   async function toggleAuto(on: boolean) {
     if (on) {
       if (pass.length < 6) { setMsg('Enter a passphrase first, then enable auto-sync.'); return }
+      // The dialog that used to stand here warned that auto-sync stores the
+      // passphrase unencrypted and asked you to accept it. That warning was
+      // accurate and it is now obsolete: `saveSyncPassphrase` seals the
+      // passphrase under the passcode when there is one. Consent is not the
+      // fix for a design that hands over a second copy of the journal —
+      // COD-228.
       if (encrypted && !await confirm({
-        title: 'Auto-sync stores this passphrase unencrypted',
+        title: 'Auto-sync pauses while this journal is locked',
         description:
-          'This journal has a passcode, so it is encrypted on this device. Auto-sync has to keep the '
-          + 'passphrase in readable browser storage to run on its own — and anyone who can read that '
-          + 'can fetch the cloud copy of this journal without the passcode. Push and Pull by hand do '
-          + 'not store anything.',
-        confirmLabel: 'Turn on auto-sync anyway',
+          'This journal has a passcode, so the sync passphrase is stored encrypted under it. '
+          + 'That means auto-sync can only run after you unlock — it will not sync in the '
+          + 'background from a locked device, which is the point. Push and Pull by hand are '
+          + 'unchanged.',
+        confirmLabel: 'Turn on auto-sync',
         cancelLabel: 'Keep syncing by hand',
-        destructive: true,
       })) return
-      localStorage.setItem('bujo:sync', pass); setAuto(true); push()
-    } else { localStorage.removeItem('bujo:sync'); setAuto(false); setMsg('Auto-sync off.') }
+      await saveSyncPassphrase(pass); setAuto(true); push()
+    } else { clearSyncPassphrase(); setAuto(false); setMsg('Auto-sync off.') }
   }
 
   return (
