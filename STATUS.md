@@ -117,6 +117,38 @@ They are not harmless: a dev server started in one is pinned to it, so a tab on
 that port never shows changes made here however hard you reload — and
 `vite.config.ts` excluding the path from vitest is a mitigation, not a fix.
 
+## Next, in order
+
+The 2026-10-09 leftovers, filed as COD-285–289 after an audit of what this
+session raised and then dropped. **The pattern is worth keeping: everything
+found mid-task and fixed got filed; everything found mid-task and deferred
+mostly did not.** Five of these existed only in a conversation.
+
+| # | | Why this order |
+|---|---|---|
+| **COD-285** | Drop the `?code=` arm of `api/sync.ts` | The only one with a security consequence — a secret in a query string, i.e. in every access log. 4 refs still present. Move `docs/AUTH.md`'s recovery `curl` to the header in the same change or recovery breaks silently. |
+| **COD-286** | Type scale is 8 steps, documented as 5 | COD-283 carried two findings, the serif half shipped in #358 and the ticket was closed **taking the other half with it**. 12px x4 is a real outlier; 22 and 32 are real tokens the doc never recorded. Fix the code AND the doc, in opposite directions. |
+| **COD-287** | Let `PageHeader` scroll away | 67px back on every long page. Recommended when asked about hiding the top bar, then dropped. Not a one-word change: `LibraryBar` and `SectionRail` park against `--header-h` and must re-park at 0. |
+| **COD-288** | Coaching is not the band-pairing shape | A **negative** result, filed so nobody repeats the half hour. Its 2.7 screens is a 1676px act column, not wide-and-underfull bands. Needs folding, which is a content decision. |
+| **COD-289** | Two gaps the gates miss | Every browser gate runs with the rail OPEN; and the toggle icon is 3.47:1 on latte (above the 3.0 graphic floor, so not a violation — same as the mic beside it). |
+
+### Owner-only, and genuinely blocked on an account
+
+1. Supabase → Authentication → **Users**: delete every user with no email —
+   the anonymous ones from the RLS test. Journal rows cascade with them.
+2. Supabase → Providers → **Anonymous sign-ins → off**. In that order.
+3. Click **Continue with Google** once, to confirm the UI round trip (COD-282).
+
+### Closed this session rather than carried
+
+**#306** (`feat/page-contract-rollout`) was closed, not merged: **81 commits**
+behind, and it deletes `src/components/mod/Band.tsx`, which **13 files now
+import** and which carries the `BandRow` context COD-284 is built on. Rebasing
+60 files across 81 commits is a re-implementation, and the conflict resolution
+is where the real decisions would get made silently. The branch still exists;
+`git diff main...feat/page-contract-rollout` still reads.
+
+
 ## Open, deliberately
 
 - **#306** — an old PR still open, "finish the page contract and retire the
