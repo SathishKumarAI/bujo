@@ -1,9 +1,118 @@
 # STATUS
 
-**Stopped:** 2026-10-08. `main` at `fee85a7`, clean tree. **Five PRs merged this
-session** (#348–#352). `npm run verify`: 124 files, **1740 tests**, exit 0.
-`a11y` 173/173 with no serious or critical, `smoke` 24/24, `clipped` clean at
-1440/1024/390, `design` 419 files, `contrast` 5 themes — all green on `main`.
+**Stopped:** 2026-10-09. `main` at `fe88314`, clean tree. Last PR merged:
+**#363, COD-291** — a Google sign-in now visibly changes the app. `npm run
+verify`: **129 files, 1784 tests**, exit 0. `a11y` 173/173 with no serious or
+critical, `smoke` 24/24, `clipped` clean at 1440/1024/390, `space` inside
+budget, `design` 425 files, `contrast` 5 themes — all green on `main`.
+
+## Start here · COD-292, and it is bigger than it looks
+
+**The account feature has never run in production.** Measured against
+`https://bujo-journal.vercel.app`, not inferred:
+
+- the served `Content-Security-Policy` header has **no `supabase.co` in
+  `connect-src`**, while this repo's `vercel.json` has had it since the CSP fix
+  recorded below — and a header can only come from the deployed `vercel.json`;
+- `Last-Modified: Mon, 05 Oct 2026 22:47:23 GMT`;
+- all **50** JS chunks in the deployed `sw.js` precache manifest downloaded and
+  grepped: **0** hits for the project ref, for `supabase`, for `Continue with
+  Google`, for `account is recoverable`, or for `Google refused the sign-in`
+  (COD-290, merged as #360). `Locking this journal` *is* there — a real bujo
+  build, an old one.
+
+So Google sign-in, the account row, `AccountCard`, `AccountSync`, COD-290's
+failure reporting and now #363 have only ever run on a local dev or preview
+server, where `.env.local` supplies the keys.
+
+**A redeploy fixes half of it.** The other half: `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` must be set in the **Vercel project environment**. The
+`.env.local` that Vercel CLI pulled into this tree carries only
+`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — the
+Next.js convention, which Vite does not expose to `import.meta.env`. The `VITE_`
+pair in that file was typed in by hand locally, so **it exists on this machine
+and nowhere else**. Without it a redeploy ships an Account page with no sign-in
+button at all: *absent, not broken*, which is the designed behaviour and is
+indistinguishable from the feature being missing.
+
+Worth a guard rather than a memory — a check that fails a production build with
+no `VITE_SUPABASE_URL`. "A thing that exists only on one machine" is written up
+three times in `CLAUDE.md` already.
+
+## Which port is which, on THIS machine — measured 2026-10-09
+
+The user could not see the change and was looking at the wrong application.
+Checked with `Get-CimInstance Win32_Process` on every listening port, not
+guessed:
+
+| Port | Actually serving |
+|---|---|
+| **5173** | **`shelf/product/loan-division-emi-tracker`** — Vite's *dev* default, claimed by whichever project started first. Title: *Loan Division & Variable-Rate EMI Tracker*. |
+| 4173 | bujo `vite preview`, from this tree's `dist/` |
+| 4178 | bujo `vite preview`, from this tree's `dist/` |
+
+So **`localhost:5173` is not bujo on this machine.** That is the smoke-gate trap
+in `CLAUDE.md` happening to a human instead of a gate: a page that is not this
+app cannot show this app's sign-in button, and it looks exactly like the feature
+being broken. There is no bujo *dev* server running at all — use **4173**.
+
+And `vite preview` serves through a service worker, so after a rebuild:
+unregister it, clear `caches`, and **reload twice** (the first reload is still
+served by the worker that was controlling the page). Confirm by comparing the
+served `assets/index-*.js` against this tree's `dist/index.html` — the title
+cannot distinguish two worktrees.
+
+## COD-291 · signing in changed one card, on one page
+
+Reported as *"able to continue with Google and able to sign in, but it's not
+showing any kind of updates on my UI."* Exact.
+
+The signed-in user was `useState` inside `AccountCard`; the sync lifecycle was
+`useState` inside `AccountSync`, which renders `null`. So the two components
+that knew were the only two that could be asked, and everything else guessed
+from the local profile nickname and `localStorage['bujo:sync']` — the **other**
+sync mechanism's passphrase.
+
+| Surface | Before | After |
+|---|---|---|
+| avatar trigger | `Account, No name set`, no image | `Account, Sathish Kumar`, the Google photo |
+| header menu | `No name set` · `This device only` | name · email · `Not syncing yet` |
+| Account zone 1 | `account: not set up` · `journal: this device only` | `account: Sathish Kumar` · `journal: not syncing yet` |
+| the pill | never lit for account sync | lights, from the status store |
+
+Two things from it that are worth more than the pixels:
+
+- **COD-134 named `AccountMenu` and was fixed in `AccountCard`,** then closed
+  without a test. That is the entire reason it reopened silently.
+  `components/shell/AccountMenu.test.tsx` is the guard now.
+- **"Signed in" was claiming "synced".** `AccountSync` cannot push without a
+  sync passphrase and returned early when there was none; the card said *"your
+  journal syncs to your account"* regardless. The default state of a new account
+  — signed in, row created, nothing uploaded, nothing ever going to be — read as
+  a working sync. `lib/account.test.ts` now asserts as a **property** that no
+  phase but `synced` may claim one.
+
+New: `lib/authUser.ts` (the session, one `onAuthChange` per tab, via
+`useSyncExternalStore` — not a context, because one consumer is the shell header
+and another is a card inside a lazily-imported view), `lib/accountStatus.ts`
+(the phase, a persisted last-synced stamp, and the `bujo:sync` dispatch), and
+`lib/account.ts` (`identityOf`, `phaseCopy`, and the `SYNCED` / `WITHHELD` lists
+read off `forEgress`).
+
+**And `npm run space` could not see any of it.** It reports `2.2 / 4.2` on the
+branch and `2.2 / 4.2` on `main` — identical, because nothing in that gate seeds
+a session, so it grades the *signed-out* Account page. Measured by probe
+instead, page height ÷ viewport:
+
+| | signed out | signed in |
+|---|---|---|
+| 1440×900 | 2.32 | **2.59** |
+| 390×844 | 4.29 | **4.87** |
+
+Phone Account was already 4.29 before this, so +0.58 is 13% longer, not a new
+category of problem. If it bites, fold the two data lists — but note that puts
+the *withheld* list behind a click, and that is the half a reader cannot verify
+for themselves.
 
 ## Security, as of 2026-10-09
 
