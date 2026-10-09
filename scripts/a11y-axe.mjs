@@ -194,9 +194,14 @@ const COMPANIONS = [
   // reachable by URL now (`?view=settings&tab=…`) rather than by clicking,
   // because a tab click is one more thing to wait for and this gate already has
   // a table of waits it got wrong.
-  ['Settings · appearance', 'settings&tab=feel'],
-  ['Settings · sync', 'settings&tab=sync'],
-  ['Settings · data', 'settings&tab=data'],
+  // Third element is extra query, kept OUT of the id on purpose: the landed-URL
+  // check reads the `view` PARAM, so folding `&tab=` into the id makes
+  // "settings&tab=feel" a value `view` can never equal. The first run of this
+  // failed four shards exactly that way — the assertion doing its job on the
+  // author rather than on the app, which is the best kind of red.
+  ['Settings · appearance', 'settings', 'tab=feel'],
+  ['Settings · sync', 'settings', 'tab=sync'],
+  ['Settings · data', 'settings', 'tab=data'],
   // The guide. Behind the top bar's "?", so no tab clicks to it and it had
   // never been scanned — the page a user opens *because they are already
   // stuck* was the one page with no accessibility evidence behind it. It is
@@ -1136,15 +1141,27 @@ async function runUnit(w, unit) {
   // Companion views, reached by URL because they have no tab to click.
   // `setTheme` persists to the journal in localStorage, which survives the
   // navigation, so these are scanned under the theme of the current pass.
-  for (const [label, view] of COMPANIONS) {
+  for (const [label, view, query] of COMPANIONS) {
     w.at = label
-    await w.page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
+    const url = `${BASE}?view=${view}${query ? `&${query}` : ''}`
+    await w.page.goto(url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
     // The alias table used to bounce these to Fitness. If that ever comes
     // back, the URL will silently be a different page and `scan` would
     // happily grade Fitness under this label — so check where we landed.
-    const landed = await w.page.evaluate(() => new URLSearchParams(location.search).get('view'))
-    if (landed !== view) {
-      fail(`\n[${label}] asked for ?view=${view} and landed on ?view=${landed}.`,
+    //
+    // The tab is checked too, and that half is load-bearing rather than
+    // defensive: the three Settings entries exist ONLY to reach panels a tab
+    // shell keeps out of the DOM (COD-232), so a `?tab=` that silently did
+    // nothing would leave this gate scanning the Account tab three more times
+    // and printing three more reassuring zeroes for panels it never opened.
+    const wantTab = query ? new URLSearchParams(query).get('tab') : null
+    const landed = await w.page.evaluate(() => {
+      const p = new URLSearchParams(location.search)
+      return { view: p.get('view'), tab: p.get('tab') }
+    })
+    if (landed.view !== view || (wantTab && landed.tab !== wantTab)) {
+      fail(`
+[${label}] asked for ${url} and landed on ?view=${landed.view}&tab=${landed.tab}.`,
         '  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
     }
     await scan(w, label)
