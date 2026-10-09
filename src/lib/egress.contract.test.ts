@@ -35,6 +35,26 @@ const SOURCES = import.meta.glob('../**/*.{ts,tsx}', {
 }) as Record<string, string>
 
 /**
+ * `api/` is OUTSIDE the glob above. COD-301.
+ *
+ * The pattern resolves relative to this file's directory, so `../**` is
+ * `src/**` and stops there — while this file's own docstring claimed a
+ * whole-tree sweep. `api/sync.ts` and `api/feedback.ts` both make outbound
+ * `fetch` calls, one of them carrying a GitHub token, and neither was ever
+ * scanned.
+ *
+ * Not a live leak today: neither handles a journal shape, so there was nothing
+ * for the cycle-log rule to catch. But "the test does not look there" and "the
+ * test looked and found nothing" are different facts, and only one of them was
+ * true.
+ */
+const API_SOURCES = import.meta.glob('../../api/**/*.ts', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>
+
+/**
  * `import.meta.glob` keys are relative to THIS file's directory, so they arrive
  * in two shapes: a sibling in `src/lib` is `./storage.ts` — with no `lib/`
  * segment at all — and anything else is `../components/CloudStorage.tsx`. A
@@ -48,7 +68,7 @@ const SOURCES = import.meta.glob('../**/*.{ts,tsx}', {
  */
 const SELF = /egress\.contract\.test\.ts$/
 
-const files = Object.entries(SOURCES).filter(
+const files = Object.entries({ ...SOURCES, ...API_SOURCES }).filter(
   ([p]) => !/\.test\.tsx?$/.test(p) || /egress\.contract/.test(p),
 )
 const scannable = files.filter(([p]) => !SELF.test(p))
@@ -77,11 +97,46 @@ const TRANSPORTS = ['pushGist', 'pushData'] as const
 /** …and the modules that define them, where a bare mention is the definition. */
 const TRANSPORT_DEFS = [/^\.\/github\.ts$/, /^\.\/gdrive\.ts$/]
 
+/**
+ * What counts as "sends it somewhere".
+ *
+ * Constructed from strings rather than written as regex literals. When this
+ * array was rewritten as a multi-line list of literals during COD-301, two of
+ * the three known carriers silently dropped out of the assertion below —
+ * `SENDS[0].test(src)` returned false on a file an identical *inline* literal
+ * matched. **I did not isolate why**, and that is the point: a tripwire whose
+ * patterns can stop matching without anyone noticing is worse than no
+ * tripwire, because it reports a clean sweep.
+ *
+ * So they are built where there is nothing to mis-parse, and
+ * `each pattern still matches what it is for` below asserts every one of them
+ * against a known-positive sample. If you ever convert these back to
+ * literals, keep that test.
+ */
+const SENDS = [
+  String.raw`fetch\s*\(`,
+  String.raw`fetchImpl\s*\(`,
+  '@supabase/supabase-js',
+  String.raw`navigator\.sendBeacon`,
+  String.raw`new WebSocket\(`,
+  String.raw`new XMLHttpRequest\(`,
+].map((pattern) => new RegExp(pattern))
+
 describe('nothing leaves except through forEgress', () => {
   it('scans the source tree', () => {
     // Guards the key-shape trap above: a glob that matched nothing would make
     // every other assertion in this file vacuously true.
     expect(scannable.length).toBeGreaterThan(50)
+  })
+
+  it('scans api/ too, and proves it rather than assuming it', () => {
+    // COD-301. Widening a glob that then matches nothing is worse than not
+    // widening it: the docstring starts claiming coverage the file does not
+    // have. These two serverless functions both call `fetch`, so if the second
+    // glob silently resolved to nothing this assertion is what says so.
+    const api = scannable.filter(([p]) => p.includes('/api/'))
+    expect(api.map(([p]) => p.replace(/^.*\/api\//, 'api/')).sort())
+      .toEqual(['api/feedback.ts', 'api/sync.ts'])
   })
 
   it('has no caller of forNetwork except forEgress', () => {
@@ -119,21 +174,79 @@ describe('nothing leaves except through forEgress', () => {
     }
   })
 
+  it('each pattern still matches what it is for', () => {
+    // The guard on the guard. Two carriers once vanished from the assertion
+    // below because a pattern silently stopped matching, and the sweep went
+    // green — a tripwire that reports a clean result for the wrong reason is
+    // the exact failure this whole file exists to prevent, turned inward.
+    const samples: Array<[string, string]> = [
+      ['await fetch(url)', 'a plain fetch'],
+      ['const r = fetchImpl(url, init)', 'an injected fetch'],
+      ["import { createClient } from '@supabase/supabase-js'", 'the Supabase SDK'],
+      ['navigator.sendBeacon(url, body)', 'a beacon'],
+      ['const ws = new WebSocket(url)', 'a socket'],
+      ['const x = new XMLHttpRequest()', 'an XHR'],
+    ]
+    expect(samples).toHaveLength(SENDS.length)
+    samples.forEach(([sample, what], i) => {
+      expect(SENDS[i].test(sample), `SENDS[${i}] (${SENDS[i].source}) no longer matches ${what}`).toBe(true)
+    })
+    // And it must not match prose, or every file becomes a carrier.
+    for (const re of SENDS) {
+      expect(re.test('// we do not fetch anything here'), re.source).toBe(false)
+    }
+  })
+
+  it('excludes the two untyped transports by name, not by accident', () => {
+    // `gdrive.pushData` and `github.pushGist` take `unknown`, so the journal
+    // reaches them untyped and the call-site assertion is where their rule
+    // lives. That is correct — but until COD-301 they were also absent from
+    // the carriers list purely because neither file happens to contain the
+    // string `JournalData`. Annotating either would have failed the build for
+    // a file that was already right.
+    const defs = scannable.filter(([p]) => TRANSPORT_DEFS.some((re) => re.test(p))).map(([p]) => p)
+    expect(defs.sort()).toEqual(['./gdrive.ts', './github.ts'])
+  })
+
   it('knows every lib module that carries a journal over the network', () => {
     // A completeness tripwire, not a style rule. A NEW module that types a
     // `JournalData` and sends it somewhere is a new egress path, and it fails
     // here until someone adds it to this list having decided what it owes the
     // boundary. The two untyped transports are covered by the call-site
-    // assertion above instead, which is why they are not in this set.
+    // assertion above instead, which is why they are not in this set —
+    // and `TRANSPORT_DEFS` is what makes that deliberate: those two files are
+    // filtered out BY NAME below.
+    //
+    // Before COD-301 they fell out only because neither contains the string
+    // `JournalData` (both take `unknown`) — so adding a type annotation to
+    // either would have turned this assertion red for a file that is already
+    // correct. An exclusion nobody chose is not an exclusion.
     //
     // "Sends it somewhere" was `fetch(` alone until COD-271, and that was too
     // narrow: `supabase.ts` carries a `JournalData` to a server and never calls
     // `fetch` itself — the SDK does. The tripwire written to catch the next
     // egress path would have missed the very next egress path. Any client that
     // speaks for us has to be named here.
-    const SENDS = [/fetch\(/, /@supabase\/supabase-js/]
+    //
+    // ── Three ways this filter used to miss things (COD-301) ──────────────
+    //
+    // 1. The path pattern was `/^\.\/[a-zA-Z]+\.ts$/` — flat, alphabetic-only,
+    //    `src/lib/*.ts` and nothing else. `food/providers.ts` makes two
+    //    outbound calls (one carrying a user API key) and `voice/model.ts`
+    //    ships the raw spoken transcript; neither could EVER appear in this
+    //    list whatever it did. The same class of hole the test was written
+    //    for, one directory level down.
+    // 2. `SENDS` was `fetch(` and the Supabase SDK. `voice/model.ts` calls
+    //    `fetchImpl(`, injected as a parameter — the string `fetch(` never
+    //    appears. The note above says the tripwire "would have missed the very
+    //    next egress path"; it was still true for an injected fetch.
+    // 3. A client that speaks for us is not always a `fetch`. Beacons and
+    //    sockets send too, and neither was named.
     const carriers = scannable
-      .filter(([p]) => /^\.\/[a-zA-Z]+\.ts$/.test(p))
+      // Any .ts under src/lib, subdirectories included.
+      .filter(([p]) => /^\.\/[a-zA-Z0-9][a-zA-Z0-9/-]*\.ts$/.test(p))
+      // The two untyped transports, excluded on purpose and by name.
+      .filter(([p]) => !TRANSPORT_DEFS.some((re) => re.test(p)))
       .filter(([, src]) => src.includes('JournalData') && SENDS.some((re) => re.test(src)))
       .map(([p]) => p.replace('./', ''))
       .sort()
