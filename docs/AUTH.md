@@ -105,34 +105,49 @@ entirely local, nothing transmitted.
 Same rule as the passphrase: **no recovery.** It is the honest cost of the key
 never leaving your device.
 
-### Auto-sync defeats it, and this page used to say otherwise
+### Auto-sync used to defeat it. Fixed — COD-228
 
-Auto-sync has to keep the sync passphrase to run unattended, and it keeps it
-**in plaintext** at `bujo:sync`. With both switched on, the actual contents of
-`localStorage` — measured, not reasoned about:
+**This section has been wrong twice, in opposite directions, so read the dates.**
+It first claimed the passcode was "the only control that actually restricts
+access" with no qualifier, which the code did not honour. It was then corrected
+to say auto-sync defeats the lock, which was true. As of COD-228 it no longer
+does, and here is the mechanism rather than a reassurance.
+
+The hole was not merely a key in the clear. The sync passphrase is also what
+encrypts the **cloud** copy at `/api/sync`, and the storage path is *derived*
+from it. So `bujo:sync` in plaintext meant anyone holding the locked device
+could derive the path, download the blob and decrypt it — obtaining a
+byte-identical copy of the journal the passcode was protecting, without ever
+attacking the passcode. Measured at the time:
 
 ```
 bujo:enc    {"v":1,"salt":"R6+Ar…      103,399 characters of ciphertext
-bujo:sync   correct-horse-battery
+bujo:sync   correct-horse-battery      the key to an identical remote copy
 ```
 
-The lock is doing exactly what this section describes: `bujo:data` is gone.
-It just does not matter. The key to the cloud copy of the same journal is
-sitting beside it in the clear, so anyone who can read that storage calls
-`pullCloud` with it and has the journal in cleartext — the passcode was never
-in the way. This section previously called the passcode "the only control that
-actually restricts access" with no qualifier, which was a promise the code did
-not keep.
+`lib/syncSecret.ts` is now the only thing that decides where that passphrase
+may live:
 
-It is not silently fixed, because the fix is a product decision. Encrypting
-`bujo:sync` under the passcode key would mean auto-sync cannot run while the
-journal is locked — which is most of the time, and is arguably the whole point
-of a background sync. So the trade-off is surfaced where it is made:
-`CloudSyncCard` asks before turning auto-sync on over an encrypted journal, and
-keeps a warning on screen for as long as both are on.
+| passcode set | where it lives |
+|---|---|
+| no | `bujo:sync`, plaintext. Unchanged, and correct — the journal is plaintext too, so sealing its key would be theatre. |
+| yes | `bujo:sync.enc`, encrypted **under the passcode**, plus an in-memory copy that dies with the tab. |
 
-**Push and Pull by hand store nothing.** They are the combination that keeps
-the passcode meaningful.
+In-memory means a module variable, not `sessionStorage`: the latter survives a
+reload and is readable by any script on the origin, which is most of what this
+stops.
+
+Setting a passcode **re-seals** an existing plaintext key, and clearing one
+unseals it. Without that the fix would only ever have protected new users, and
+the plaintext key would have sat there untouched on every existing install.
+
+**The cost, which is the honest half:** auto-sync does not run while the
+journal is locked. That is the feature being truthful rather than a regression
+— a journal you have locked should not be shipping itself anywhere until you
+unlock it. `CloudSyncCard` now says that at the switch instead of asking you to
+accept a plaintext key.
+
+**Push and Pull by hand still store nothing.**
 
 ### Recovering an earlier cloud payload
 
