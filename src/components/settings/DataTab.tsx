@@ -4,6 +4,7 @@ import { YourDataCard } from './YourDataCard'
 import { BackupCard } from './BackupCard'
 import { DemoResetCard } from './DemoResetCard'
 import { AppleHealthCard } from './AppleHealthCard'
+import { ProjectLinks } from '../account/ProjectLinks'
 
 /**
  * What is here, how to get it out, and how to destroy it — in that order.
@@ -31,6 +32,11 @@ export function DataTab() {
         <AppleHealthCard />
         <TagManager />
         <DemoResetCard />
+        {/* From the retired Account page. There is no support inbox — the issue
+            tracker is the whole channel — so it belongs on the tab people reach
+            for when something about their data looks wrong, which is this one
+            rather than a page about who you are signed in as. */}
+        <ProjectLinks />
       </MasonryGrid>
     </>
   )

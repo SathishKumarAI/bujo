@@ -182,12 +182,21 @@ const COMPANIONS = [
   // anyone who has turned it on, and it had never been scanned. Recovery's
   // lesson, from the other side of the default.
   ['Cycle', 'cycle'],
-  // Account has no tab either — it is behind the account menu, like Settings,
-  // and like Settings it had never been scanned. It was a full-screen auth card
-  // for most of this gate's life: two text inputs, a password reveal toggle and
-  // an OAuth button, none of them ever checked. It is now the local-account
-  // page, which is the moment to notice the hole rather than inherit it.
-  ['Account', 'account'],
+  // `account` is retired into Settings (COD-297), and `settings` below opens on
+  // that tab — so its sign-in button, local-account form and units controls are
+  // scanned by the entry that replaced it.
+  //
+  // These three are the hole COD-232 described, closed. Both rendering gates
+  // walk the rendered DOM and a tab shell holds ONE panel, so for this gate's
+  // whole life "Settings: 0 serious" meant the first tab only: the passcode
+  // form, the cloud passphrase, every export button and the erase-everything
+  // dialog had never been seen by axe at any theme or viewport. They are
+  // reachable by URL now (`?view=settings&tab=…`) rather than by clicking,
+  // because a tab click is one more thing to wait for and this gate already has
+  // a table of waits it got wrong.
+  ['Settings · appearance', 'settings&tab=feel'],
+  ['Settings · sync', 'settings&tab=sync'],
+  ['Settings · data', 'settings&tab=data'],
   // The guide. Behind the top bar's "?", so no tab clicks to it and it had
   // never been scanned — the page a user opens *because they are already
   // stuck* was the one page with no accessibility evidence behind it. It is

@@ -7,6 +7,8 @@ import { PasscodeCard } from './PasscodeCard'
 import { SelfHostCard } from './SelfHostCard'
 import { ConnectionsCard } from './ConnectionsCard'
 import { VoiceModelCard } from './VoiceModelCard'
+import { SecurityCard } from '../account/SecurityCard'
+import { SyncStatusBar } from './SyncStatusBar'
 
 /**
  * Does the journal leave this device, what else does the app talk to, and is
@@ -26,6 +28,14 @@ import { VoiceModelCard } from './VoiceModelCard'
 export function SyncTab() {
   return (
     <>
+          {/* Zone 1, which this view had nowhere: the tab row was the only
+              orientation on the page that answers "does my journal leave".
+              Four facts, each of which changes what you do in the next thirty
+              seconds — see `SyncStatusBar` for why "what is withheld" is
+              deliberately not one of them. */}
+          <div className="mb-5">
+            <SyncStatusBar />
+          </div>
           {/* In a grid, not a stack: full-bleed these gave a 1,160px-wide
               passphrase field and ~150-character paragraph lines, the widest
               measure anywhere in the app on the page that asks for a secret.
@@ -45,6 +55,15 @@ export function SyncTab() {
               three below it described an intent the page never had: every fold
               on Settings shipped expanded, which is why Sync ran to 1,900px and
               Data to 3,000. */}
+          {/* The two halves of "how is this protected", moved from the retired
+              Account page (COD-297). They belong beside the mechanisms they
+              describe: the passcode, the passphrase and the egress boundary are
+              all on this tab, and the cards explaining them were one page away
+              with no link between them. The second card is not optional — a
+              page that lists only the protections is marketing. */}
+          <div className="mt-5">
+            <SecurityCard />
+          </div>
           <div className="mt-5">
             <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage" defaultOpen={false}>
               <CardGrid>

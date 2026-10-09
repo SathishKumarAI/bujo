@@ -89,7 +89,7 @@ describe('the account card is absent until a project is configured', () => {
     mockState.configured = true
     mockState.user = { email: 'sam@example.com' }
     const nav = vi.fn()
-    render(<AccountCard onNavigate={nav} />)
+    render(<AccountCard onGoToSync={nav} />)
     setAccountStatus({ phase: 'no-passphrase' })
     await waitFor(() => expect(screen.getByText(/nothing has been uploaded/i)).toBeTruthy())
     expect(await screen.findByRole('button', { name: /set a sync passphrase/i })).toBeTruthy()

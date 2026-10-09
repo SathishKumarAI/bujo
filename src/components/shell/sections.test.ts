@@ -49,7 +49,7 @@ describe('the five sections', () => {
    */
   it('gives every non-preference view a section', () => {
     const exempt = new Set<ViewId>([
-      'settings', 'help', 'account', 'kitchen-sink',
+      'settings', 'help', 'kitchen-sink',
       // A redirect, not a page: the habit grid is Today's `habits` surface
       // now, and `views/Trackers.tsx` only forwards there. Fifteen places
       // still link to the id, which is why it exists at all — see the file.

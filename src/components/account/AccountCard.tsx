@@ -53,7 +53,7 @@ import { useState } from 'react'
  * status row below is driven by the phase the sync component publishes, so the
  * card can only say what is actually happening.
  */
-export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') => void } = {}) {
+export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
   const [busy, setBusy] = useState(false)
   const configured = isConfigured()
   const { user, ready } = useAuthUser()
@@ -128,7 +128,7 @@ export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') =>
               readable to everyone and `short` has to stand on its own. */}
           <div className="flex items-start gap-2">
             <span aria-hidden className={`mt-1.5 h-2 w-2 shrink-0 rounded-pill ${TONE[copy.tone]}`} />
-            <p className="text-body text-fg-2">
+            <p className="max-w-[56ch] text-body text-fg-2">
               <strong className="font-medium text-fg-1">{copy.short}</strong> — {copy.detail}
             </p>
           </div>
@@ -136,8 +136,8 @@ export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') =>
           {/* The one actionable state. `no-passphrase` is where a new account
               sits by default and it is the state in which nothing syncs, so it
               gets the button rather than a line of prose to act on. */}
-          {phase === 'no-passphrase' && onNavigate ? (
-            <Button onClick={() => onNavigate('settings')}>Set a sync passphrase</Button>
+          {phase === 'no-passphrase' && onGoToSync ? (
+            <Button onClick={onGoToSync}>Set a sync passphrase</Button>
           ) : null}
 
           {/* "What kind of data is being synced" had no answer anywhere on
@@ -158,7 +158,7 @@ export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') =>
             </div>
           </div>
 
-          <p className="text-body text-fg-2">
+          <p className="max-w-[56ch] text-body text-fg-2">
             Your journal is encrypted on this device before it is uploaded, so the server stores
             ciphertext and nothing else. Signing in on another device finds your journal; your sync
             passphrase is what opens it.
@@ -169,7 +169,16 @@ export function AccountCard({ onNavigate }: { onNavigate?: (view: 'settings') =>
           <p className="text-body text-fg-2">Signing out leaves this journal on this device.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="max-w-[56ch] space-y-3">
+          {/* Capped at the house measure. This card is full-bleed — it is the act
+            zone — so without a cap its paragraphs ran the width of the page: at
+            1707 they measured **1378px carrying 160 and 230 characters**, the
+            widest measure anywhere in the app, on the card that has to be read
+            rather than skimmed. 56ch is `.prose-doc`'s width and it is measured,
+            not guessed: `ch` is the width of "0", which in Instrument Sans is
+            half again the average letter, so 56ch lands at 68-75 characters.
+            The class rather than `.prose-doc` itself, which also recolours to
+            `subtext1` — the honesty sentence below is `fg-1` on purpose. */}
           <p className="text-body text-fg-2">
             An account is how this journal reaches your phone and your desktop without copying
             anything by hand. Google tells us who you are — it does not get your journal.

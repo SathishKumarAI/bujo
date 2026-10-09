@@ -32,8 +32,19 @@ describe('readDeepLink — retired destinations', () => {
     // The day cursor is the reason this matters: a link to a specific day on a
     // retired spelling must still land on that day.
     expect(readDeepLink('?view=home-workout&day=2026-06-10')).toEqual({
-      view: 'homeworkout', day: '2026-06-10', activity: null, surface: null,
+      view: 'homeworkout', day: '2026-06-10', activity: null, surface: null, tab: null,
     })
+  })
+
+  it('reads ?tab= raw, and null when absent', () => {
+    // Untyped on purpose: the tabbed view validates it. What this module
+    // guarantees is only that it survives the rewrite — the same promise the
+    // day cursor above gets, and for the same reason (COD-297 made
+    // `?view=settings&tab=sync` the way both the user and the a11y gate reach a
+    // panel that a tab shell otherwise keeps out of the DOM).
+    expect(readDeepLink('?view=settings&tab=sync').tab).toBe('sync')
+    expect(readDeepLink('?view=settings').tab).toBeNull()
+    expect(readDeepLink('?view=account&tab=data')).toMatchObject({ view: 'settings', tab: 'data' })
   })
 
   it('passes an explicit ?activity= through untouched', () => {

@@ -76,6 +76,13 @@ const VIEW_ALIASES: Record<string, string> = {
      bookmark pointing at it still has to land somewhere, and Insights is where
      its content went. */
   stats: 'insights',
+  /* The Account page is retired into Settings (COD-297). It held the Google
+     sign-in, the local name, cloud sync, the two protection cards and the
+     issue tracker — every one of which now lives on a Settings tab, because
+     having two destinations for "who am I and does my journal leave" was the
+     complaint. Bookmarks, the guide's "Open account" buttons and anything that
+     ever shared a `?view=account` link land on Settings. */
+  account: 'settings',
 }
 
 /**
@@ -109,6 +116,19 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
   const raw = params.get('view')
   const alias = raw ? VIEW_ALIASES[raw] : undefined
   const surface = params.get('surface')
+  /**
+   * Which tab of a tabbed view to open. Deliberately untyped here: the only
+   * consumer is `views/Settings.tsx` and it validates against its own four ids,
+   * so this module does not have to know them.
+   *
+   * **Read-only.** Clicking a tab does not write this back, because `writeDeepLink`
+   * is driven by `DeepLinkSync` from the cursor and a second writer would fight
+   * it for the same query string. What it buys is a linkable tab — and, more to
+   * the point, a tab a gate can REACH: COD-232 is that both rendering gates walk
+   * the DOM, a tab shell holds one panel, and so three of Settings' four tabs had
+   * never been scanned by axe at any theme or viewport.
+   */
+  const tab = params.get('tab')
   return {
     view: alias ?? (raw ? (SECTION_ALIASES[raw] ?? raw) : null),
     day: day && ISO_DAY.test(day) ? day : null,
@@ -116,6 +136,8 @@ export function readDeepLink(search = typeof window === 'undefined' ? '' : windo
     activity: params.get('activity') || null,
     /** Which Today surface to open. Null → pick from the clock. */
     surface: surface && (SURFACES as string[]).includes(surface) ? (surface as Surface) : null,
+    /** Raw; the tabbed view validates it. Null when absent. */
+    tab,
   }
 }
 
