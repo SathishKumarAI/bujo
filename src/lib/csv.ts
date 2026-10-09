@@ -371,6 +371,22 @@ export const SYNC_SECRET_KEYS = [
   'githubGistId',
   'googleClientId',
   'googleEmail',
+  // COD-299. A user-supplied USDA FoodData Central key, and it was the one
+  // credential in `settings` this list did not name — so it rode out plaintext
+  // to a self-hosted PostgREST row, into a GitHub gist and into Drive, and
+  // travelled inside the encrypted blob on the two E2E paths, where "two people
+  // share one passphrase" is a documented setup and they therefore shared each
+  // other's key.
+  //
+  // Low blast radius on its own — it is free and rate-limit-only — but this is
+  // exactly the defect `forEgress`'s second rule exists to prevent, and the
+  // reason it was missed is instructive: the rule was applied to the *sync*
+  // credentials someone was thinking about, not to "every secret in settings".
+  // Stripping cannot break a round trip: `mergeJournals` spreads
+  // `{...loser.settings, ...winner.settings}`, so a key the winner omits keeps
+  // the loser's value and this device's own key survives pulling a payload with
+  // none. Asserted in `cyclePrivacy.test.ts` rather than reasoned about.
+  'usdaKey',
 ] as const
 
 /**

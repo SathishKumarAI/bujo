@@ -12,6 +12,8 @@ import { stripSyncSecrets } from '../../lib/csv'
 import { generateDemoData } from '../../lib/demo'
 import { inlineImages } from '../../lib/imageStore'
 import { download } from './download'
+import { eraseDevice, wipeableKeys, wipeSummary } from '../../lib/wipe'
+import { signOut } from '../../lib/supabase'
 
 /**
  * Sample data, and the danger zone. The only card in Settings that can destroy
@@ -89,10 +91,23 @@ export function DemoResetCard() {
             onClick={async () => {
               if (await confirm({
                 title: 'Erase everything and start fresh?',
-                description: `This deletes all ${data.entries.length} entries, ${data.habits.length} habits, ${data.workouts.length} workouts, and every photo and memory on this device. It cannot be undone.`,
+                // The count is named because it is the thing being destroyed,
+                // and the three credentials are named because they are the
+                // things a user assumes are gone and, until COD-299, were not.
+                description: `This deletes all ${data.entries.length} entries, ${data.habits.length} habits, ${data.workouts.length} workouts and every photo — and it signs you out, forgets your sync passphrase, and clears the ${wipeableKeys().length} items this app has stored in this browser. It cannot be undone.`,
                 confirmLabel: 'Erase everything', destructive: true, onBackup: doExport,
               })) {
+                // Order matters. `signOut` first, while the session token is
+                // still present: revoking it server-side needs the refresh
+                // token that `eraseDevice` is about to delete, and a local-only
+                // wipe would leave a live session on Supabase's side.
+                try { await signOut() } catch { /* offline: the local key still goes below */ }
+                const report = await eraseDevice()
+                // Empty the in-memory journal LAST. `replaceAll` persists, so
+                // doing it first would write `bujo:data` straight back after
+                // the sweep had removed it.
                 replaceAll(emptyJournal())
+                notify.success('Erased', wipeSummary(report))
               }
             }}
             className="inline-flex items-center gap-1.5"
