@@ -255,6 +255,76 @@ and that the journal is untouched. That is not padding: the provider's own words
 app whose central warning is that a lost passphrase is a lost journal. Nothing
 was lost, and the message has to say so faster than the fear arrives.
 
+## Where a signed-in account appears, and what "signed in" does not mean
+
+### Three surfaces, one source — COD-291
+
+The section above says `onAuthChange` "re-renders everything showing identity".
+That was true of the mechanism and false of the application: **exactly one
+component read it.** The signed-in user was `useState` inside `AccountCard`, so
+a successful Google sign-in changed that card and nothing else —
+
+| Surface | What it rendered after a successful sign-in |
+|---|---|
+| `shell/AccountMenu` — the corner avatar | `No name set` · `This device only`, yellow not-set-up dot still on the trigger |
+| `views/Account` zone 1 | `account: not set up` · `journal: this device only` |
+| `components/SyncIndicator` — the pill | nothing, ever: only `lib/bujocloud.ts` fires `bujo:sync` |
+
+Reported as *"able to continue with Google and able to sign in, but it's not
+showing any kind of updates on my UI"*, which was exact. COD-134 had been filed
+against the header menu specifically and was closed by adding the subscription
+**to the card**; the menu was never wired, and the ticket closed without a test,
+so it reopened silently.
+
+The shape of the fix matters more than the wiring: identity is now a module
+store (`lib/authUser.ts`) and the sync phase is another (`lib/accountStatus.ts`),
+both read with `useSyncExternalStore`. Not a context — one consumer is the shell
+header and another is a card inside a lazily-imported view, so a provider is a
+thing to forget. And the words live in `lib/account.ts` rather than in the three
+components, because the same sentence now appears in three places and three
+hand-typed copies of a sentence drift.
+
+`lib/accountStatus.ts` also fires `bujo:sync`, so the pill that existed for the
+blob sync now lights for the account sync too. It is dispatched from the store
+rather than from `AccountSync` so the pill cannot disagree with the phase.
+
+### Signed in is not synced
+
+**This is the half that was being actively contradicted on screen.**
+`AccountSync` cannot push without a sync passphrase and returns early when there
+is none — so the default state of a brand-new account is: signed in, row
+created, **nothing uploaded, and nothing ever going to be.** The card's subtitle
+read "Signed in — your journal syncs to your account" in that state.
+
+The phases are the vocabulary, and the two that are *not* sync failures are the
+ones worth knowing:
+
+| Phase | What is actually happening |
+|---|---|
+| `no-passphrase` | Signed in, nothing uploaded. Set a passphrase in Settings → Sync & privacy. |
+| `demo` | The journal is the demo seed, and `mayPush` refuses sample data into a real account. |
+| `checking` / `uploading` | Reading the row, or encrypting and sending. |
+| `synced` | In the account, with the time it last went. |
+| `locked` | The row was written with a different passphrase. **Nothing has been overwritten.** |
+| `error` | Offline or the session expired. The next change is the retry. |
+
+Neither `no-passphrase` nor `demo` lights the red pill: "nothing is being
+uploaded" is a steady state, not a failure, and alarming someone whose journal
+is exactly where they left it is its own bug. `lib/account.test.ts` asserts that
+no phase but `synced` is allowed to claim a sync, as a property rather than as a
+fixed string — the wording will be edited and the claim must not come back
+with it.
+
+### What is uploaded, in words, on the page
+
+"What kind of data is being synced" had no answer anywhere in the UI; the only
+place the boundary was written down was a comment in `lib/cyclePrivacy.ts`. Both
+lists are now on the account card, read off `forEgress` and `pushAccount`'s
+image budget: entries, habits, workouts, nutrition, goals and settings go up
+encrypted; the **cycle log, this device's other sync tokens and over-budget
+photos do not.** They are `SYNCED` and `WITHHELD` in `lib/account.ts` — if you
+change what `forEgress` withholds, change those lists in the same commit.
+
 ## Words this app does not use, and why
 
 Copy near any of this has to keep the promise the mechanism makes. These are
@@ -268,6 +338,7 @@ banned on purpose:
 | "Your account" for the passphrase | `bujocloud` has no accounts. Two people with one passphrase are not two users. |
 | "Forgot passphrase?" | There is no reset path and there will not be one. Say it cannot be recovered. |
 | "Backed up" for sync state | One live blob and three throwaway snapshots is not a backup. Say "synced". |
+| "Your journal syncs to your account" while signed in | Only true once a sync passphrase exists. Without one nothing is uploaded — say so (COD-291). |
 | "The passcode protects your journal" with auto-sync on | It protects the copy on this device. `bujo:sync` hands over the cloud copy. Qualify it or do not say it. |
 
 ## Why accounts were removed (2026-09-11)
