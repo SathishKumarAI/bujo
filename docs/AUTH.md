@@ -167,6 +167,94 @@ The payload is ciphertext; decrypting it needs the passphrase, exactly as a
 normal pull does. Snapshots are taken at most every ten minutes and only three
 are kept, so this is a window of minutes-to-hours, not an archive.
 
+## Signing in with Google: the setup, and reading a failure
+
+Three places hold configuration, and a mistake in each one fails at a
+**different step**. That matters more than the list does, because the step tells
+you which of the three to open — and two of the three failures used to produce
+an identical blank screen.
+
+| Where | Holds | Fails at |
+|---|---|---|
+| Google Cloud Console → Credentials → OAuth 2.0 Client ID | the client ID, the client secret, and the **authorised redirect URI** | ID or URI: at Google, before you ever come back. Secret: at the exchange, after. |
+| Supabase → Authentication → Sign In / Providers → **Google** | the same client ID and secret, pasted | the exchange |
+| Supabase → Authentication → **URL Configuration** → Redirect URLs | which app origins may be returned to | after a *successful* sign-in — you land on the Site URL instead of where you started |
+
+The redirect URI registered at Google is Supabase's callback, never this app's:
+
+```
+https://<project-ref>.supabase.co/auth/v1/callback
+```
+
+This app's own URL (`http://localhost:4173/**`, the Vercel origin) goes in
+Supabase's **Redirect URLs** allowlist instead. Confusing the two is common and
+the symptom is the last row of the table: sign-in works, and dumps you on the
+wrong origin with the session attached to it.
+
+### Which half is broken, in one command
+
+`signInWithOAuth` hands off to Supabase's `authorize` endpoint, and that
+endpoint's redirect is public, unauthenticated, and says exactly what Supabase
+will present to Google:
+
+```sh
+curl -s -o /dev/null -w '%{redirect_url}\n' \
+  "https://<project-ref>.supabase.co/auth/v1/authorize?provider=google"
+```
+
+Read `client_id` and `redirect_uri` out of the result. Nothing secret is in it.
+
+**The deduction this enables is the useful part.** Google issues an
+authorisation code (`4/0A…`) only *after* it has validated the client ID and
+matched the redirect URI against the ones registered for that client. So if you
+got a code back at all, those two are provably correct — and since the token
+exchange sends exactly client ID, redirect URI and **secret**, a failed exchange
+leaves one variable.
+
+### The failure taxonomy
+
+| What you see | Step | Almost always |
+|---|---|---|
+| Google's own error page, no return to the app | authorize | redirect URI not registered on that client, or wrong client ID |
+| Back on the app, `error_description=Unable to exchange external code` | exchange | **the client secret** in the Supabase provider — stale, blank, or from a different OAuth client |
+| Back on the app, `error=access_denied` | consent | the person pressed cancel |
+| Signed in, but on the wrong origin | after | the app's URL is missing from Supabase's Redirect URLs |
+
+Google shows a client secret once. If you cannot see it in the console, add a
+new secret on that client and paste the new one — do not guess at the old.
+
+### The app reports these now — COD-290
+
+It did not, and that was a bug of its own rather than a gap in this page. The
+**success** leg was handled: `detectSessionInUrl` consumes the fragment,
+`onAuthChange` re-renders everything showing identity. The **failure** leg had
+no handler anywhere. Supabase returns with the reason in the URL, there is no
+session to detect, and the app drew its ordinary signed-out screen — identical
+to never having clicked. Reported as *"I made a login, the screen is not
+changing"*, which was precise: the screen was the one place the failure was
+invisible, while the address bar had been carrying it the whole time.
+
+`consumeAuthError()` in `lib/supabase.ts` reads it, reports it, and clears it.
+Three decisions in it are load-bearing:
+
+- **Called from `App`, not from `AccountCard`.** `redirectTo` returns you to the
+  view you left, which is frequently not the account page. A failure reported
+  only on a component that is not mounted is the same bug one layer up.
+- **Reads the fragment *and* the query, and decodes twice.** Supabase
+  double-encodes the fragment copy (`%253A` for a colon). The second decode is
+  wrapped in a `try`, because a malformed escape must not throw on the one path
+  whose job is reporting a failure.
+- **Does not touch the URL unless `error` is present.** Stripping params on the
+  success leg would race `detectSessionInUrl` for the fragment it needs.
+  `lib/authError.test.ts` asserts this specifically — it is exactly the sort of
+  thing a later tidy-up deletes.
+
+The wording for a failed exchange says the fault is server-side provider setup
+and that the journal is untouched. That is not padding: the provider's own words
+("Unable to exchange external code: 4/0A…") read like something was lost, in an
+app whose central warning is that a lost passphrase is a lost journal. Nothing
+was lost, and the message has to say so faster than the fear arrives.
+
 ## Words this app does not use, and why
 
 Copy near any of this has to keep the promise the mechanism makes. These are
@@ -205,7 +293,7 @@ next launch: their cloud journal pulled, merged through the normal conflict path
 
 **That rescue is gone as of 2026-09-15, and it had already stopped working long
 before.** The Supabase project's hostname does not resolve —
-`ueahhgqxshfvkjgcwtnh.supabase.co` returns NXDOMAIN, the same as a host that
+`ueahhgqxshfvkjgcwtnh.supabase.co` returned NXDOMAIN, the same as a host that
 never existed, and `TASKS.md` recorded the same thing on 2026-08-02, *five weeks
 before accounts were even retired*. So `currentUser()` failed at DNS, the rescue
 caught that as "nothing to bring across", and every user got the same silent
@@ -221,6 +309,13 @@ any of this — deleting the client did not cause that, and could not have
 prevented it. `settings.legacyAccountChecked` stays in the type as an inert
 field: existing journals carry it, and removing a key from `JournalData` is a
 one-way-door schema change for no gain.
+
+**That hostname resolves again as of 2026-10-09** — the project was rebuilt
+for COD-271 under the same ref. The paragraph above is history, not a current
+reading; do not re-run that `dig` and conclude the section is wrong. What is
+still true is the reason accounts were removed, and that the journals which
+were unreachable in 2026-08 were not recovered by the project coming back:
+the schema was recreated empty.
 
 ## See also
 

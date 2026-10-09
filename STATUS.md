@@ -31,6 +31,8 @@ bug that mattered more than any of it.
 | **Hide the rail, and latte** #350 | `⌘B`, persisted. Latte is the default theme for fresh journals. |
 | **Rail contents, bigger cards** #351 | Wordmark out of the rail, week strip into its foot. Band padding 24→28px; masonry steps 48/80/100rem → 64/96/120rem. |
 | **Mindset** #352 | Toggle moved onto the rail. Library 4.2 → 3.7 screens. Balance bars were using a *text* token as a chart fill. |
+| **A refused sign-in showed nothing** #360 | COD-290. The OAuth *success* leg was handled; the *failure* leg had no handler anywhere. `grep -rn "error_description" src/ api/` returned **zero hits** while the address bar carried the reason. Reported as "the screen is not changing" — exactly right. 7 new tests, 1751 → 1758. |
+| **The trap that nearly reverted it** #361 | Unregistering a service worker does not evict it from the page it already controls, so the reload meant to replace it is served *by* it. The fix looked dead: page on `index-DfwUZGbn.js`, `dist/` on `index-CMBntfQy.js`. The documented procedure was followed exactly and still gave a wrong answer. |
 
 ## Read this before trusting a number in a commit message
 
@@ -134,10 +136,30 @@ mostly did not.** Five of these existed only in a conversation.
 
 ### Owner-only, and genuinely blocked on an account
 
-1. Supabase → Authentication → **Users**: delete every user with no email —
+**0. Google sign-in is broken right now, and the fix is one field.** Supabase →
+Authentication → Sign In / Providers → **Google** → re-paste the **client
+secret** from the Google Cloud credential of the same client. Evidence it is
+that field and not another: `authorize` presents
+`70992319956-…apps.googleusercontent.com` and the callback
+`https://ueahhgqxshfvkjgcwtnh.supabase.co/auth/v1/callback`, and Google issued a
+code (`4/0A…`) — which it only does after validating both. The exchange sends
+those two plus the secret and is what failed, so one variable is left. Google
+shows a secret once; add a new one on that client if it is not visible. **Do not
+paste it into a session with an assistant.** Taxonomy and the one-line probe are
+in [`docs/AUTH.md`](docs/AUTH.md#signing-in-with-google-the-setup-and-reading-a-failure).
+
+Then, in this order:
+
+1. Supabase → Authentication → **URL Configuration** → Redirect URLs must list
+   `http://localhost:4173/**` and the Vercel origin. This is the *next* failure
+   after the secret is fixed, and it looks like success — you sign in and land
+   on the Site URL with the session on the wrong origin.
+2. Supabase → Authentication → **Users**: delete every user with no email —
    the anonymous ones from the RLS test. Journal rows cascade with them.
-2. Supabase → Providers → **Anonymous sign-ins → off**. In that order.
-3. Click **Continue with Google** once, to confirm the UI round trip (COD-282).
+3. Supabase → Providers → **Anonymous sign-ins → off**. In that order.
+4. Click **Continue with Google** once, to confirm the UI round trip (COD-282).
+   Only meaningful after 0 — until then it exercises the failure path, which is
+   now at least legible.
 
 ### Closed this session rather than carried
 
@@ -161,4 +183,5 @@ is where the real decisions would get made silently. The branch still exists;
 - **COD-273/274** — the gate install recipe lived only in CI; the base-layer
   anchor blue fails on a raised panel.
 - **`?code=` still accepted** by `api/sync.ts` for bundles cached before #323.
-- One pre-existing lint warning: `src/App.tsx:120:6` `react-hooks/exhaustive-deps`.
+- One pre-existing lint warning: `src/App.tsx:131:6` `react-hooks/exhaustive-deps`
+  (was `:120:6`; COD-290 inserted eleven lines above it — the warning did not move).

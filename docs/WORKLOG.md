@@ -26,6 +26,122 @@ Rules the three share:
 
 ---
 
+## 2026-10-09 — A refused sign-in that showed nothing (COD-290)
+
+Shipped #359 (the session's leftovers, ordered and filed), **#360** (the bug
+below), **#361** (the trap that nearly reverted #360). `main` at `6c9f41d`,
+zero open PRs, **1758 tests** (was 1751).
+
+### The report was the diagnosis
+
+*"I made a login, the screen is not changing."*
+
+It was literally true. The sign-in **had** failed, and the screen was the only
+place that fact did not appear. The address bar had been carrying it:
+
+```
+error=server_error&error_code=unexpected_failure
+&error_description=Unable+to+exchange+external+code%3A+4%2F0A
+```
+
+`grep -rn "error_description" src/ api/` — **zero hits**. Nothing in this
+codebase had ever read it.
+
+The asymmetry is the finding. The success leg was properly handled:
+`detectSessionInUrl` consumes the fragment, `onAuthChange` re-renders every
+component showing identity, and COD-134 had already been fixed so the header
+could not disagree with the page. All of that care went into the path that
+works. The failure path had **no handler at any layer** — not in
+`signInGoogle`, whose `try/catch` only covers *starting* the redirect, and not
+on arrival. A refusal rendered as the ordinary signed-out screen: indis­tin­guish­able
+from never having clicked the button.
+
+`consumeAuthError()` in `lib/supabase.ts`, called once from `App`. Three
+decisions worth keeping:
+
+- **In `App`, not in `AccountCard`.** The first instinct is the account page.
+  But `redirectTo` is `origin + pathname + search` — it returns you to the view
+  you left, frequently not the account page. A failure reported only on an
+  unmounted component is the same bug one layer up. Verified by deliberately
+  landing the failure on **Today**: the toast appears and the URL still cleans.
+- **Fragment *and* query, decoded twice.** Supabase double-encodes the fragment
+  copy — `%253A` for a colon, so one `URLSearchParams` pass leaves `%3A` in the
+  message. Second decode is wrapped: a malformed escape must not throw on the
+  one path whose job is reporting a failure.
+- **Does not touch the URL unless `error` is present.** Stripping on the success
+  leg would race `detectSessionInUrl` for the fragment it needs. This has its
+  own test, because it is precisely what a later tidy-up deletes — it looks like
+  a missing cleanup.
+
+Wording matters more than usual here. The provider's own words ("Unable to
+exchange external code: 4/0A…") read like something was lost, in an app whose
+central warning is that a lost passphrase is a lost journal. The message says
+the fault is server-side provider setup and the entries are all still here,
+because the fear arrives before the explanation does.
+
+### Naming the broken credential without ever seeing it
+
+The cause is config, not code, and it is owner-only. It was still possible to
+narrow it to one field from outside.
+
+`authorize` is public and unauthenticated, and its redirect states what Supabase
+will present to Google:
+
+```sh
+curl -s -o /dev/null -w '%{redirect_url}\n' \
+  "https://<ref>.supabase.co/auth/v1/authorize?provider=google"
+# client_id     70992319956-…apps.googleusercontent.com
+# redirect_uri  https://<ref>.supabase.co/auth/v1/callback
+```
+
+Google issues a code (`4/0A…`) **only after** validating the client ID and
+matching the redirect URI against that client's registered list. A code came
+back. So both are provably correct — and the exchange sends exactly those two
+plus the **client secret**. One variable left, with no secret handled and none
+requested. Taxonomy written up in `docs/AUTH.md`.
+
+### The expensive part: a correct fix that looked broken
+
+The first browser check showed no toast and an uncleaned URL. Read naively,
+that is a fix that does not work, and the next move is to revert it.
+
+The page was serving `index-DfwUZGbn.js` while `dist/` held
+`index-CMBntfQy.js`. The repo's documented procedure — unregister the service
+worker, clear `caches`, reload — had been followed **exactly**. What it omits is
+that unregistering does not evict the worker from the page it already controls:
+it keeps control through the very navigation meant to replace it, so the first
+reload after the unregister is still served by the old bundle. Reloading a
+second time produced the toast, the cleaned URL, and the right bundle hash.
+
+Recorded in `CLAUDE.md` (#361) because of the **direction** of the error. The
+existing trap guards against believing a stale screenshot that shows a bug
+already fixed — an error toward caution. This variant makes working code look
+broken, and the natural response is to delete it. Comparing the served bundle
+hash against `dist/index.html` settles it in one command either way, and that is
+now the instruction rather than "reload".
+
+### What this cost, and the pattern behind it
+
+Two of the three PRs this stretch exist because of how a thing *reports itself*,
+not because of what it does:
+
+| | The mechanism was fine | The reporting was not |
+|---|---|---|
+| #360 | OAuth redirect, `detectSessionInUrl`, `onAuthChange` | a refusal had nowhere to appear |
+| #361 | the service-worker procedure | it stopped one reload short, and the residue looks like a failed fix |
+
+Both failures are silent and both read as "the thing you just did had no
+effect". That is the same sentence from the user's side and from the
+developer's, and in both cases the correct response was the opposite of the
+obvious one: not "the feature is broken", but "the report is missing".
+
+A smaller one of the same shape, worth not repeating: `STATUS.md` pinned the
+standing lint warning at `src/App.tsx:120:6`. COD-290 inserted eleven lines
+above it, so it is now `:131:6` — the warning did not move, the file did. A
+line number in a doc is a hostage to every edit above it.
+
+---
+
 ## 2026-10-06 — A tick with no room for what it was (COD-275)
 
 **Summary:** audited every page for one class of gap — *a thing the app lets
