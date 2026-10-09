@@ -353,6 +353,47 @@ hand-typed copies of a sentence drift.
 blob sync now lights for the account sync too. It is dispatched from the store
 rather than from `AccountSync` so the pill cannot disagree with the phase.
 
+### A gate that replaces the app drops the sign-in - COD-295
+
+`detectSessionInUrl` is not a passive setting; it is work the client does inside
+its own `_initialize()`. So it happens **only if a client exists while the OAuth
+params are still in the URL** - and `sb()` is lazy, so the first thing to build
+one used to be whichever component asked for the user.
+
+Every one of those components sits under a gate that returns *instead of* the
+tree:
+
+| Gate | Condition |
+|---|---|
+| `store.tsx` - `if (!unlocked) return <LockScreen ...>` | a passcode is set |
+| `App.tsx` - `if (!mode) return <Welcome />` | no storage mode chosen yet |
+
+`JournalProvider` returns `LockScreen` in place of `children`, and `App` *is*
+`children`. So on a journal with a passcode the whole Supabase-aware tree is
+absent: come back from Google onto a locked journal and nothing constructs a
+client, nothing reads the fragment, and **the sign-in is dropped on the floor.**
+From the outside that is indistinguishable from COD-293, and it is a different
+cause.
+
+Measured through the Welcome gate - the reproducible one - by counting requests
+to `/auth/v1/` on a URL carrying an implicit-shaped fragment:
+
+| | requests to `/auth/v1/` | |
+|---|---|---|
+| before | **0** - no client was ever constructed | dropped |
+| after | 1 (`/auth/v1/user`) | consumed |
+
+`initAuth()` is called from `main.tsx` before `createRoot`, which is the only
+code that runs unconditionally. It is cheap - `createClient` does no network
+work of its own, and on a URL with no auth params `_initialize` finds nothing.
+
+**And one testing fact that invalidates an easy assumption:** Vite loads
+`.env.local` for `vitest` as well as for a build, so `isConfigured()` is **true**
+in the local test env and **false** in CI. The first draft of
+`initAuth.test.ts` asserted `isConfigured() === false` and could only ever pass
+in CI. Assert the *relationship* - a client is built when and only when the
+build is configured - not either answer.
+
 ### Signed in is not synced
 
 **This is the half that was being actively contradicted on screen.**

@@ -7,10 +7,24 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { ConfirmProvider } from './components/ConfirmDialog.tsx'
 import { canonicalizeDeepLink } from './lib/deepLink.ts'
 import { shouldReloadForUpdate, RELOAD_FLAG } from './lib/swUpdate.ts'
+import { initAuth } from './lib/supabase.ts'
 
 // Before the first render, so every reader — including the lazy view chunks that
 // mount long after the address bar has been rewritten — sees one canonical URL.
 canonicalizeDeepLink()
+
+// Consume an OAuth return BEFORE anything can gate the app away. COD-295.
+//
+// `detectSessionInUrl` is work the Supabase client does when it is constructed,
+// and `sb()` is lazy — so until now the first component to ask for the user was
+// what triggered it. Those components all sit under `store.tsx`'s
+// `if (!unlocked) return <LockScreen/>` and `App`'s `if (!mode) return
+// <Welcome/>`, both of which return *instead of* the tree. Return from Google
+// onto a locked journal and the fragment was never read: the sign-in vanished,
+// looking exactly like COD-293 and having nothing to do with it.
+//
+// Here, before `createRoot`, is the only code that runs unconditionally.
+initAuth()
 
 // Ask the browser not to evict this origin under storage pressure. The journal
 // is canonical here and a local-first app has nothing to re-fetch it from, so a

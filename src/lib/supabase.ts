@@ -62,6 +62,41 @@ function sb(): SupabaseClient | null {
   return client
 }
 
+/**
+ * Construct the client at startup, so the OAuth return is consumed no matter
+ * which screen renders. COD-295.
+ *
+ * `detectSessionInUrl` is work the client does in its own `_initialize()` — it
+ * reads `#access_token=…` (implicit, this client's default) or `?code=…` off
+ * `window.location`, exchanges or stores it, and strips it from the URL. So it
+ * only ever happens **if a client exists while those params are still there**,
+ * and `sb()` is lazy: the first thing to build one is whichever component calls
+ * `currentUser()` or `onAuthChange()`.
+ *
+ * Every one of those components lives under two gates that can replace the
+ * entire app:
+ *
+ *   `store.tsx`  → `if (!unlocked) return <LockScreen …/>`   (a passcode is set)
+ *   `App.tsx`    → `if (!mode) return <Welcome />`           (no storage mode yet)
+ *
+ * Both return *instead of* `children`, so with a passcode set the whole tree —
+ * `AccountMenu`, `AccountSync`, `AccountCard`, `AuthReturnReport` — is absent.
+ * Come back from Google onto a locked journal and nothing constructs a client,
+ * nothing reads the fragment, and the sign-in is simply dropped. It looks
+ * exactly like COD-293 (the redirect that never came back) from the outside and
+ * is a different cause entirely.
+ *
+ * Called from `main.tsx` before `createRoot`, which is the only place that runs
+ * unconditionally. Cheap: `createClient` does no network work of its own, and
+ * on a URL with no auth params `_initialize` finds nothing and stops.
+ *
+ * Returns whether a client was made, so a caller can tell "nothing to do" from
+ * "not configured" — and so this is testable without a browser.
+ */
+export function initAuth(): boolean {
+  return sb() !== null
+}
+
 export type { User }
 
 /** The signed-in user, or null. Null whenever unconfigured. */
