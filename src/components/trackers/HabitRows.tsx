@@ -75,24 +75,54 @@ export function HabitRows({
               {h.name}
             </span>
 
-            {/* THE WEEK, as seven dots.
+            {/* THE WEEK, as seven cells.
                 Read-only on purpose: a tap target here would be a second way to
                 mark a day, which is the duplication this component exists to
                 end. `aria-hidden` because the row's control already announces
-                today and the dots are a summary a screen reader gets from the
-                tracker's own table. */}
-            <span aria-hidden className="hidden items-center gap-1 sm:flex">
+                today and the cells are a summary a screen reader gets from the
+                tracker's own table.
+
+                **It was 6px dots, and `hidden sm:flex`.** Two defects in one
+                strip: at `size-1.5` with a `surface1` miss, the difference
+                between a four-day week and a seven-day one was ~24px of faint
+                colour that had to be counted rather than seen — and below
+                640px the strip did not render at all, so the phone, which is
+                where a habit actually gets ticked, showed no history
+                whatsoever. Reported as "it's very very low ... it can be
+                smaller on mobile but I want it to show".
+
+                Now 10px on a phone and 14px from `sm` up, as rounded squares
+                rather than dots: a square reads as a filled unit of a week
+                (the same language as `Heatmap`), and at 14px a glance gives
+                you the count. Desktop strip 116px against the old 66px, and
+                the row has the width — the name beside it is `truncate`.
+
+                **No `opacity` anywhere in here.** The old strip faded an
+                unscheduled day to 0.35, which produces a colour no gate can
+                check (the trap in CLAUDE.md) and reads as "dimly done".
+                A day this habit is not scheduled for is drawn as an *outline*
+                — nothing was asked of you, so nothing is filled — while a
+                scheduled miss is a real `surface1` fill. Three states, three
+                shapes, every colour a token.
+
+                Today's cell carries a ring so the strip has a right-hand
+                anchor: without it "four of the last seven" and "four, ending
+                three days ago" draw the same picture. */}
+            <span aria-hidden className="flex shrink-0 items-center gap-[2px] sm:gap-[3px]">
               {days.map((d) => {
                 const met = habitDoneOn(data, h, d)
                 const scheduled = isScheduledOn(h, d)
+                const isToday = d === today
                 return (
                   <span
                     key={d}
-                    title={d}
-                    className="size-1.5 rounded-pill"
+                    title={`${d}${scheduled ? (met ? ' · done' : ' · missed') : ' · not scheduled'}`}
+                    className="size-2.5 rounded-[3px] sm:size-3.5"
                     style={{
-                      background: met ? accent : cat('surface1'),
-                      opacity: scheduled ? 1 : 0.35,
+                      background: met ? accent : scheduled ? cat('surface1') : 'transparent',
+                      border: scheduled ? undefined : `1px solid ${cat('surface1')}`,
+                      outline: isToday ? `1px solid ${cat('overlay0')}` : undefined,
+                      outlineOffset: 1,
                     }}
                   />
                 )
