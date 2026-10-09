@@ -14,10 +14,30 @@ import { Switch } from '../ui/switch'
  * after, because markup that looks identical often is not.
  */
 
-/** A labeled settings row: label on the left, control on the right. */
+/**
+ * A labeled settings row: label on the left, control on the right.
+ *
+ * **The cap is the whole point.** `justify-between` across an uncapped parent
+ * strands the control at the far edge of whatever width it is given, and on the
+ * wide tier that is a long way: measured on Settings at 1440, the Gender row was
+ * **546px wide with a 344px gap** between the word "Gender" and the select it
+ * names, and the wellbeing toggles put their switches ~700px from their labels.
+ * Reported as "it's overflowing to the sides".
+ *
+ * A pair that far apart is two separate things to the eye — you read the label,
+ * travel, and have to re-check which control you landed on. The page contract
+ * caps an individual control at ~380px for the same reason; this caps the
+ * *pairing*, which is the half that was actually broken here.
+ *
+ * Capped here rather than at the call sites because there are a dozen of them
+ * across five cards, and a rule each author has to remember is a rule that gets
+ * forgotten — the same argument as `.prose-doc a` and `CYCLE_CLAUSE`.
+ */
+const PAIR = 'max-w-[26rem]'
+
 export function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className={`flex ${PAIR} items-center justify-between gap-3`}>
       <span className="text-body text-fg-1">{label}</span>
       {children}
     </div>
@@ -26,7 +46,7 @@ export function Row({ label, children }: { label: string; children: React.ReactN
 
 export function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex w-full cursor-pointer items-center justify-between text-body text-fg-1">
+    <label className={`flex w-full ${PAIR} cursor-pointer items-center justify-between text-body text-fg-1`}>
       <span>{label}</span>
       <Switch checked={on} onCheckedChange={onChange} />
     </label>

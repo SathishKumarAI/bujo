@@ -1,9 +1,9 @@
 import { autoSyncEnabled } from '../../lib/syncSecret'
-import { ArrowCounterClockwise, Command, Gear, Minus, Plus, Question, ShareNetwork, ShieldCheck, UserCircle, ChatCenteredDots} from '@/components/icons'
+import { ArrowCounterClockwise, Command, Gear, Minus, Plus, Question, ShareNetwork, UserCircle, ChatCenteredDots} from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Button } from '../ui/button'
 import {
-  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { PageHelpItems } from './topbar/HelpMenu'
@@ -59,11 +59,21 @@ export function AccountMenu({
   view,
   onNavigate,
   onCommand,
+  side = 'bottom',
 }: {
   /** The page whose help this menu offers — the corner menu is per-page now. */
   view: ViewId
   onNavigate: (id: ViewId) => void
   onCommand: () => void
+  /**
+   * Which way the panel opens. The two adopters are opposite corners of the
+   * window and the same value cannot serve both: measured at 1440x849 from the
+   * rail's bottom-left trigger, `side="bottom" align="end"` collision-flipped
+   * and landed at **x: 0** — flush against the window edge with no gap at all,
+   * which is the "overflowing to the sides" this was reported as. The rail
+   * passes `right`, so it opens into the page instead of off the screen.
+   */
+  side?: 'bottom' | 'right'
 }) {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
@@ -97,7 +107,6 @@ export function AccountMenu({
     : syncing ? 'Syncing with your passphrase' : 'This device only'
   const zoom = data.settings.zoom ?? 1
   const suggestions = useSuggestionCount()
-  const reminderOn = !!data.settings.reminderEnabled
   const clamp = (z: number) => Math.min(1.5, Math.max(0.7, Math.round(z * 100) / 100))
 
   function share() {
@@ -135,7 +144,10 @@ export function AccountMenu({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      {/* `collisionPadding` is the guard, not the `side` above: a side is a
+          preference and Radix will still flip it when the panel does not fit.
+          Without a padding the flipped panel is allowed to sit at exactly 0. */}
+      <DropdownMenuContent side={side} align="end" collisionPadding={12} className="w-64">
         <div className="px-2 py-1.5">
           <p className="truncate text-body font-medium text-fg-1">{label}</p>
           {/* The email, when signed in. Two people's Google accounts can share
@@ -146,7 +158,7 @@ export function AccountMenu({
         </div>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => onNavigate('account')}>
+        <DropdownMenuItem onClick={() => onNavigate('settings')}>
           <Icon as={UserCircle} size="sm" className="mr-2" /> {setUp ? 'Account & sync' : 'Set up this journal'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={share}>
@@ -186,21 +198,8 @@ export function AccountMenu({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 
-        {/* The reminder's ON/OFF is a decision you revisit; its TIME is a
-            setting you choose once, so that stays in Settings → Profile
-            rather than growing a time picker inside a dropdown. */}
-        <DropdownMenuCheckboxItem
-          checked={reminderOn}
-          onCheckedChange={(c) => setSettings({ reminderEnabled: c })}
-        >
-          Daily reminder
-        </DropdownMenuCheckboxItem>
-
         <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
           <Icon as={ChatCenteredDots} size="sm" className="mr-2" /> Send feedback
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onNavigate('account')}>
-          <Icon as={ShieldCheck} size="sm" className="mr-2" /> How your data is stored
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 
@@ -212,15 +211,33 @@ export function AccountMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom - 0.1) })}>
-          <Icon as={Minus} size="sm" className="mr-2" /> Zoom out
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSettings({ zoom: 1 })}>
-          <span className="mr-2 w-4" /> Reset zoom ({Math.round(zoom * 100)}%)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSettings({ zoom: clamp(zoom + 0.1) })}>
-          <Icon as={Plus} size="sm" className="mr-2" /> Zoom in
-        </DropdownMenuItem>
+        {/* One row, not three. Zoom is a nudge you make twice and then never
+            again, and it was spending three of this menu's thirteen slots —
+            the panel measured 558px tall, 66% of an 849px window. A stepper is
+            the shape this control actually is: two steps and the current value
+            between them, which doubles as the reset.
+
+            Not `DropdownMenuItem`s: an item closes the menu on select, so
+            stepping twice meant reopening the menu in between. Plain buttons
+            inside the panel, and the row stops the menu closing on click. */}
+        <div className="flex items-center justify-between px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+          <span className="text-body text-fg-1">Zoom</span>
+          <span className="inline-flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" aria-label="Zoom out" onClick={() => setSettings({ zoom: clamp(zoom - 0.1) })}>
+              <Icon as={Minus} size="sm" />
+            </Button>
+            <button
+              className="min-w-14 rounded-control px-1 py-0.5 text-label text-fg-2 tabular-nums hover:text-fg-1"
+              onClick={() => setSettings({ zoom: 1 })}
+              aria-label={`Reset zoom, currently ${Math.round(zoom * 100)} percent`}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <Button variant="ghost" size="icon-sm" aria-label="Zoom in" onClick={() => setSettings({ zoom: clamp(zoom + 0.1) })}>
+              <Icon as={Plus} size="sm" />
+            </Button>
+          </span>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
     {/* Outside the menu on purpose: a dropdown unmounts its content on select,

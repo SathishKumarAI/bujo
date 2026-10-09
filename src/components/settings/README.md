@@ -3,14 +3,27 @@
 `views/Settings.tsx` is the tab shell — four `TabsTrigger`s and four one-line
 panels. Everything else is here, one file per thing.
 
+**This is the only destination for account and sync (COD-297).** There used to
+be a `views/Account.tsx` as well, and between them they answered "who am I and
+does my journal leave" twice: `CloudSyncCard` rendered on both, the local
+profile was editable on both under two different nouns ("You" here, "Profile"
+there), and sign-out was on one page while the passcode was on the other. The
+page is retired; `?view=account` is a 301 in `lib/deepLink.ts`.
+
+**`?view=settings&tab=<id>` opens a tab.** Read-only — clicking a tab does not
+write it back, because `DeepLinkSync` already owns the query string. It exists
+so a tab is linkable and, more importantly, so a gate can *reach* one: see the
+tab-shell rule below.
+
 | Change | File |
 |---|---|
 | A tab's name, order, or icon | `../../views/Settings.tsx` |
-| Gender, wellbeing gates, units, week start, daily reminder | `ProfileTab.tsx` |
+| Google sign-in/out, local name, gender, gates, reminder, units | `AccountTab.tsx` |
+| The four sync facts in zone 1 of the Sync tab | `SyncStatusBar.tsx` |
 | Theme, accent, text size, paper, Today cards, reset | `AppearanceTab.tsx` |
 | Weather, food lookup | `ConnectionsCard.tsx` |
 | The local model (Ollama) | `VoiceModelCard.tsx` |
-| Cloud sync, advanced/self-host fold | `SyncTab.tsx` |
+| Cloud sync, the protection cards, advanced/self-host fold | `SyncTab.tsx` |
 | Passcode / encryption at rest | `PasscodeCard.tsx` |
 | PostgREST self-host fields | `SelfHostCard.tsx` |
 | The record counts, coverage, storage bar | `YourDataCard.tsx` |
@@ -34,7 +47,17 @@ JSX.
 events-and-birthdays file used to be a hero button while its three siblings
 were folded below it, so "does this export to my calendar" had two answers.
 
-**A tab is not free, and neither rendering gate can see that.** Both walk the
+**A tab is not free, and only one rendering gate can see past the first one
+now.** `npm run a11y` visits `?view=settings&tab=feel|sync|data` directly, so
+the passcode form, the cloud passphrase, every export button and the
+erase-everything dialog are scanned at every theme and viewport for the first
+time. `npm run space` still grades only the tab it opens on — COD-232 stays open
+for that half, and any space number quoted for this view is the Account tab.
+
+The original note, kept because its measurements are still the reason the tab
+count is four:
+
+**A tab is not free, and neither rendering gate could see that.** Both walk the
 rendered DOM and a tab shell holds one panel at a time, so every space number
 ever quoted for this view is the Profile tab — and axe has never scanned any
 other panel (COD-232). Driven per tab with a throwaway probe, Settings was 2.7

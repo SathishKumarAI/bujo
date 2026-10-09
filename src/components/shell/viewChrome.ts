@@ -1,6 +1,6 @@
 export type ViewId =
   | 'today' | 'monthly' | 'trackers' | 'fitness' | 'nutrition' | 'gym' | 'program' | 'pullups' | 'pickleball' | 'homeworkout' | 'challenges' | 'focus'
-  | 'plan' | 'collections' | 'reading' | 'goals' | 'insights' | 'cycle' | 'nofap' | 'coaching' | 'mindset' | 'account' | 'help' | 'settings' | 'kitchen-sink'
+  | 'plan' | 'collections' | 'reading' | 'goals' | 'insights' | 'cycle' | 'nofap' | 'coaching' | 'mindset' | 'help' | 'settings' | 'kitchen-sink'
 
 export interface ViewChrome {
   title: string
@@ -33,8 +33,7 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   nofap: { title: 'Recovery', subtitle: 'Streak, urges & resilience', help: 'An opt-in abstinence streak: current streak, personal best, milestones, an urge-surfing counter, and a judgement-free relapse log. Stays entirely on your device.' },
   mindset: { title: 'Mindset', subtitle: 'Train your thinking style', help: 'A toolkit for your mental game and thinking style, app-wide (not just sport). Browse principles across focus, resilience, growth, composure, confidence, discipline and connection; pick a few to actively work on and jot how you’ll apply each. Build the habit of thinking well.' },
   coaching: { title: 'Coaching', subtitle: 'Pickleball academy · beginner to pro', help: 'A full pickleball coaching curriculum, not just tracking: a 12-week beginner→4.0 program with a day-by-day practice schedule, a skill ladder (2.0→4.5+), a drill library by skill, and a mental-game track to build the right mindset. Start the program to track your week.' },
-  account: { title: 'Account', subtitle: 'Your name, and whether this journal travels', help: 'bujo has no accounts — no email, no password, no provider. Here you set a local name and face (stored in this journal, on this device, and not checked against anything), turn on end-to-end encrypted sync with a single passphrase if you want this journal on another device, and find the issue tracker. To lock the journal itself, use the passcode in Settings → Sync & privacy. See docs/AUTH.md.' },
   help: { title: 'Help', subtitle: 'Guide & bullet legend', help: 'The in-app guide to every feature, written in plain language · a lighter companion to the full Feature Guide in the docs.' },
   'kitchen-sink': { title: 'Kitchen sink', subtitle: 'Every primitive, variant and state', help: 'A design-system review page: the type scale, foreground tiers, surfaces, every button variant and size, inputs, data displays and container tiers, all on one screen. Not linked from the nav — reach it with ?view=kitchen-sink.' },
-  settings: { title: 'Settings', subtitle: 'Theme, profile, data', help: 'Profile/units, journal feel (paper, handwriting, accent, Today-dashboard cards), reminders, and Data & Cloud · storage meter, JSON/Markdown/CSV export, print, passcode encryption, and cloud sync.' },
+  settings: { title: 'Settings', subtitle: 'Account, sync, appearance and data', help: 'One place for everything about this journal rather than about a page. Account · sign in with Google, your local name, what the app tracks about you, units. Sync & privacy · the end-to-end encrypted passphrase, the passcode lock, and what is never uploaded. Appearance · theme, paper, handwriting, accent. Data · the storage meter, every export, and erase. The separate Account page was retired into the first tab — see docs/AUTH.md.' },
 }

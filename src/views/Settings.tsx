@@ -3,8 +3,9 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
+import { readDeepLink } from '../lib/deepLink'
 import {
-  AppearanceTab, DataTab, ProfileTab, SyncTab,
+  AccountTab, AppearanceTab, DataTab, SyncTab,
 } from '../components/settings'
 
 /**
@@ -34,8 +35,28 @@ import {
  * now, and its daily reminder is on Profile. The gates still cannot see past
  * the first tab — COD-232; these numbers came from a throwaway probe.
  */
+/** The four panel ids, and the only values `?tab=` accepts. */
+const TABS = ['account', 'feel', 'sync', 'data']
+
 export function Settings() {
-  const [tab, setTab] = useState('profile')
+  /**
+   * 'account' was 'profile'. The id is the deep-link value now, so the rename is
+   * visible in a URL.
+   *
+   * `?view=settings&tab=sync` opens that tab. Two reasons, and the second is the
+   * load-bearing one: "Settings → Sync & privacy" becomes a link people can send
+   * each other, and **a gate can reach a tab it could not reach before.** COD-232
+   * is that both rendering gates walk the rendered DOM and a tab shell holds one
+   * panel at a time, so three of these four panels had never been scanned by axe
+   * at any theme or viewport. `scripts/a11y-axe.mjs` now visits them by URL.
+   *
+   * Validated against this list rather than trusted: a stale or hand-typed `tab`
+   * must land on the default, not on an empty panel.
+   */
+  const [tab, setTab] = useState(() => {
+    const wanted = readDeepLink().tab
+    return wanted && TABS.includes(wanted) ? wanted : 'account'
+  })
 
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these pills to 209px each across the wide tier. They are labels, not
@@ -64,7 +85,13 @@ export function Settings() {
             (it showed everything) and `a11y` asks whether the tree is sound (it
             was). Overridden with the same specificity it is set at. */}
         <TabsList className="mb-6 flex w-full flex-wrap justify-start gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto">
-          <TabsTrigger value="profile" className={tabClass}><Icon as={User} size="sm" /> Profile</TabsTrigger>
+          {/* "Account", not "Profile". There were two destinations answering
+              "who is this journal for" — a whole `views/Account.tsx` holding the
+              Google sign-in and a card titled "You", and this tab holding a card
+              titled "Profile". One person, two nouns, two pages (COD-297). The
+              page is retired into this tab and the tab takes the name people
+              actually look for. */}
+          <TabsTrigger value="account" className={tabClass}><Icon as={User} size="sm" /> Account</TabsTrigger>
           <TabsTrigger value="feel" className={tabClass}><Icon as={Palette} size="sm" /> Appearance</TabsTrigger>
           {/* "& privacy" is the half that used to wrap a five-pill row onto a
               third line at 390px. It is a clarifier, not the name. Four pills
@@ -85,7 +112,11 @@ export function Settings() {
             before: `bujo-rise` is inside a `prefers-reduced-motion:
             no-preference` block. */}
         <div key={tab} className="min-w-0">
-        <TabsContent value="profile"><ProfileTab /></TabsContent>
+        {/* The card's "Set a sync passphrase" button is a tab switch, not a
+            navigation. That is the whole shape of this change: the thing the
+            Account tab tells you is missing is two tabs away in the same place,
+            so the fix for it should not be a journey. */}
+        <TabsContent value="account"><AccountTab onGoToSync={() => setTab('sync')} /></TabsContent>
         <TabsContent value="feel"><AppearanceTab /></TabsContent>
         <TabsContent value="sync"><SyncTab /></TabsContent>
         <TabsContent value="data"><DataTab /></TabsContent>

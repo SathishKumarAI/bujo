@@ -8,7 +8,6 @@ import { useConfirm } from './components/ConfirmDialog'
 import { pushCloud, pullCloud } from './lib/bujocloud'
 import { useJournal } from './store'
 import { Today } from './views/Today'
-import { Account } from './views/Account'
 import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
 import { AuthReturnReport } from './components/AuthReturnReport'
@@ -59,7 +58,7 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: Fitness, nutrition: Nutrition, gym: Gym, program: Program, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
-  insights: Insights, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, account: Account, help: Help,
+  insights: Insights, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, help: Help,
   'kitchen-sink': KitchenSink,
   settings: Settings,
 }

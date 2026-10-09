@@ -37,7 +37,7 @@ export interface GuideEntry {
 }
 
 /** Real surfaces that belong to no nav section. */
-const SETUP: ViewId[] = ['account', 'settings']
+const SETUP: ViewId[] = ['settings']
 
 /**
  * Deliberately uncovered, listed rather than left absent so the test can tell
@@ -243,24 +243,19 @@ export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
     ],
     keywords: ['bodyweight', 'no equipment', 'home', 'calisthenics', 'demos'],
   },
-  account: {
-    why: 'There is no account here. This page exists to say so — and to offer the one thing an account is normally for: getting this journal onto a second device.',
-    how: [
-      'Set a local name and face. It is stored in this journal, on this device, and checked against nothing.',
-      'Turn on end-to-end encrypted sync with a single passphrase only if you want this journal elsewhere.',
-      'To lock the journal itself, use the passcode in Settings → Sync & privacy. That is a different thing from sync.',
-    ],
-    keywords: ['login', 'sign in', 'sync', 'passphrase', 'devices', 'profile'],
-  },
   settings: {
-    why: 'Your journal lives in this browser and nowhere else. Nothing else in this app matters if you have not exported a backup.',
+    why: 'Everything about this journal rather than about a page: who it belongs to, whether it leaves this device, how it looks, and how to get it out. Nothing else in this app matters if you have not exported a backup.',
     how: [
+      'Account · sign in with Google to reach this journal from another device, set the local name the app greets you with, and choose units. Signing in is NOT syncing: the passphrase on the next tab is what actually uploads anything.',
       'Export JSON today, and again every month. Clearing browser data deletes the journal, and there is no copy to ask anyone for.',
       'Set units, theme and the journal feel — paper texture, handwriting, accent, and which cards Today shows.',
       'Turn on the Cycle or Recovery tracker here if you want them. Both are off unless you ask.',
       '“Load demo data” fills about thirty days of samples so every chart has something in it. It replaces the current journal, and offers you a backup first.',
     ],
-    keywords: ['export', 'import', 'backup', 'theme', 'dark mode', 'units', 'privacy', 'passcode', 'demo data', 'reminders'],
+    // The trailing eight came from the retired `account` entry. Kept rather
+    // than dropped: they are what someone types when they cannot find sign-in,
+    // and the page they used to resolve to no longer exists (COD-297).
+    keywords: ['export', 'import', 'backup', 'theme', 'dark mode', 'units', 'privacy', 'passcode', 'demo data', 'reminders', 'login', 'sign in', 'sign out', 'account', 'google', 'passphrase', 'devices', 'profile'],
   },
 }
 

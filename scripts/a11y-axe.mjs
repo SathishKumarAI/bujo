@@ -182,12 +182,26 @@ const COMPANIONS = [
   // anyone who has turned it on, and it had never been scanned. Recovery's
   // lesson, from the other side of the default.
   ['Cycle', 'cycle'],
-  // Account has no tab either — it is behind the account menu, like Settings,
-  // and like Settings it had never been scanned. It was a full-screen auth card
-  // for most of this gate's life: two text inputs, a password reveal toggle and
-  // an OAuth button, none of them ever checked. It is now the local-account
-  // page, which is the moment to notice the hole rather than inherit it.
-  ['Account', 'account'],
+  // `account` is retired into Settings (COD-297), and `settings` below opens on
+  // that tab — so its sign-in button, local-account form and units controls are
+  // scanned by the entry that replaced it.
+  //
+  // These three are the hole COD-232 described, closed. Both rendering gates
+  // walk the rendered DOM and a tab shell holds ONE panel, so for this gate's
+  // whole life "Settings: 0 serious" meant the first tab only: the passcode
+  // form, the cloud passphrase, every export button and the erase-everything
+  // dialog had never been seen by axe at any theme or viewport. They are
+  // reachable by URL now (`?view=settings&tab=…`) rather than by clicking,
+  // because a tab click is one more thing to wait for and this gate already has
+  // a table of waits it got wrong.
+  // Third element is extra query, kept OUT of the id on purpose: the landed-URL
+  // check reads the `view` PARAM, so folding `&tab=` into the id makes
+  // "settings&tab=feel" a value `view` can never equal. The first run of this
+  // failed four shards exactly that way — the assertion doing its job on the
+  // author rather than on the app, which is the best kind of red.
+  ['Settings · appearance', 'settings', 'tab=feel'],
+  ['Settings · sync', 'settings', 'tab=sync'],
+  ['Settings · data', 'settings', 'tab=data'],
   // The guide. Behind the top bar's "?", so no tab clicks to it and it had
   // never been scanned — the page a user opens *because they are already
   // stuck* was the one page with no accessibility evidence behind it. It is
@@ -1127,15 +1141,27 @@ async function runUnit(w, unit) {
   // Companion views, reached by URL because they have no tab to click.
   // `setTheme` persists to the journal in localStorage, which survives the
   // navigation, so these are scanned under the theme of the current pass.
-  for (const [label, view] of COMPANIONS) {
+  for (const [label, view, query] of COMPANIONS) {
     w.at = label
-    await w.page.goto(`${BASE}?view=${view}`, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
+    const url = `${BASE}?view=${view}${query ? `&${query}` : ''}`
+    await w.page.goto(url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT })
     // The alias table used to bounce these to Fitness. If that ever comes
     // back, the URL will silently be a different page and `scan` would
     // happily grade Fitness under this label — so check where we landed.
-    const landed = await w.page.evaluate(() => new URLSearchParams(location.search).get('view'))
-    if (landed !== view) {
-      fail(`\n[${label}] asked for ?view=${view} and landed on ?view=${landed}.`,
+    //
+    // The tab is checked too, and that half is load-bearing rather than
+    // defensive: the three Settings entries exist ONLY to reach panels a tab
+    // shell keeps out of the DOM (COD-232), so a `?tab=` that silently did
+    // nothing would leave this gate scanning the Account tab three more times
+    // and printing three more reassuring zeroes for panels it never opened.
+    const wantTab = query ? new URLSearchParams(query).get('tab') : null
+    const landed = await w.page.evaluate(() => {
+      const p = new URLSearchParams(location.search)
+      return { view: p.get('view'), tab: p.get('tab') }
+    })
+    if (landed.view !== view || (wantTab && landed.tab !== wantTab)) {
+      fail(`
+[${label}] asked for ${url} and landed on ?view=${landed.view}&tab=${landed.tab}.`,
         '  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
     }
     await scan(w, label)

@@ -72,7 +72,7 @@ export function ExploreBanner() {
         <Button variant="secondary" size="sm" onClick={clearDemo} className="press-3d text-label">
           Clear the demo
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => nav('account')} className="h-auto p-0 text-label">
+        <Button variant="ghost" size="sm" onClick={() => nav('settings')} className="h-auto p-0 text-label">
           Set up this journal
         </Button>
         <Button

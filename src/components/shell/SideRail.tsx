@@ -226,7 +226,7 @@ export function SideRail({
           <div className="min-w-0 flex-1 overflow-hidden px-1">
             <WeekStrip />
           </div>
-          <AccountMenu view={view} onNavigate={onNavigate} onCommand={onCommand} />
+          <AccountMenu view={view} onNavigate={onNavigate} onCommand={onCommand} side="right" />
         </div>
       </div>
     </aside>
