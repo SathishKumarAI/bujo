@@ -1,12 +1,46 @@
 # STATUS
 
-**Stopped:** 2026-10-09, end of a long session. `main` at `fa54b56`, clean
-tree. **Fifteen PRs merged: #363–#377.**
+**Stopped:** 2026-10-09, after a short session on top of the long one.
+`main` at `534aa81`, clean tree. **Three PRs merged this session: #379, #380,
+#381.** (The fifteen before them, #363–#377, are below.)
 
-`npm run verify`: **137 files, 1854 tests**, exit 0. `eslint` 0 errors (one
-pre-existing `App.tsx` exhaustive-deps warning). `a11y` **187/187 across 12
-shards**, no serious or critical. `clipped` clean at 1440/1024/390. `smoke`
-23/23. `design` 433 files. `contrast` 5 themes. All green on `main`.
+`npm run verify`: **138 files, 1861 tests**, exit 0. `eslint` 0 errors (the one
+pre-existing `App.tsx` exhaustive-deps warning). `design` 434 files, `contrast`
+5 themes / 14 accents. Browser gates (`a11y`, `clipped`, `smoke`, `space`) were
+**not** re-run this session — the three PRs are UI, so run them before the next
+deploy; the numbers quoted lower down are from the previous session.
+
+## This session, in one line each
+
+- **#379 · the rail takes a gesture.** Click its empty column, or over-scroll
+  it past the end (120px of travel), and it hides. `railGestures.ts` holds both
+  decisions as arithmetic with 7 assertions — jsdom's zero-size rects mean a
+  render test cannot see the geometry that makes the click correct.
+- **#380 · the week, at a size you can read.** The habit week strip was 6px
+  dots and `hidden sm:flex`, so a phone showed **no history at all**; now 10px
+  cells there, 14px from `sm`, as squares, with no `opacity` anywhere. And
+  "Weekly goals" moved into the **278 × 340px hole** the focused Today grid
+  leaves in its left column, at 64px rings — it had been rendering only in
+  `TodayClassic`. Avoid and `limit` habits are filtered out of it, because a
+  ring filling toward a cap says "keep going" (Caffeine drew 4/5, 80% full, for
+  the fourth coffee against a limit of five). Seed gained five positive goals;
+  `DEMO_VERSION` 12 → 14.
+- **#381 · charts.** Mood/Stress/Sleep had no legend and three hues carrying
+  identity alone — red↔green separate by **ΔE 5.8 under deuteranopia in latte,
+  vscode and dawn**. Every three-accent trio these palettes can make was scored
+  across the five themes and **none is clean**, so the fix is secondary
+  encoding: a dash pattern per series plus a legend. The plan card's week strip
+  stopped being a three-bucket traffic light (a real week lands in one bucket →
+  seven olive blocks) and became a sequential green ramp.
+
+**Open, filed: COD-306.** An avoid habit with a `weeklyGoal` now draws nothing
+at all — the field is accepted and never shown. It needs a ceiling mark, not a
+floor one, beside the rings rather than among them.
+
+**Traps worth carrying:** the preview's service worker handed back a stale
+bundle twice during this session — compare the served `assets/index-*.js`
+against `dist/index.html` before believing a screenshot. And port 4173 was
+already held by another session's `vite preview` of this same repo.
 
 ---
 
