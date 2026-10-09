@@ -32,6 +32,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { encryptString, decryptString, isEncryptedBlob, type EncryptedBlob } from './crypto'
 import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import { forEgress } from './cyclePrivacy'
+import { markSignInStarted, clearSignInPending } from './authReturn'
 import type { JournalData } from './types'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -86,17 +87,27 @@ export function onAuthChange(fn: (user: User | null) => void): () => void {
   return () => data.subscription.unsubscribe()
 }
 
-/** Start the Google redirect. Resolves when the browser is on its way out. */
+/**
+ * Start the Google redirect. Resolves when the browser is on its way out.
+ *
+ * Stamps `bujo:auth.pending` first. **`redirectTo` is a request, not a
+ * guarantee:** Supabase checks it against the project's Redirect URLs
+ * allow-list and silently substitutes the Site URL when it is not on it — no
+ * error, nothing in the response to read. So the browser can be sent somewhere
+ * else entirely after Google and this app never runs again, which is COD-293
+ * and is why the stamp exists. See `lib/authReturn.ts` for the whole shape.
+ */
 export async function signInGoogle(): Promise<void> {
   const c = sb()
   if (!c) throw new Error('Sign-in is not configured in this build.')
+  markSignInStarted(window.location.origin)
   const { error } = await c.auth.signInWithOAuth({
     provider: 'google',
     // Back to the page they left, not to `/`. `detectSessionInUrl` above
     // consumes the fragment on arrival.
     options: { redirectTo: window.location.origin + window.location.pathname + window.location.search },
   })
-  if (error) throw error
+  if (error) { clearSignInPending(); throw error }
 }
 
 /**
@@ -130,6 +141,11 @@ export function consumeAuthError(): { message: string; detail: string } | null {
 
   const code = pick('error')
   if (!code) return null
+  // An error is a resolution: the round trip came back, it just came back
+  // badly. Clearing here is what keeps COD-293's "never came back" message
+  // from firing on top of COD-290's "Google refused it" message — two
+  // explanations for one event is worse than either alone.
+  clearSignInPending()
 
   const described = pick('error_description')
   let detail = described

@@ -11,6 +11,7 @@ import { Today } from './views/Today'
 import { Account } from './views/Account'
 import { ReminderBanner } from './components/ReminderBanner'
 import { SyncIndicator } from './components/SyncIndicator'
+import { AuthReturnReport } from './components/AuthReturnReport'
 import { ExploreBanner } from './components/ExploreBanner'
 import { SkeletonView } from './components/Skeleton'
 import { OfflineBanner } from './components/OfflineBanner'
@@ -212,6 +213,10 @@ export default function App() {
       <ExploreBanner />
       <ReminderBanner />
       <SyncIndicator />
+      {/* Mounted here, not on the account page, for the same reason
+          `consumeAuthError` is called here: when a sign-in goes wrong the user is
+          not on the page they started from. COD-293. */}
+      <AuthReturnReport />
       <AppShell
         gates={gated}
         view={view}
