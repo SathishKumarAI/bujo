@@ -43,6 +43,56 @@ No journal content is ever sent. Geolocation requires explicit browser permissio
 - Images are re-encoded through a `<canvas>` (strips original EXIF/GPS metadata).
 - Dependencies are minimal and pinned in `package.json`; run `npm audit` in CI.
 
+## Verifying Row Level Security, without two Google accounts
+
+RLS is the only thing making the account feature multi-tenant. A policy nobody
+has tried **from the other side** is a policy nobody has tested — so this is
+the procedure, and the result of running it on 2026-10-09.
+
+The obstacle is that the obvious test needs two real Google accounts. It does
+not: **two anonymous sign-ins are two distinct `auth.uid()`s**, which is
+exactly what the policies separate on. Anonymous sign-in is a legitimate
+testing tool — it is just not something to leave switched on.
+
+### The procedure
+
+1. Supabase → Authentication → Providers → **Anonymous sign-ins → on**.
+2. `POST /auth/v1/signup` twice with an empty body and the publishable key.
+   Each returns an `access_token` and a distinct user id. Assert they differ.
+3. Run the seven calls below with those two bearer tokens.
+4. Authentication → **Users**, delete every user with no email address. The
+   `journals` rows go with them: `id` is
+   `references auth.users (id) on delete cascade`, so this is **one step, not
+   two** — do not bother deleting rows by hand.
+5. Providers → **Anonymous sign-ins → off**. In that order: turning it off
+   first does not remove the users already created.
+
+### What must happen, and what did
+
+| # | As | Action | Required | 2026-10-09 |
+|---|---|---|---|---|
+| 1 | A | insert its own row | succeeds, `owner` filled from the JWT | **201**, owner = A |
+| 2 | B | `select` the whole table | sees nothing | **`[]`** |
+| 3 | B | select A's row by id | sees nothing | **`[]`** |
+| 4 | B | `patch` A's row | changes nothing | **`[]`**, 0 rows |
+| 5 | B | insert claiming `owner: A` | refused | **403** `42501 new row violates row-level security policy` |
+| 6 | B | `delete` A's row | deletes nothing | **`[]`**, 0 rows |
+| 7 | A | re-read its own row | unchanged | **unchanged** |
+
+Step 7 is the one that matters: after B attempted to read, overwrite, spoof and
+delete, A's data was byte-identical. Step 1 proves `owner default auth.uid()`
+holds — a client cannot write a row it does not own, because the server fills
+that column from the token rather than trusting the payload.
+
+### A note on cleanup, which is itself a result
+
+An agent holding only the publishable key **cannot tidy up after this test**:
+a fresh session reads the table as empty, a mass `delete` returns 204 having
+removed zero rows, and `/auth/v1/admin/users` answers `403 not_admin`. If
+cleanup were possible from that key, the test above would have failed. The
+inability is the proof.
+
+
 ## Roadmap (v2)
 
 - **Passcode lock** on app open.

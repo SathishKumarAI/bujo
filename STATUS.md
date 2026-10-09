@@ -94,13 +94,17 @@ was, so the container-query treatment should transfer.
 - **The toggle icon is 3.47 (latte) / 3.58 (dawn)** against the header. Above
   the 3.0 floor for a graphic, under 4.5, and exactly where the microphone
   button beside it already sits. Not made worse; worth its own pass.
-- **Supabase is live and half-verified.** The project is up (auth health 200),
-  `schema.sql` is applied, Google is enabled, and the sign-in surface renders.
-  Verified by probe: anon `SELECT` and anon `INSERT` spoofing another `owner`
-  both return **401 permission denied** — the grants hold before RLS is even
-  consulted. **What is still owed is the two-account test** (COD-282): sign in
-  as a second Google account and confirm it cannot read the first’s row. That
-  needs two real accounts and is the only thing that proves multi-tenancy.
+- **Supabase is live and RLS is proven.** Project up, `schema.sql` applied,
+  Google enabled, sign-in surface rendering. The two-account test was run on
+  2026-10-09 — and the "needs two Google accounts" blocker was false: two
+  anonymous sign-ins are two distinct `auth.uid()`s. B could not read, patch,
+  spoof or delete A’s row (403 on the spoof, 0 rows on the rest), and A’s data
+  was byte-identical afterwards. Procedure in `docs/SECURITY.md` so it is
+  repeatable after any schema change.
+
+  **Owner-only, still open (COD-282):** the Google UI round trip, and cleanup
+  — Authentication → Users, delete every user with no email (rows cascade,
+  one step), then Providers → Anonymous sign-ins → off, in that order.
 
 ## First thing, still: 18 worktrees
 
