@@ -99,6 +99,61 @@ export async function signInGoogle(): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * Read an OAuth failure off the return URL, and clear it. Null when the
+ * current URL carries no failure, which is the overwhelmingly common case.
+ *
+ * The *success* leg needs no help: `detectSessionInUrl` above consumes the
+ * fragment and `onAuthChange` re-renders everything that shows identity. The
+ * *failure* leg had no handler at all. Google refuses the token exchange,
+ * Supabase redirects back here with the reason in the fragment,
+ * `detectSessionInUrl` finds no session to detect, and the app renders its
+ * ordinary signed-out state. Reported as "I made a login, the screen is not
+ * changing" — an exact description: the screen was the one place the failure
+ * was invisible, while the address bar had been carrying
+ * `error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code`
+ * the whole time.
+ *
+ * Reads the fragment *and* the query because the reason arrives in both, and
+ * decodes twice because the fragment copy is double-encoded (`%253A` for a
+ * colon). The second decode is guarded: a malformed escape must not throw on
+ * the only code path whose job is to report a failure.
+ *
+ * Deliberately does NOT touch the URL unless `error` is present — stripping
+ * params on the success leg would be racing `detectSessionInUrl` for the
+ * fragment it needs.
+ */
+export function consumeAuthError(): { message: string; detail: string } | null {
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const query = new URLSearchParams(window.location.search)
+  const pick = (k: string) => hash.get(k) || query.get(k) || ''
+
+  const code = pick('error')
+  if (!code) return null
+
+  const described = pick('error_description')
+  let detail = described
+  try { detail = decodeURIComponent(described) } catch { /* keep the single-decoded form */ }
+
+  for (const k of ['error', 'error_code', 'error_description']) { hash.delete(k); query.delete(k) }
+  const q = query.toString()
+  const h = hash.toString()
+  window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + (h ? `#${h}` : ''))
+
+  // A failed *exchange* means Supabase reached Google and Google refused the
+  // trade — which is the provider credentials on the server, not anything about
+  // this device or this journal. Worth saying plainly, because the provider's
+  // own words ("Unable to exchange external code: 4/0A…") read like something
+  // was lost, and nothing was: the journal is untouched on this device.
+  const credentials = /exchange external code/i.test(detail)
+  return {
+    message: 'Google sign-in did not complete',
+    detail: credentials
+      ? 'Google refused the sign-in. That is the server-side provider setup, not your journal — nothing on this device changed and your entries are all still here.'
+      : detail || code,
+  }
+}
+
 export async function signOut(): Promise<void> {
   await sb()?.auth.signOut()
 }
