@@ -20,6 +20,18 @@ import { Row, Toggle } from './shared'
  * already knows the answer.
  */
 export function VoiceModelCard() {
+  /**
+   * Served over HTTPS from somewhere that is not this machine.
+   *
+   * `localhost` and `127.0.0.1` are "potentially trustworthy" origins, so a
+   * page on them may fetch plain-http localhost; anything else may not, and
+   * no CSP directive changes that. COD-300 found this card telling hosted
+   * users to check whether Ollama was running, which is a question about the
+   * wrong machine.
+   */
+  const hostedBuild = typeof window !== 'undefined'
+    && window.location.protocol === 'https:'
+    && !['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
   const { data, setSettings } = useJournal()
   const vm = data.settings.voiceModel ?? {}
   const endpoint = vm.endpoint ?? DEFAULT_ENDPOINT
@@ -94,13 +106,28 @@ export function VoiceModelCard() {
                 <span className="text-label text-fg-2">
                   {models.length > 0
                     ? `${models.length} model${models.length === 1 ? '' : 's'} on this machine`
-                    : 'Nothing answered — is Ollama running?'}
+                    : hostedBuild
+                      // "Is Ollama running?" is the wrong question here and
+                      // sends people to restart a service that is fine. A
+                      // page served over HTTPS cannot reach `http://localhost`
+                      // at all: the browser blocks it as mixed content before
+                      // any CSP is consulted, so no policy change can enable
+                      // this and the card must stop implying one would.
+                      ? 'A hosted page cannot reach this machine — browsers block http://localhost from an https:// site. Use the desktop build or a self-hosted copy.'
+                      : 'Nothing answered — is Ollama running?'}
                 </span>
               )}
             </div>
             <p className="text-label text-fg-3">
               Built against Ollama&apos;s API. Anything speaking it works; nothing leaves this machine either way.
             </p>
+            {hostedBuild && (
+              <p className="text-label text-peach">
+                This copy is served over HTTPS, so it cannot talk to a model on your own machine.
+                That is the browser&apos;s mixed-content rule, not a setting — the desktop build and a
+                self-hosted copy both work.
+              </p>
+            )}
           </div>
         )}
       </div>
