@@ -32,6 +32,7 @@ import type {
 } from './lib/types'
 import { load, save, uid, emptyJournal, migrate, hasEncrypted, readEncryptedRaw, writeEncrypted, clearEncrypted } from './lib/storage'
 import { encryptString, decryptString } from './lib/crypto'
+import { setSyncPassphrase, resealForNewPasscode, unsealSyncPassphrase } from './lib/syncSecret'
 import { LockScreen } from './components/LockScreen'
 import { parseQuickCapture, parseTags } from './lib/bullets'
 import { dayDiff, todayISO } from './lib/date'
@@ -242,6 +243,13 @@ interface Store {
   replaceAll: (data: JournalData, opts?: { stamp?: boolean }) => void
   // passcode / encryption
   setPasscode: (passcode: string | null) => void
+  /**
+   * Store the cloud sync passphrase, sealed under the passcode when there is
+   * one. Lives here because the store is the only thing that holds the live
+   * passcode — handing it out to a card so the card can encrypt is how a
+   * secret ends up in a component’s props and then in a devtools snapshot.
+   */
+  saveSyncPassphrase: (passphrase: string) => Promise<void>
   encrypted: boolean
   // history
   undo: () => void
@@ -1031,6 +1039,10 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       // write plaintext + drop the encrypted blob. Data in memory is untouched.
       setPasscode: (pc) => {
         passcodeRef.current = pc
+        // An existing auto-sync key was written in plaintext under the old
+        // setting. Setting a passcode has to re-seal it and clearing one has
+        // to unseal it, or this fix only ever protects new users.
+        void resealForNewPasscode(pc)
         if (pc) {
           encryptString(JSON.stringify(data), pc).then(writeEncrypted).catch((e) => console.error('bujo: encrypt failed', e))
         } else {
@@ -1039,6 +1051,8 @@ export function JournalProvider({ children }: { children: ReactNode }) {
         }
         setEncrypted(pc != null)
       },
+
+      saveSyncPassphrase: (passphrase) => setSyncPassphrase(passphrase, passcodeRef.current),
       encrypted,
 
       undo: () => dispatch({ type: 'undo' }),
@@ -1058,6 +1072,10 @@ export function JournalProvider({ children }: { children: ReactNode }) {
     const json = await decryptString(blob, pc) // throws → LockScreen shows error
     const decrypted = migrate(JSON.parse(json))
     passcodeRef.current = pc
+    // Recover the sealed auto-sync passphrase into memory for this
+    // session. Before the journal is unlocked there is deliberately no
+    // way to reach it, which is the whole point of COD-228.
+    await unsealSyncPassphrase(pc)
     setEncrypted(true)
     dispatch({ type: 'silent', fn: () => decrypted })
     setUnlocked(true)

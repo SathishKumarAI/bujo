@@ -107,6 +107,50 @@ describe('sign-in is rendered in one place', () => {
   })
 })
 
+describe('no credential is hardcoded into the source', () => {
+  /**
+   * This guard did not exist in the main tree — it was sitting in an agent
+   * worktree, which is the same as not existing. Added once the project went
+   * live, because that is the point at which a pasted key stops being
+   * hypothetical.
+   *
+   * The two things that must never be committed, and why each is different:
+   */
+
+  it('contains no service_role key, in any spelling', () => {
+    // A service_role key bypasses Row Level Security COMPLETELY. RLS is the
+    // only thing making this app multi-tenant, so this one key undoes the
+    // entire security model — it could read every user's row. It belongs in
+    // no file, no comment and no test fixture.
+    const offenders = scannable
+      .filter(([, s]) => /service_role|SERVICE_ROLE|sb_secret_/.test(s))
+      .map(([p]) => p)
+    expect(offenders).toEqual([])
+  })
+
+  it('contains no hardcoded Supabase project URL', () => {
+    // The URL is not itself a secret — it ships in the bundle via
+    // `VITE_SUPABASE_URL`, by design. What this catches is someone pasting a
+    // literal to "just make it work", which silently pins the build to one
+    // project and takes the deployment out of the env vars that are supposed
+    // to control it. `import.meta.env` is the only route in.
+    const offenders = scannable
+      .filter(([, s]) => /[a-z0-9]{15,}\.supabase\.co/.test(s))
+      .map(([p]) => p)
+    expect(offenders).toEqual([])
+  })
+
+  it('reads its configuration only from import.meta.env', () => {
+    // Belt to the above braces: the client module is the one place allowed to
+    // know how it is configured, and it must get that from the environment.
+    const client = scannable.find(([p]) => p === CLIENT)
+    expect(client, `${CLIENT} not found — has it moved?`).toBeDefined()
+    expect(client![1]).toMatch(/import\.meta\.env\.VITE_SUPABASE_URL/)
+    expect(client![1]).toMatch(/import\.meta\.env\.VITE_SUPABASE_ANON_KEY/)
+  })
+})
+
+
 describe('the journal never reaches the account unencrypted', () => {
   /**
    * The property the whole design rests on, and the one most easily lost by a

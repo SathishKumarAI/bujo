@@ -1,3 +1,4 @@
+import { autoSyncEnabled } from '../../lib/syncSecret'
 import { ArrowCounterClockwise, Command, Gear, Minus, Plus, Question, ShareNetwork, ShieldCheck, UserCircle, ChatCenteredDots} from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Button } from '../ui/button'
@@ -64,7 +65,7 @@ export function AccountMenu({
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { data, setSettings, undo, redo, canUndo, canRedo } = useJournal()
   const profile = data.settings.profile
-  const syncing = typeof localStorage !== 'undefined' && !!localStorage.getItem('bujo:sync')
+  const syncing = autoSyncEnabled()
   const label = profile ? profile.name : 'No name set'
   const zoom = data.settings.zoom ?? 1
   const suggestions = useSuggestionCount()
