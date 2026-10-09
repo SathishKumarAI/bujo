@@ -93,6 +93,37 @@ const RULES: { match: string[]; work: MuscleWork }[] = [
   { match: ['high knee'], work: { primary: [M.quads, M.abs], secondary: [M.calves, M.glutes] } },
   { match: ['bear crawl', 'crab walk'], work: { primary: [M.abs, M.shoulders], secondary: [M.quads, M.triceps, M.obliques] } },
 
+  // ── The coach's thread (COD-302). Ten names from `lib/coachSessions.ts`
+  //    resolved to nothing; measured, not guessed — `allMusclesForExercise`
+  //    was run over all 127 distinct movements and returned empty for these.
+  //
+  //    Worth recording what the measurement corrected: an earlier audit listed
+  //    battle rope, renegade row, Bulgarian split squat, Arnold press and
+  //    thrusters as missing. All five already resolve through the generic
+  //    `rope` / `row` / `squat` / `press` / `thruster` rules. Only
+  //    behind-neck press was really absent. A guess at what a keyword list
+  //    misses is worth less than running it. ──
+  //
+  // Above the generic `press` rules, which would otherwise claim these for
+  // the chest.
+  { match: ['behind-neck', 'behind neck'], work: { primary: [M.shoulders], secondary: [M.traps, M.triceps] } },
+  // "Parallel bar" is this thread's name for a dip.
+  { match: ['parallel bar'], work: { primary: [M.chest, M.triceps], secondary: [M.shoulders, M.serratus] } },
+  // One-armed triceps work. The generic `extension` rule reads as leg
+  // extension, so these have to win first.
+  { match: ['single-hand dumbbell extension', 'single hand dumbbell extension', 'single-hand cable pressdown', 'single hand cable press down'], work: { primary: [M.triceps], secondary: [M.shoulders] } },
+  // Flat and decline dumbbell pressing: the generic rule keys on "bench".
+  { match: ['flat dumbbell press', 'flat db press'], work: { primary: [M.chest], secondary: [M.triceps, M.shoulders] } },
+  { match: ['decline dumbbell press', 'decline db press'], work: { primary: [M.chest], secondary: [M.triceps, M.abs] } },
+  // A loaded trunk rotation held at arm's length.
+  { match: ['plate rotation', 'russian twist'], work: { primary: [M.obliques, M.abs], secondary: [M.shoulders] } },
+  { match: ['knee tuck', 'toe touch'], work: { primary: [M.abs], secondary: [M.obliques, M.quads] } },
+  // The hip-abduction machine. There is no abductor id in `M` — wger does not
+  // separate one — so this names the gluteus medius's own job through
+  // `glutes` rather than inventing a muscle the 2D and 3D maps cannot draw.
+  { match: ['outer thigh', 'hip abduction', 'abductor'], work: { primary: [M.glutes], secondary: [M.quads] } },
+  { match: ['inner thigh', 'hip adduction', 'adductor'], work: { primary: [M.quads], secondary: [M.glutes, M.hamstrings] } },
+
   // ── Hanging trunk flexion. The lats hold the hang; the abs do the lift. ──
   { match: ['toes-to-bar', 'toes to bar', 'hanging knee raise', 'hanging leg raise', 'knees to elbows'], work: { primary: [M.abs], secondary: [M.obliques, M.lats, M.quads] } },
 

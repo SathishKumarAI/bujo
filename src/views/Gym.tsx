@@ -18,6 +18,7 @@ import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
 import { ProgressPhotos } from '../components/ProgressPhotos'
 import { QuietSection } from '../components/CollapsibleSection'
+import { CoachSessions } from '../components/gym/CoachSessions'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { splitGlyph } from '../components/glyphs'
 import {
@@ -400,6 +401,9 @@ export function Gym() {
                 />
                 <PlateCalculator key={unit} unit={unit} />
                 <SavedRoutines routines={data.routines} onRemove={removeRoutine} onLoad={loadRoutine} />
+                {/* Beside Saved routines on purpose: same verb, same object. See
+                    `CoachSessions` for why it is not a tab and not on Program. */}
+                <CoachSessions onLoad={loadRoutine} />
                 <Card band title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session">
                   <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
                 </Card>

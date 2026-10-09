@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { COACH_SESSIONS, COACH_TAGS, movesOf, setsOf, isSuperset, type Move } from './coachSessions'
+import { COACH_SESSIONS, COACH_TAGS, movesOf, setsOf, isSuperset, loadableMoves, splitOf, type Move } from './coachSessions'
+import { allMusclesForExercise } from './exerciseMuscles'
 
 /**
  * COD-302. These counts are the point of the file.
@@ -155,5 +156,87 @@ describe('derived helpers never become a second list', () => {
     const names = movesOf(s7).map((mv) => mv.name)
     expect(names.indexOf('Seated cable rowing')).toBeLessThan(names.indexOf('Side lateral raises'))
     expect(names).toContain('Knee tucks')
+  })
+})
+
+/**
+ * Without a muscle mapping a movement is invisible to the body view and to
+ * every "what did this work" rollup — it logs fine and then silently stops
+ * existing in the analysis.
+ */
+describe('every movement reaches the muscle map', () => {
+  /** Correctly unmapped, each for a stated reason. */
+  const NOT_A_MOVEMENT: Record<string, string> = {
+    'Legs warm-up': 'An instruction ("Legs warmup cheyu"), not a movement.',
+    Cardio: 'The thread’s "After cardio" preamble.',
+    'Cross trainer': 'Cardio equipment; the session carries its minutes, not muscles.',
+    // Deliberately NOT guessed at. Session 27 reads "Extension 20x5" with no
+    // qualifier, between squat jumps and sumo squats. Leg extension is likely
+    // and triceps extension is possible, and inventing the answer would put a
+    // muscle on the body map that the coach never named.
+    Extension: 'Ambiguous in the source — "Extension 20x5", no qualifier. Ask before mapping.',
+  }
+
+  it('maps every movement that is one', () => {
+    const names = [...new Set(COACH_SESSIONS.flatMap(movesOf).map((mv) => mv.name))]
+    const unmapped = names.filter((n) => allMusclesForExercise(n).length === 0 && !NOT_A_MOVEMENT[n])
+    expect(
+      unmapped,
+      'these coach movements resolve to no muscles, so they would not appear in the body view. '
+      + 'Add a keyword rule to exerciseMuscles.ts, or list the name in NOT_A_MOVEMENT with a reason.',
+    ).toEqual([])
+  })
+
+  it('keeps the unmapped list to the four that are not movements', () => {
+    const names = [...new Set(COACH_SESSIONS.flatMap(movesOf).map((mv) => mv.name))]
+    const unmapped = names.filter((n) => allMusclesForExercise(n).length === 0)
+    expect(unmapped.sort()).toEqual(Object.keys(NOT_A_MOVEMENT).sort())
+  })
+
+  it('documents every exemption', () => {
+    for (const [name, why] of Object.entries(NOT_A_MOVEMENT)) {
+      expect(why.length, `${name} is exempted without a reason`).toBeGreaterThan(20)
+    }
+  })
+})
+
+describe('loading a session into the logger', () => {
+  it('loads the main work and drops warm-ups and finishers', () => {
+    // `loadRoutine` makes one set row per name. "Legs warmup cheyu" and
+    // "Treadmill 30 minutes" are not set rows, so they are shown in the
+    // expanded session and not loaded — the prescription stays intact on
+    // screen, it just does not become a row asking for reps and a weight.
+    const s2 = COACH_SESSIONS.find((s) => s.id === 'cs-02')!
+    expect(s2.warmup.length).toBeGreaterThan(0)
+    expect(s2.finisher.length).toBeGreaterThan(0)
+    const loaded = loadableMoves(s2)
+    expect(loaded).not.toContain('Cycle')
+    expect(loaded).not.toContain('Treadmill')
+    expect(loaded[0]).toBe('Squat jumps')
+  })
+
+  it('expands a superset into both of its movements', () => {
+    // Loading a superset as one row would lose half the session.
+    const s7 = COACH_SESSIONS.find((s) => s.id === 'cs-07')!
+    const loaded = loadableMoves(s7)
+    expect(loaded).toContain('Seated cable rowing')
+    expect(loaded).toContain('Side lateral raises')
+  })
+
+  it('gives every session something to load', () => {
+    for (const s of COACH_SESSIONS) {
+      expect(loadableMoves(s).length, `${s.id} ${s.title}`).toBeGreaterThan(0)
+    }
+  })
+
+  it('derives a split from the tags rather than storing one', () => {
+    const splits = COACH_SESSIONS.map(splitOf)
+    expect(new Set(splits).size).toBeGreaterThan(2)
+    // A legs-and-shoulders day is neither a leg day nor a push day.
+    expect(splitOf(COACH_SESSIONS.find((s) => s.id === 'cs-09')!)).toBe('full')
+    expect(splitOf(COACH_SESSIONS.find((s) => s.id === 'cs-02')!)).toBe('legs')
+    expect(splitOf(COACH_SESSIONS.find((s) => s.id === 'cs-12')!)).toBe('push')
+    expect(splitOf(COACH_SESSIONS.find((s) => s.id === 'cs-20')!)).toBe('upper')
+    expect(splits.every((x) => ['push', 'pull', 'legs', 'upper', 'lower', 'full', 'other'].includes(x))).toBe(true)
   })
 })
