@@ -121,6 +121,22 @@ shard meets the page in its authored state and the column means the same thing
 on all 166 rows. Separate from the single-open-accordion ceiling above, which is
 expected and stays.
 
+Trap (fixed, COD-294): **the first load after any new build served the
+PREVIOUS build**, everywhere — `vite preview`, dev, and production. The worker
+skip-waits and claims the page, but the document has already fetched its bundle
+from the old precache, and the injected `registerSW.js` is three statements that
+register and nothing else. So load 1 was stale and load 2 was current, once per
+release, for every user. Measured with two real builds and one manual reload:
+**before, 1 navigation and the document ended on build A; after, 2 navigations
+and build B.** `main.tsx` now reloads once on `controllerchange`, guarded by
+`lib/swUpdate.ts` — and the guard that matters is that **an update arriving
+mid-sign-in is skipped**, because reloading over `#access_token=…` throws the
+fragment away before `detectSessionInUrl` persists the session, which looks
+exactly like COD-290/COD-293 and would have been blamed on them. The entry
+below is what this trap used to say; it is kept because the manual reset is
+still the way to clear a worker you have already poisoned, and because it is
+the clearest example in this file of a workaround that should have been a fix.
+
 Trap: **`vite preview` serves a stale bundle through its service worker.** A
 screenshot can show pre-change markup against a freshly built `dist/`. Before
 believing what you see:
