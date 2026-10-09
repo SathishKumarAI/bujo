@@ -55,7 +55,7 @@ const TRACKER_VIEW_MODES = ['day', 'week', 'month'] as const
 
 /** One-click habit presets (sensible defaults). */
 const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; color: string; type?: HabitType; target?: number; unit?: string; weeklyGoal?: number; avoid?: boolean }[] = [
-  { name: 'Water', emoji: '💧', category: 'food', color: 'sky', type: 'count', target: 8, unit: 'glasses' },
+  { name: 'Water', emoji: '💧', category: 'food', color: 'sky', type: 'count', target: 8, unit: 'glasses', weeklyGoal: 7 },
   { name: 'Exercise', emoji: '🏃', category: 'movement', color: 'green', weeklyGoal: 4 },
   { name: 'Read', emoji: '📚', category: 'wellness', color: 'peach', weeklyGoal: 7 },
   { name: 'Meditate', emoji: '🧘', category: 'wellness', color: 'lavender', weeklyGoal: 7 },
