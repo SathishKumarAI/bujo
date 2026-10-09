@@ -45,10 +45,28 @@ export const OVERSCROLL_PX = 120
  * while the list still has somewhere to go — resets to zero, so the travel has
  * to be one continuous downward gesture.
  *
+ * **`canScroll` is the guard this shipped without, and it was the whole bug.**
+ * A list with nothing to scroll has `scrollTop + clientHeight === scrollHeight`
+ * — it is at its end because it is also at its start — so "at the end" was
+ * permanently true, and that is the NORMAL state of this rail: measured at
+ * 1503×849 on the Body section, eleven tabs and five sections come to
+ * **scrollHeight 699 against clientHeight 699**. Scrolling the page with the
+ * pointer anywhere over the sidebar therefore hid the sidebar. Reported as
+ * "I can hover it but I can't click it" — correctly: the row you were aiming
+ * at was gone before the click landed.
+ *
+ * Over-scrolling only means something where scrolling means something, so a
+ * list that cannot scroll never accumulates.
+ *
  * @returns the new accumulator, and whether to hide (which resets it)
  */
-export function overscrollHide(acc: number, deltaY: number, atEnd: boolean): { acc: number; hide: boolean } {
-  if (deltaY <= 0 || !atEnd) return { acc: 0, hide: false }
+export function overscrollHide(
+  acc: number,
+  deltaY: number,
+  atEnd: boolean,
+  canScroll: boolean,
+): { acc: number; hide: boolean } {
+  if (deltaY <= 0 || !atEnd || !canScroll) return { acc: 0, hide: false }
   const next = acc + deltaY
   return next >= OVERSCROLL_PX ? { acc: 0, hide: true } : { acc: next, hide: false }
 }

@@ -201,8 +201,9 @@ export function SideRail({
         }}
         onWheel={(e) => {
           const el = e.currentTarget
+          const canScroll = el.scrollHeight > el.clientHeight
           const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
-          const { acc, hide } = overscrollHide(overscroll.current, e.deltaY, atEnd)
+          const { acc, hide } = overscrollHide(overscroll.current, e.deltaY, atEnd, canScroll)
           overscroll.current = acc
           if (hide) onToggleRail()
         }}
