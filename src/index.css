@@ -1172,6 +1172,36 @@ body.handwriting textarea {
   :is(header, nav) a {
     text-decoration: none;
   }
+
+  /* AND A BUTTON SAYS IT IS A BUTTON, which this app stopped doing at the
+     Tailwind v4 upgrade.
+
+     v3's preflight carried `cursor: pointer` on `button`; v4 dropped it and
+     defers to the UA sheet, where a `<button>` is `cursor: default`. Nothing
+     fails, nothing is logged, and the only symptom is that the pointer stops
+     changing — so every control in the app quietly stopped *looking* like a
+     control. Measured on Today at 1512x950 before this rule: **37 of 37
+     buttons computed `cursor: default`**, against 28 of 28 anchors at
+     `pointer`. Quick add, Search, Hide the sidebar, every habit tick, every
+     fold toggle, every chip. Reported, exactly, as "why is not clickable".
+
+     Element selectors rather than a class for the reason the anchor rule above
+     gives: a rule each author must re-type is a rule that gets forgotten, and
+     there are ~37 call sites on one page alone. `[role='button']` catches the
+     handful of divs that act as buttons; `summary` is a disclosure and behaves
+     like one.
+
+     Disabled is deliberately NOT `not-allowed`: this app disables a control to
+     say "not yet" (a stepper at its floor, a future day in the tracker), not
+     "you are forbidden", and a crossed-out circle on a day that simply has not
+     happened yet reads as an error. The arrow is the honest cursor there.
+
+     In `@layer base` with the rest, so a `cursor-*` utility at a call site
+     still wins — `@layer utilities` beats `@layer base`, and an unlayered rule
+     here would beat BOTH, which is the trap recorded above. */
+  :is(button, [role='button'], summary):not(:disabled):not([aria-disabled='true']) {
+    cursor: pointer;
+  }
 }
 .prose-doc code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

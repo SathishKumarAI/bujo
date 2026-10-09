@@ -33,6 +33,17 @@ deploy; the numbers quoted lower down are from the previous session.
   stopped being a three-bucket traffic light (a real week lands in one bucket →
   seven olive blocks) and became a sequential green ramp.
 
+- **#383 · the rail stopped hiding itself under the pointer.** #379's `atEnd`
+  test is also true for a list that cannot scroll — and that is the rail's
+  normal state (scrollHeight 699 = clientHeight 699 at 1503x849) — so one wheel
+  flick with the cursor over the sidebar hid it. `overscrollHide` now takes
+  `canScroll`.
+- **#384 · every button in the app now looks clickable.** Tailwind v4 dropped
+  v3's preflight `cursor: pointer` on `button`, so **37 of 37 buttons on Today
+  computed `cursor: default`** against 28 of 28 anchors at `pointer`. One rule
+  in `@layer base`; 261 enabled buttons on a fully-unfolded Today now read
+  `pointer`, and the 269 disabled ones deliberately do not.
+
 **Open, filed: COD-306.** An avoid habit with a `weeklyGoal` now draws nothing
 at all — the field is accepted and never shown. It needs a ceiling mark, not a
 floor one, beside the rings rather than among them.
