@@ -139,8 +139,12 @@ export function SegmentScale({
                   'group-hover/seg:h-3.5 motion-reduce:transition-none',
                 )}
                 style={{
+                  // The run is ONE colour, and the picked segment is taller
+                  // and ringed — it was `opacity: 0.85` on every filled
+                  // segment but the chosen one, which is a colour no gate can
+                  // check for a difference nobody can see. Height and the ring
+                  // were already saying which one is picked.
                   background: on ? accent : cat('surface1'),
-                  opacity: on ? (exact ? 1 : 0.85) : 1,
                   boxShadow: exact ? `0 0 0 2px ${accent}33` : undefined,
                 }}
               />
