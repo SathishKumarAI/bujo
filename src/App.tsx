@@ -1,4 +1,6 @@
 import { getSyncPassphrase } from './lib/syncSecret'
+import { consumeAuthError } from './lib/supabase'
+import { notify } from './lib/notify'
 import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
@@ -63,6 +65,14 @@ const VIEWS: Record<ViewId, React.ComponentType> = {
 
 export default function App() {
   const { data, replaceAll } = useJournal()
+  // A failed Google redirect lands back on whatever view it left from, so this
+  // belongs here and not in `AccountCard` — the card may not be mounted, and
+  // the whole bug was a failure with nowhere to appear. Runs once; it clears
+  // the params, so a reload cannot resurrect a stale error.
+  useEffect(() => {
+    const failure = consumeAuthError()
+    if (failure) notify.error(failure.message, failure.detail)
+  }, [])
   // Live mirror of `data` so once-on-mount sync handlers compare against the
   // current journal (not the stale mount snapshot) for conflict resolution.
   const dataRef = useRef(data)
