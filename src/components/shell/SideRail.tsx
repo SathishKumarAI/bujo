@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { MagnifyingGlass, Microphone, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Kbd } from '../Kbd'
@@ -8,6 +9,7 @@ import { RailToggle } from './RailToggle'
 import { WeekStrip } from './WeekStrip'
 import { SectionNav } from './SectionNav'
 import { SectionTabs } from './SectionTabs'
+import { deadSpaceClick, overscrollHide } from './railGestures'
 import type { SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
@@ -105,6 +107,10 @@ export function SideRail({
   onQuickAdd: () => void
   onTalk: () => void
 }) {
+  /** Wheel travel spent after the list has stopped scrolling. Resets on any
+      upward wheel, so only one continuous downward shove counts. */
+  const overscroll = useRef(0)
+
   return (
     <aside
       aria-label="Main navigation"
@@ -169,7 +175,39 @@ export function SideRail({
           tabs — the list would push the foot off the bottom of the rail, and
           the foot is where Quick add now lives. The section with the most to
           navigate is exactly the one that must not lose its primary action. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      {/* CLICK THE DEAD SPACE, OR SCROLL PAST THE END, TO HIDE THE RAIL.
+
+          Both gestures are the same request — *get out of the way* — made with
+          whatever hand happens to be on the mouse, and both land on this div
+          rather than on the `aside`, because this is the element that owns the
+          empty column below the last tab and the only one that scrolls.
+
+          `e.target === e.currentTarget` is what keeps it from eating a
+          navigation click: every row in the two lists is an `<a>` or a
+          `<button>`, so a click that reaches the container itself hit nothing.
+          A double click therefore also works — the first of the two does it,
+          and the second lands on the page the rail just uncovered.
+
+          The wheel gesture needs a threshold or a trackpad's tail end hides
+          the rail on arrival at the bottom. 120px of travel *after* the
+          scroller has nothing left to give is a deliberate shove, and any
+          upward wheel resets it. Below `md` none of this exists, because the
+          rail does not. */}
+      <div
+        onClick={(e) => {
+          const last = e.currentTarget.lastElementChild?.getBoundingClientRect() ?? null
+          if (deadSpaceClick(e.target === e.currentTarget, e.clientY, last ? last.bottom : null))
+            onToggleRail()
+        }}
+        onWheel={(e) => {
+          const el = e.currentTarget
+          const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+          const { acc, hide } = overscrollHide(overscroll.current, e.deltaY, atEnd)
+          overscroll.current = acc
+          if (hide) onToggleRail()
+        }}
+        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+      >
         <SectionNav view={view} gates={gates} onNavigate={onNavigate} />
         {/* The rule that separates the two lists lives on `SectionTabs`
             itself, not here, because it must exist exactly when that list
