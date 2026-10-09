@@ -606,6 +606,87 @@ Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.
 
+Trap: **a tripwire's regex literals can silently stop matching.** Two carriers
+dropped out of `egress.contract.test.ts`'s `SENDS` assertion while the data they
+described was byte-identical, and the test stayed green because a pattern that
+matches nothing contributes nothing. **Root cause was never isolated**, which is
+precisely why the fix is structural rather than a one-line correction: build the
+patterns from `String.raw` strings compiled with `new RegExp`, and **assert each
+pattern against a known-positive sample** in the same file. A pattern that stops
+matching then fails as itself, loudly, instead of as a quiet zero. The general
+rule, and the reason all three of this repo's contract tests were armed against
+a planted violation before being trusted: **a scan that silently matches nothing
+passes.** `csp.contract.test.ts` has an explicit assertion for exactly that
+(`the source glob matched nothing`), and it is not paranoia — it is the failure
+mode that ships.
+
+Trap: **`button:has-text("…")` is a substring match, and the row count hides
+it.** A probe verifying that a coach session loads clicked a *different* button
+whose label happened to contain `Load `, and reported the feature broken. The
+expensive half is the assertion that was about to be written: **the number of
+rows**, which would have passed either way, because the wrong button also adds
+rows. Scope a browser-probe click to an exact label (`/^Load \d+$/`) and
+**assert on the value, not on the shape of the result** — the exercise names
+appearing, not the inputs going from 4 to 34.
+
+Trap: **Vite loads `.env.local` for vitest, so `isConfigured()` differs between
+this machine and CI.** Supabase is configured locally and not in CI, so a test
+asserting `isConfigured() === false` is green on one and red on the other, in
+either direction depending on which you wrote it against. Assert the
+**relationship** — a client is built iff configured, the call never throws, the
+result is memoised — never either answer. Same family as the preview-port traps
+above: the test was right about the code and wrong about the environment it
+would run in.
+
+Trap: **for "login works but the UI is blank", read the redirect chain before
+reading the source.** COD-290 through COD-296 was one sentence of report with
+six causes, and **the one that mattered was in the OAuth error query string the
+whole time** (`error_description=Unable+to+exchange+external+code` — a wrong
+provider client secret, a dashboard field no code change can reach). Five code
+PRs shipped first, each fixing something genuinely broken: identity in one
+component's `useState`, a stale service worker, a client built too late for
+`detectSessionInUrl`, an un-allow-listed redirect origin, a CSP with no
+`supabase.co`. That is exactly why none of them being the cause was not obvious.
+Driving the real browser and reading the network panel found it in **sixty
+seconds**. Corollary: **`redirectTo` is a request, not an instruction** — Supabase
+substitutes the Site URL when the origin is not allow-listed and returns 302 as
+if nothing happened, so measure it by sending one and reading the `Location`
+header back.
+
+Trap: **a deny-list of storage keys cannot be kept in step with the keys.**
+"Erase everything" walked a hand-written list of 23 and therefore left behind the
+sync passphrase, **the Supabase session** (so the device was erased and still
+signed in), the passcode salt, the onboarding flags and **every photo** in the
+`bujo-images` IndexedDB. Nothing failed; the dialog said it was done. Sweep by
+**prefix** (`bujo:`, `bujo.ui.`, `sb-`) and keep an explicit short *allow*-list
+of what survives, which is the direction that stays correct as the key space
+grows. Two corollaries worth copying: delete the IndexedDB databases with a
+timeout race, because `deleteDatabase` blocks silently forever on a held
+connection and hangs the dialog; and **return a report of what was actually
+removed**, since "we tried" and "it is gone" are different claims.
+
+Trap: **`vercel.json` headers do not apply to `vite preview`, so every gate runs
+without the CSP.** Three shipped features were dead **in production only** —
+Google Drive sign-in (`accounts.google.com/gsi/client` against `script-src
+'self'`), and both food-lookup providers (absent from `connect-src`) — and a CSP
+failure is uniquely quiet: the request never leaves, the console note is easy to
+miss, and the feature simply does nothing. Neither the type checker nor any
+browser gate can see it. `csp.contract.test.ts` now asserts that every absolute
+host named in a file that *fetches* is allowed or is listed in `NOT_FETCHED`
+with a reason — scoped to files that already fetch, because the repo is full of
+citation links and an `<a href>` is not egress.
+
+Trap: **retiring a destination leaves hand-written id lists behind, and only a
+gate sees them.** `?view=account` became a 301 into Settings, and
+`scripts/view-ids.mjs` still listed `account` — caught by the repo's own
+`viewChrome` test, which reads a list a type cannot. Same family as the retired
+`BottomNav` `PRIMARY` list. And when you add a *query* to a gate's destination,
+check how the gate parses it: `['Settings · appearance', 'settings&tab=feel']`
+folded the tab into the view id, `goOrDie` reads only the `view` parameter, and
+four of twelve a11y shards went red. The fix is a third `query` element **plus
+an assertion that the tab actually stuck** — otherwise the gate silently scans
+the default panel five times and reports five themes.
+
 ## graphify
 
 This project has a graphify knowledge graph at .graphify/.

@@ -1,50 +1,58 @@
 # Next session
 
-> **2026-10-05 — FIRST: check that #326 went green.** The browser gates were
-> split into two parallel jobs because the single job was being cancelled at
-> 15m03s on every run, which Actions reports as a bare `failure` (COD-268). If
-> `a11y` and `render` both pass on `main`, the split worked and there is nothing
-> to do. **If either hits 15m03s again, the cap is not about job duration** and
-> that is the thread to pull before trusting any browser gate — all three
-> (axe, smoke, clipped) were silently not running on #322 and #323.
+> **2026-10-09 — FIRST, and it is not code: promote the deployment.**
 >
-> Second, and only if you touch sync: the live deploy is still serving the
-> **old** `/api/sync` handler. Verified read-only — `?code=X&versions=1` returns
-> 404 instead of `{"versions":[]}`. So #322 and #323 are merged but not live,
-> and the first production pull is what proves the `x-sync-code` header path end
-> to end. The `?code=` fallback exists to make that safe to find out.
+> ```
+> ! npx vercel promote bujo-bdyge3g4a-sathish-s-pickleball-cards.vercel.app
+> ```
 >
-> The 2026-09-30 note that used to head this file said "FIRST: merge the open
-> stack, #317 then #318". Both merged on 2026-09-30. Removed rather than left,
-> because an instruction that is already done reads exactly like one that is
-> not, and this file's own rule is that it gets rewritten when picked up.
+> **Fifteen PRs (#363–#377) are merged and none of them is live.** Production
+> serves the 27 September build; the alias was never moved and **no deployment
+> fired for any of the fifteen merges**, which means the GitHub→Vercel
+> integration is not deploying and that is the thread to pull. The production
+> build itself is fine — `dpl_3gygHvzWEu6japMoTQHx1Nxt5Dgf` is Ready and its
+> bundle was verified to contain the project ref, "Continue with Google" and
+> "not syncing yet". `vercel promote` is blocked by this sandbox's classifier,
+> so the one command is the owner's.
 >
-> **The #320–#326 queue was NOT worked through either** — that stretch was the
-> sync audit (see `WORKLOG.md` 2026-10-05 and
-> `docs/security/sync-hardening-plan.md`). Every item below is still open and
-> still measured.
+> **SECOND: the Supabase redirect allow-list (COD-293).** Authentication → URL
+> Configuration. Site URL is `http://localhost:3000`, and production and preview
+> origins are both **rejected** — measured by sending a `redirect_to` and
+> reading the `Location` back, where both came back as the Site URL. So a
+> production Google sign-in **cannot complete**. Set Site URL to
+> `https://bujo-journal.vercel.app` and add that origin's `/**`, the preview
+> wildcard, and `http://localhost:4173/**` + `http://localhost:5173/**`. **Keep
+> the localhost entries** — they are the only reason local sign-in works.
+>
+> Nothing below needs either of those done first. The rest of this session's
+> state, including the four open decisions it deliberately did not guess, is in
+> `STATUS.md`; what shipped and what it measured is in `WORKLOG.md`.
 >
 > **Joined the pile this stretch:**
 >
-> - **COD-268 — why is the CI job cap 15 minutes?** Public repo on a personal
->   account, so Actions minutes are free and unlimited; no `timeout-minutes` was
->   configured and `a11y` has no `concurrency` block (`screenshots` does, which
->   explains its cancel but not a11y's). A rerun queued and never picked up a
->   runner. #326 works around it either way; the cause is unknown.
-> - **No restore dialog has ever been rendered by any gate.** All four
->   "Replace my data" confirms need a configured remote, so a11y, smoke and
->   clipped all structurally miss them, and #321 changed the copy in all four.
->   Pinned by a source assertion in `egress.contract.test.ts`, which is not the
->   same as having seen it. Same family as COD-232's tab shell and COD-237's
->   rails: when a gate walks the DOM, ask what is not in it.
-> - **`?code=` is still accepted by `api/sync.ts`** for bundles cached before
->   #323. Drop that arm one release after `b0e79fa` — it is the logged-secret
->   path the change exists to close, so leaving it forever defeats the change.
-> - **Rotating a sync passphrase does not erase the old blob**, and nothing in
->   the UI says so. The v1 blob stays decryptable by the old passphrase forever
->   (reasoning in `pullCloud` and plan §3). Either say it in `CloudSyncCard` or
->   decide it does not need saying — but it is currently unsaid rather than
->   decided.
+> - **COD-304 — hover-to-navigate on the sidebar.** Asked for directly, filed
+>   rather than built. Five hazards in the ticket; the short version is that a
+>   190px rail means the pointer crosses up to nine rows on its way anywhere,
+>   and a navigation nobody asked for cannot be undone by moving the mouse back.
+>   **Prefetch on hover instead of navigating** gives the speed with none of it.
+>   Recommended, not decided.
+> - **Loading a coach session does not pre-fill reps and sets.** `loadRoutine`
+>   makes one row per exercise name; the prescription stays visible in the
+>   expanded session and is retyped. Worth doing, not obviously — a pre-filled
+>   target is also a target you clear when the day goes differently.
+> - **`Extension 20x5`** (coach session 27) has no muscle mapping and should not
+>   get a guessed one. Held in `coachSessions.test.ts`'s `NOT_A_MOVEMENT` with
+>   that reason, so it is a recorded question, not a silent gap. **Ask the coach.**
+>
+> **Cleared this stretch, so do not go looking:** the 18 worktrees are down to
+> 1; COD-287 (hide the page header) shipped as "make it shorter instead", 67px →
+> 49px; and the Google client secret that broke sign-in has been re-pasted.
+>
+> The 2026-10-05 note that headed this file is gone. #326 went green and the
+> browser gates have run on every push since — `a11y` is 187/187 across 12
+> shards. Removed rather than left, because an instruction that is already done
+> reads exactly like one that is not, and this file's own rule is that it gets
+> rewritten when it is picked up.
 
 > **2026-09-30 — the stack this note used to open with is merged.** `#317` and
 > `#318` both landed on 2026-09-30; the instruction to merge them bottom-first

@@ -26,6 +26,178 @@ Rules the three share:
 
 ---
 
+## 2026-10-09 — Six causes behind one sign-in, then everything it touched
+
+Fifteen PRs, **#363–#377**. `main` at `fa54b56`, zero open PRs, **137 test
+files / 1854 tests** (was 129 / 1784). `a11y` **187/187 across 12 shards**, no
+serious or critical — the scan count went up because retiring a page into
+Settings made three tab panels reachable. `clipped` clean at 1440/1024/390,
+`smoke` 23/23, `design` 433 files, `contrast` 5 themes.
+
+**None of it is live.** Production still serves the 27 September build; the
+alias was never moved and no deployment fired for any of the fifteen merges.
+`vercel promote` is the one command the sandbox will not run, so it is the first
+line of `STATUS.md`.
+
+### "I can sign in and the UI never changes" had six causes
+
+The report was one sentence and the answer was not one bug. Each of these was
+real, each was shipped, and **the fifth is the one that mattered**:
+
+| # | Cause | Why nothing said so |
+|---|---|---|
+| COD-291 | Identity lived in `useState` inside `AccountCard`. The header, the Account bar and the sync pill could not see it. | React does not warn you that two components are each holding their own copy of the truth. |
+| COD-293 | `redirectTo` is a *request*. Supabase substitutes the Site URL when the origin is not allow-listed, with no error. | Measured by sending a `redirect_to` and reading the `Location` header back: production and preview both came back as `http://localhost:3000`. |
+| COD-294 | The service worker served the **previous build on every first load**. | `registerType: 'autoUpdate'` with `skipWaiting` activates a new worker but does not reload the page it is already controlling. A fix shipped and then looked dead. |
+| COD-295 | `detectSessionInUrl` only runs when a client exists — and every component that built one sat under `LockScreen`/`Welcome`. | So the callback's `#access_token` was dropped, and *then* canonicalised out of the URL. Nothing to see in either place. |
+| **COD-296** | **Google issued a code; Supabase failed to exchange it. The provider's client secret was wrong.** | `error=server_error&error_description=Unable+to+exchange+external+code`. No code change could fix it. |
+| COD-300 | The CSP blocked Drive sign-in, food lookup and the local model **in production only**. | `vercel.json` headers do not apply to `vite preview`, so every gate is run without them. |
+
+**What this cost, and the lesson.** Five code PRs went in before COD-296 was
+found, and COD-296 took **sixty seconds** once the real browser was driven and
+the network panel read: the redirect chain named the failure in its own query
+string. Each of the five fixed something genuinely broken — the UI really was
+blind, the worker really was stale, the client really was never built — which is
+exactly why none of them being the cause was not obvious. *For "login works, UI
+blank", read the redirect chain before reading the source.* Written to memory.
+
+Two smaller things fell out of it. `AuthReturnReport` stamps `bujo:auth.pending`
+before the redirect and reports a round trip that never came back, deliberately
+with no expiry — a stamp left by a crash should be reported at the next launch,
+not silently dropped. And `shouldReloadForUpdate` guards the worker reload on
+`hadController && !alreadyReloaded`, with the auth-parameter regex **anchored on
+a parameter boundary** so a URL carrying `?barcode=123` cannot match `code`.
+
+### One home for the account (COD-297)
+
+Asked for: *"everything need to be at one place"*. Sign-in, local account, cloud
+sync and sync status were spread across an Account page, a Settings tab, the
+header menu and a pill. Now: Settings → Account, with the Account page retired
+to a 301 (`?view=account` rewrites, preserving the rest of the query string) and
+a `SyncStatusBar` that is the same object on every tab.
+
+The state machine is nine phases — `absent · signed-out · no-passphrase · demo ·
+checking · uploading · synced · locked · error` — derived, never stored, because
+a stored phase can contradict the thing it describes. `pill()` maps phase to the
+existing `SyncState`, and `no-passphrase` and `demo` deliberately **do not** light
+it: "you have not set this up" is not a sync in progress.
+
+**It closed half of COD-232 for free.** Adding `?view=settings&tab=…` gave the
+a11y gate a way to address the three panels a tab shell had been keeping out of
+the DOM — the passcode form, the cloud passphrase, the export buttons and the
+erase dialog had never been seen by axe at any theme or viewport. 173 → 187
+scans, green.
+
+### "Erase everything" did not, and a key was leaving the device (COD-299)
+
+Asked directly: where does local data live, and does a Google login write a key
+to this device. The answer is in `docs/AUTH.md` and it is the good one — one
+`sb-<ref>-auth-token` in `localStorage` holding the JWT and refresh token,
+written by `@supabase/supabase-js`, and **no key material of our own**. The
+journal's encryption key is derived from the passphrase at use time and never
+persisted.
+
+The audit found two things that were not fine:
+
+1. **Erase walked a hand-written list of 23 keys.** So it left the sync
+   passphrase, **the Supabase session** (still signed in), the passcode salt,
+   the onboarding flags and **every photo** in the `bujo-images` IndexedDB. Now
+   a prefix sweep (`bujo:`, `bujo.ui.`, `sb-`), both databases deleted with a 3s
+   race so a held connection cannot hang the dialog, and a `WipeReport` of what
+   was actually removed. A deny-list cannot be kept in step with a growing key
+   space; a prefix sweep does not have to be.
+2. **`settings.usdaKey` was not in `SYNC_SECRET_KEYS`.** A user's own API key,
+   leaving in every cloud sync and every CSV export, while `lmUrl` beside it was
+   stripped. One line — and `secretKeys.contract.test.ts` now parses the
+   `Settings` interface for credential-shaped field names, so the next such
+   field fails the build.
+
+**1302 commits** scanned for eight secret shapes, zero hits. The scan was
+canary-proven before being trusted: a planted fake key was found first.
+
+### Three tripwires, each proven on a canary before being believed
+
+A contract test that matches nothing passes. All three were armed against a
+deliberately planted violation first:
+
+- **`csp.contract.test.ts`** — every absolute host named in a file that
+  *fetches* must be in `connect-src`, or in `NOT_FETCHED` with a reason. Scoping
+  to files that already fetch is what makes it precise: the repo is full of
+  citation links to `nih.gov`, and an `<a href>` is not egress.
+- **`secretKeys.contract.test.ts`** — above.
+- **`egress.contract.test.ts`** (COD-301) — four blind spots closed. And it
+  taught the sharpest lesson of the session: **two of its `SENDS` regexes
+  silently stopped matching** while the data they described was unchanged. Root
+  cause never isolated, which *is* the finding. Patterns are now `String.raw`
+  strings compiled with `new RegExp`, and each is asserted against a
+  known-positive sample, so a pattern that stops matching fails as itself.
+
+### The coach's 29 sessions (COD-302)
+
+~29 WhatsApp messages of prescriptions in mixed English and Telugu, pasted in.
+`docs/workouts/coach-sessions.md` holds the **verbatim** source plus a
+vocabulary (`cheyu`, `ravali`, `thiyyi`) and the normalised breakdown;
+`lib/coachSessions.ts` types it; Gym → Look up & tools loads one into today's
+logger.
+
+The notation is genuinely ambiguous — `5x15` is five sets of fifteen in one line
+and fifteen reps five times in the next — so the resolution rule is written into
+a test rather than into a comment: **whichever number would be absurd as a set
+count is the reps**, asserted as "no move resolves to more than 6 sets" and "no
+move resolves to more than 50 reps". Both would fail on a backwards reading.
+
+The data model had to grow shapes the old one could not express: `Superset`
+(set count on the pair, not the move), `scheme` for the pyramid and the drop
+set, `toFailure` + `minReps` as floors rather than targets, and `noCount` as the
+explicit "the coach wrote no number here" marker — held to the two lines the
+thread really has, so a lazily-transcribed third fails the test.
+
+Two things deliberately **not** guessed: `Extension 20x5` has no qualifier, so
+it stays unmapped with that reason recorded; and loading a session does not
+pre-fill reps and sets.
+
+### Smaller, and all of them measured
+
+- **COD-298 · the rail's sub-tabs** ran at a 54px pitch under a 38px nav, so
+  Cycle fell off the bottom of a 12-tab cluster. `min-h-9` vertical / `min-h-11`
+  horizontal, plus a reveal that adjusts the rail scroller's `scrollTop`.
+- **COD-303 · five history lists, five different rules**, two of them silently
+  truncating at 12. One `useCappedList` + `ShowMore`, cap 3. The label carries
+  the total — `Show all (24)`, not `Show all` — because a list collapsed to
+  three rows with an unlabelled button cannot be told from a list that only ever
+  had three entries. Renders nothing when nothing is hidden.
+- **COD-287 · the page header, done by not doing it.** Asked to make the top bar
+  hide on scroll. It should not: `LibraryBar` and `SectionRail` park against
+  `--header-h`, and a nav that vanishes on scroll is the COD-202 trap that once
+  killed a whole gate run having scanned zero views. Instead it got *shorter* —
+  title and subtitle on one line with a `·` between them, **67px → 49px**, 27%
+  back on every page, and it never moves.
+
+### What else went wrong
+
+- **`button:has-text("Load ")` is a substring match.** A probe verifying the
+  coach-session load clicked a different button whose label contained the
+  phrase and reported the feature broken. Worse: the planned assertion was the
+  **row count**, which would have passed either way, because the wrong button
+  also adds rows. Scoped to `/^Load \d+$/` and asserted on the exercise names.
+- **Vite loads `.env.local` for vitest**, so `isConfigured()` is `true` locally
+  and `false` in CI. The first `initAuth` test asserted `=== false`. Assert the
+  relationship, never either answer.
+- **`scripts/view-ids.mjs` still listed `account`** after the page was retired —
+  caught by the repo's own `viewChrome` gate, which sees a hand-written id list
+  that a type cannot.
+- **The a11y gate went red on 4 of 12 shards** because
+  `['Settings · appearance', 'settings&tab=feel']` folded the query into the
+  view id, and `goOrDie` reads only the `view` parameter. Fixed with a third
+  `query` element, and the tab is now asserted to have stuck.
+- **An agent's list of unmapped exercises named seven; measuring gave
+  fourteen**, with one name in common.
+- **Python heredocs mangled regexes and quotes repeatedly.** Switched to
+  line-range replacement and `String.raw`; one unescaped apostrophe in
+  `'The thread's …'` broke test collection and was fixed with `’`.
+
+---
+
 ## 2026-10-09 — A refused sign-in that showed nothing (COD-290)
 
 Shipped #359 (the session's leftovers, ordered and filed), **#360** (the bug
