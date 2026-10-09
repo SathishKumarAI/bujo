@@ -2,7 +2,7 @@ import { Icon as AppIcon } from '@/components/Icon'
 import { ArrowLineUp, Barbell, CheckSquare, ListChecks, Timer, Flame } from '@/components/icons'
 import { useJournal } from '../store'
 import { useNav } from './shell/nav'
-import { cat, onRaised } from '../lib/colors'
+import { cardSurface, cat, onRaised, over } from '../lib/colors'
 import { todayISO, prettyDay, WEEKDAYS } from '../lib/date'
 import { dayCompletion } from '../lib/stats'
 import { atRiskHabits } from '../lib/streak'
@@ -149,13 +149,31 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
             <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${prettyDay(d.date)}: ${pct}% covered`}>
               <div
                 className="flex h-10 w-full items-end rounded"
-                style={{ background: cat('surface1') + '80', outline: d.date === day ? `1px solid ${cat('mauve')}` : 'none' }}
+                style={{ background: over(cat('surface1'), cardSurface(), 0.5), outline: d.date === day ? `1px solid ${cat('mauve')}` : 'none' }}
               >
+                {/* ONE HUE, STEPPED BY THE VALUE — not three buckets.
+
+                    The buckets were `>=99 green · >=50 yellow · >0 peach`, and
+                    a real week lands inside ONE of them: the demo's seven days
+                    are 78–93, so the strip painted seven identical blocks in
+                    latte's `yellow`, which is the olive-gold this repo had to
+                    re-pick by hue to make legible at all. A wall of mustard,
+                    and a colour scale carrying no information.
+
+                    Magnitude wants a sequential ramp, so the fill is `green`
+                    mixed toward the track by the score itself — 40% at zero,
+                    100% at a full day. Height stays the primary encoding and
+                    the number is printed underneath; colour is the redundant
+                    cue it was always meant to be. `over()` flattens the mix to
+                    a real hex, so what ships is a token-derived value a gate
+                    can read rather than an alpha suffix. */}
                 <div
                   className="w-full rounded transition-[height] duration-300"
                   style={{
                     height: `max(2px, ${pct}%)`,
-                    background: d.score >= 0.99 ? cat('green') : d.score >= 0.5 ? cat('yellow') : d.score > 0 ? cat('peach') : cat('surface1'),
+                    background: d.score > 0
+                      ? over(cat('green'), over(cat('surface1'), cardSurface(), 0.5), 0.4 + 0.6 * d.score)
+                      : cat('surface1'),
                   }}
                 />
               </div>

@@ -1,8 +1,8 @@
 import {
-  CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  CartesianGrid, Legend, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { Card } from '../ui'
-import { cat, rechartsTooltip } from '../../lib/colors'
+import { cardSurface, cat, over, rechartsTooltip } from '../../lib/colors'
 import { justCapturedProps } from '../CaptureReceipt'
 import { prettyMonth } from '../../lib/date'
 
@@ -31,7 +31,28 @@ type MetricsPoint = {
  * of them readings given days ago. Measured in a browser before the keys were
  * split per field: three dots for a one-word capture.
  */
-const SERIES = { mood: 'green', stress: 'red', sleep: 'blue' } as const
+/**
+ * THREE SERIES, AND COLOUR IS NOT ALLOWED TO BE THE ONLY DIFFERENCE.
+ *
+ * This chart drew mood in `green`, stress in `red` and sleep in `blue`, with no
+ * legend at all — identity by hue, and by a hue pair that is the textbook
+ * failure. Run over all five themes with the dataviz validator, red↔green
+ * separates by **ΔE 5.8 for deuteranopia in latte, vscode and dawn** (the floor
+ * is 6, the target 8): three of five themes, the two most-used ones among them.
+ *
+ * The fix is NOT a different trio. Every three-accent combination this app's
+ * palettes can make was scored across the five themes, and **none is clean** —
+ * red/green/blue is already joint best at 5.8, so re-stepping buys nothing and
+ * would cost the semantics (green mood, red stress) on top. Below the floor the
+ * rule is secondary encoding, so each series now carries a **dash pattern** as
+ * well as a hue, and a legend names all three. Pattern survives a greyscale
+ * print and a monochrome display, which is more than can be said for the hue.
+ */
+const SERIES = {
+  mood: { token: 'green', dash: undefined, label: 'Mood' },
+  stress: { token: 'red', dash: '7 4', label: 'Stress' },
+  sleep: { token: 'blue', dash: '2 3', label: 'Sleep' },
+} as const
 
 export function MetricsTrendCard({ chartData, ym, just = null }: {
   chartData: MetricsPoint[]
@@ -39,7 +60,15 @@ export function MetricsTrendCard({ chartData, ym, just = null }: {
   just?: { day: number; fields: readonly ('mood' | 'stress' | 'sleep')[] } | null
 }) {
   const marked = just == null ? null : chartData.find((p) => p.day === just.day)
-  const dots = just == null ? [] : just.fields.map((key) => ({ key, colour: cat(SERIES[key]) }))
+  const dots = just == null ? [] : just.fields.map((key) => ({ key, colour: cat(SERIES[key].token) }))
+  // The daily line is the quieter of the pair, and it says so with a COLOUR
+  // rather than with `opacity={0.35}`. A faded stroke is a value no gate can
+  // check — `check-contrast` reads token values and a faded token is not a
+  // token — and this file is where that trap is most expensive, because the
+  // same hue appears twice and the only thing separating the readings from the
+  // trend was the fade. `over()` flattens the accent onto the card it is drawn
+  // on, so what ships is a real hex.
+  const faint = (token: string) => over(cat(token), cardSurface(), 0.42)
 
   return (
     <Card enlargeable band title="Mood. Stress. Sleep" subtitle={`${prettyMonth(ym)}, faint = daily, bold = 7-day avg`} className="lg:col-span-2">
@@ -59,12 +88,54 @@ export function MetricsTrendCard({ chartData, ym, just = null }: {
             <XAxis dataKey="day" stroke={cat('overlay0')} fontSize={11} />
             <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
             <Tooltip contentStyle={rechartsTooltip()} />
-            <Line type="monotone" dataKey="mood" stroke={cat('green')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
-            <Line type="monotone" dataKey="stress" stroke={cat('red')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
-            <Line type="monotone" dataKey="sleep" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2} opacity={0.35} />
-            <Line type="monotone" dataKey="moodAvg" stroke={cat('green')} dot={false} connectNulls strokeWidth={2.5} />
-            <Line type="monotone" dataKey="stressAvg" stroke={cat('red')} dot={false} connectNulls strokeWidth={2.5} />
-            <Line type="monotone" dataKey="sleepAvg" stroke={cat('blue')} dot={false} connectNulls strokeWidth={2.5} />
+            {/* The legend names the three, so identity is never colour alone —
+                and it carries only the AVERAGES. Six entries for three subjects
+                would say the chart has six subjects; the daily line is the same
+                series drawn twice, which the subtitle already explains. */}
+            {/* `itemSorter` off, because recharts defaults it to `'value'` and
+                sorted the three ALPHABETICALLY: "Mood · Sleep · Stress", which
+                is not the order the card's own title reads in. Insertion order
+                is the authored one. */}
+            <Legend
+              verticalAlign="top"
+              align="right"
+              height={22}
+              iconSize={10}
+              wrapperStyle={{ fontSize: 11 }}
+              itemSorter={() => 0}
+              // The swatch carries identity; the WORD does not. recharts paints
+              // each legend label in its series colour by default, which puts
+              // 11px of text on the card in `red` and `green`. Text wears text
+              // tokens; the coloured mark beside it says which series it is.
+              formatter={(value: string) => <span style={{ color: cat('subtext0') }}>{value}</span>}
+            />
+            {(['mood', 'stress', 'sleep'] as const).map((key) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={faint(SERIES[key].token)}
+                strokeDasharray={SERIES[key].dash}
+                dot={false}
+                connectNulls
+                strokeWidth={1.5}
+                legendType="none"
+                name={`${SERIES[key].label}, daily`}
+              />
+            ))}
+            {(['mood', 'stress', 'sleep'] as const).map((key) => (
+              <Line
+                key={`${key}Avg`}
+                type="monotone"
+                dataKey={`${key}Avg`}
+                stroke={cat(SERIES[key].token)}
+                strokeDasharray={SERIES[key].dash}
+                dot={false}
+                connectNulls
+                strokeWidth={2.5}
+                name={SERIES[key].label}
+              />
+            ))}
             {marked && dots.map(({ key, colour }) => {
               const y = marked[key]
               if (typeof y !== 'number') return null
