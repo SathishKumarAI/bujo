@@ -1,3 +1,4 @@
+import { Band, BandRow } from '../components/mod'
 import { useJournal } from '../store'
 import { Page } from '../components/shell/Page'
 import { NowReading } from '../components/reading/NowReading'
@@ -56,9 +57,23 @@ export function Reading() {
         pagesRead={sum.pages}
       />
 
-      <LearningFeed books={books} />
+      {/* LEARNINGS AND READ LATER SHARE A ROW.
 
-      <ReadLater />
+          Measured at a 1368px shell: 249px and 218px, each spending the full
+          page width on a short list. They pair because they are the same
+          question in two tenses — what a finished book left you with, and what
+          you have not started — so they are read together or not at all.
+
+          The three above stay full width on purpose: Shelves is the browsing
+          surface, "Finished by month" is a chart that uses the width, and
+          "Reading now" is the one thing the page opens on. Pairing for the
+          sake of it would cost those their room to buy nothing. */}
+      <Band>
+        <BandRow>
+          <LearningFeed books={books} />
+          <ReadLater />
+        </BandRow>
+      </Band>
     </Page>
   )
 }
