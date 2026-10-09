@@ -42,6 +42,8 @@
 // here are the record of what the coach actually prescribed, and they are not
 // recoverable from a rendered page.
 
+import type { Split } from './types'
+
 /** One prescribed movement. `raw` is the coach's text; the rest is this file's reading of it. */
 export interface Move {
   name: string
@@ -571,6 +573,40 @@ export const COACH_TAGS: string[] = [...new Set(COACH_SESSIONS.flatMap((s) => s.
 /** Flattened moves of a session, supersets expanded in order. */
 export function movesOf(s: CoachSession): Move[] {
   return [...s.warmup, ...s.main.flatMap((b) => (isSuperset(b) ? b.moves : [b])), ...s.finisher]
+}
+
+/**
+ * The movement names to load into the logger, in order.
+ *
+ * Warm-ups and finishers are dropped: they are cardio and mobility
+ * instructions ("Legs warmup cheyu", "Treadmill 30 minutes"), and a set row
+ * asking for reps and a weight is the wrong shape for both. `noCount` moves
+ * stay — the coach named the movement and only left the numbers off.
+ */
+export function loadableMoves(s: CoachSession): string[] {
+  return s.main.flatMap((b) => (isSuperset(b) ? b.moves : [b])).map((mv) => mv.name)
+}
+
+/**
+ * Which `Split` this session is, derived from its tags.
+ *
+ * Derived rather than stored, so it cannot contradict the tags it describes —
+ * the page-contract rule the registry pass in this repo settled on. The order
+ * matters: a legs-and-shoulders day is neither a push nor a leg day, so the
+ * mixed cases are checked before the pure ones.
+ */
+export function splitOf(s: CoachSession): Split {
+  const t = new Set(s.tags)
+  const push = t.has('chest') || t.has('shoulders') || t.has('triceps')
+  const pull = t.has('back') || t.has('biceps') || t.has('pull')
+  const legs = t.has('legs')
+  if (t.has('full-body')) return 'full'
+  if (legs && (push || pull)) return 'full'
+  if (push && pull) return 'upper'
+  if (legs) return 'legs'
+  if (push) return 'push'
+  if (pull) return 'pull'
+  return 'other'
 }
 
 /** Total working sets, for a "how big is this" line. Supersets count once per set. */

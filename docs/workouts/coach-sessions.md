@@ -10,8 +10,13 @@ module carries a `raw` field holding the coach's own words, so each reading of
 the ambiguous notation below can be checked against the original without
 leaving the code.
 
-**No view imports the module yet.** That is deliberate and is the second half
-of COD-302 — see the ticket for why Program was the wrong home.
+**On screen:** Gym → *Look up & tools* → **Coach sessions**. Filter by tag,
+expand a session to read the prescription, press *Load N* to put its movements
+into today's logger. It sits beside *Saved routines* — same verb, same object.
+
+Warm-ups and cardio finishers are shown but **not loaded**: a set row asking
+for reps and a weight is the wrong shape for "Legs warmup cheyu" or "Treadmill
+30 minutes", so the button's count is the loadable count, not the line count.
 
 ---
 
