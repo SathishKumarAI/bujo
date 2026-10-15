@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { SectionRail, SummaryStrip, CalendarHeatmap, EmptyFrame } from '../page'
+import { SectionRail, SummaryStrip, CalendarHeatmap, EmptyFrame, PanelGrid, PanelCard, Tag } from '../page'
 import { Button } from '../ui/button'
 import { ShowMore } from '../ShowMore'
 import { useStickyState } from '../../lib/useStickyState'
@@ -57,7 +56,6 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
   const [panel, setPanel] = useStickyState<string>(
     'homeworkout.panel', 'history', HW_PANELS.map((p) => p.id),
   )
-  const [openId, setOpenId] = useState<string | null>(null)
   const current = HW_PANELS.find((p) => p.id === panel) ?? HW_PANELS[0]
 
   return (
@@ -96,29 +94,40 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
                 {sessions.length === 0 ? (
                   <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
                 ) : (
-                  <ul className="mt-3">
-                    {history.shown.map((w) => {
-                      const open = openId === w.id
-                      return (
-                        <li key={w.id} className="group border-b border-line py-2 text-body last:border-b-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <button onClick={() => setOpenId(open ? null : w.id)} aria-expanded={open} className="min-w-0 flex-1 text-left hover:text-fg-1">
-                              <span className="text-fg-1">{prettyDay(w.date)}</span>
-                              <span className="text-fg-2"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                              <span className="caret-turn caret-turn-quarter ml-1 inline-block text-micro text-fg-2" data-open={open}>▸</span>
-                            </button>
-                            <Button variant="ghost" size="icon-sm" onClick={() => onRemove(w.id)} aria-label={`Delete home workout on ${prettyDay(w.date)}`} className="shrink-0 text-fg-2 reveal hover:text-red">×</Button>
-                          </div>
-                          {open && (
-                            <ul className="collapse-in mt-1.5 ml-1 space-y-0.5">
-                              {w.sets.map((s, i) => <li key={i} className="text-label text-fg-2">• {s}</li>)}
-                              {w.notes && <li className="mt-1 text-label text-fg-2 italic">“{w.notes}”</li>}
-                            </ul>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ul>
+                  /* A session is a named item with a figure beside the name and
+                     a short body — the card this page now uses everywhere else.
+                     It was a `border-b` list whose contents were behind a
+                     disclosure, so reading what you actually did took a click
+                     per session; at three rows there is nothing to save by
+                     hiding six lines of text. */
+                  <div className="mt-3">
+                    <PanelGrid>
+                      {history.shown.map((w) => (
+                        <PanelCard
+                          key={w.id}
+                          title={prettyDay(w.date)}
+                          right={
+                            <span className="flex items-center gap-2">
+                              <Tag>{w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}</Tag>
+                              {w.durationMin != null && <Tag>{w.durationMin}m</Tag>}
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => onRemove(w.id)}
+                                aria-label={`Delete home workout on ${prettyDay(w.date)}`}
+                                className="text-fg-2 reveal hover:text-red"
+                              >×</Button>
+                            </span>
+                          }
+                        >
+                          <ul className="space-y-0.5 text-label text-fg-2">
+                            {w.sets.map((line, i) => <li key={i} className="pl-3 -indent-3">· {line}</li>)}
+                          </ul>
+                          {w.notes && <p className="mt-2 border-t border-line pt-2 text-label text-fg-2 italic">“{w.notes}”</p>}
+                        </PanelCard>
+                      ))}
+                    </PanelGrid>
+                  </div>
                 )}
               </>
             )}
