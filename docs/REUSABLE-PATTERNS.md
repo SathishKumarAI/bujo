@@ -664,3 +664,45 @@ logging page is the list you just added to.
 **And the heading above a bar is `sr-only`.** The bar names every row; a grey
 "The record" above it is furniture, and with the act column hidden it is
 furniture 1110px wide. Keep the heading for the document outline, draw nothing.
+
+---
+
+## 23 · The act column, stacked — `useActColumn`
+
+**What it is.** The open/shut state of zone 2, with the one rule nobody
+guesses: **stacked, it starts shut.**
+
+**Why.** Wide, the act is a column beside the review and open is right. Below
+the split it is the whole width of the page, and one column cannot have a
+683px form above the record AND the record near the top. Measured on
+Pickleball at a 1152px window:
+
+| order | what it cost |
+|---|---|
+| form first (the shared default) | the rail sat at **y1057** — a screen down |
+| record first (`actLast`) | the form drifted to **y880**, and to **y1321** just by switching to a bigger panel |
+| **shut by default** | strip **41px**, rail **y415**, form one tap away |
+
+Reported twice from both sides — *"when I click Matchups it tries to get
+downwards"*, then *"it's still moving down"* — because the first two orders
+trade the problem rather than solve it. The third is the solution: when you
+tap the strip open you are logging, so the form at the top is the point.
+
+**Three things this hook exists to get right:**
+
+1. **`stacked` can only come from the shell.** The split is a container query
+   on the 900px shell, so no viewport test answers it — a 1152px window with
+   the rail open is a "desktop" by `useDevice()` and stacks anyway.
+   `PageLayout` measures it and reports through `onSplitChange`.
+2. **It is a default, not a rule.** Once the reader opens or shuts the column
+   themselves, their choice holds for the life of the page, and the sticky
+   value keeps governing the desktop, where it is a preference rather than a
+   reaction to a layout they can see.
+3. **`ActStrip` lies down when it stacks.** It is built for a column — 40px
+   wide, label rotated — and a 40px tower of sideways text in the middle of a
+   full-width zone reads as a rendering fault. `layout.css` turns the same
+   button into a 44px bar below the split, label upright, summary beside it.
+
+Verified across all five Pickleball panels at 1152, 1024 and 390: the rail
+sits at the same y on every one of them, and nothing moves when you switch
+panels.
