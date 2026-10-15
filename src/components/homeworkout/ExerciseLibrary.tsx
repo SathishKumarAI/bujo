@@ -1,21 +1,25 @@
 import { useState } from 'react'
 import { MagnifyingGlass, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { Card, Pill } from '../ui'
+import { Pill } from '../ui'
 import { onRaised } from '../../lib/colors'
 import { Button } from '../ui/button'
 import { ChipPick } from '../ui/quickpick'
 import { VideoLink } from '../VideoLink'
 import { EmptyFrame } from '../page'
+import { ShowMore } from '../ShowMore'
+import { useCappedList } from '../../lib/useCappedList'
 import { muscleNames } from '../../lib/muscles'
 import {
   EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL,
   filterExercises, musclesOf, progressionChain, searchUrl,
-  type Difficulty, type Equipment, type HomeExercise, type Muscle,
+  type Difficulty, type Equipment, type Family, type HomeExercise, type Muscle,
 } from '../../lib/homeExercises'
+import { FamilyChapter } from './Manual'
 
 const MUSCLES: Muscle[] = ['chest', 'shoulders', 'arms', 'back', 'core', 'glutes', 'legs', 'cardio', 'full body']
 const DIFFICULTIES: Difficulty[] = ['beginner', 'intermediate', 'advanced']
+const FAMILIES = Object.keys(FAMILY_LABEL) as Family[]
 
 /**
  * ZONE 3 · the catalogue. Reference content, after the act and the history.
@@ -39,37 +43,70 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
   const [muscle, setMuscle] = useState<Muscle | null>(null)
   const [equipment, setEquipment] = useState<Equipment | null>(null)
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
+  const [family, setFamily] = useState<Family | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
-  const rows = filterExercises({ muscle, equipment, difficulty })
-  const anyFilter = muscle != null || equipment != null || difficulty != null
+  const rows = filterExercises({ muscle, equipment, difficulty, family })
+  /* Twelve, not three: this is a catalogue you browse, not a history you
+     glance at, so the cap is there to stop 83 tiles from being the panel's
+     default height rather than to hide the list. Measured on the built bundle:
+     all 83 is **7.28 desktop screens and 16.06 on a phone**, against 1.89 for
+     the worst panel on the Pull-ups bar. The affordance carries the total, so
+     a filtered list of twelve cannot be mistaken for "that is all there is". */
+  const shown = useCappedList(rows, 12)
+  const anyFilter = muscle != null || equipment != null || difficulty != null || family != null
 
   /** A chip row where tapping the selected value clears it. */
   const toggle = <T,>(cur: T | null, set: (v: T | null) => void) => (v: T) => set(cur === v ? null : v)
 
   return (
-    <Card band title="Exercise library" subtitle={`${rows.length} of ${filterExercises({}).length} movements · tap one for the cues and a form demo`} collapsible defaultCollapsed>
+    /* No `Card` and no fold any more. The bar in `Review.tsx` draws the heading
+       for this panel, and a second titled box inside a panel is the duplicate
+       chrome the page-shape contract exists to remove. The fold had to go
+       regardless: `npm run a11y` walks the RENDERED page, so an 83-movement
+       catalogue that shipped collapsed was 83 tiles no gate had ever scanned. */
+    <>
       <div className="space-y-3">
+        <ChipPick label="Movement" tone="brand" value={family} onChange={toggle(family, setFamily)}
+          options={FAMILIES.map((f) => ({ value: f, label: FAMILY_LABEL[f] }))}
+          hint="Picking one also opens that family's chapter of the manual" />
         <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
         <ChipPick label="What you have" tone="teal" value={equipment} onChange={toggle(equipment, setEquipment)} options={EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))} />
         <ChipPick label="Difficulty" tone="peach" value={difficulty} onChange={toggle(difficulty, setDifficulty)} options={DIFFICULTIES.map((d) => ({ value: d, label: d }))} className="capitalize"
-          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setEquipment(null); setDifficulty(null) }}>Clear</Button> : undefined} />
+          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setEquipment(null); setDifficulty(null); setFamily(null) }}>Clear</Button> : undefined} />
+      </div>
+
+      {/* The family chapter, where you are standing when you want it. It used to
+          be one of twelve rows in a rail at the very bottom of the page, a
+          navigation away from the movements it describes — and `chapterFor()`
+          had no call site at all. */}
+      {family && (
+        <div className="mt-4 rounded-card bg-ink-2 p-3">
+          <FamilyChapter family={family} />
+        </div>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-label text-fg-2">
+          <span className="num">{rows.length}</span> of <span className="num">{filterExercises({}).length}</span> movements · tap one for the cues and a form demo
+        </p>
+        <ShowMore list={shown} />
       </div>
 
       {rows.length === 0 ? (
-        <div className="mt-3"><EmptyFrame>Nothing matches all three filters. Clear one.</EmptyFrame></div>
+        <div className="mt-3"><EmptyFrame>Nothing matches every filter. Clear one.</EmptyFrame></div>
       ) : (
         /* `sm:grid-cols-2` with the phone column spelled out — a grid with no
            base `grid-template-columns` gets one implicit `auto` track sized to
            its widest item's min-content, which is how a card's neighbours get
            dragged off the right edge of a 390px viewport. */
         <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
-          {rows.map((ex) => (
+          {shown.shown.map((ex) => (
             <Tile key={ex.id} ex={ex} open={openId === ex.id} onToggle={() => setOpenId(openId === ex.id ? null : ex.id)} onAdd={onAdd} />
           ))}
         </div>
       )}
-    </Card>
+    </>
   )
 }
 
