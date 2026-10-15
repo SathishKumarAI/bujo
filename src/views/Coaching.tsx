@@ -115,10 +115,24 @@ export function Coaching() {
   const firstUnfinished = TWELVE_WEEK.find((w) => !done.includes(w.week))?.week ?? ACADEMY_TOTAL_WEEKS
   const [openWeek, setOpenWeek] = useState<number | null>(start ? firstUnfinished : 1)
 
+  /* Sticky so the section survives a reload — the seven folds this page
+     started as each did, and losing that would be a regression dressed as a
+     redesign. Same key as the manual's old chapter state, so a reader who
+     left it on `drills` comes back to `drills`; `playsafe` is no longer in
+     the allowed list and falls back to the default, which is what should
+     happen to a row that no longer exists. */
+  const [section, setSection] = useStickyState<string>('coaching.chapter', 'program', CHAPTERS.map((c) => c.id))
+
   const pct = Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)
 
+  /*
+    `Today` is NOT a fact here any more. It was the first StatBar fact, the
+    title of the card immediately below it, AND the lit cell in the weekday
+    strip inside that card — the same sentence three times in the first 232px
+    of the page. Zone 1 answers "where am I in the program"; the focus and its
+    instruction are one thing, said once, on the card that carries the detail.
+  */
   const facts = [
-    { label: 'Today', value: todaySlot.focus, prose: true },
     { label: 'Week', value: start ? `${week}/12` : 'Not started' },
     { label: 'Weeks done', value: `${done.length}/12` },
     { label: 'Progress', value: `${pct}%` },
@@ -146,6 +160,27 @@ export function Coaching() {
       zone1={<StatBar facts={facts} />}
       zone2={
         <>
+          {/*
+            THE BAR IS THE PAGE, and it sits above everything it switches.
+
+            There is no zone 3 any more. The review zone held the manual and
+            its own bar, under 1640px of act — so the seven chapters were a
+            table of contents you reached by scrolling past the thing it was
+            an alternative to. Reported as "why do I need to scroll down".
+
+            Not sticky, deliberately: `SectionRail`'s own note explains that a
+            bar above its panel paints over the panel when it sticks, and that
+            hiding it on scroll is COD-202, where the phone's only navigation
+            slid out of frame.
+          */}
+          <SectionRail
+            label="Coaching sections"
+            groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label, count: 'count' in c ? c.count : undefined }))}
+            value={section}
+            onChange={(id) => setSection(id ?? 'program')}
+            railAt="never"
+          />
+          {section !== 'program' ? <Manual chapter={section} /> : <>
           <TodaySession slot={todaySlot} dow={todayDow} />
           <Card
             band
@@ -262,9 +297,9 @@ export function Coaching() {
               </div>
             )}
           </Card>
+          </>}
         </>
       }
-      zone3={<Manual />}
     />
   )
 }
@@ -412,55 +447,69 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
  * Same `SectionRail` as Insights. No "All" row: the chapters do not overlap
  * and nobody wants all seven at once — that is the page this replaces.
  */
+/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
+const TIPS = [
+  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
+  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
+  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
+  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
+  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
+]
+
+/**
+ * THE PAGE'S ONE NAVIGATION · the program first, then the manual it teaches.
+ *
+ * It was two surfaces stacked: 1640px of act (today's session plus a
+ * twelve-row roadmap) and then, below the fold on every viewport, a bar of
+ * seven manual chapters. Reaching "Third-shot drop" meant scrolling past a
+ * roadmap you were not reading — and the fault is the one
+ * `docs/REUSABLE-PATTERNS.md` names: **a page has one navigation in it.** A
+ * bar at the bottom of the page is a table of contents you have to reach the
+ * end to use.
+ *
+ * So the program is a row. It is the default row, so landing on the page still
+ * lands on the act, and nothing about the act changed — but the manual is now
+ * one click from the top instead of 1640px down.
+ *
+ * **Play safe is gone as a row**, folded into `rehab`. Five physio tips and
+ * twenty-three knee exercises are the same subject (0.36 screens of it), and
+ * the row budget is the constraint a bar lives under: a facet goes inside the
+ * row it is a facet of.
+ *
+ * The counts are on the chips on purpose, against this file's own older note
+ * that a count here "would be a number about nothing". That was true of a
+ * count of *chapters*; these are counts of items — 14 shots, 21 drills — and
+ * they say where the bulk is before you open it. `program` carries none
+ * because "12" would be a week number competing with the StatBar.
+ */
 const CHAPTERS = [
-  { id: 'shots', color: 'mauve', label: 'How to play every shot', blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
-  { id: 'drills', color: 'green', label: 'Drill library', blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
-  { id: 'ladder', color: 'sky', label: 'Skill ladder', blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
-  { id: 'rehab', color: 'red', label: 'Knee rehab & prehab', blurb: "ACL / MCL · prevent and recover, with or without equipment", icon: Heartbeat },
-  { id: 'playsafe', color: 'green', label: 'Play safe', blurb: "Physio & trainer notes · injury-prevention basics for the court", icon: ShieldPlus },
-  { id: 'mental', color: 'peach', label: 'Mental game', blurb: "The mindset that wins close games", icon: Brain },
-  { id: 'formats', color: 'blue', label: 'Format playbook', blurb: "How each league & tournament format works", icon: Medal }
+  { id: 'program', color: 'teal', label: 'Program', title: 'Your 12-week program', blurb: 'Today, and the twelve weeks', icon: Target },
+  { id: 'shots', color: 'mauve', label: 'Shots', title: 'How to play every shot', count: TECHNIQUES.length, blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
+  { id: 'drills', color: 'green', label: 'Drills', title: 'Drill library', count: ACADEMY_DRILLS.length, blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
+  { id: 'ladder', color: 'sky', label: 'Skill ladder', count: ACADEMY_LEVELS.length, blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
+  { id: 'rehab', color: 'red', label: 'Knee & safety', title: 'Knee rehab, prehab & playing safe', count: KNEE_REHAB.length + TIPS.length, blurb: "ACL / MCL, and the physio notes for staying on court", icon: Heartbeat },
+  { id: 'mental', color: 'peach', label: 'Mental game', count: MINDSET.length, blurb: "The mindset that wins close games", icon: Brain },
+  { id: 'formats', color: 'blue', label: 'Formats', title: 'Format playbook', count: PICKLE_FORMATS.length, blurb: "How each league & tournament format works", icon: Medal },
 ] as const
 
-function Manual() {
+/** One chapter of the manual. The bar that chooses it lives in `Coaching`. */
+function Manual({ chapter }: { chapter: string }) {
   const drillSkills = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
   const [openSkill, setOpenSkill] = useState<string | null>(drillSkills[0])
   const [openTech, setOpenTech] = useState<string | null>(null)
   const [equip, setEquip] = useState<RehabEquip | 'all'>('all')
   const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
   const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
-  /* Sticky so the chapter survives a reload — the seven folds each did, and
-     losing that would be a regression dressed as a redesign. */
-  const [chapter, setChapter] = useStickyState<string>(
-    /* Drills, not the first chapter. The rail always shows something, so the
-       default is a real choice — and `shots` is the longest chapter (2,921px
-       against `playsafe`'s 2,119px), which makes the biggest one the landing
-       page. Drills is what you open beside a twelve-week program: "pick 1–2
-       a session" is the sentence next to the act above it. */
-    'coaching.chapter', 'drills', CHAPTERS.map((c) => c.id),
-  )
   const current = CHAPTERS.find((c) => c.id === chapter) ?? CHAPTERS[0]
 
   return (
     <section>
-      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
-      {/* Container on the outer div, grid on the inner: an element cannot
-          query itself. Phone column spelled out, or the chip row's
-          min-content sizes the only implicit track and the page scrolls
-          sideways. Both documented in docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
-        <SectionRail
-          label="Manual chapters"
-          groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
-          value={chapter}
-          onChange={(id) => setChapter(id ?? 'drills')}
-        />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
             <h3 className="flex items-center gap-2 text-heading font-medium text-fg-1">
               <Icon as={current.icon} size="md" style={{ color: onRaised(current.color) }} />
-              {current.label}
+              {'title' in current ? current.title : current.label}
             </h3>
             <p className="text-label text-fg-2">{current.blurb}</p>
           </div>
@@ -588,17 +637,22 @@ function Manual() {
             </div>
           )
         })}
+        {/* The five physio tips that were their own rail row. Same subject as
+            the twenty-three exercises above them and 0.36 screens of it, so
+            they are a facet of this chapter rather than a peer of it — the
+            row budget is what a single bar lives under. */}
+        <div className="mb-3">
+          <p className="mb-1.5 flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={ShieldPlus} size="sm" className="text-green" /> Playing safe — physio &amp; trainer notes</p>
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {TIPS.map((x) => (
+              <li key={x.t} className="rounded-card bg-ink-2 p-2.5">
+                <p className="text-body font-medium text-fg-1">{x.t}</p>
+                <p className="text-label text-fg-2">{x.d}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
         <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-          </>)}
-          {chapter === 'playsafe' && (<>
-        <ul className="space-y-2">
-          {TIPS.map((x) => (
-            <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
-              <p className="text-fg-1">{x.t}</p>
-              <p className="text-label text-fg-2">{x.d}</p>
-            </li>
-          ))}
-        </ul>
           </>)}
           {chapter === 'mental' && (<>
         <ul className="grid gap-2 sm:grid-cols-2">
@@ -625,16 +679,6 @@ function Manual() {
           </>)}
         </div>
       </div>
-      </div>
     </section>
   )
 }
-
-/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
-const TIPS = [
-  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
-  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
-  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
-  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
-  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
-]
