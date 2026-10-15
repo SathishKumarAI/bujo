@@ -1,6 +1,7 @@
 import { RailToggle } from './RailToggle'
 import { DateNav } from './topbar/DateNav'
 import { SyncPill } from './SyncPill'
+import { useHideOnScroll } from './useHideOnScroll'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 /**
@@ -47,9 +48,43 @@ export function PageHeader({
   onToggleRail: () => void
 }) {
   const chrome = VIEW_CHROME[view]
+  /**
+   * ── Out of the way while you read, back on the first scroll up ──────────
+   *
+   * Asked for directly, and it is the right pattern: this strip names the view
+   * you are already looking at, so once you are reading it is 48px of chrome
+   * restating something you know. The same hook already drives `BottomNav` and
+   * the phone top bar, so all three edges move on one rule rather than three.
+   *
+   * **It translates, it does not collapse, and that distinction is the whole
+   * reason this is safe.** `useHideOnScroll`'s own docstring records the loop
+   * that in-flow collapsing causes: shrink a sticky bar's real height, Chrome's
+   * scroll anchoring compensates to keep the view stable, the scroll listener
+   * cannot tell that compensation from a person scrolling up, and the rail
+   * oscillates (`44 → 39 → 25 → 24 → 15 → 9 → 20 → 35 → 24 …`). A transform
+   * changes no layout at all, so there is nothing for anchoring to react to.
+   * The hook's settle window still guards the phone bar, which does collapse.
+   *
+   * The known cost, stated rather than discovered later: `--header-h` keeps
+   * reporting 48px while the bar is away, so the handful of elements that
+   * stick beneath it sit 48px lower than the top edge during a downward
+   * scroll. Making the variable follow the transform would mean six sticky
+   * offsets moving on every flip — a visibly busier page than one quiet band,
+   * for a state that ends the moment you scroll up.
+   */
+  const hidden = useHideOnScroll()
 
   return (
-    <div className="app-header sticky top-0 z-20 hidden items-center gap-3 border-b border-line bg-card/75 px-4 py-2.5 backdrop-blur-lg md:flex">
+    <div
+      className="app-header sticky top-0 z-20 hidden items-center gap-3 border-b border-line bg-card/75 px-4 py-2.5 backdrop-blur-lg transition-transform duration-[--dur-base] ease-[--ease-out] motion-reduce:transition-none md:flex"
+      style={{ transform: hidden ? 'translateY(-100%)' : 'translateY(0)' }}
+      // Hidden to the eye, not to the machine. It stays in the accessibility
+      // tree and keyboard order because it is still on screen as far as layout
+      // is concerned, and a Tab into the sync pill brings it straight back on
+      // the next scroll up. `inert` here would make a focusable control
+      // unreachable for anyone not using a pointer.
+      data-hidden={hidden || undefined}
+    >
       {/* Only while the rail is away — its head carries the control otherwise.
           Same component, same label, same `aria-pressed`; `railHidden` decides
           which of the two renders, so they cannot both appear. */}
