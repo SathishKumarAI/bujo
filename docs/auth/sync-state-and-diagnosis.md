@@ -21,7 +21,8 @@ Measured 2026-10-14 against `main` at `fdae640`.
 | RLS / anon lockout | **works** | anon `select` refused before policies are consulted |
 | Local dev build configured | **works** | `VITE_SUPABASE_*` in `.env.local`; the Account card renders |
 | Local sign-in origin allow-listed | **works** | `localhost:*` returns to itself |
-| **Production build configured** | **BROKEN** | no `supabase.co` string in any deployed chunk; no sign-in button on the page |
+| Production build configured | **works** — see the correction below | `VITE_SUPABASE_*` are set on Vercel and bake in correctly |
+| **The live alias** | **BROKEN** | `bujo-journal.vercel.app` points at a build from before the feature existed |
 | **Production origin allow-listed** | **BROKEN** | `bujo-journal.vercel.app` is substituted with the Site URL |
 | **Supabase Site URL** | **BROKEN** | still `http://localhost:3000`, the Supabase default |
 | Sign-in → anything syncs | **conditional** | four silent refusals, below |
@@ -33,16 +34,48 @@ Two of those are the answer to "I signed in and nothing synced", and they are
 
 ## 1. Why production shows no sign-in at all
 
-Two independent causes, either one sufficient.
+### 1a. The alias is stale — and this entry was wrong twice before it was right
 
-### 1a. The build has no project
+**What is actually true:** `bujo-journal.vercel.app` resolves to a deployment
+built **2026-09-27**. The account feature landed **2026-10-05** (`79d1100`,
+#333). The live build simply predates the feature. Nothing is misconfigured.
 
-`src/lib/supabase.ts` reads `import.meta.env.VITE_SUPABASE_URL`. Vite inlines
-that **at build time**. Vercel's build has neither variable, so it inlines
-`undefined`, `isConfigured()` constant-folds to `false`, and Rollup drops the
-whole feature — client, card, button. This is the file's own "absent, not
-broken" design working exactly as written; it is just pointed at the wrong
-build.
+Proof, which is also the cheapest way to re-check this:
+
+```sh
+npx vercel ls bujo        # newest Production deployment vs. what the alias serves
+npx vercel env ls production
+```
+
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are **both present** on
+  Production, added 124 days ago.
+- There is a **newer** Production deployment the alias is not pointing at, and
+  it contains `supabase.co` twice, the real project URL, and one
+  `Continue with Google`. So the variables bake in correctly and always did.
+
+**The two wrong answers, kept because the method that produced them is the
+lesson.** This section first said *"Vercel's build has neither variable, so
+Vite inlines `undefined`, `isConfigured()` constant-folds false and Rollup
+drops the whole feature"* — an explanation that fit every observation I had
+(zero `supabase.co` across the deployed chunks, no sign-in button on the page)
+and was still wrong. It was reasoned from the bundle alone. One command against
+the deployment list would have cost ten seconds and ruled it out.
+
+It is the same mistake as COD-290, recorded in CLAUDE.md: five code PRs shipped
+before anyone read the redirect chain, and the answer had been in the query
+string the whole time. **When something is wrong in a deployed environment, ask
+the deployment what it is before asking the code.** A bundle tells you what was
+built; it cannot tell you when, or from what.
+
+**Fix:** deploy current `main`.
+
+```sh
+npx vercel --prod --yes
+```
+
+An alias promotion (`npx vercel promote <url>`) would also work and is
+instant, but it ships a build from 2026-10-09 — before the three PRs merged on
+2026-10-14 — so a fresh deploy is the better one.
 
 Measured:
 
@@ -64,16 +97,11 @@ renders **`Account`, `Create a local account`, `About you`, `Units & week`**.
 > different env. That is worth stating because "Vercel is on an older version"
 > is the natural guess and it is wrong.
 
-**Fix:** Vercel → project `bujo` → Settings → Environment Variables, add for
-Production *and* Preview:
-
-| Name | Value |
-|---|---|
-| `VITE_SUPABASE_URL` | `https://ueahhgqxshfvkjgcwtnh.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | the publishable/anon key from `.env.local` |
-
-Then **redeploy** — an env var added without a rebuild changes nothing, because
-the value is baked into the bundle.
+Still true and worth keeping, because it is why the variables matter at all:
+they are read by Vite **at build time**, so adding or changing one without a
+rebuild changes nothing. `VITE_`-prefixed values are inlined into the
+JavaScript every visitor downloads — which is also why `service_role` must
+never be given a `VITE_` name.
 
 ### 1b. The production origin is not allow-listed
 
@@ -281,11 +309,14 @@ The account path does not have it — there, the row is found by `auth.uid()`.
 | # | Where | Action | Blocks |
 |---|---|---|---|
 | 1 | Supabase dashboard | Site URL → `https://bujo-journal.vercel.app`; add `https://bujo-journal.vercel.app/**` to Redirect URLs | every production sign-in |
-| 2 | Vercel | add `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` to Production and Preview, **then redeploy** | the sign-in button existing at all |
-| 3 | Google Cloud console | confirm `https://bujo-journal.vercel.app` is an Authorized JavaScript origin, and the consent screen is **Published** (or your account is a Test user) | the consent screen |
-| 4 | the app, per device | set a sync passphrase; erase the demo if `explore`/`demoSeeded` is set | anything uploading |
-| 5 | code (small) | make the Sync status bar subscribe instead of reading `localStorage` once | nothing; it only misreports |
-| 6 | code (judgement call) | decide whether sign-out should clear `bujo:sync` | shared-device hygiene |
+| 2 | Supabase SQL editor | run `supabase/migrations/2026-10-14-journal-in-the-clear.sql` | every push — without it the app writes a column that does not exist |
+| 3 | A terminal | `npx vercel --prod --yes` | the sign-in button existing at all, and every UI change merged since 2026-09-27 |
+| 4 | Google Cloud console | confirm `https://bujo-journal.vercel.app` is an Authorized JavaScript origin, and the consent screen is **Published** (or your account is a Test user) | the consent screen |
+| 5 | the app, per device | erase the demo if `explore`/`demoSeeded` is set | anything uploading |
+| 6 | code (small) | make the Sync status bar subscribe instead of reading `localStorage` once | nothing; it only misreports |
+
+Run them in that order. 1 and 2 are server-side and cannot be done from a PR;
+3 is what makes any of it visible.
 
 Re-run the §1b probe after 1, and re-check the §1a `grep -c 'supabase.co'`
 after 2. Neither fix is believable without its measurement — the whole reason
