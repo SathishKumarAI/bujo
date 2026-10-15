@@ -182,26 +182,35 @@ const COMPANIONS = [
   // anyone who has turned it on, and it had never been scanned. Recovery's
   // lesson, from the other side of the default.
   ['Cycle', 'cycle'],
-  // `account` is retired into Settings (COD-297), and `settings` below opens on
-  // that tab — so its sign-in button, local-account form and units controls are
-  // scanned by the entry that replaced it.
+  // `account` is retired into Settings (COD-297), and the single `settings`
+  // entry above now covers the whole view — sign-in button, local-account form,
+  // units controls and all.
   //
-  // These three are the hole COD-232 described, closed. Both rendering gates
-  // walk the rendered DOM and a tab shell holds ONE panel, so for this gate's
-  // whole life "Settings: 0 serious" meant the first tab only: the passcode
-  // form, the cloud passphrase, every export button and the erase-everything
-  // dialog had never been seen by axe at any theme or viewport. They are
-  // reachable by URL now (`?view=settings&tab=…`) rather than by clicking,
-  // because a tab click is one more thing to wait for and this gate already has
-  // a table of waits it got wrong.
-  // Third element is extra query, kept OUT of the id on purpose: the landed-URL
-  // check reads the `view` PARAM, so folding `&tab=` into the id makes
-  // "settings&tab=feel" a value `view` can never equal. The first run of this
-  // failed four shards exactly that way — the assertion doing its job on the
-  // author rather than on the app, which is the best kind of red.
-  ['Settings · appearance', 'settings', 'tab=feel'],
-  ['Settings · sync', 'settings', 'tab=sync'],
-  ['Settings · data', 'settings', 'tab=data'],
+  // **Three entries were deleted here, and the reason is a layout change rather
+  // than a decision to scan less.** COD-232: both rendering gates walk the
+  // rendered DOM, a tab shell holds ONE panel, and so for this gate's whole
+  // life "Settings: 0 serious" meant the first tab only — the passcode form,
+  // the cloud passphrase, every export button and the erase-everything dialog
+  // had never been seen by axe at any theme or viewport. The workaround was to
+  // reach each tab by URL (`?view=settings&tab=…`): three more navigations and
+  // three more axe runs, at twelve shards each, to scan one page.
+  //
+  // COD-310 made Settings four panes on one screen, so all four are in the DOM
+  // in a single load and one scan covers the view. **36 fewer scans in a run of
+  // 166**, with strictly more coverage than the clicking version ever had.
+  //
+  // The risk is exactly the shape of COD-232 itself: if a pane ever became
+  // lazily mounted, coverage would silently collapse back to one panel and this
+  // gate would go on printing a reassuring zero. `src/views/Settings.test.tsx`
+  // is the tripwire — it asserts content from every pane renders in one pass,
+  // and it is what makes deleting these three entries safe rather than
+  // optimistic. If you make a pane lazy, put these back.
+  //
+  // Kept for whoever adds a third element to an entry: it is extra query, and
+  // it stays OUT of the id on purpose — the landed-URL check reads the `view`
+  // PARAM, so folding `&tab=` into the id makes "settings&tab=feel" a value
+  // `view` can never equal. The first run of that failed four shards exactly
+  // that way, the assertion doing its job on the author rather than on the app.
   // The guide. Behind the top bar's "?", so no tab clicks to it and it had
   // never been scanned — the page a user opens *because they are already
   // stuck* was the one page with no accessibility evidence behind it. It is
