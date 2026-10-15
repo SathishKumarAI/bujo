@@ -56,6 +56,20 @@ function sb(): SupabaseClient | null {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // **Spelled out, because the default is the weaker one.** auth-js
+        // defaults to `implicit` (`GoTrueClient.js:24`), which returns from
+        // Google with the access token itself in `#access_token=…`. A URL is
+        // the least private part of a browser: it is in the address bar, in
+        // `history`, in anything that logs or syncs URLs, and it is handed to
+        // a service worker on every navigation. PKCE returns a single-use
+        // `?code=` instead and trades it for the token over a POST the URL
+        // never sees, with a verifier this browser generated and kept.
+        //
+        // The one thing to re-check if this is ever changed back: the
+        // service-worker reload guard in `lib/swUpdate.ts` must keep matching
+        // whichever parameter the flow uses, or COD-294 returns wearing a new
+        // parameter name. `AUTH_PARAM` there already matches both.
+        flowType: 'pkce',
       },
     })
   }
@@ -67,8 +81,9 @@ function sb(): SupabaseClient | null {
  * which screen renders. COD-295.
  *
  * `detectSessionInUrl` is work the client does in its own `_initialize()` — it
- * reads `#access_token=…` (implicit, this client's default) or `?code=…` off
- * `window.location`, exchanges or stores it, and strips it from the URL. So it
+ * reads `?code=…` off `window.location` (PKCE, set above; it still understands
+ * an `#access_token=…` left over from a sign-in started by an older bundle),
+ * exchanges or stores it, and strips it from the URL. So it
  * only ever happens **if a client exists while those params are still there**,
  * and `sb()` is lazy: the first thing to build one is whichever component calls
  * `currentUser()` or `onAuthChange()`.
@@ -205,8 +220,27 @@ export function consumeAuthError(): { message: string; detail: string } | null {
   }
 }
 
+/**
+ * Sign out, on every device rather than only this one.
+ *
+ * `scope: 'global'` reverses the auth-js default of `'local'`, which drops the
+ * session out of this browser's storage and leaves the refresh token valid
+ * everywhere else. For a journal that is the wrong default: "sign me out" said
+ * on a laptop you are handing back has to mean the phone-shaped copy of that
+ * session dies too. The cost is that signing out of one device signs out of all
+ * of them, which is what the words already promised.
+ *
+ * **What this deliberately does NOT do yet** is forget the sync passphrase.
+ * `bujo:sync` survives sign-out, in plaintext, and it is the one secret that
+ * opens the blob-sync copy of this journal (that target's storage path is
+ * derived from the passphrase itself — `lib/crypto.ts`). Clearing it here is
+ * the obvious fix and it is deferred on purpose: COD-309 is deciding whether
+ * this app keeps a user-held key at all, and under a device-held key, wiping it
+ * on sign-out would destroy the journal rather than protect it. Whichever way
+ * that lands, this function is where it belongs.
+ */
 export async function signOut(): Promise<void> {
-  await sb()?.auth.signOut()
+  await sb()?.auth.signOut({ scope: 'global' })
 }
 
 /**

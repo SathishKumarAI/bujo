@@ -85,7 +85,11 @@ export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
     setBusy(true)
     try {
       await signOut()
-      notify.success('Signed out', 'Your journal is still on this device.')
+      // "Everywhere", because it now is: `signOut` revokes the refresh token
+      // globally, so the phone-shaped copy of this session dies with it. A
+      // toast that said only "Signed out" would under-report what just
+      // happened to the user's other devices.
+      notify.success('Signed out everywhere', 'Your journal is still on this device.')
     } finally {
       setBusy(false)
     }
@@ -166,7 +170,10 @@ export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
           <Button variant="secondary" onClick={disconnect} disabled={busy}>
             {busy ? 'Signing out…' : 'Sign out'}
           </Button>
-          <p className="text-body text-fg-2">Signing out leaves this journal on this device.</p>
+          <p className="max-w-[56ch] text-body text-fg-2">
+            Signing out leaves this journal on this device, and ends the session on your other
+            devices too.
+          </p>
         </div>
       ) : (
         <div className="max-w-[56ch] space-y-3">

@@ -151,6 +151,49 @@ describe('no credential is hardcoded into the source', () => {
 })
 
 
+describe('the round trip takes the stronger of two defaults', () => {
+  /**
+   * Both assertions below are about a value auth-js would otherwise choose for
+   * us, and in each case its choice is the weaker one. A silent revert — a
+   * merge conflict resolved the wrong way, an options object rewritten — would
+   * restore the weaker behaviour with nothing on screen and nothing in a log to
+   * show for it. That is precisely the shape this file exists to catch.
+   */
+  const client = () => scannable.find(([p]) => p === CLIENT)?.[1] ?? ''
+
+  it('asks for PKCE rather than taking the implicit default', () => {
+    // Implicit returns the access token itself in `#access_token=…`. A URL is
+    // the least private part of a browser — address bar, history, anything
+    // that syncs or logs URLs, and handed to a service worker on every
+    // navigation. PKCE trades a single-use `?code=` over a POST instead.
+    const src = client()
+    expect(src, `${CLIENT} not found — has it moved?`).not.toBe('')
+    expect(code(src).some((l) => /flowType:\s*'pkce'/.test(l))).toBe(true)
+  })
+
+  it('signs out globally rather than taking the local default', () => {
+    // auth-js defaults to `scope: 'local'`: the session leaves this browser and
+    // the refresh token stays valid on every other device. For a journal that
+    // is the wrong default — "sign me out" on a borrowed laptop has to reach
+    // the phone too.
+    const src = client()
+    expect(code(src).some((l) => /signOut\(\{\s*scope:\s*'global'\s*\}\)/.test(l))).toBe(true)
+  })
+
+  it('has a service-worker reload guard that covers whichever parameter the flow uses', () => {
+    // The cross-file half, and the reason this assertion is here rather than in
+    // `swUpdate.test.ts`: changing `flowType` changes which parameter carries
+    // the sign-in home, and a reload over it destroys the session before
+    // `detectSessionInUrl` can persist it (COD-294). The guard must keep
+    // matching BOTH, so neither direction of that change can reopen it.
+    const sw = scannable.find(([p]) => p === './swUpdate.ts')?.[1] ?? ''
+    expect(sw, 'swUpdate.ts not found — has it moved?').not.toBe('')
+    const guard = code(sw).find((l) => /AUTH_PARAM\s*=/.test(l)) ?? ''
+    expect(guard).toMatch(/access_token/)
+    expect(guard).toMatch(/\bcode\b/)
+  })
+})
+
 describe('the journal never reaches the account unencrypted', () => {
   /**
    * The property the whole design rests on, and the one most easily lost by a
