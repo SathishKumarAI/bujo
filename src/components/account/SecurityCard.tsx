@@ -16,10 +16,9 @@ import { isConfigured } from '../../lib/supabase'
  * post-mortem quotes back. The limits here are not hedging — each one is a real
  * property of the system that changes what a reader should do:
  *
- *   • a lost passphrase is unrecoverable → write it down somewhere real;
- *   • auto-sync stores it in plaintext  → the passcode lock does not cover the
- *                                         cloud copy (COD-228);
- *   • metadata is not encrypted         → the server knows when you wrote.
+ *   • the server can read the account copy → do not treat it as a secret store;
+ *   • the passcode protects this device only → it does not reach your account;
+ *   • Google learns that you use this app  → inherent to using them for identity.
  *
  * Nothing here is generated or inferred. Every claim maps to a mechanism in
  * this repo, and the ones that are enforced by a test say so, because "we take
@@ -30,15 +29,7 @@ type Row = { claim: string; how: string }
 
 const PROTECTED: Row[] = [
   {
-    claim: 'The server cannot read your journal',
-    how: 'AES-GCM-256. The key comes from your passphrase through PBKDF2-SHA256 at 600,000 rounds, with a fresh random salt and IV on every single write.',
-  },
-  {
-    claim: 'The key never leaves this device',
-    how: 'It is derived in your browser. Neither the key nor the passphrase is ever sent anywhere — there is no request that could carry them.',
-  },
-  {
-    claim: 'No other account can read your row',
+    claim: 'No other account can read your journal',
     how: 'Postgres row-level security, forced on. The owner column is filled in from your verified sign-in token, so a client cannot claim to be someone else.',
   },
   {
@@ -47,7 +38,19 @@ const PROTECTED: Row[] = [
   },
   {
     claim: 'Your cycle log never leaves this device',
-    how: 'Stripped from every network path without exception, enforced by a test that fails the build if a new sync target forgets.',
+    how: 'Stripped from every network path without exception, enforced by a test that fails the build if a new sync target forgets. It is the one thing an account never reaches.',
+  },
+  {
+    claim: 'Your sign-in never puts a token in the address bar',
+    how: 'The PKCE flow returns a single-use code and trades it for your session over a POST, so nothing reusable is ever in a URL, your history, or anything that logs one.',
+  },
+  {
+    claim: 'Signing out ends the session on every device',
+    how: 'Not just this browser. The refresh token is revoked, so a laptop you have handed back cannot quietly keep your phone signed in.',
+  },
+  {
+    claim: 'A passcode encrypts this journal at rest, here',
+    how: 'AES-GCM-256, with the key from your passcode through PBKDF2-SHA256 at 600,000 rounds and a fresh random salt and IV on every write. Optional, and local to this device.',
   },
   {
     claim: 'Your other services’ tokens never travel',
@@ -61,12 +64,16 @@ const PROTECTED: Row[] = [
 
 const LIMITS: Row[] = [
   {
-    claim: 'A lost passphrase is a lost journal',
-    how: 'You can still sign in and your data is still there — permanently unreadable, by you and by anyone else. This is the cost of the first promise above, not a gap in it. Write the passphrase down somewhere real.',
+    claim: 'The server can read your journal',
+    how: 'It is stored in a form the service can read, which is what lets a brand-new device sign in and simply have your data. A database dump, or anyone holding an admin key, would read it too. This is the trade the account makes, and it is the one worth knowing before you write something you would not want read.',
   },
   {
-    claim: 'Auto-sync keeps your passphrase in this browser, in plain text',
-    how: 'It has to, to run unattended. Anyone who can read this browser’s storage can read the cloud copy, so the passcode lock protects this device and not the copy in your account. Push and Pull by hand store nothing.',
+    claim: 'The passcode lock protects this device, not your account',
+    how: 'It encrypts the copy in this browser. The copy in your account is reached by signing in, so the passcode does not stand between anyone and that. Locking this device is not the same as locking your journal.',
+  },
+  {
+    claim: 'The advanced self-host sync is the encrypted one',
+    how: 'Settings → Sync & privacy → Advanced still offers a passphrase-encrypted copy that no server can read. It is a separate target from your account and it asks you to carry a secret — that is the cost the account avoids.',
   },
   {
     claim: 'Google knows you use this app',

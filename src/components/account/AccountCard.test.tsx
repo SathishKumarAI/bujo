@@ -52,13 +52,18 @@ describe('the account card is absent until a project is configured', () => {
     expect(await screen.findByRole('button', { name: /continue with google/i })).toBeTruthy()
   })
 
-  it('says the journal is unrecoverable, not only that the account is secure', async () => {
-    // The sentence this card exists for. Every other product with a Google
-    // button means "we can always get your data back"; this one cannot, and a
-    // card that offers the button without the caveat misrepresents the trade.
+  it('states the trade the account actually makes, not only that it is convenient', async () => {
+    // This assertion is INVERTED from what it was, and deliberately so. It
+    // required "The account is recoverable. The journal is not." for as long as
+    // the row was ciphertext; COD-309 made that false, and the honest half of
+    // the new trade is that the server can read what it stores. A card that
+    // offers a one-tap sign-in without saying so misrepresents it in the other
+    // direction, which is the worse one.
     mockState.configured = true
     render(<AccountCard />)
-    expect(await screen.findByText(/The account is recoverable\. The journal is not\./i)).toBeTruthy()
+    expect(
+      await screen.findByText(/private to your account, not secret from the server/i),
+    ).toBeTruthy()
   })
 
   it('shows who is signed in, and that signing out keeps the local journal', async () => {
@@ -79,38 +84,56 @@ describe('the account card is absent until a project is configured', () => {
   /**
    * COD-291, and the reason this card was rewritten.
    *
-   * Signed in with no sync passphrase is the DEFAULT state of a new account:
-   * `AccountSync` has nothing to encrypt with, so it uploads nothing and never
-   * will. The card's subtitle claimed "your journal syncs to your account"
-   * anyway, which is how a user can sign in, see a card that says it is
-   * working, and have no copy of their journal anywhere.
+   * Signed in with no sync passphrase used to be the DEFAULT state of a new
+   * account: `AccountSync` had nothing to encrypt with, so it uploaded nothing
+   * and never would, while the card's subtitle claimed "your journal syncs to
+   * your account" anyway. COD-309 removed the passphrase, so that state cannot
+   * be reached — what is asserted instead is the remaining refusal a user can
+   * sit in indefinitely, which is a demo journal.
    */
-  it('admits that nothing is uploaded when there is no passphrase, and offers the fix', async () => {
+  it('admits that a demo journal is not being uploaded, and says what to do', async () => {
     mockState.configured = true
     mockState.user = { email: 'sam@example.com' }
-    const nav = vi.fn()
-    render(<AccountCard onGoToSync={nav} />)
-    setAccountStatus({ phase: 'no-passphrase' })
-    await waitFor(() => expect(screen.getByText(/nothing has been uploaded/i)).toBeTruthy())
-    expect(await screen.findByRole('button', { name: /set a sync passphrase/i })).toBeTruthy()
+    render(<AccountCard />)
+    setAccountStatus({ phase: 'demo' })
+    await waitFor(() => expect(screen.getByText(/never pushed into a real account/i)).toBeTruthy())
+    // The fix is named, not implied: this state is permanent until the demo is
+    // erased, and `settings.explore` is set by one tap on the Welcome screen.
+    expect(screen.getByText(/erase the demo/i)).toBeTruthy()
   })
 
   it('answers "what is actually being synced" on screen, both halves', async () => {
     mockState.configured = true
     mockState.user = { email: 'sam@example.com' }
     render(<AccountCard />)
-    await waitFor(() => expect(screen.getByText('Uploaded, encrypted')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Uploaded to your account')).toBeTruthy())
     expect(screen.getByText('Never uploaded')).toBeTruthy()
     // The absolute promise. If this list stops naming the cycle log, the page
     // is making a weaker claim than `lib/cyclePrivacy.ts` enforces.
     expect(screen.getByText(/cycle log/i)).toBeTruthy()
   })
 
-  it('reports a locked row as locked, and says nothing was overwritten', async () => {
+  it('reports an unreadable row, and says nothing was overwritten', async () => {
     mockState.configured = true
     mockState.user = { email: 'sam@example.com' }
     render(<AccountCard />)
-    setAccountStatus({ phase: 'locked' })
+    setAccountStatus({ phase: 'unusable' })
     expect(await screen.findByText(/nothing has been overwritten/i)).toBeTruthy()
+  })
+
+  /**
+   * The card led with "The account is recoverable. The journal is not." for as
+   * long as the row was ciphertext. It is not, any more, and a promise that
+   * outlives its mechanism is the failure mode this whole file guards.
+   */
+  it('no longer promises that the server cannot read the journal', async () => {
+    mockState.configured = true
+    mockState.user = null
+    render(<AccountCard />)
+    await waitFor(() => expect(screen.getByText(/continue with google/i)).toBeTruthy())
+    const page = document.body.textContent ?? ''
+    expect(page).not.toMatch(/the journal is not|cannot be read|encrypted on this device/i)
+    // And says the true thing in its place, where a skimmer will meet it.
+    expect(page).toMatch(/private to your account, not secret from the server/i)
   })
 })

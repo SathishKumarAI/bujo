@@ -80,7 +80,7 @@ function pill(phase: AccountPhase): void {
   const state =
     phase === 'checking' || phase === 'uploading' ? 'syncing'
       : phase === 'synced' ? 'synced'
-        : phase === 'locked' || phase === 'error' ? 'error'
+        : phase === 'unusable' || phase === 'error' ? 'error'
           : null
   if (!state || typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent('bujo:sync', { detail: state satisfies SyncState }))

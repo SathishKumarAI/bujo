@@ -18,14 +18,20 @@
 // three sentences that drift. That has already happened in this repo twice
 // (`CYCLE_CLAUSE`, the retired auth form).
 //
-// ── The one claim that must never be made ──────────────────────────────────
+// ── The claim that must never be made ──────────────────────────────────────
 //
-// **"Signed in" does not mean "syncing".** `AccountSync` cannot push without a
-// sync passphrase, and it returns early when there is none — silently, because
-// the card's old subtitle said "Signed in — your journal syncs to your account"
-// unconditionally. A user who signs in and sets no passphrase has an account,
-// has a row, and has uploaded nothing. `phaseCopy('no-passphrase')` is the
-// sentence that says so, and `docs/AUTH.md` carries the same wording.
+// **"Signed in" does not mean "synced".** It used to be false for a structural
+// reason — no passphrase, no upload, ever — and COD-309 removed that reason:
+// signing in now is enough, and `no-passphrase` is gone from `AccountPhase`
+// along with the whole secret.
+//
+// It is still false for the ordinary reasons, and those are the ones that will
+// now be mistaken for nothing happening, because the obvious obstacle has been
+// taken away. A first pull takes a moment; an upload can fail; a demo journal
+// is refused on purpose; a row this build cannot read is refused on purpose.
+// Each of those is a phase below with a sentence of its own, and the rule that
+// produced this file is unchanged: **the card may only say what is actually
+// happening.**
 import type { User } from './supabase'
 
 /**
@@ -72,16 +78,14 @@ export type AccountPhase =
   /** No Supabase project in this build — the feature is absent, not off. */
   | 'absent'
   | 'signed-out'
-  /** Signed in, and **nothing is being uploaded** because there is no passphrase. */
-  | 'no-passphrase'
   /** Signed in, and this journal is the demo seed, which never reaches a real account. */
   | 'demo'
   /** Reading the account's row to find out whether this device may write to it. */
   | 'checking'
   | 'uploading'
   | 'synced'
-  /** The row exists and this device's passphrase does not open it. Nothing overwritten. */
-  | 'locked'
+  /** The row exists and this build could not read it. Nothing overwritten. */
+  | 'unusable'
   | 'error'
 
 /** A token name, used as a `bg-*` dot. Never as a foreground — see the `cat('crust')` trap. */
@@ -104,17 +108,6 @@ export function phaseCopy(phase: AccountPhase, lastSyncedAt: number | null = nul
         detail: 'This journal has never left this device. Sign in to reach it from another one.',
         tone: 'fg-2',
       }
-    // The sentence this change exists for. An account with no passphrase is an
-    // account that has uploaded nothing, and the old copy claimed the opposite.
-    case 'no-passphrase':
-      return {
-        short: 'not syncing yet',
-        detail:
-          'You are signed in, but nothing has been uploaded. Your journal is encrypted with a sync '
-          + 'passphrase before it leaves this device, and you have not set one yet — so there is '
-          + 'nothing to encrypt it with and sync is off.',
-        tone: 'peach',
-      }
     // `mayPush` refuses sample data, and a card that said "synced" over a demo
     // journal would be describing an upload that is forbidden rather than slow.
     case 'demo':
@@ -128,24 +121,27 @@ export function phaseCopy(phase: AccountPhase, lastSyncedAt: number | null = nul
     case 'checking':
       return { short: 'checking…', detail: 'Reading your account to see what it already holds.', tone: 'fg-2' }
     case 'uploading':
-      return { short: 'uploading…', detail: 'Encrypting this journal and sending it to your account.', tone: 'fg-2' }
+      return { short: 'uploading…', detail: 'Sending this journal to your account.', tone: 'fg-2' }
     case 'synced':
       return {
         short: 'synced',
         detail:
           lastSyncedAt == null
-            ? 'Your journal is in your account, encrypted on this device before it was uploaded.'
-            : `Last synced ${syncedAgo(lastSyncedAt, now)} — encrypted on this device before it was uploaded.`,
+            ? 'Your journal is in your account. Sign in anywhere else and it is there.'
+            : `Last synced ${syncedAgo(lastSyncedAt, now)}. Sign in anywhere else and it is there.`,
         tone: 'green',
       }
-    // "Locked", not "wrong passphrase": the second is a guess about the person,
-    // the first is a statement about the row. And the reassurance is load-bearing.
-    case 'locked':
+    // A statement about the row, not a guess about the person — and the second
+    // sentence is the load-bearing one. The reasonable fear on seeing a sync
+    // error is that the error WAS the data being lost; here the refusal to
+    // write is the thing that kept it.
+    case 'unusable':
       return {
-        short: 'locked',
+        short: 'not uploaded',
         detail:
-          "This account's journal was encrypted with a different passphrase, so it cannot be opened "
-          + 'here. Enter the passphrase you used on your other device. Nothing has been overwritten.',
+          "This account's journal could not be read, so nothing has been overwritten. A row this "
+          + 'app cannot read is a row it must not write over, and refusing is the whole point — '
+          + 'your entries on this device are untouched.',
         tone: 'red',
       }
     case 'error':
@@ -199,6 +195,7 @@ export const SYNCED: readonly string[] = [
 
 export const WITHHELD: readonly string[] = [
   'Your cycle log — never uploaded by anything, on any path',
-  "This device's other sync tokens: self-host, GitHub and Drive",
+  "This device's sync tokens: self-host, GitHub and Drive",
+  'Your passcode, which exists only on this device',
   'Photos beyond the upload budget, which stay on this device',
 ]

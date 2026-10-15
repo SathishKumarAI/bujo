@@ -1,29 +1,55 @@
 # Accounts, identity and sync
 
-**bujo has one account, and it is not what an account usually means.** As of
-COD-271 there is a Google sign-in, and a per-account row in Supabase holding
-your journal — **as ciphertext**. The server knows who you are and cannot read
-what you wrote.
+**bujo has one account, and as of COD-309 it means the ordinary thing.** Sign
+in with Google and your journal syncs. Sign in on another device and it is
+there. There is no second secret, nothing to copy across, and nothing you can
+lose that loses your data.
 
-That distinction is the whole page. The words the industry uses for these things
-(*account*, *sign in*, *secure*, *backed up*) all imply a server that holds your
-data and can give it back to you; here the server holds your data and **cannot**
-give it back to you without a passphrase it has never seen.
+> **Your journal is private to your account, not secret from the server.**
+> Row-level security is what keeps it yours — the database refuses one account's
+> row to another, forced, before any app code runs. What it does not do is hide
+> the journal from someone holding a database admin key or a dump. Say this
+> wherever sign-in is offered.
 
-> **The account is recoverable. The journal is not.** Lose the passphrase and
-> you can still sign in, your row is still there, and it is permanently
-> unreadable. Say this wherever sign-in is offered — it is the single sentence
-> most likely to be assumed the other way.
+### This page said the opposite until 2026-10-14
 
-Everything below still applies: the local profile, the sync passphrase and the
-passcode lock are unchanged, and the app works with no account at all.
+COD-271 stored the row **as ciphertext**, encrypted in the browser under a
+passphrase the server never saw, and this page opened with *"The account is
+recoverable. The journal is not."* That was true, it was deliberate, and it has
+been reversed on request:
+
+> *"I don't want a passphrase. I just want to sign in. The data needs to sync
+> directly, just like some other SaaS application. Why I need two things?"*
+
+The honest answer is that you cannot have both, and this is the trade:
+**a server that can hand your journal to a brand-new device is a server that can
+read your journal.** The passphrase was the only secret the server never saw,
+and therefore the only thing that could open data the server could not read.
+Notion, Todoist and Google Keep sync in one tap and every one of them can read
+your content; Signal, 1Password and Standard Notes cannot read yours and every
+one of them makes you carry a second secret. Nobody has both. This app has now
+chosen the first, where it used to choose the second.
+
+What did **not** change, listed because it is what people assume goes with the
+rest:
+
+- **The cycle log still never leaves the device**, by any route, encrypted or
+  not. `forEgress` strips it and `egress.contract.test.ts` fails the build if a
+  new sync target forgets.
+- **The passcode lock is unchanged.** It still encrypts this device's copy at
+  rest, and it never reached the cloud copy under either design.
+- **The self-host / bring-your-own-storage sync is unchanged and still
+  end-to-end encrypted**, passphrase and all. That trade still exists for anyone
+  who wants it; it is now a genuinely separate target rather than the account's
+  secret-sharer.
+- **The app still works with no account at all.**
 
 ## The three things people mean by "my account"
 
 | What you want | What does it in bujo | What it is **not** |
 |---|---|---|
 | The app knowing my name | **Local profile** — `settings.profile`, a name and an emoji | Not authentication. Nothing is verified. |
-| My journal on two devices | **Sync passphrase** — `lib/bujocloud.ts` | Not an account. A shared secret, not a login. |
+| My journal on two devices | **An account** — sign in, and that is all of it. Or the **sync passphrase** (`lib/bujocloud.ts`) for the self-host target, which is still a shared secret and not a login. |
 | Nobody else reading my journal | **Passcode lock** — `lib/crypto.ts`, Settings → Sync & privacy | Not the profile. The name protects nothing. |
 
 They are independent. You can have any, all, or none. The common mistake — the
@@ -396,40 +422,51 @@ build is configured - not either answer.
 
 ### Signed in is not synced
 
-**This is the half that was being actively contradicted on screen.**
-`AccountSync` cannot push without a sync passphrase and returns early when there
-is none — so the default state of a brand-new account is: signed in, row
-created, **nothing uploaded, and nothing ever going to be.** The card's subtitle
-read "Signed in — your journal syncs to your account" in that state.
+**This used to be contradicted on screen for a structural reason, and that
+reason is gone.** `AccountSync` could not push without a passphrase, so the
+default state of a brand-new account was: signed in, row created, nothing
+uploaded, nothing ever going to be — while the card's subtitle read "Signed in
+— your journal syncs to your account". COD-309 deleted the passphrase and the
+`no-passphrase` phase with it.
 
-The phases are the vocabulary, and the two that are *not* sync failures are the
-ones worth knowing:
+It is still not the same claim, for the ordinary reasons, and those now matter
+**more**: with the obvious obstacle removed, a wrong "synced" is harder to
+doubt.
 
 | Phase | What is actually happening |
 |---|---|
-| `no-passphrase` | Signed in, nothing uploaded. Set a passphrase in Settings → Sync & privacy. |
-| `demo` | The journal is the demo seed, and `mayPush` refuses sample data into a real account. |
-| `checking` / `uploading` | Reading the row, or encrypting and sending. |
+| `demo` | The journal is the demo seed, and `mayPush` refuses sample data into a real account. Permanent until the demo is erased — see below. |
+| `checking` / `uploading` | Reading the row, or sending it. |
 | `synced` | In the account, with the time it last went. |
-| `locked` | The row was written with a different passphrase. **Nothing has been overwritten.** |
+| `unusable` | The row could not be read — a transport failure, or ciphertext left behind by COD-271. **Nothing has been overwritten**, and the refusal is what kept it that way. |
 | `error` | Offline or the session expired. The next change is the retry. |
 
-Neither `no-passphrase` nor `demo` lights the red pill: "nothing is being
-uploaded" is a steady state, not a failure, and alarming someone whose journal
-is exactly where they left it is its own bug. `lib/account.test.ts` asserts that
-no phase but `synced` is allowed to claim a sync, as a property rather than as a
-fixed string — the wording will be edited and the claim must not come back
-with it.
+`demo` does not light the red pill: "nothing is being uploaded" is a steady
+state, not a failure, and alarming someone whose journal is exactly where they
+left it is its own bug. `lib/account.test.ts` asserts that no phase but `synced`
+may claim a sync, as a property rather than as a fixed string — the wording
+will be edited and the claim must not come back with it.
+
+**`demo` is the trap that remains.** One tap on *"Explore the demo →"* on the
+Welcome screen sets `settings.explore`; `isDemo()` is `demoSeeded || explore`,
+and nothing clears it when you start writing your own entries. A journal that
+began as "just looking" and became real will never sync, and the only thing that
+says so is one status row. Settings → Data → erase the demo.
 
 ### What is uploaded, in words, on the page
 
 "What kind of data is being synced" had no answer anywhere in the UI; the only
 place the boundary was written down was a comment in `lib/cyclePrivacy.ts`. Both
 lists are now on the account card, read off `forEgress` and `pushAccount`'s
-image budget: entries, habits, workouts, nutrition, goals and settings go up
-encrypted; the **cycle log, this device's other sync tokens and over-budget
-photos do not.** They are `SYNCED` and `WITHHELD` in `lib/account.ts` — if you
-change what `forEgress` withholds, change those lists in the same commit.
+image budget: entries, habits, workouts, nutrition, goals and settings go up;
+the **cycle log, this device's sync tokens, your passcode and over-budget photos
+do not.** They are `SYNCED` and `WITHHELD` in `lib/account.ts` — if you change
+what `forEgress` withholds, change those lists in the same commit.
+
+`forEgress` is now the **only** boundary on this path, which makes it more
+load-bearing than it was rather than less: under COD-271 anything that slipped
+past it was at least ciphertext on the wire, and there is no second line any
+more.
 
 ## Words this app does not use, and why
 

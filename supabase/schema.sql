@@ -14,17 +14,29 @@
 -- which reads like a bug in the policy and is actually the create having
 -- been a no-op. `if not exists` is not the same promise as idempotent.
 --
--- ── What this stores, and what it cannot read ──────────────────────────────
+-- ── What this stores, and who can read it ──────────────────────────────────
 --
--- One row per account, holding a `blob` of {v, salt, iv, data} — the journal
--- encrypted in the browser with a passphrase that is never sent here. This
--- database cannot read a journal, and neither can anyone who gains access to
--- it. That is the point of the design and the reason the column is `jsonb`
--- holding ciphertext rather than the journal itself.
+-- One row per account holding `data` — the journal, as JSON, in the clear.
 --
--- The consequence, stated here too because this file may be read on its own:
--- **the account is recoverable and the data is not.** A password reset gets a
--- user back to their row; only the passphrase gets them back to their journal.
+-- **This reverses COD-271.** The column used to be `blob`: the journal
+-- encrypted in the browser under a passphrase this database never saw, so that
+-- nobody with access here could read a journal. That design worked and was
+-- abandoned on purpose, because it cannot be had together with the thing an
+-- account is for. A server that can hand your journal to a brand-new device is
+-- a server that can read your journal; the passphrase was the only thing the
+-- server never saw, and therefore the only thing that could unlock what the
+-- server could not read. Keeping it meant a second secret to carry to every
+-- device and a lost-passphrase case that lost the journal for good.
+--
+-- So, stated here too because this file may be read on its own: **row-level
+-- security is now the whole of the protection.** It is unchanged, forced, and
+-- the only thing between two accounts. What it does not defend against is
+-- someone holding a `service_role` key or a database dump — before, those got
+-- ciphertext; now they get the journal. That is the ordinary SaaS bargain.
+--
+-- One domain is still never here at all: the cycle log. `lib/cyclePrivacy.ts`
+-- strips it from every network path and `egress.contract.test.ts` fails the
+-- build if a new sync target forgets. See `docs/AUTH.md`.
 
 -- ── Converge an existing `journals` table, or refuse ───────────────────────
 --
@@ -52,7 +64,7 @@ begin
   select count(*) = 2 into shaped
   from pg_attribute
   where attrelid = 'public.journals'::regclass
-    and attname in ('owner', 'blob')
+    and attname in ('owner', 'data')
     and not attisdropped;
 
   if shaped then
@@ -81,8 +93,12 @@ create table if not exists public.journals (
   -- does not own is rejected by `with check` rather than silently accepted.
   owner uuid not null default auth.uid() references auth.users (id) on delete cascade,
 
-  -- The encrypted journal: {"v":2,"salt":…,"iv":…,"data":…}. Never plaintext.
-  blob jsonb not null,
+  -- The journal, as JSON. Nullable on purpose: the row is created by the first
+  -- push, and "signed in but nothing synced yet" is a state the app renders.
+  -- A `not null default '{}'` would make "no journal yet" and "an empty
+  -- journal" the same value, and the pull path has to tell those apart to know
+  -- whether it is allowed to overwrite.
+  data jsonb,
 
   updated_at timestamptz not null default now(),
   created_at timestamptz not null default now()
@@ -112,6 +128,12 @@ create policy journals_update_own on public.journals
 drop policy if exists journals_delete_own on public.journals;
 create policy journals_delete_own on public.journals
   for delete using (owner = auth.uid());
+
+-- An existing project that ran the old version of this file has a `blob`
+-- column and needs `supabase/migrations/2026-10-14-journal-in-the-clear.sql`
+-- first; `add column if not exists` above cannot drop the old one, and this
+-- file deliberately does not try. A migration that silently drops a column
+-- only the user can decrypt is the one mistake that is not recoverable.
 
 -- Keep `updated_at` honest. A client can send whatever timestamp it likes, and
 -- the conflict resolution in `lib/conflict.ts` compares timestamps to decide

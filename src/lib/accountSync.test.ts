@@ -9,7 +9,7 @@ import { emptyJournal } from './storage'
  */
 
 describe('nothing pushes until this device has proved it can read the row', () => {
-  const ok = { hasPassphrase: true, isDemo: false }
+  const ok = { isDemo: false }
 
   it('refuses before any pull has happened', () => {
     // The default. A push that fires between sign-in and the first pull is the
@@ -17,7 +17,7 @@ describe('nothing pushes until this device has proved it can read the row', () =
     expect(mayPush({ ...initialState, userId: 'u1' }, ok)).toBe(false)
   })
 
-  it('allows once a pull decrypted', () => {
+  it('allows once a pull read the row', () => {
     const s = afterPull({ ...initialState, userId: 'u1' }, { row: 'read' })
     expect(mayPush(s, ok)).toBe(true)
   })
@@ -29,25 +29,22 @@ describe('nothing pushes until this device has proved it can read the row', () =
     expect(mayPush(s, ok)).toBe(true)
   })
 
-  it('REFUSES when the row would not decrypt', () => {
-    // The one that matters. The row is intact; this device simply holds the
-    // wrong passphrase. Pushing a fresh encryption over it is irreversible.
+  it('REFUSES when the row could not be read', () => {
+    // The one that matters, and the one COD-309 did NOT remove. The row is
+    // intact and this build could not make sense of it — a transport failure,
+    // or ciphertext left by the previous design. Writing over it is
+    // irreversible and "I have local data" is not evidence that it should be.
     const s = afterPull({ ...initialState, userId: 'u1' }, { row: 'unreadable' })
-    expect(s.mismatch).toBe(true)
+    expect(s.unusable).toBe(true)
     expect(mayPush(s, ok)).toBe(false)
   })
 
   it('stays refused even after a later successful-looking state', () => {
-    // A mismatch is sticky until the account changes: the passphrase in use has
-    // not changed just because another effect ran.
+    // Sticky until the account changes. Nothing about the row has improved
+    // just because another effect ran and set `verified`.
     let s = afterPull({ ...initialState, userId: 'u1' }, { row: 'unreadable' })
     s = { ...s, verified: true } // whatever else happens…
-    expect(mayPush(s, ok)).toBe(false) // …mismatch still vetoes
-  })
-
-  it('refuses with no passphrase, signed in or not', () => {
-    const s = afterPull({ ...initialState, userId: 'u1' }, { row: 'empty' })
-    expect(mayPush(s, { hasPassphrase: false, isDemo: false })).toBe(false)
+    expect(mayPush(s, ok)).toBe(false) // …unusable still vetoes
   })
 
   it('refuses when not signed in', () => {
@@ -59,7 +56,7 @@ describe('nothing pushes until this device has proved it can read the row', () =
 describe('sample data never reaches a real account', () => {
   it('refuses to push a seeded demo', () => {
     const s = afterPull({ ...initialState, userId: 'u1' }, { row: 'empty' })
-    expect(mayPush(s, { hasPassphrase: true, isDemo: true })).toBe(false)
+    expect(mayPush(s, { isDemo: true })).toBe(false)
   })
 
   it('recognises both the seeded demo and explore mode', () => {
@@ -83,7 +80,7 @@ describe('switching accounts does not hand one person another person’s journal
     expect(state.userId).toBe('bob')
     // And bob's device has proved nothing yet, so it cannot push over bob's row.
     expect(state.verified).toBe(false)
-    expect(mayPush(state, { hasPassphrase: true, isDemo: false })).toBe(false)
+    expect(mayPush(state, { isDemo: false })).toBe(false)
   })
 
   it('keeps the local journal on a first sign-in', () => {
@@ -107,10 +104,10 @@ describe('switching accounts does not hand one person another person’s journal
     expect(onAccountChange(prev, 'alice').discardLocal).toBe(false)
   })
 
-  it('clears a mismatch when the account changes', () => {
-    // A different account is a different row; the old row's passphrase has no
-    // bearing on whether this one opens.
+  it('clears an unusable row when the account changes', () => {
+    // A different account is a different row. Whatever was wrong with alice's
+    // has no bearing on whether bob's can be read.
     const prev = afterPull({ ...initialState, userId: 'alice' }, { row: 'unreadable' })
-    expect(onAccountChange(prev, 'bob').state.mismatch).toBe(false)
+    expect(onAccountChange(prev, 'bob').state.unusable).toBe(false)
   })
 })

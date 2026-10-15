@@ -9,10 +9,15 @@ import type { JournalData } from './types'
  * same move with its injectable `ask`.
  *
  * The whole module is about ONE failure: **overwriting a journal that is
- * intact and merely unreadable by this device.** A wrong passphrase, a second
- * device with a different passphrase, and a just-switched account all look
+ * intact and merely not usable by this device right now.** A transport error, a
+ * row written by a different design, and a just-switched account all look
  * identical from inside a push — "I have local data, the remote is not usable,
  * therefore mine must be the good copy" — and all three of them are wrong.
+ *
+ * COD-309 removed the passphrase from this path, which removed one of the four
+ * gates below and NOT the reason the rest exist. The commonest way to lose a
+ * journal was never bad crypto; it was a push that ran before a pull finished.
+ * That race is unchanged, and so is `verified`.
  */
 
 /** Where the account's own sync state lives, in memory, for one session. */
@@ -27,11 +32,19 @@ export interface AccountSyncState {
    * stands between a mistyped passphrase and a destroyed journal.
    */
   verified: boolean
-  /** Set when the row exists but this device's passphrase does not open it. */
-  mismatch: boolean
+  /**
+   * Set when the row exists and this build cannot use what is in it.
+   *
+   * Under COD-271 this meant "the passphrase does not open it". It now means a
+   * row holding something that is not a journal — most concretely, ciphertext
+   * left behind by that older design. Either way the rule is the same and it is
+   * the whole point of the flag: **a row we cannot read is not a row we may
+   * overwrite.**
+   */
+  unusable: boolean
 }
 
-export const initialState: AccountSyncState = { userId: null, verified: false, mismatch: false }
+export const initialState: AccountSyncState = { userId: null, verified: false, unusable: false }
 
 /**
  * May this device write the journal to the account row?
@@ -40,11 +53,10 @@ export const initialState: AccountSyncState = { userId: null, verified: false, m
  * stalls a sync until the next change, which is recoverable; pushing over a
  * journal you could not read is not.
  */
-export function mayPush(s: AccountSyncState, opts: { hasPassphrase: boolean; isDemo: boolean }): boolean {
+export function mayPush(s: AccountSyncState, opts: { isDemo: boolean }): boolean {
   if (!s.userId) return false // not signed in
-  if (!opts.hasPassphrase) return false // nothing to encrypt with
   if (opts.isDemo) return false // never push sample data into a real account
-  if (s.mismatch) return false // the row is someone's, and not readable here
+  if (s.unusable) return false // the row holds something we could not read
   return s.verified
 }
 
@@ -63,26 +75,29 @@ export function onAccountChange(prev: AccountSyncState, nextUserId: string | nul
 } {
   const switched = prev.userId !== null && nextUserId !== null && prev.userId !== nextUserId
   return {
-    state: { userId: nextUserId, verified: false, mismatch: false },
+    state: { userId: nextUserId, verified: false, unusable: false },
     discardLocal: switched,
   }
 }
 
 /**
- * Classify a failed pull.
+ * Classify a finished pull.
  *
- * `decryptString` throws the same way for "wrong passphrase" and "this row was
- * written by a different passphrase", because they are the same event seen from
- * two sides. What matters is that neither may be read as "the remote is
- * broken, overwrite it" — so both produce `mismatch`, and only a genuinely
- * absent row produces a pushable state.
+ * Three outcomes and only two verdicts, because the distinction that matters is
+ * not "did we get data" but **"do we know what is in that row"**. An absent row
+ * and a row we read are both known, and both allow a push. Anything else — a
+ * network failure, a row in a shape this build does not understand — is the
+ * same verdict: do not write.
+ *
+ * `unreadable` must never be collapsed into `empty` by a caller's `catch`. They
+ * are one keystroke apart and one of them destroys a journal.
  */
 export function afterPull(
   s: AccountSyncState,
   result: { row: 'empty' } | { row: 'read' } | { row: 'unreadable' },
 ): AccountSyncState {
-  if (result.row === 'unreadable') return { ...s, verified: false, mismatch: true }
-  return { ...s, verified: true, mismatch: false }
+  if (result.row === 'unreadable') return { ...s, verified: false, unusable: true }
+  return { ...s, verified: true, unusable: false }
 }
 
 /** A journal that is the seeded demo must never reach a real account. */
@@ -91,12 +106,15 @@ export function isDemo(d: JournalData): boolean {
 }
 
 /**
- * The message for a mismatch, which has to say what actually happened.
+ * The message for an unusable row, which has to say what actually happened.
  *
- * "Wrong passphrase" is a guess about the user; "this account's journal was
- * encrypted with a different passphrase" is a statement about the data, and it
- * is the one that tells someone with two devices what to do next.
+ * Two jobs, and the second is the load-bearing one. It names the state — the
+ * row could not be read — and then it says **nothing has been overwritten**,
+ * because the reasonable fear on seeing a sync error is that the error *was*
+ * the data being lost. Here the error is precisely the opposite: the refusal
+ * to write is what kept the row intact.
  */
-export const MISMATCH_MESSAGE =
-  "This account's journal was encrypted with a different passphrase, so it cannot be opened here. " +
-  'Enter the passphrase you used on your other device. Nothing has been overwritten.'
+export const UNUSABLE_MESSAGE =
+  "This account's journal could not be read, so nothing has been overwritten. " +
+  'That is deliberate — a row this app cannot read is a row it must not write over. ' +
+  'Your entries on this device are untouched.'

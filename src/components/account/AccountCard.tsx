@@ -33,27 +33,31 @@ import { useState } from 'react'
  * still said "this device only", and the sync pill never lit. Reported, exactly,
  * as "able to sign in, but it's not showing any kind of updates on my UI".
  *
- * ── The sentence this card exists to say ───────────────────────────────────
+ * ── What this card used to say, and why it no longer does ─────────────────
  *
- * **The account is recoverable. The journal is not.** Signing in gets you back
- * to your row; only the sync passphrase gets you back to your journal, because
- * the journal is encrypted in the browser and this project has never held the
- * key. Every other product that offers a Google button means "we can always get
- * your data back to you", and this one cannot. That is a deliberate trade — see
- * `docs/security/account-sync-plan.md` §0 — and a card that offers the button
- * without the sentence would be misrepresenting it.
+ * It led with **"The account is recoverable. The journal is not."** — true
+ * under COD-271, where the row was ciphertext and only a passphrase this
+ * project never held could open it. COD-309 removed that, so the sentence is
+ * gone rather than softened. Copy that survives the mechanism it described is
+ * how a card ends up lying politely.
  *
- * ── And the second sentence, which is newer and was being contradicted ─────
+ * What replaces it is not reassurance, it is the other half of the same trade:
+ * **the server can read this journal, and your account is what keeps it
+ * yours.** A reader who takes one sentence from this card should take that one,
+ * because the thing they are signing into is now an ordinary cloud account and
+ * the previous version promised something stronger.
  *
- * **Signed in is not synced.** `AccountSync` cannot upload without a sync
- * passphrase and returns early when there is none; this card's subtitle used to
- * read "Signed in — your journal syncs to your account" regardless. So the
- * commonest state of a brand-new account — signed in, no passphrase, nothing
- * uploaded, nothing ever going to be — was reported as a working sync. The
- * status row below is driven by the phase the sync component publishes, so the
- * card can only say what is actually happening.
+ * ── The claim that must still never be made ───────────────────────────────
+ *
+ * **Signed in is not synced.** The structural reason is gone — there is no
+ * passphrase to be missing — but a first pull still takes a moment, an upload
+ * still fails offline, a demo journal is still refused, and a row this build
+ * cannot read is still refused. The status row is driven by the phase
+ * `AccountSync` publishes, so the card can only say what is actually
+ * happening; now that the obvious obstacle has been removed, a wrong "synced"
+ * would be harder to doubt, not easier.
  */
-export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
+export function AccountCard() {
   const [busy, setBusy] = useState(false)
   const configured = isConfigured()
   const { user, ready } = useAuthUser()
@@ -137,19 +141,12 @@ export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
             </p>
           </div>
 
-          {/* The one actionable state. `no-passphrase` is where a new account
-              sits by default and it is the state in which nothing syncs, so it
-              gets the button rather than a line of prose to act on. */}
-          {phase === 'no-passphrase' && onGoToSync ? (
-            <Button onClick={onGoToSync}>Set a sync passphrase</Button>
-          ) : null}
-
           {/* "What kind of data is being synced" had no answer anywhere on
               screen. Both lists, because the withheld one is the half a reader
               cannot verify for themselves. */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-label font-medium text-fg-1">Uploaded, encrypted</p>
+              <p className="text-label font-medium text-fg-1">Uploaded to your account</p>
               <ul className="mt-1 space-y-1 text-label text-fg-2">
                 {SYNCED.map((s) => <li key={s}>{s}</li>)}
               </ul>
@@ -163,9 +160,11 @@ export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
           </div>
 
           <p className="max-w-[56ch] text-body text-fg-2">
-            Your journal is encrypted on this device before it is uploaded, so the server stores
-            ciphertext and nothing else. Signing in on another device finds your journal; your sync
-            passphrase is what opens it.
+            Sign in on another device and your journal is there — nothing to copy, nothing to
+            enter. Your account is what keeps it yours: every row is readable only by the account
+            that owns it, enforced by the database rather than by this app. The flip side is that
+            it is stored in a form the server can read, so it is private to your account and not
+            secret from it.
           </p>
           <Button variant="secondary" onClick={disconnect} disabled={busy}>
             {busy ? 'Signing out…' : 'Sign out'}
@@ -188,19 +187,20 @@ export function AccountCard({ onGoToSync }: { onGoToSync?: () => void } = {}) {
             `subtext1` — the honesty sentence below is `fg-1` on purpose. */}
           <p className="text-body text-fg-2">
             An account is how this journal reaches your phone and your desktop without copying
-            anything by hand. Google tells us who you are — it does not get your journal.
+            anything by hand. One tap, and it keeps itself up to date from then on — there is
+            nothing else to set up and no second password to remember.
           </p>
           <Button onClick={connect} disabled={busy}>
             {busy ? 'Opening Google…' : 'Continue with Google'}
           </Button>
-          {/* The honest half. It is not a footnote and it is not styled as one:
-              a reader who takes only one sentence from this card should take
-              this one, because every other account they have ever made behaves
-              the opposite way. */}
+          {/* The honest half. Not a footnote and not styled as one — it is the
+              sentence the previous version of this card promised the opposite
+              of, so a reader who skims has to still meet it. */}
           <p className="text-body text-fg-1">
-            <strong>The account is recoverable. The journal is not.</strong> If you lose your sync
-            passphrase you can still sign in, your data is still there, and it cannot be read —
-            by you or by anyone else. That is what keeps it private, and it is the cost.
+            <strong>Your journal is private to your account, not secret from the server.</strong>{' '}
+            It is stored in a form the service can read, so losing access never loses your data —
+            and anyone with database access could read it. Your cycle log is the exception: it is
+            never uploaded, by any route.
           </p>
         </div>
       )}

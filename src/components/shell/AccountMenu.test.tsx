@@ -76,11 +76,14 @@ describe('the header menu says who is signed in', () => {
   it('reports the real sync phase, not the blob passphrase, when signed in', async () => {
     mockState.user = { email: 'sam@example.com' }
     mount()
-    setAccountStatus({ phase: 'no-passphrase' })
+    setAccountStatus({ phase: 'demo' })
     await open()
     // Was "This device only" — which is the *other* sync mechanism's answer and
     // happened to be right for the wrong reason, so it could not be trusted.
-    await waitFor(() => expect(screen.getByText('Not syncing yet')).toBeTruthy())
+    // The phase used to be `no-passphrase`; COD-309 removed it, and `demo` is
+    // the refusal that makes the same point — the menu must echo the sync
+    // component, never `autoSyncEnabled()`.
+    await waitFor(() => expect(screen.getByText('Demo, not uploaded')).toBeTruthy())
   })
 
   it('names the door "Account & sync" once there is an account to go to', async () => {

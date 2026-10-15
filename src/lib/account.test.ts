@@ -51,7 +51,7 @@ describe('identityOf', () => {
 
 describe('phaseCopy', () => {
   const ALL: AccountPhase[] = [
-    'absent', 'signed-out', 'no-passphrase', 'demo', 'checking', 'uploading', 'synced', 'locked', 'error',
+    'absent', 'signed-out', 'demo', 'checking', 'uploading', 'synced', 'unusable', 'error',
   ]
 
   it('answers for every phase, with a short form and a sentence', () => {
@@ -65,27 +65,33 @@ describe('phaseCopy', () => {
   /**
    * THE REGRESSION THIS FILE EXISTS FOR.
    *
-   * `AccountSync` cannot upload without a sync passphrase and returns early
-   * when there is none, while `AccountCard`'s subtitle read "Signed in — your
-   * journal syncs to your account" unconditionally. So the default state of a
-   * brand-new account — signed in, no passphrase, nothing uploaded, nothing
-   * ever going to be — was reported on screen as a working sync.
+   * `AccountCard`'s subtitle read "Signed in — your journal syncs to your
+   * account" unconditionally, while `AccountSync` could not upload at all
+   * without a sync passphrase. So the default state of a brand-new account —
+   * signed in, nothing uploaded, nothing ever going to be — was reported on
+   * screen as a working sync.
+   *
+   * COD-309 removed the passphrase and with it `no-passphrase`, which removes
+   * the *commonest* way to sit in a false "synced" and none of the others. The
+   * list below is therefore shorter and this assertion matters more, not less:
+   * with the obvious obstacle gone, a wrong "synced" is harder to doubt.
    *
    * Asserted as "does not claim", not as an exact string: the wording will be
    * edited and the claim must not come back with it.
    */
   it('never says a journal is synced when nothing can be uploaded', () => {
-    for (const p of ['no-passphrase', 'demo', 'locked', 'error', 'signed-out', 'absent'] as AccountPhase[]) {
+    for (const p of ['demo', 'unusable', 'error', 'signed-out', 'absent'] as AccountPhase[]) {
       const c = phaseCopy(p)
       expect(`${c.short} ${c.detail}`.toLowerCase(), p).not.toMatch(/\bis synced\b|\bsyncs to your account\b/)
     }
-    expect(phaseCopy('no-passphrase').detail).toMatch(/nothing has been uploaded/i)
+    expect(phaseCopy('demo').detail).toMatch(/never pushed into a real account/i)
   })
 
-  it('reassures on a locked row that nothing was overwritten', () => {
-    // A user seeing "locked" has two devices and a typo, and the thing they
-    // need to know first is that their other device's journal is intact.
-    expect(phaseCopy('locked').detail).toMatch(/nothing has been overwritten/i)
+  it('reassures on an unreadable row that nothing was overwritten', () => {
+    // Someone seeing this has a sync error, and the reasonable fear is that the
+    // error WAS their data being lost. Here the refusal to write is the thing
+    // that kept it, and that has to be the sentence they get.
+    expect(phaseCopy('unusable').detail).toMatch(/nothing has been overwritten/i)
   })
 
   it('carries the last-sync time into the synced sentence, and copes without one', () => {

@@ -25,19 +25,33 @@ describe('the security card states both halves', () => {
     expect(screen.getByText(/row-level security, forced on/i)).toBeTruthy()
   })
 
-  it('says a lost passphrase is unrecoverable', () => {
+  it('says the server can read the journal', () => {
+    // The limit COD-309 created, and the one a reader is least likely to guess:
+    // every other line on this card is reassuring, and an account that syncs in
+    // one tap reads as "they thought of everything". This is the sentence that
+    // says what was traded away to get it.
     mockState.configured = true
     render(<SecurityCard />)
-    expect(screen.getByText(/A lost passphrase is a lost journal/i)).toBeTruthy()
+    expect(screen.getByText(/The server can read your journal/i)).toBeTruthy()
   })
 
-  it('says the passphrase is stored in plain text, and that the passcode does not cover the cloud copy', () => {
-    // COD-228, disclosed rather than buried. An account makes this feel more
-    // official than it is, which is exactly when it most needs saying.
+  it('says the passcode does not reach the copy in your account', () => {
+    // Was COD-228's plaintext-passphrase disclosure. The passphrase is gone
+    // from this path, the gap it described is not: locking this device still
+    // does nothing to the copy your account will hand to the next sign-in, and
+    // a passcode prompt makes the whole journal feel locked.
     mockState.configured = true
     render(<SecurityCard />)
-    expect(screen.getByText(/in plain text/i)).toBeTruthy()
-    expect(screen.getByText(/protects this device and not the copy in your account/i)).toBeTruthy()
+    expect(screen.getByText(/protects this device, not your account/i)).toBeTruthy()
+    expect(screen.getByText(/Locking this device is not the same as locking your journal/i)).toBeTruthy()
+  })
+
+  it('still points at the encrypted target for anyone who wants it', () => {
+    // The option was not deleted, only demoted. Someone who came to this app
+    // FOR the end-to-end encryption needs to find where it went.
+    mockState.configured = true
+    render(<SecurityCard />)
+    expect(screen.getByText(/self-host sync is the encrypted one/i)).toBeTruthy()
   })
 
   it('does not claim the metadata is private', () => {
