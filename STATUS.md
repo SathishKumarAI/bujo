@@ -1,6 +1,6 @@
 # STATUS
 
-**Stopped:** 2026-10-15, on `feat/pickleball-pass`, **eight commits**, branched
+**Stopped:** 2026-10-15, on `feat/pickleball-pass`, **twelve commits**, branched
 off `feat/coaching-pass` (**PR #407**, still open). It stacks on that branch
 because `lib/practiceLog.ts` and `components/coaching/PracticeTick.tsx` exist
 only there. `refactor/homeworkout-panels` (**PR #405**) is also open and is not
@@ -26,14 +26,17 @@ patterns — to the last sport page still on the legacy shell.
 | `731ee07` | one concern per file, under the 500-line ceiling |
 | `2ba93ed` | the prep checklist is reachable by the gate; the demo gets a future event |
 | `2c6538a` | the last user-visible "bujo" strings say Cadence |
+| `23e18b9` | the log can be put away; nothing overflows; chips say what they are |
+| `35f5fe4` | panels scale with the column; the weekday card is readable; figures lead back to your entries |
+| `0e51a11` | hiding the log scales at every width; Results/Activity replace Performance/Trends |
+| `9134156` | today's drill joins the stat bar; the rail reads in order |
 
 ### The page now
 
 `PageLayout` tier 1180, same as Home Workout and Pull-ups:
 
-- **zone 1** — the `nextStep` sentence (a button into the panel that answers
-  it), four totals on a `StatBar`, the week against the weekly goal.
-- **zone 2** — Log a session, in the sticky 38% column. One primary button.
+- **zone 2** — Log a session, in the sticky 38% column, with a **Hide the log**
+  toggle that gives the width back (`PageLayout collapsibleAct`).
 - **zone 1** — one bordered block: the `nextStep` sentence, four totals, and
   **Today's drill** (merged in, asked for as "one single space"). It is not
   part of the record, so it does not sit in it.
@@ -47,11 +50,12 @@ Measured at `?demo=1` against the preview server, both viewports:
 
 | | before the pass | after |
 |---|---|---|
-| desktop landing | 2568px · 2.70 screens… **2.85** | **1117px · 1.24** |
-| phone landing | 4200px · 4.98 screens | **2535px · 3.00** |
-| desktop, worst panel | 2.85 (Performance) | 2.15 (Trends) |
-| phone, worst panel | 4.98 | 4.48 (Performance) |
-| Performance with a sub-section picked | — | 338–397px |
+| desktop landing | 2568px · 2.85 screens | **1136px · 1.26** |
+| phone landing | 4200px · 4.98 screens | **2598px · 3.08** |
+| desktop, worst panel, log open | 2.85 | 2.90 (Activity) |
+| desktop, worst panel, log hidden | — | **1.92** (Results) / 1.77 (Activity) |
+| review width, log hidden, 1920 / 2560 | — | 1590 / 1926 (was 1062 / 1398) |
+| a sub-section picked | — | 338–397px |
 | `views/Pickleball.tsx` | 1233 lines | 406 |
 | `<details>` in `#main` | 1 (invisible to the gate) | 0 |
 
@@ -79,15 +83,13 @@ every weekday, partner and venue opens Sessions filtered to it.
 
 ### Next action
 
-1. **Re-measure nothing — push and open the PR against `feat/coaching-pass`.**
-   `npm run verify` was clean at `7f5ada8` (1986 tests, 145 files) and only
-   copy and the demo seed have moved since.
-2. `npm run design` and `npm run contrast` are **not in `verify` but are in
-   CI** — run both before pushing.
-3. The throwaway probes (`pb-probe.mjs`, `pb-axe.mjs`, `pb-top.mjs`,
-   `pb-facet.mjs`, `pb-phone.mjs`, `pb-check.mjs`) are untracked at the repo
-   root. Delete them or move the axe one into `scripts/` as the per-panel gate
-   COD-237 asks for.
+1. **PR #408 is open and pushed.** Rebase onto `main` and retarget it BEFORE
+   #407 merges, or GitHub closes it permanently.
+2. Gates all green at `9134156`: `npm run verify` (1986 tests / 145 files),
+   `npm run design` (456 files), `npm run contrast`, and the new
+   `npm run a11y:panels` (35 scans, armed on a canary).
+3. The throwaway probes are gone; the axe one is `scripts/a11y-panels.mjs`,
+   which COD-237 asks for on five more pages.
 
 ### Traps found in it, worth not re-learning
 
@@ -116,9 +118,13 @@ every weekday, partner and venue opens Sessions filtered to it.
 
 ### Open questions for the owner
 
-- The phone's worst panel is Performance at **4.48 screens** with every
-  sub-section showing. Picking one takes it under 1.5. Should a phone default
-  to a sub-section rather than All?
+- The phone's worst panel is Activity with every sub-section showing. Picking
+  one takes it under 1.5 screens. Should a phone default to a sub-section
+  rather than All?
+- With the log OPEN the review is one column, so a short card (Recent form
+  fills 0.48 of its box) looks sparse at 702px. Two columns there would be
+  331px, which is the width this pass spent three rounds getting rid of. A
+  dense/span rule could pair short cards; it has not been written.
 - `PracticeTick` writes under one key space shared with Coaching, so ticking
   "Figure-8" here and in the manual is one record. That is deliberate; if the
   two pages should ever count separately, the key needs a surface.
