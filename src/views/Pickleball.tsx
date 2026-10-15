@@ -8,7 +8,7 @@ import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
 import { Page } from '../components/shell/Page'
-import { CardGrid, MasonryGrid } from '../components/shell/CardGrid'
+import { CardGrid } from '../components/shell/CardGrid'
 import { LazyMount } from '../components/LazyMount'
 import { useStickyState } from '../lib/useStickyState'
 import { CalendarHeatmap, DisclosureRow, StatBar, SectionRail } from '../components/page'
@@ -835,7 +835,7 @@ export function Pickleball() {
               <p className="text-label text-fg-2">{currentGroup.blurb}</p>
             </div>
             {group === 'competition' && (<>
-        <MasonryGrid>
+        <CardGrid>
         {/* ── Tournament prep countdown (#345) · conditional top status,
               surfaces only when events exist; collapsed. ── */}
         {upcoming.length > 0 && (
@@ -976,14 +976,14 @@ export function Pickleball() {
             </ul>
           )}
         </Card>
-        </MasonryGrid>
+        </CardGrid>
             </>)}
             {group === 'performance' && (<>
         {/* "Form & momentum" and "Deeper signals" were two headings over one
             question — how am I playing. Nine cards in one masonry balance into
             even columns; four and five in separate groups could not, and each
             group cost a heading to say something the cards already said. */}
-        <MasonryGrid>
+        <CardGrid>
         {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
         {forecast.ready && <WinRateForecastCard forecast={forecast} />}
         <MilestonesCard milestones={milestones} />
@@ -995,18 +995,18 @@ export function Pickleball() {
         {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
         {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
         
-        </MasonryGrid>
+        </CardGrid>
             </>)}
             {group === 'trends' && (<>
         <LazyMount minHeight={500}>{charts}</LazyMount>
             </>)}
             {group === 'matchups' && (<>
-        <MasonryGrid>
+        <CardGrid>
         {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
         {venues.length > 0 && <VenuesCard venues={venues} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-        </MasonryGrid>
+        </CardGrid>
             </>)}
           </div>
         </div>
