@@ -318,6 +318,33 @@ The account path does not have it — there, the row is found by `auth.uid()`.
 Run them in that order. 1 and 2 are server-side and cannot be done from a PR;
 3 is what makes any of it visible.
 
+### Status as of 2026-10-15, measured rather than assumed
+
+| # | state | how it was measured |
+|---|---|---|
+| 1 | **half done, and the half that was lost matters.** Production is allow-listed; **localhost is not** | authorize → replay the callback with a dummy error → read the `Location`. Production returns verbatim; `localhost:5173`, `:5180` and `:4173` all come back substituted with the Site URL, **identically to an `evil.example.com` control** |
+| 2 | **NOT RUN** | PostgREST column probe: `data` → `42703` (absent), `blob` → `42501` (present), `blob_legacy_20261014` → `42703`, control `nonsense_col` → `42703` |
+| 3 | done, by `vercel alias set` — see §1a's correction | — |
+
+Item 2 is the live blocker. `pushAccount` inserts `{ id, data, updated_at }`
+and `pullAccount` selects `data, updated_at` (`src/lib/supabase.ts:344`, `:358`,
+`:409`), so against the current schema **every push and every pull fails
+`42703`** and `AccountSync` reports "not reaching your account". The whole
+plain-sync pipeline merged in #386, #392 and #394 is inert in production and
+works locally only because nothing local talks to that table.
+
+Item 1's regression is worth naming because it was introduced *by* the fix:
+production and localhost were both meant to be on the list, and only production
+survived the edit. Local sign-in is impossible until they go back, which also
+blocks testing item 2.
+
+The exact probe commands for both are in `docs/NEXT-SESSION.md` §1, written so
+they can be pasted rather than reconstructed. `42703` means the column does not
+exist and `42501` means it exists behind RLS — the `nonsense_col` control is
+what makes that reading trustworthy, and for the redirect probe the status code
+tells you nothing, because Supabase substitutes the Site URL and still answers
+302.
+
 Re-run the §1b probe after 1, and re-check the §1a `grep -c 'supabase.co'`
 after 2. Neither fix is believable without its measurement — the whole reason
 this page exists is that §1b has been *documented as fixed* in two places since
