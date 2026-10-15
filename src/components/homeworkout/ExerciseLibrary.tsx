@@ -6,9 +6,10 @@ import { onRaised } from '../../lib/colors'
 import { Button } from '../ui/button'
 import { ChipPick } from '../ui/quickpick'
 import { VideoLink } from '../VideoLink'
-import { EmptyFrame, PanelGrid, PanelCard } from '../page'
+import { EmptyFrame, PanelGrid, PanelCard, DisclosureRow } from '../page'
 import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
+import { useStickyState } from '../../lib/useStickyState'
 import { muscleNames } from '../../lib/muscles'
 import {
   EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL, FAMILY_ORDER, FAMILY_SHORT,
@@ -40,12 +41,21 @@ const DIFFICULTIES: Difficulty[] = ['beginner', 'intermediate', 'advanced']
  */
 export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }) {
   const [muscle, setMuscle] = useState<Muscle | null>(null)
-  const [equipment, setEquipment] = useState<Equipment | null>(null)
+  /* Your kit is a SETTING, not a search. It is the only facet about the room
+     you are standing in rather than about the movement, it halves the library
+     on its own (37 of 83 need nothing at all), and it does not change between
+     visits — so it persists, and the catalogue opens already narrowed to what
+     you can actually do. `exercisesForKit` has been in `homeExercises.ts` with
+     no call site since it was written, for exactly this. */
+  const [equipment, setEquipment] = useStickyState<Equipment | 'any'>(
+    'homeworkout.kit', 'any', ['any', ...EQUIPMENT_ORDER],
+  )
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [family, setFamily] = useState<Family | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
-  const rows = filterExercises({ muscle, equipment, difficulty, family })
+  const kit = equipment === 'any' ? null : equipment
+  const rows = filterExercises({ muscle, equipment: kit, difficulty, family })
   /* Twelve, not three: this is a catalogue you browse, not a history you
      glance at, so the cap is there to stop 83 tiles from being the panel's
      default height rather than to hide the list. Measured on the built bundle:
@@ -53,7 +63,7 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
      the worst panel on the Pull-ups bar. The affordance carries the total, so
      a filtered list of twelve cannot be mistaken for "that is all there is". */
   const shown = useCappedList(rows, 12)
-  const anyFilter = muscle != null || equipment != null || difficulty != null || family != null
+  const anyFilter = muscle != null || kit != null || difficulty != null || family != null
 
   /** A chip row where tapping the selected value clears it. */
   const toggle = <T,>(cur: T | null, set: (v: T | null) => void) => (v: T) => set(cur === v ? null : v)
@@ -75,10 +85,36 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
         <ChipPick label="Movement" tone="brand" value={family} onChange={toggle(family, setFamily)}
           options={FAMILY_ORDER.map((f) => ({ value: f, label: FAMILY_SHORT[f], name: FAMILY_LABEL[f], hint: FAMILY_LABEL[f] }))}
           hint="Picking one also opens that family's chapter of the manual" />
-        <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
-        <ChipPick label="What you have" tone="teal" value={equipment} onChange={toggle(equipment, setEquipment)} options={EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))} />
         <ChipPick label="Difficulty" tone="peach" value={difficulty} onChange={toggle(difficulty, setDifficulty)} options={DIFFICULTIES.map((d) => ({ value: d, label: d }))} className="capitalize"
-          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setEquipment(null); setDifficulty(null); setFamily(null) }}>Clear</Button> : undefined} />
+          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setDifficulty(null); setFamily(null); setEquipment('any') }}>Clear</Button> : undefined} />
+
+        {/* Muscle is behind the fold because it answers almost the same
+            question as Movement, and that is measured rather than felt: for
+            every one of the nine families, a single muscle covers most of it —
+            `pull→back 7/7`, `squat→legs 7/7`, `core→core 12/12`, `push→chest
+            11/13`, `overhead→shoulders 9/10`, `hinge→glutes 8/9` — and three
+            families map onto one muscle exactly. Four rows of 29 chips were
+            two questions asked twice. Movement stays up front because it does
+            strictly more: it also opens that family's chapter.
+
+            `DisclosureRow`, not a `<details>`: it renders `aria-expanded`,
+            which is what `npm run a11y` clicks before it scans. */}
+        <DisclosureRow label="Filter by muscle">
+          <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
+        </DisclosureRow>
+      </div>
+
+      {/* Your kit, once. */}
+      <div className="mt-3 border-t border-line pt-3">
+        <ChipPick
+          label="Your kit"
+          tone="teal"
+          value={equipment}
+          onChange={setEquipment}
+          options={[{ value: 'any' as const, label: 'Show everything', name: 'Show every movement, whatever kit it needs' },
+            ...EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))]}
+          hint="Remembered. The catalogue opens narrowed to what you own."
+        />
       </div>
 
       {/* The family chapter, where you are standing when you want it. It used to
