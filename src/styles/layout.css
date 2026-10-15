@@ -107,6 +107,15 @@
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
   }
 
+  /* The act column, shut. `auto` rather than a fraction: the strip is 40px of
+     content and the review takes everything else, which is the whole point —
+     a `Card collapsible` folds its body and frees HEIGHT, leaving a ~400px
+     empty lane beside the text you are reading. Measured at a 1440 viewport on
+     both adopters: review 678px → 1054px, act 416px → 40px. */
+  .page-zones.page-zones-act-shut:not(.page-zones-single) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   /* Review LEFT and act RIGHT, against the DOM order, because the two rules
      disagree on purpose: status reads before the input form on a wide screen,
      while a phone still gets the form first. Both are explicitly placed —

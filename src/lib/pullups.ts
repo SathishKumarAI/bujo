@@ -205,7 +205,11 @@ export const PULLUP_PRINCIPLES: Principle[] = [
 export interface EquipmentItem {
   item: string
   spec: string
+  /** A verified guide. Absent is the norm — `buyingGuideUrl` builds a search
+   *  rather than letting a row render no link at all. */
   url?: string
+  /** Set on a row that is not a purchase ("Nothing"), so no guide is offered. */
+  noBuy?: boolean
 }
 
 export const PULLUP_EQUIPMENT: EquipmentItem[] = [
