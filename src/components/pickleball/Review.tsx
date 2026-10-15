@@ -1,35 +1,31 @@
-import { useState, type ReactNode } from 'react'
-import { ArrowSquareOut, Barbell, CalendarDot, Gauge, Medal, Plus, Target, Trophy } from '@/components/icons'
+import { useState } from 'react'
+import { ArrowSquareOut, Barbell, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
-import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../ui'
+import { Card, Empty, Input, Pill, Segmented, Textarea } from '../ui'
 import { Button } from '../ui/button'
 import { CardGrid } from '../shell/CardGrid'
 import { LazyMount } from '../LazyMount'
 import { useNav } from '../shell/nav'
-import { CalendarHeatmap, SectionRail } from '../page'
-import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
+import { SectionRail } from '../page'
+import { cat, onRaised } from '../../lib/colors'
 import { todayISO, prettyDay, fromISODay } from '../../lib/date'
 import {
-  pickleTotals, winRateSeries, weeklyGames, formatStats, cumulativeGames, gamesByDay, partnerStats,
-  venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup,
-  weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
-  pickleHours, scoringStats, upcomingEvents, playConsistency,
+  partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential,
+  levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
+  pickleHours, scoringStats, playConsistency,
 } from '../../lib/pickleball'
-import { PICKLE_FORMATS, FORMAT_LABEL } from '../../lib/pickleballPlan'
 import { ACADEMY_DRILLS, DRILL_FIXES } from '../../lib/pickleballAcademy'
 import { PracticeTick } from '../coaching/PracticeTick'
 import { PB_PANELS } from './panels'
-import type { PickleballFormat } from '../../lib/types'
+import { Facet } from './Facet'
+import { TrendCharts } from './TrendCharts'
+import { CompetitionPanel } from './CompetitionPanel'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from './FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from './MatchupCards'
 import { WeekdayPerformanceCard, PointDifferentialCard, TimeOnCourtCard, ScoringPerformanceCard, PlayConsistencyCard } from './SignalCards'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
 import { PICKLEBALL_KEY } from '../../lib/recordKeys'
-import { notify } from '../../lib/notify'
-
-const tip = rechartsTooltip
 
 /**
  * ZONE 3 - everything this page has recorded, behind ONE bar.
@@ -50,18 +46,7 @@ const tip = rechartsTooltip
  * `lib/pickleball.ts`), and a prop list that long is a second place for two
  * components to disagree about what a number means.
  */
-const evtBlankOf = () => ({ date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' })
 
-/** Tournament-day prep checklist · shown alongside the countdown to an event. */
-const PREP_CHECKLIST = [
-  'Paddles (+ a backup) and fresh grip / overgrip tape',
-  'Court shoes, extra socks, athletic tape',
-  'Water + electrolytes; quick-energy snacks',
-  'Sun: hat, sunglasses, sunscreen — or layers for cold',
-  'Warm-up band, foam roller; ibuprofen / blister kit',
-  'Know your start time, division & format; arrive 45 min early',
-  'Mental routine: pre-point breath, one tactical intention',
-]
 
 /** Reputable external coaching / rules resources (open in a new tab). */
 const RESOURCES = [
@@ -70,18 +55,6 @@ const RESOURCES = [
 ]
 
 
-/**
- * Renders its children only when their sub-section is the selected one.
- *
- * Module level and `active` as a prop, not a closure: a component declared
- * inside a render is a NEW component type every render, so React unmounts and
- * remounts its whole subtree — every chart would re-enter, every fold inside
- * it would snap shut, and eslint's `no-create-component-during-render` says so
- * before any of that is visible.
- */
-function Facet({ of, active, children }: { of: string; active: string | null; children: ReactNode }) {
-  return active == null || active === of ? <>{children}</> : null
-}
 
 // History row with in-place editing (BUJO-201): correct a mistyped score/format/
 // duration without delete-and-re-log.
@@ -153,69 +126,15 @@ export function PickleballReview({ panel, onPanel }: {
   onPanel: (id: string) => void
 }) {
   const nav = useNav()
-  const { data, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, logDupr, removeDupr } = useJournal()
+  const { data, updatePickleball, removePickleball } = useJournal()
   const today = todayISO()
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
 
-  const [dupr, setDupr] = useState({ date: todayISO(), rating: '' })
-  // The page had three always-open log forms — session, DUPR, event — each
-  // ending in its own wide tonal button. Three controls at primary weight is
-  // three primary actions, which is none: nothing tells a first-time visitor
-  // that logging a session is the thing this page is for. DUPR and events are
-  // logged monthly at most, so they sit behind a header "+" and the reveal
-  // saves with a ghost button. "Log session" stays the one wide control.
-  // Both cards are also collapsible, so the fold is driven from here: hitting
-  // "+" on a card the user had collapsed would otherwise reveal a form inside a
-  // hidden body and read as a dead button.
   // Not sticky, and not in the URL: a sub-section is a narrowing you do while
   // reading, not a place you return to. Sticky it would be, on a page you open
   // a week later, four cards you cannot find and no memory of hiding them.
   const [facet, setFacet] = useState<string | null>(null)
-  const [duprOpen, setDuprOpen] = useState(false)
-  const [duprCardOpen, setDuprCardOpen] = useState(true)
-  const [evOpen, setEvOpen] = useState(false)
-  const [evCardOpen, setEvCardOpen] = useState(true)
-  const duprStats = duprTrend(data.settings)
-  function saveDupr() {
-    const r = Number(dupr.rating)
-    if (!dupr.rating || Number.isNaN(r) || r <= 0) return
-    logDupr(dupr.date, r)
-    setDupr({ date: todayISO(), rating: '' })
-  }
 
-  const [ev, setEv] = useState(evtBlankOf)
-  const setE = (p: Partial<ReturnType<typeof evtBlankOf>>) => setEv((c) => ({ ...c, ...p }))
-  function logEvent() {
-    if (!ev.name.trim()) { notify.info('Name the event', 'A league or tournament needs a name to find it by.'); return }
-    addPickleEvent({
-      date: ev.date,
-      name: ev.name.trim(),
-      kind: ev.kind,
-      format: ev.format,
-      division: ev.division.trim() || undefined,
-      wins: ev.wins ? Number(ev.wins) : undefined,
-      losses: ev.losses ? Number(ev.losses) : undefined,
-      placement: ev.placement.trim() || undefined,
-      partner: ev.partner.trim() || undefined,
-      notes: ev.notes.trim() || undefined,
-    })
-    setEv(evtBlankOf())
-  }
-
-  const all = pickleTotals(data)
-  const trend = winRateSeries(data)
-  const weeks = weeklyGames(data, 8, today)
-  const wl = [{ name: 'Won', value: all.gamesWon, color: 'green' }, { name: 'Lost', value: all.gamesLost, color: 'red' }]
-  const formats = formatStats(data)
-  const cum = cumulativeGames(data)
-  const byDay = gamesByDay(data)
-  /* The play-frequency heatmap renders through the Body cluster's
-     `CalendarHeatmap`: a real <table> with weekday row headers and per-cell
-     focus, bucketed by QUARTILE over the non-zero days. The grid it replaced
-     scaled linearly against the busiest day, so one tournament Saturday
-     flattened every ordinary session to the lightest step - the shape of the
-     habit was the one thing the visual could not show. */
-  const heat = [...byDay].map(([date, value]) => ({ date, value }))
   // Read-only rivalry / chemistry / venue aggregates over logged sessions.
   const partners = partnerStats(data)
   const venues = venueStats(data)
@@ -228,8 +147,10 @@ export function PickleballReview({ panel, onPanel }: {
   const weekdays = weekdayPerformance(data)
   const weekdaysPlayed = weekdays.filter((w) => w.games > 0)
   // Read-only monthly volume / forecast / load / milestone signals.
-  const months = monthlyGames(data, 6, today)
-  const monthsPlayed = months.some((m) => m.games > 0)
+  /* Only the chip COUNT needs this here — the chart itself lives in
+     `TrendCharts`, which calls the same function over the same journal. Two
+     call sites of one pure function, not two opinions about what a month is. */
+  const monthsPlayed = monthlyGames(data, 6, today).some((m) => m.games > 0)
   const forecast = winRateForecast(data)
   const load = rpeLoad(data, 7, today)
   const milestones = pickleMilestones(data)
@@ -237,12 +158,6 @@ export function PickleballReview({ panel, onPanel }: {
   const hours = pickleHours(data, 30, today)
   const scoring = scoringStats(data)
   const consistency = playConsistency(data, 8, today)
-  const upcoming = upcomingEvents(data, today)
-  // Leagues & tournaments.
-  const events = [...(data.pickleballEvents ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
-  const evWins = events.reduce((s, e) => s + (e.wins ?? 0), 0)
-  const evLosses = events.reduce((s, e) => s + (e.losses ?? 0), 0)
-  const medals = events.filter((e) => /gold|silver|bronze|1st|2nd|3rd/i.test(e.placement ?? '')).length
   // Deterministic daily rotation, over the academy's twenty-one drills.
   const drill = ACADEMY_DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % ACADEMY_DRILLS.length]
 
@@ -313,133 +228,6 @@ export function PickleballReview({ panel, onPanel }: {
   const activeFacet = facetRows.some((f) => f.id === facet) ? facet : null
 
 
-  const charts = (
-    <CardGrid>
-      <Facet of="winning" active={activeFacet}>
-      <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
-        {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
-          <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trend} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis domain={[0, 100]} stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip()} />
-                <Line type="monotone" dataKey="winPct" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Card>
-      </Facet>
-      <Facet of="winning" active={activeFacet}>
-      <Card band title="Win / loss" subtitle="All games played" enlargeable>
-        {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
-          <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={wl} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                  {wl.map((x) => <Cell key={x.name} fill={cat(x.color)} />)}
-                </Pie>
-                <Tooltip contentStyle={tip()} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center gap-3 text-label">
-              {wl.map((x) => <span key={x.name} style={{ color: onRaised(x.color) }}>● {x.name} {x.value}</span>)}
-            </div>
-          </div>
-        )}
-      </Card>
-      </Facet>
-      <Facet of="volume" active={activeFacet}>
-      <Card band title="Games per week" subtitle="Last 8 weeks" enlargeable>
-        <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeks.map((g, i) => ({ wk: `w${i + 1}`, games: g }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-              <CartesianGrid stroke={cat('surface0')} vertical={false} />
-              <XAxis dataKey="wk" stroke={cat('overlay0')} fontSize={11} />
-              <YAxis stroke={cat('overlay0')} fontSize={11} />
-              <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
-              <Bar dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-      </Facet>
-      {monthsPlayed && (
-        <Facet of="volume" active={activeFacet}>
-        <Card band title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
-          <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={months.map((m) => ({ m: m.label.slice(0, 3), games: m.games, winPct: m.winPct }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid stroke={cat('surface0')} vertical={false} />
-                <XAxis dataKey="m" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v, n) => [n === 'winPct' ? `${v}%` : `${v}`, n === 'winPct' ? 'Win %' : 'Games'] as [string, string]} />
-                <Bar dataKey="games" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-        </Facet>
-      )}
-      <Facet of="winning" active={activeFacet}>
-      <Card band title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
-        {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
-          <ul className="space-y-3">
-            {formats.map((fm) => (
-              <li key={fm.format}>
-                <div className="mb-1 flex justify-between text-body">
-                  <span className="capitalize text-fg-1">{fm.format}</span>
-                  <span className="text-fg-2">{fm.games} games · <span style={{ color: onRaised('green') }}>{fm.winPct}%</span></span>
-                </div>
-                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${fm.format} win rate ${fm.winPct}%`}>
-                  <div className="h-full rounded-pill" style={{ width: `${fm.winPct}%`, background: cat(fm.format === 'doubles' ? 'mauve' : 'teal') }} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-      </Facet>
-      <Facet of="volume" active={activeFacet}>
-      <Card band title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
-        {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
-          <div className="h-40" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={cum} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                <YAxis stroke={cat('overlay0')} fontSize={11} />
-                <Tooltip contentStyle={tip()} />
-                <Line type="monotone" dataKey="games" stroke={cat('blue')} dot={false} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Card>
-      </Facet>
-      {/* `ranges`, like every other heatmap in the app.
-          This card had its own 3mo/6mo/1yr toggle, which is three ways of
-          looking at a year and no way of looking at this week — the thing
-          asked for across every heatmap: *"I want to focus more on this month
-          and this week, why should I focus on yearly."* Swapping the bespoke
-          control for the shared one also deletes the `heatWeeks` state, the
-          title badge that restated it and the fixed-span subtitle. */}
-      <Facet of="volume" active={activeFacet}>
-      <Card band title="Heatmap" subtitle="Darker = more games" enlargeable>
-        <CalendarHeatmap
-          ranges
-          storageKey="pickleball"
-          fluid
-          data={heat}
-          unit="games"
-          label="Pickleball games per day"
-        />
-      </Card>
-      </Facet>
-    </CardGrid>
-  )
 
   return (
       <section className="mt-2">
@@ -609,150 +397,7 @@ export function PickleballReview({ panel, onPanel }: {
         )}
       </Card>
             </>)}
-            {panel === 'competition' && (<>
-        <CardGrid>
-        {/* ── Tournament prep countdown (#345) · conditional top status,
-              surfaces only when events exist; collapsed. ── */}
-        {upcoming.length > 0 && (
-          <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarDot} size="md" className="text-peach" /> Upcoming events</span>} subtitle="Countdown &amp; a tournament-day prep checklist" collapsible>
-            <ul className="mb-3 space-y-2">
-              {upcoming.map((e) => (
-                <li key={e.id} className="flex items-center justify-between gap-2 rounded-card border p-2.5" style={{ borderColor: e.soon ? cat('peach') : cat('surface0'), background: e.soon ? cat('peach') + '0d' : cat('base') }}>
-                  <span className="min-w-0">
-                    <span className="text-body font-medium text-fg-1">{e.name}</span>
-                    <span className="block truncate text-label text-fg-2">{prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                  </span>
-                  <Pill color={e.soon ? 'peach' : 'mauve'} className="px-2.5 py-1 font-medium">
-                    {e.daysUntil === 0 ? 'Today' : e.daysUntil === 1 ? 'Tomorrow' : `${e.daysUntil} days`}
-                  </Pill>
-                </li>
-              ))}
-            </ul>
-            <details className="rounded-card bg-ink-2 p-3">
-              <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
-              <ul className="mt-2 space-y-1">
-                {PREP_CHECKLIST.map((x) => (
-                  <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
-                ))}
-              </ul>
-            </details>
-          </Card>
-        )}
-        {/* ── DUPR rating tracker ── */}
-        <Card enlargeable
-          band
-          title={<span className="inline-flex items-center gap-2"><Icon as={Gauge} size="md" className="text-mauve" /> DUPR rating</span>}
-          subtitle="Log your DUPR over time, watch the trend climb"
-          collapsible
-          open={duprCardOpen}
-          onOpenChange={setDuprCardOpen}
-          right={
-            <Button variant="ghost" size="icon-sm" onClick={() => { setDuprOpen((o) => !o); setDuprCardOpen(true) }} aria-expanded={duprOpen} aria-label="Log a DUPR rating">
-              <Icon as={Plus} size="sm" />
-            </Button>
-          }
-        >
-          {duprOpen && (
-            <div className="mb-3 flex flex-wrap items-end gap-2 bg-ink-2 p-3">
-              <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
-              <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-              <Button variant="ghost" size="sm" onClick={saveDupr}>Save rating</Button>
-            </div>
-          )}
-          {duprStats.points.length === 0 ? (
-            <Empty>No DUPR ratings logged yet · use + in the header to start the trend.</Empty>
-          ) : (
-            <>
-              <div className="mb-3 grid grid-cols-3 gap-2">
-                <StatTile compact label="Latest" value={duprStats.latest ?? '—'} />
-                <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
-                <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
-              </div>
-              {duprStats.points.length >= 2 && (
-                <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-                      <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                      <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                      <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
-                      <Tooltip contentStyle={tip()} />
-                      <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-              <ul className="mt-3 divide-y divide-surface0">
-                {[...duprStats.points].reverse().slice(0, 8).map((p) => (
-                  <li key={p.date} className="group flex items-center justify-between gap-2 py-1.5 text-body">
-                    <span className="text-fg-1">{prettyDay(p.date)}</span>
-                    <span className="flex items-center gap-2">
-                      <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </Card>
-        {/* ── Leagues & tournaments · secondary event logging, grouped beside the
-              DUPR tracker and collapsed. ── */}
-        <Card
-          band
-          title={<span className="inline-flex items-center gap-2"><Icon as={Medal} size="md" className="text-yellow" /> Leagues &amp; tournaments</span>}
-          subtitle="Log competitive events, separate from casual sessions"
-          collapsible
-          open={evCardOpen}
-          onOpenChange={setEvCardOpen}
-          right={
-            <Button variant="ghost" size="icon-sm" onClick={() => { setEvOpen((o) => !o); setEvCardOpen(true) }} aria-expanded={evOpen} aria-label="Log an event">
-              <Icon as={Plus} size="sm" />
-            </Button>
-          }
-        >
-          <div className="mb-4 grid grid-cols-3 gap-2">
-            <StatTile compact label="Events" value={events.length} />
-            <StatTile compact label="Event record" value={`${evWins}–${evLosses}`} />
-            <StatTile compact label="Medals" value={medals} color="yellow" icon={<Icon as={Trophy} size="sm" />} />
-          </div>
-          {/* log an event */}
-          {evOpen && (
-          <div className="grid gap-2 rounded-card bg-ink-2 p-3 sm:grid-cols-2">
-            <Input value={ev.name} onChange={(e) => setE({ name: e.target.value })} placeholder="Event name" aria-label="Event name" />
-            <Input type="date" value={ev.date} onChange={(e) => setE({ date: e.target.value })} aria-label="Date" />
-            <Segmented value={ev.kind} onChange={(v) => setE({ kind: v })} options={[{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }]} />
-            <select value={ev.format} onChange={(e) => setE({ format: e.target.value as PickleballFormat })} aria-label="Format" className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-2 text-body text-foreground">
-              {PICKLE_FORMATS.map((fm) => <option key={fm.id} value={fm.id}>{fm.label}</option>)}
-            </select>
-            <Input value={ev.division} onChange={(e) => setE({ division: e.target.value })} placeholder="Division e.g. 3.5 Mixed" aria-label="Division" />
-            <Input value={ev.placement} onChange={(e) => setE({ placement: e.target.value })} placeholder="Placement e.g. Gold / 2nd of 8" aria-label="Placement" />
-            <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
-            <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
-            <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-            <div className="flex justify-end sm:col-span-2"><Button variant="ghost" size="sm" onClick={logEvent}>Save event</Button></div>
-          </div>
-          )}
-          {/* event list */}
-          {events.length > 0 && (
-            <ul className="mt-3 divide-y divide-surface0">
-              {events.map((e) => (
-                <li key={e.id} className="group flex items-center justify-between gap-2 py-2 text-body">
-                  <span className="min-w-0">
-                    <span className="text-fg-1">{e.name}</span>
-                    <span className="text-fg-2"> · {prettyDay(e.date)} · {FORMAT_LABEL[e.format]}{e.division ? ` · ${e.division}` : ''}</span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-2">
-                    {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
-                    {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
-                    <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-        </CardGrid>
-            </>)}
+            {panel === 'competition' && <CompetitionPanel />}
             {panel === 'performance' && (<>
         {/* "Form & momentum" and "Deeper signals" were two headings over one
             question — how am I playing. Nine cards in one masonry balance into
@@ -772,7 +417,7 @@ export function PickleballReview({ panel, onPanel }: {
         </CardGrid>
             </>)}
             {panel === 'trends' && (<>
-        <LazyMount minHeight={500}>{charts}</LazyMount>
+        <LazyMount minHeight={500}><TrendCharts activeFacet={activeFacet} /></LazyMount>
             </>)}
             {panel === 'matchups' && (<>
         <CardGrid>
