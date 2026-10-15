@@ -26,7 +26,7 @@ export function TagManager() {
   }
 
   return (
-    <Card band title="Tags" subtitle="Rename or merge your #tags across every entry">
+    <Card band collapsible defaultCollapsed title="Tags" subtitle="Rename or merge your #tags across every entry">
       {tags.length === 0 ? (
         <Empty>No #tags yet · add them inline in any entry, e.g. “#travel”.</Empty>
       ) : (

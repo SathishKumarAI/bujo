@@ -1,0 +1,154 @@
+/* ── One section, one screen ─────────────────────────────────────────────────
+   Owned by `components/panes/SectionScreen.tsx`. Nothing else should use these
+   classes; if a second page wants this layout it should render that component.
+
+   The shape: ONE section is on screen at a time, it is exactly as tall as the
+   viewport allows, and its cards are packed into columns that fill that height
+   before starting a new one. The page never scrolls.
+
+   ── What this replaced, an hour earlier ────────────────────────────────────
+
+   The first attempt put all four Settings sections side by side at once. That
+   was a misreading of the request — four 328px columns on a 1440 screen, every
+   card narrower than the same card gets on a phone, and the thing actually
+   asked for ("fit everything in one page for one section") delivered by none
+   of it. Two things are kept from it because both were found by measurement
+   and are still true: the `position: relative` below, and the height
+   arithmetic.
+
+   ── Why `column-fill: auto` and not a grid or a masonry ────────────────────
+
+   A grid puts each card in a cell, so the shortest column ends in a hole. A
+   masonry packs better but still balances only what it was given. Against a
+   FIXED height, `column-fill: auto` is the one layout that does what "do not
+   waste the empty space" literally asks: fill column one to the bottom, then
+   start column two. Nothing is stranded beside a gap, because there is no gap
+   until the content runs out.
+
+   The cost, stated because it is a real one: reading order becomes
+   down-then-right instead of across. That is correct for a page of independent
+   settings cards and would be wrong for anything with a narrative order.
+
+   ── The height ────────────────────────────────────────────────────────────
+
+   `100dvh`, not `100vh`. On a phone `vh` is the viewport with the browser
+   chrome *retracted*, so a `100vh` box is taller than what you can see and the
+   page scrolls by exactly the height of the URL bar — which is the scroll this
+   layout exists to remove. The `vh` line before it is the fallback for
+   anything without `dvh`: wrong by that same bar, and wrong-and-usable beats
+   unset. `--header-h` is republished from `.app-header`'s measured box by
+   `useHeaderHeight`, so this follows a header that wraps rather than guessing
+   at one. */
+
+/* ── Below 64rem this is an ordinary stack, and that is the right answer ───
+
+   A phone has no spare width, so there is nothing for columns to use and
+   nothing to waste — "fill the width" and "do not scroll" are the same demand
+   at 390px and cannot both be met. Measured, with the column layout forced on
+   at every width: a 390px screen needed **3.16 screens of sideways scroll for
+   Account and 7.41 for Data**, and the page still moved 91px. Seven screens of
+   horizontal swiping to reach an export button is worse than the vertical
+   scroll it replaced, by a wide margin.
+
+   So the packing is a wide-screen layout and says so. Phones scroll down, the
+   way phones do. Nothing below is overridden there — the block simply does not
+   apply — which is why the shared rules (`break-inside`, the card-grid
+   collapse) sit outside it. */
+@media (min-width: 64rem) {
+  .section-screen {
+    /* The section nav, its gap, and `#main`'s own padding. Measured against
+       the shipped shell rather than derived — at one rem less the document
+       came out 23px taller than the viewport, which is a scrollbar and a flick
+       on a layout that promises neither. The extra 2px absorbs sub-pixel
+       rounding in the header's measured height, which showed up as a 1px page
+       scroll at 1440x900 and at no other size. Re-measure if the shell's
+       padding moves. */
+    height: calc(100vh - var(--header-h, 3.5rem) - 10.5rem - 2px);
+    height: calc(100dvh - var(--header-h, 3.5rem) - 10.5rem - 2px);
+    /* A floor, because the calculation goes absurd on a short landscape
+       screen, and a 40px-tall section is not a layout, it is a bug that
+       validates. */
+    min-height: 22rem;
+
+    /* `column-width`, not `column-count`, so the number of columns follows the
+       room available rather than a breakpoint deciding it. 21rem is the
+       narrowest a card on this page reads well at; below that the
+       label/control rows in `settings/shared.tsx` start wrapping every line. */
+    /* 18rem, and the exact number was measured twice because the arithmetic
+       is a cliff, not a slope. Column count is
+       `floor((W + gap) / (colWidth + gap))`, so at a 1280px laptop — 950px of
+       content once the sidebar is out — 21rem gives 2 columns and so does
+       19rem: `floor((950+20)/324) = 2`, missing a third by a single pixel.
+       18rem (288px) gives 3. The visible effect of that one rem is Data going
+       from 3.05 screens of sideways scroll to one.
+
+       288px is still above the width where the label/control rows in
+       `settings/shared.tsx` begin wrapping every line, which is the floor that
+       matters for this page's content. */
+    column-width: 18rem;
+    column-gap: 1.25rem;
+    column-fill: auto;
+
+    /* When a section genuinely holds more than one screen it goes SIDEWAYS,
+       not down. That is the one deliberate scroll here, and `overflow-y:
+       hidden` is what stops it quietly becoming a vertical one instead. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+  }
+}
+
+.section-screen {
+
+  /* ── Load-bearing, and it took a measurement to find ──────────────────────
+     An `overflow` scrollport clips its descendants, but ONLY those whose
+     containing block is inside it. An absolutely-positioned element with no
+     positioned ancestor resolves against the initial containing block — the
+     document — so it is not clipped here, and it extends the PAGE by its own
+     offset.
+
+     Not hypothetical: `sr-only` is `position: absolute`, and the Data
+     section's hidden file inputs (Import JSON) sat at a static offset of
+     1641px inside the scroll content. The page grew 876px and scrolled, on the
+     one layout whose whole promise is that it does not — while every visible
+     element measured correctly and the container reported itself properly
+     clipped. `documentElement.scrollHeight` read 1714 against an 838 viewport
+     with nothing on screen below 861px.
+
+     The general rule: a scrollport that will hold arbitrary content wants
+     `position: relative`, or it is only clipping the children that happened to
+     cooperate. */
+  position: relative;
+
+  scrollbar-width: thin;
+}
+
+/* A card must never be split down the middle by a column break.
+   `break-inside` is the modern spelling and `-webkit-column-break-inside` the
+   one Safari still wants; both, because a card sliced across a column boundary
+   is the single worst thing this layout can do and it costs one line. */
+.section-screen > * {
+  -webkit-column-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Content inside a column is in a COLUMN, whatever the window is doing ───
+
+   `CardGrid` breaks on the VIEWPORT (`md:grid-cols-2`, `2xl:grid-cols-3`),
+   which is right when the page is full width and wrong inside a 336px column
+   on a 1440px screen: it laid out two sub-columns and drew text over text —
+   "Encrypt journal" across the passcode copy, two buttons reduced to "Ne" and
+   "Cc".
+
+   This is the `MasonryGrid`-in-a-722px-zone trap from CLAUDE.md seen from the
+   other side. There a container query was too small to fire; here a media
+   query fires when it should not. Same cause — a layout asking about the wrong
+   box — and the same tell: the class list looks right and the pixels are
+   wrong.
+
+   `:where()` keeps specificity at zero, so a call site that genuinely wants
+   something else can still say so with one class. */
+.section-screen :where([data-card-grid]) {
+  grid-template-columns: minmax(0, 1fr);
+}

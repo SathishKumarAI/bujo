@@ -143,6 +143,15 @@ export function AppleHealthCard() {
   return (
     <Card
       band
+      // Folded by default: an import you run once, not something you came to
+      // Settings to read. It was part of what pushed the Data section past one
+      // screen while every other section fit. `Card collapsible` renders a
+      // real `aria-expanded`, so the a11y gate's `openFolds()` still scans
+      // inside it — folding content is how the Gym pass once hid a 1.41:1
+      // contrast bug from that gate, and the gate was armed against exactly
+      // this afterwards.
+      collapsible
+      defaultCollapsed
       title="Apple Health"
       subtitle="Drop your export in — temperature, steps, sleep and weight"
       help="Read entirely on this device. Basal body temperature fills the chart on Cycle, so you stop typing it in every morning."

@@ -1,6 +1,5 @@
 import { useJournal } from '../../store'
 import { Card, Segmented } from '../ui'
-import { CardGrid } from '../shell/CardGrid'
 import { Row, Toggle } from './shared'
 import { AccountCard } from '../account/AccountCard'
 import { LocalAccountCard } from '../account/LocalAccountCard'
@@ -73,8 +72,11 @@ export function AccountTab() {
           act is now one button, which is what an act zone is for. */}
       <AccountCard />
 
-      <div className="mt-5">
-        <CardGrid>
+      {/* No grid wrapper. `SectionScreen` packs this section into
+          height-filling columns, so a grid here would be a second layout
+          competing with the first — and the one that loses is the one that
+          cannot see the viewport height. Cards are siblings; source order is
+          the reading order, down each column then right. */}
           <LocalAccountCard />
 
           <Card band title="About you" subtitle="What this journal tracks, and when it nudges you">
@@ -145,8 +147,6 @@ export function AccountTab() {
               </Row>
             </div>
           </Card>
-        </CardGrid>
-      </div>
     </>
   )
 }

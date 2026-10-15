@@ -3,7 +3,6 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { Card, Segmented } from '../ui'
 import { Button } from '../ui/button'
-import { MasonryGrid } from '../shell/CardGrid'
 import { useConfirm } from '../ConfirmDialog'
 import { cat } from '../../lib/colors'
 import { THEMES } from '../../lib/themes'
@@ -26,7 +25,11 @@ export function AppearanceTab() {
               column held a gap until the next row began. Peer cards in no
               particular order, which is the one case column-major reading is
               fine. */}
-          <MasonryGrid>
+      {/* No grid wrapper. `SectionScreen` packs this section into
+          height-filling columns, so a grid here would be a second layout
+          competing with the first — and the one that loses is the one that
+          cannot see the viewport height. Cards are siblings; source order is
+          the reading order, down each column then right. */}
       <Card band title="Theme" subtitle="The palette, and the accent that runs through it">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {THEMES.map((t) => {
@@ -127,7 +130,6 @@ export function AppearanceTab() {
           })}
         </div>
       </Card>
-          </MasonryGrid>
 
           {/* SET-4: one-tap return to the default look. Below the grid, not
               inside one of the four bands — it resets all four, and a reset
