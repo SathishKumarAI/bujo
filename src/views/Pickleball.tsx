@@ -274,6 +274,11 @@ export function Pickleball() {
       tier={1180}
       zone1={atAGlance}
       actTop
+      /* Stacked — a 1024 or 1152px window, or a phone — the record comes
+         before the form. The form is 726px here, so act-first put the rail a
+         screen and a half down and picking a row read as the page running
+         away. Wide, this changes nothing: both columns are placed. */
+      actLast
       actShut={act === 'shut'}
       zone2={act === 'shut' ? (
         <ActStrip
