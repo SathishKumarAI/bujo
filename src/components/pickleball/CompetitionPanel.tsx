@@ -6,6 +6,7 @@ import { useJournal } from '../../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile } from '../ui'
 import { Button } from '../ui/button'
 import { CardGrid } from '../shell/CardGrid'
+import { DisclosureRow } from '../page'
 import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 import { todayISO, prettyDay } from '../../lib/date'
 import { duprTrend, upcomingEvents } from '../../lib/pickleball'
@@ -96,14 +97,22 @@ export function CompetitionPanel() {
                 </li>
               ))}
             </ul>
-            <details className="rounded-card bg-ink-2 p-3">
-              <summary className="cursor-pointer text-body font-medium text-fg-1">Tournament-day prep checklist</summary>
-              <ul className="mt-2 space-y-1">
+            {/* `DisclosureRow`, not a raw `<details>`.
+
+                A `<summary>` carries no `aria-expanded`, and `openFolds()` in
+                `scripts/a11y-axe.mjs` finds content by exactly that attribute —
+                so this checklist had never been opened by the gate at any theme
+                or viewport. It is the same trap the Coaching pass found in its
+                session template, and this was the last `<details>` in `#main`
+                on this page: the probe now reports 0. Folding something is not
+                allowed to be a way of making a violation vanish. */}
+            <DisclosureRow label="Tournament-day prep checklist">
+              <ul className="space-y-1">
                 {PREP_CHECKLIST.map((x) => (
                   <li key={x} className="flex gap-1.5 text-label text-fg-2"><span className="text-peach">•</span> {x}</li>
                 ))}
               </ul>
-            </details>
+            </DisclosureRow>
           </Card>
         )}
         {/* ── DUPR rating tracker ── */}

@@ -127,7 +127,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 18
+export const DEMO_VERSION = 19
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -652,9 +652,28 @@ export function generateDemoData(today = todayISO()): JournalData {
   }
 
   // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──
+  /**
+   * TWO PLAYED, AND ONE STILL TO COME.
+   *
+   * Every event here was in the PAST, so `upcomingEvents` returned empty and
+   * the whole Upcoming-events card — the countdown, the prep checklist inside
+   * it, and the `event` rule in `nextStep` — rendered for nobody. Not a bug
+   * anybody could see: the card is conditional, so a page with no future event
+   * simply has one card fewer, and every browser gate therefore scanned a
+   * Competition panel with a third of it missing. Same family as the unseeded
+   * `data.cycle` and the pull-up sessions the seed never wrote: a branch the
+   * seed never takes cannot fail.
+   *
+   * Dated +9 days on purpose. Inside `nextStep`'s fourteen-day window so the
+   * sentence at the top of the page can be the event one, and outside the
+   * `soon` threshold (≤1 day) so the card renders its ordinary state rather
+   * than its alarm — the alarm is reachable by moving the clock, the ordinary
+   * state is what a screenshot should show.
+   */
   j.pickleballEvents = [
     { id: uid('pke'), date: addDays(today, -21), name: 'Spring Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', wins: 4, losses: 2, placement: 'Bronze', partner: 'Maya' },
     { id: uid('pke'), date: addDays(today, -7), name: 'Tuesday Night Ladder', kind: 'league', format: 'ladder', division: '3.5–4.0', wins: 3, losses: 1, placement: '2nd of 8' },
+    { id: uid('pke'), date: addDays(today, 9), name: 'Riverside Autumn Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', partner: 'Mara' },
   ]
   j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
 

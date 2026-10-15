@@ -268,3 +268,99 @@ And then, for a page that is a programme rather than a catalogue:
 10. **Is there more than one warning on the surface?** (§11.)
 11. **Does any new animation touch opacity on text?** (§10.) If so, it will
     eventually be blamed on a colour token.
+
+---
+
+## 15 · One sentence that says what to do next — `lib/pickleball.ts`'s `nextStep`
+
+**What it is.** A priority list of rules over the page's own data, returning
+ONE sentence and the panel that holds its detail. Zone 1 renders it above the
+totals; it is a button when a panel answers it and a paragraph when none does.
+
+**Reach for it** on any page whose orient zone is a row of totals. Four true
+numbers are four things that change nothing about today; the thing that does —
+an event on Saturday, a goal two games short, eleven days of silence — is
+usually somewhere in zone 3 behind a navigation choice.
+
+**The order is urgency, and getting it wrong is visible immediately.** It
+shipped as event → goal → lapse, and the demo journal — ten days quiet, weekly
+goal of twelve — rendered *"12 more games this week and you hit your goal of
+12"*: arithmetically true, and nagging, because at a 3.8-day cadence that week
+was already gone. Lapse above goal now. A target inside a week you have not
+started is worth less than the fact that you stopped.
+
+| rule | fires when |
+|---|---|
+| `first` | nothing logged — a record with no rows cannot say anything else |
+| `event` | a dated thing within 14 days; the date is not movable |
+| `lapse` | silence longer than twice your cadence |
+| `goal` | a target you set, this period, not met |
+| `milestone` | always, as the floor — something to aim at beats a blank line |
+
+**Every window-comparing rule needs a coverage floor on both sides and must
+state its sample.** The lapse rule wants four play days (three gaps) before it
+will call anything a lapse, and says so in the sentence: *"across 5 play days
+your cadence is about every 3.8 days"*. Without that it is the
+momentum-indicator bug in CLAUDE.md, where a two-day sample against a seven-day
+one reported a lapse as an improvement.
+
+**Make the function total.** It always returns a sentence, which is what lets
+the page render it without a conditional that would leave a hole at the top.
+
+**Colour means urgency on that row and nothing else**, in the left edge and the
+icon, with `fg-1` text — never the accent as text on a wash of itself.
+
+---
+
+## 16 · Sub-sections, and the single source that keeps them honest
+
+**What it is.** A second, lighter chip row under a rail row, for the groups big
+enough to need one. Pickleball's Performance holds nine cards and Trends seven;
+the chips split them by the question they answer — *How I am playing · How hard
+· Turning up · Badges*.
+
+**Reach for it** at about five panels in one group. Below that a sub-navigation
+costs more than it saves: Competition (3) and Opponents (4) have none.
+
+**The rule that makes it safe:** the chips and the cards read ONE source. A
+`has` map of booleans is declared once, the chip counts are computed from it,
+and each card renders behind `has.x`. The obvious shape — a chip list written
+beside the render conditions — is the hand-written list resolved against
+another source that this repo has been bitten by three times (`BottomNav`'s
+`PRIMARY`, `view-ids.mjs`, the a11y `VIEWS`), and it fails the same way: a chip
+that selects nothing, or a card no chip can reach. Measured against the demo
+journal the chips read `All 7 · 2 · 2 · 2 · 1` — seven, not the nine that
+exist, because two have no data yet.
+
+**`Facet` is module-level with `active` as a prop.** Declared inside the render
+it is a new component type every render, so React remounts the whole subtree:
+every chart re-enters and every fold inside it snaps shut. eslint's
+`no-create-component-during-render` catches it before any of that is visible.
+
+**Not sticky, and not in the URL.** A sub-section is a narrowing you do while
+reading. Persist it and somebody opens the page a week later with four cards
+missing and no memory of hiding them — the opposite of the rail row, which IS
+a place you return to.
+
+---
+
+## 17 · A rail panel is a page-split column, so `CardGrid` — not `MasonryGrid`
+
+`MasonryGrid` breaks on its **container** at 64rem. A review panel beside a
+13rem rail measures **870px at a 1440 viewport** (an 1180px shell minus the
+rail and a 2rem gap), so it draws one column however wide the window is —
+seven cards, 1561px, with `@min-[64rem]:columns-2` sitting in the class list
+looking correct. It only ever worked at 1920.
+
+`CardGrid` asks about the **viewport**, which is the right question when the
+column's width is decided by the page split rather than by the card. Measured
+on the swap: **1561px → 1022px**, and the page from 2.84 to 2.24 desktop
+screens. The cost is the row pocket masonry exists to avoid (~200px beside the
+shortest card), which is the right side of that trade.
+
+**And then prefer a bar to a column.** `railAt="never"` gives the panel the
+full 1110px and puts the four rows left to right, which is how a short table of
+contents is read. It wraps rather than scrolling — a strip wider than its box
+scrolls with nothing advertising it, which is how three of eight chapters went
+missing on Pull-ups — and it must not be sticky, because a bar that sticks
+paints over the panel it switches (COD-202).

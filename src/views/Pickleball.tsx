@@ -161,8 +161,15 @@ export function Pickleball() {
           <>
             <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
             <span className="min-w-0 text-body text-fg-1">{step.text}</span>
+            {/* The destination is named on a desktop and dropped on a phone.
+                Measured: the row is 39px wide-screen and was **156px** at
+                390px — four lines, because "Riverside Autumn Open is in 9 days
+                — the prep checklist is under Competition." already wraps to
+                three and the panel name added a fourth. The sentence names the
+                panel in its own words, the whole row is the button, and a
+                phone has no hover to need the hint. */}
             {step.group && (
-              <span className="ml-auto shrink-0 text-label text-fg-2">
+              <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
                 {PB_PANELS.find((g) => g.id === step.group)?.label} →
               </span>
             )}
