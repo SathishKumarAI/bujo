@@ -6,7 +6,7 @@ import { Card, Input, Textarea } from '../components/ui'
 import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
-import { ActStrip, PageLayout, DisclosureRow, StatBar } from '../components/page'
+import { ActStrip, PageLayout, DisclosureRow, StatBar, useActColumn } from '../components/page'
 import { cat, onRaised } from '../lib/colors'
 import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
@@ -78,7 +78,9 @@ export function Pickleball() {
      the review. The shell owns the geometry, the page owns the state — which
      is the half this branch had back to front, with a second mechanism in
      `PageLayout` that did the same job under a different name. */
-  const [act, setAct] = useStickyState<'open' | 'shut'>('pickleball.act', 'open', ['open', 'shut'])
+  /* The act column's open/shut, including the stacked default — see
+     `useActColumn` for the three measurements that decided it. */
+  const logCol = useActColumn('pickleball')
 
   /**
    * The log form's Partner and Location chips.
@@ -274,17 +276,13 @@ export function Pickleball() {
       tier={1180}
       zone1={atAGlance}
       actTop
-      /* Stacked — a 1024 or 1152px window, or a phone — the record comes
-         before the form. The form is 726px here, so act-first put the rail a
-         screen and a half down and picking a row read as the page running
-         away. Wide, this changes nothing: both columns are placed. */
-      actLast
-      actShut={act === 'shut'}
-      zone2={act === 'shut' ? (
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
+      zone2={logCol.shut ? (
         <ActStrip
           label="Log a session"
           summary={sessions.length ? `${sessions.length} logged · last ${prettyDay(sessions[0].date)}` : 'Nothing logged yet'}
-          onOpen={() => setAct('open')}
+          onOpen={logCol.open}
         />
       ) : (
         <Card band title="Log a session" right={
@@ -295,7 +293,7 @@ export function Pickleball() {
             {/* Shutting it lives in the card header, which is where Home
                 Workout and Pull-ups put theirs — the strip that comes back is
                 the way in, so the way out belongs on the thing itself. */}
-            <Button variant="ghost" size="icon-sm" onClick={() => setAct('shut')} aria-label="Hide the log" title="Hide the log — the review takes the width">
+            <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the log" title="Hide the log — the review takes the width">
               <Icon as={CaretRight} size="sm" />
             </Button>
           </span>

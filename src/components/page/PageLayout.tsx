@@ -64,6 +64,7 @@ export function PageLayout({
   actShut = false,
   actTop = false,
   actLast = false,
+  onSplitChange,
   zone3,
   className = '',
 }: {
@@ -124,6 +125,17 @@ export function PageLayout({
    * reader and to tab order; this moves the real thing.
    */
   actLast?: boolean
+  /**
+   * Told whether the zones are COLUMNS right now.
+   *
+   * The split is a container query (900px of shell), so nothing outside this
+   * component can work it out: `useDevice()` reports a 1152px window as a
+   * desktop while the zones there are stacked, and a page cannot measure a
+   * shell it does not own. A page that wants to behave differently when its
+   * act is a full-width block rather than a column — Pickleball shuts a 683px
+   * form by default there — gets told instead of guessing.
+   */
+  onSplitChange?: (split: boolean) => void
   /** Review. Summary, signature visual, list. */
   zone3?: ReactNode
   className?: string
@@ -178,7 +190,9 @@ export function PageLayout({
       setSticky(el.scrollHeight < window.innerHeight - header - 16)
       // Mirrors layout.css's `@container (min-width: 900px)` — the shell is
       // the container, so its width is the same measurement the CSS makes.
-      setSplit((el.closest('.page-shell')?.clientWidth ?? 0) >= 900)
+      const isSplit = (el.closest('.page-shell')?.clientWidth ?? 0) >= 900
+      setSplit(isSplit)
+      onSplitChange?.(isSplit)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -188,6 +202,9 @@ export function PageLayout({
       ro.disconnect()
       window.removeEventListener('resize', measure)
     }
+    // `onSplitChange` deliberately out of the deps: a caller passing an inline
+    // arrow would otherwise tear down and rebuild the observer every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const panel = tier === 1180 && !stacked && split && !sticky

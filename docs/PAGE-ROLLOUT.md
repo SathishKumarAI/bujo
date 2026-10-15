@@ -15,8 +15,9 @@ finding, not a licence to invent a seventh disclosure implementation.
 |---|---|---|
 | Three zones | `components/page/PageLayout.tsx` | One shell, so a person who learns one page has learnt all of them |
 | `actTop` | same | The act starts beside zone 1 instead of under it — for a page whose zone 1 is a BLOCK, not a bar |
-| `actLast` | same | Stacked (container < 900px), the record comes before the form. **Required for any page whose act is over ~500px** |
+| `actLast` | same | Stacked, render zone 3 before zone 2 in the DOM. Rarely what you want — `useActColumn` is usually the answer, because a form that merely moves below the record then drifts further with every bigger panel |
 | `actShut` + `ActStrip` | same + `components/page/ActStrip.tsx` | Put the act away, give the width back; a 40px strip says what is inside and reopens it |
+| `useActColumn` | `components/page/useActColumn.ts` | That state, plus the rule nobody guesses: **stacked, the act starts shut**. Hand `onSplitChange` to the shell and `shut` to `actShut` |
 | One bar per review zone | `components/page/SectionRail.tsx`, `railAt="never"` | Five short rows, read left to right, in reading order |
 | Sub-section chips | `components/pickleball/Review.tsx` + `Facet.tsx` | A row with 7+ cards narrows to 2–4 without a second navigation |
 | `PanelGrid` | `components/pickleball/PanelGrid.tsx` | Columns that answer to the PANEL's width, solved from a ~450px card floor |
@@ -53,7 +54,10 @@ each one is a commit.
    the question they answer, each with a blurb that says *when* you read it.
    The default row is the one you want after the primary button, which need not
    be the first.
-3. **`actShut` + `ActStrip`**, and `actLast` if the act is over ~500px.
+3. **`useActColumn` + `ActStrip`** — never a bare `useState` for this, and
+   never `actLast` unless the act is genuinely short. A page whose act is over
+   ~500px must be measured stacked: at 1152 and 1024 the zones are a single
+   column while every viewport test still says "desktop".
 4. **`PanelGrid`** for the cards, never `CardGrid` — the panel's width is
    decided by the page split, not the window.
 5. **Sub-section chips** on any row with five or more cards, counted from a

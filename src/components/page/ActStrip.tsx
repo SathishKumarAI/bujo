@@ -34,12 +34,18 @@ export function ActStrip({ label, onOpen, summary }: {
       aria-expanded={false}
       aria-label={summary ? `${label} · ${summary}` : label}
       title={summary ? `${label} · ${summary}` : label}
+      data-act-strip
       className="group sticky top-[calc(var(--header-h,3.5rem)+1rem)] flex h-fit w-10 flex-col items-center gap-2 rounded-card border border-line bg-ink-1 py-3 text-label text-fg-2 transition-colors hover:border-line-strong hover:text-fg-1"
     >
       <Icon as={CaretLeft} size="sm" className="shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5" />
-      {/* Sideways, so the strip stays 40px wide whatever the label says. The
-          button's accessible name carries the real text; this is paint. */}
+      {/* Sideways, so the strip stays 40px wide whatever the label says — but
+          only while it IS a column. Stacked, `.zone-act` is the full width of
+          the page and a 40px tower of rotated text in the middle of it reads
+          as a rendering fault; `layout.css` lays the same button down into a
+          44px bar there. The accessible name is the real text either way; this
+          span is paint. */}
       <span aria-hidden className="whitespace-nowrap [writing-mode:vertical-rl]">{label}</span>
+      {summary && <span aria-hidden className="hidden text-fg-2 [.page-zones-single_&]:inline">· {summary}</span>}
     </button>
   )
 }

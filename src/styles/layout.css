@@ -66,6 +66,38 @@
   max-width: max(var(--shell-floor, var(--container-wide)), min(var(--container-max), 100vw - var(--shell-gutter)));
 }
 
+/* THE SHUT ACT, STACKED, IS A BAR — not a 40px tower of sideways text.
+
+   `ActStrip` is built for a column: 40px wide, label rotated, sticky beside
+   the review. Below the split there is no column — `.zone-act` is the full
+   page width — so the same button lies down: full width, 44px tall, label
+   upright, with the summary beside it because there is room for it. Measured
+   on Pickleball at 1152: the shut act is a 44px bar under the orient block and
+   the rail sits at y≈300 instead of y≈1126. */
+.page-zones-single [data-act-strip],
+.page-zones:not(.page-zones-single) [data-act-strip] {
+  /* base stays as authored */
+}
+
+@container (max-width: 899.98px) {
+  .page-zones [data-act-strip] {
+    position: static;
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .page-zones [data-act-strip] span[aria-hidden] {
+    writing-mode: horizontal-tb;
+  }
+
+  .page-zones [data-act-strip] svg {
+    transform: rotate(-90deg);
+  }
+}
+
 .page-zones {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
