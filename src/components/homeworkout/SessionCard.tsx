@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Barbell } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Input, Textarea } from '../ui'
@@ -46,9 +47,13 @@ export function SessionCard({
   onNotes: (v: string) => void
   onLog: () => void
 }) {
+  const [routine, setRoutine] = useState<string | null>(null)
+  const loaded = HOME_ROUTINES.find((x) => x.id === routine)
+
   function loadRoutine(id: string) {
     const r = HOME_ROUTINES.find((x) => x.id === id)
     if (!r) return
+    setRoutine(id)
     onLoadRoutine(r.items.flatMap((exId) => {
       const ex = exerciseById(exId)
       return ex ? [{ id: ex.id, name: ex.name, reps: ex.reps }] : []
@@ -62,23 +67,45 @@ export function SessionCard({
       subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Start from a routine, or add from the library below'}
     >
       <div className="space-y-4">
+        {/* `Full body`, not `Full body · no kit`. Seven full names wrapped to
+            four lines in a 424px act column; `name` keeps the full one as the
+            accessible name and `hint` as the hover title, so nothing is lost by
+            shortening what is drawn. Same rule as `FAMILY_SHORT`. */}
         <ChipPick
           label="Start from a routine"
-          value={null}
+          value={routine}
           onChange={loadRoutine}
-          options={HOME_ROUTINES.map((r) => ({ value: r.id, label: r.name, hint: r.focus }))}
+          dense
+          options={HOME_ROUTINES.map((r) => ({ value: r.id, label: r.short, name: r.name, hint: `${r.focus} · needs ${r.needs.toLowerCase()}` }))}
           hint="Replaces whatever is in the list. Every exercise stays editable."
         />
+
+        {/* `needs` and `how` had no call site at all — the routine told you how
+            to run it and what to have in the room, and the page rendered
+            neither. A routine you have just loaded is exactly when both are the
+            next thing you want. */}
+        {loaded && (
+          <div className="rounded-card border border-line bg-ink-1 p-3">
+            <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="text-body font-medium text-fg-1">{loaded.name}</h3>
+              <span className="rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-2">{loaded.needs}</span>
+            </div>
+            <p className="text-label text-fg-2">{loaded.how}</p>
+          </div>
+        )}
 
         {items.length === 0 ? (
           <EmptyFrame>Pick a routine above, or tap “Add” on an exercise in the library.</EmptyFrame>
         ) : (
           <div className="space-y-2">
-            {items.map((i) => (
-              <div key={i.id} className="flex items-center gap-2">
+            {items.map((i, n) => (
+              <div key={i.id} className="flex items-center gap-2 rounded-card bg-ink-2 py-1.5 pl-3 pr-1.5">
+                {/* The index, because a session is an ORDER and the list was
+                    four identical rows with nothing saying which came first. */}
+                <span className="num w-4 shrink-0 text-label text-fg-3">{n + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-body text-fg-1">{i.name}</span>
-                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="num w-24 py-1 text-right text-label" />
-                <Button variant="ghost" size="icon-sm" onClick={() => onDrop(i.id)} aria-label={`Remove ${i.name}`} className="text-fg-2 hover:text-red">×</Button>
+                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="num w-20 py-1 text-right text-label" />
+                <Button variant="ghost" size="icon-sm" onClick={() => onDrop(i.id)} aria-label={`Remove ${i.name}`} className="shrink-0 text-fg-2 hover:text-red">×</Button>
               </div>
             ))}
             {/* There was no date field at all — `logSession` hardcoded today,

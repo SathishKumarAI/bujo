@@ -11,7 +11,7 @@ import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
 import { muscleNames } from '../../lib/muscles'
 import {
-  EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL,
+  EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL, FAMILY_ORDER, FAMILY_SHORT,
   filterExercises, musclesOf, progressionChain, searchUrl,
   type Difficulty, type Equipment, type Family, type HomeExercise, type Muscle,
 } from '../../lib/homeExercises'
@@ -19,7 +19,6 @@ import { FamilyChapter } from './Manual'
 
 const MUSCLES: Muscle[] = ['chest', 'shoulders', 'arms', 'back', 'core', 'glutes', 'legs', 'cardio', 'full body']
 const DIFFICULTIES: Difficulty[] = ['beginner', 'intermediate', 'advanced']
-const FAMILIES = Object.keys(FAMILY_LABEL) as Family[]
 
 /**
  * ZONE 3 · the catalogue. Reference content, after the act and the history.
@@ -67,8 +66,14 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
        catalogue that shipped collapsed was 83 tiles no gate had ever scanned. */
     <>
       <div className="space-y-3">
+        {/* `H push`, not `Horizontal push` — nine full labels is a chip row
+            that wraps to three lines in the review column and four on a phone.
+            `name` keeps the full label as the ACCESSIBLE name and `hint` puts
+            it in the hover title, so nothing is lost by shortening what is
+            drawn. Order pairs the pushes and then the pulls; see
+            `FAMILY_ORDER`. */}
         <ChipPick label="Movement" tone="brand" value={family} onChange={toggle(family, setFamily)}
-          options={FAMILIES.map((f) => ({ value: f, label: FAMILY_LABEL[f] }))}
+          options={FAMILY_ORDER.map((f) => ({ value: f, label: FAMILY_SHORT[f], name: FAMILY_LABEL[f], hint: FAMILY_LABEL[f] }))}
           hint="Picking one also opens that family's chapter of the manual" />
         <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
         <ChipPick label="What you have" tone="teal" value={equipment} onChange={toggle(equipment, setEquipment)} options={EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))} />

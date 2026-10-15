@@ -58,6 +58,43 @@ export const FAMILY_LABEL: Record<Family, string> = {
   conditioning: 'Conditioning',
 }
 
+/**
+ * The same nine, short enough for a chip row.
+ *
+ * Only the four push/pull families are abbreviated, and only the direction is:
+ * `Horizontal push` is 15 characters of which 10 are the word everybody can see
+ * from the group's own legend. The other five are already short, and a `Cond.`
+ * saves four characters at the cost of a word nobody says out loud.
+ *
+ * **The full name is never lost.** `ChipPick` takes a visible `label`, a `name`
+ * for the accessible name and a `hint` for the hover title — all three are
+ * passed, so the chip reads `H push`, announces "Horizontal push", and says the
+ * same on hover. A shortened label that is only shortened is a shortened *name*.
+ */
+export const FAMILY_SHORT: Record<Family, string> = {
+  push: 'H push',
+  overhead: 'V push',
+  pull: 'V pull',
+  row: 'H pull',
+  squat: 'Squat',
+  lunge: 'Single leg',
+  hinge: 'Hip hinge',
+  core: 'Core',
+  conditioning: 'Conditioning',
+}
+
+/**
+ * Chip order: the two pushes, then the two pulls, then legs, then the rest.
+ *
+ * `Object.keys(FAMILY_LABEL)` gave `H push · V push · V pull · H pull`, which
+ * alternates direction in the middle of the row and reads as a mistake once the
+ * labels are abbreviated. Pairing by movement instead means the row scans as
+ * three groups — push, pull, legs — with no heading needed to say so.
+ */
+export const FAMILY_ORDER: Family[] = [
+  'push', 'overhead', 'row', 'pull', 'squat', 'lunge', 'hinge', 'core', 'conditioning',
+]
+
 export interface HomeExercise {
   id: string
   name: string
