@@ -210,3 +210,57 @@
    positioning is not motion — the element does not animate, the page scrolls
    under it. Disabling it would remove a layout affordance in the name of a
    preference about animation. */
+
+/* ── The act plane ───────────────────────────────────────────────────────────
+
+   Measured at `bf8dbda`, and it is the strongest single explanation for "it
+   looks like a plain HTML page": the content area of every view is ONE panel,
+   separated from the page behind it by **1.17 : 1**, and inside it **216 of
+   249 cards (86.7%) are bands** — a bottom hairline at **1.27 : 1** and
+   nothing else. **Zero boxed cards rendered on any of 14 views.** One sheet
+   with rules ruled across it is the structure of a document, so that is what
+   the app read as.
+
+   Depth is not missing from the system — it is unused. `shadow-raise`,
+   `shadow-lift` and the boxed `Card` variant all exist; depth rendered on 78
+   buttons and on the panel itself, and on no content surface at all.
+   `shadow-lift` has zero direct call sites.
+
+   ── Why a rule here and not `<Card>` on three hundred call sites ───────────
+
+   The page contract already names the one zone whose cards you ACT in. A band
+   inside `.zone-act` is the thing you came to the page to use; a band in
+   `.zone-review` is something you read. That distinction is already encoded in
+   the markup, so it can be spent rather than re-declared — and the alternative
+   is a `boxed` prop added by hand to a shifting set of cards, which drifts the
+   moment a card moves zone.
+
+   Scoped to the SPLIT layout only. On a stacked page every card is in one
+   column and lifting some of them would be elevation without a rule behind it
+   — the same reason `check-design-system` exists.
+
+   `:where()` keeps specificity at zero, so a call site that wants a flat card
+   in the act zone says so with one class and wins. */
+@media (min-width: 40rem) {
+  .page-zones:not(.page-zones-single) .zone-act :where(.card-band) {
+    background: var(--color-ink-1);
+    border-bottom-color: transparent;
+    box-shadow: var(--shadow-raise);
+    margin-inline: 0;
+    padding-inline: 1rem;
+  }
+
+  /* The band's hover is a border and a fill — both of which it now has at
+     rest, so without this the card appears to do nothing when pointed at. A
+     raised surface answers the pointer by rising, which is the one new moment
+     DESIGN.md asks for and which previously rendered on no content card. */
+  .page-zones:not(.page-zones-single) .zone-act :where(.card-band):hover {
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-zones:not(.page-zones-single) .zone-act :where(.card-band) {
+    transition: box-shadow 0.18s var(--ease-out, ease), background-color 0.2s var(--ease-out, ease);
+  }
+}

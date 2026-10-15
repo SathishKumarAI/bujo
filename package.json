@@ -25,7 +25,8 @@
     "test:watch": "vitest",
     "type-census": "node scripts/type-census.mjs",
     "verify": "tsc -b && vitest run && eslint . && vite build",
-    "columns": "node scripts/column-audit.mjs"
+    "columns": "node scripts/column-audit.mjs",
+    "density": "node scripts/check-visual-density.mjs"
   },
   "dependencies": {
     "@fontsource-variable/caveat": "^5.3.0",

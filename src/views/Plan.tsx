@@ -86,6 +86,23 @@ export function Plan() {
     (n, d) => n + onDay(d).filter((e) => e.type === 'task' && e.status === 'open').length,
     0,
   )
+  /**
+   * The week's tasks, as done against total, and as a shape per day.
+   *
+   * "12 open" is a fact with no scale: twelve out of fourteen is a week under
+   * control and twelve out of twelve is a week that has not started. The gate
+   * measured this view printing 45 numbers and drawing nothing, and this is
+   * the first number on it.
+   *
+   * `weekRamp` is one mark per day of the week, true where every task that day
+   * is closed — so the shape shows WHICH days are clear, not just how many.
+   * A day with no tasks counts as clear: nothing was owed and nothing is
+   * outstanding, which is what the rest of the page says too.
+   */
+  const weekTasks = weekDays.flatMap((d) => onDay(d).filter((e) => e.type === 'task'))
+  const weekDone = weekTasks.filter((e) => e.status === 'done').length
+  const weekRamp = weekDays.map((d) =>
+    onDay(d).filter((e) => e.type === 'task').every((e) => e.status !== 'open'))
 
   // ── Migration: open tasks dated before today ──
   const overdue = data.entries
@@ -184,7 +201,23 @@ export function Plan() {
         <>
           <StatBar
             facts={[
-              { label: 'This week', value: `${weekOpen} open` },
+              {
+                label: 'This week',
+                value: `${weekOpen} open`,
+                amount: weekDone,
+                of: weekTasks.length,
+                // Which days are clear, not just how many tasks are left — a
+                // week with everything piled on Thursday and a week spread
+                // evenly both read as "5 open" otherwise.
+                ramp: weekRamp,
+                // Green only once the week is actually clear. Below that the
+                // brand hue: you are mid-week, not failing.
+                tone: weekOpen === 0 && weekTasks.length > 0 ? ('green' as const) : ('blue' as const),
+              },
+              /* Overdue and "kept deferring" are counts with no denominator —
+                 there is no "out of" an overdue pile, and inventing one would
+                 draw a target nobody set. They stay plain figures, which is
+                 the rule working rather than being skipped. */
               { label: 'Overdue', value: overdue.length },
               { label: 'Kept deferring', value: deferred.length },
             ]}

@@ -1,0 +1,93 @@
+{
+  "today": {
+    "printed": 24,
+    "encodings": 7,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "plan": {
+    "printed": 45,
+    "encodings": 1,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "fitness": {
+    "printed": 238,
+    "encodings": 1,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "gym": {
+    "printed": 55,
+    "encodings": 2,
+    "largest": 22,
+    "body": 15,
+    "rank": 1.47
+  },
+  "mindset": {
+    "printed": 242,
+    "encodings": 0,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "insights": {
+    "printed": 47,
+    "encodings": 4,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "nutrition": {
+    "printed": 128,
+    "encodings": 2,
+    "largest": 22,
+    "body": 15,
+    "rank": 1.47
+  },
+  "nofap": {
+    "printed": 73,
+    "encodings": 1,
+    "largest": 32,
+    "body": 15,
+    "rank": 2.13
+  },
+  "cycle": {
+    "printed": 106,
+    "encodings": 1,
+    "largest": 30,
+    "body": 15,
+    "rank": 2
+  },
+  "coaching": {
+    "printed": 48,
+    "encodings": 0,
+    "largest": 15,
+    "body": 15,
+    "rank": 1
+  },
+  "pickleball": {
+    "printed": 78,
+    "encodings": 0,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "collections": {
+    "printed": 20,
+    "encodings": 0,
+    "largest": 17,
+    "body": 15,
+    "rank": 1.13
+  },
+  "help": {
+    "printed": 19,
+    "encodings": 0,
+    "largest": 22,
+    "body": 15,
+    "rank": 1.47
+  }
+}

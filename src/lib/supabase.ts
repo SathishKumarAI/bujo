@@ -280,23 +280,90 @@ export async function signOut(): Promise<void> {
  * before image inlining, so a withheld domain is never even assembled into the
  * payload.
  */
-export async function pushAccount(data: JournalData): Promise<void> {
+export type PushResult =
+  /** Written. `updatedAt` is the server's new stamp — hold it for the next push. */
+  | { ok: true; updatedAt: string }
+  /**
+   * Refused, because the row moved since `ifUnchangedSince`. Nothing was
+   * written. The caller must pull, merge, and try again.
+   */
+  | { ok: false; reason: 'stale' }
+
+/**
+ * Push the journal to this account's row, **only if nobody else has written
+ * it since we last looked.**
+ *
+ * ── Why this is not an upsert any more ────────────────────────────────────
+ *
+ * It was, and that made the account the only network writer in this app that
+ * pushed blind. `App.tsx` (twice) and `ServerSync.tsx` all compare
+ * `updatedAt` before writing; this path overwrote whatever was there.
+ *
+ * Two devices is all it takes. Phone pulls at 09:00 and sits in a pocket.
+ * Laptop writes all morning. Phone wakes, its debounce fires, and it upserts
+ * a 09:00 journal over the laptop's work — no error, no conflict, and the
+ * laptop's next pull adopts the loss as the truth. The window is "between any
+ * two pushes", which on a four-second debounce is most of the day.
+ *
+ * ── How it refuses ────────────────────────────────────────────────────────
+ *
+ * `update ... where id = me and updated_at = <what I last saw>`, then read
+ * back how many rows that touched. Zero means the stamp moved, which means
+ * somebody else wrote — so this returns `stale` rather than throwing, because
+ * it is not an error: it is the mechanism working, and the caller's job is to
+ * merge rather than to report a failure.
+ *
+ * `updated_at` is NOT sent on an update. The `journals_touch_updated_at`
+ * trigger sets it server-side precisely so the ordering cannot be decided by
+ * a client's clock, and `.select()` reads back the value it chose.
+ *
+ * `ifUnchangedSince: null` means "I pulled and the row did not exist", so
+ * this inserts. A duplicate-key error there is the same race seen from the
+ * other side — two devices both believing they are first — and is reported as
+ * `stale` for the same reason.
+ */
+export async function pushAccount(
+  data: JournalData,
+  ifUnchangedSince: string | null,
+): Promise<PushResult> {
   const c = sb()
   if (!c) throw new Error('Sign-in is not configured in this build.')
   const user = await currentUser()
   if (!user) throw new Error('Not signed in.')
   const { payload, skipped } = await inlineImagesWithinBudget(forEgress(data))
-  const { error } = await c
-    .from('journals')
+
+  if (ifUnchangedSince == null) {
     // No `owner` in the payload: the column defaults to `auth.uid()` and the
     // RLS `with check` refuses anything else, so it cannot be spoofed and does
     // not need to be trusted from here. Same rule as the self-host PostgREST
-    // tier (docs/security/postgrest-hardening.md). `id` is sent because it is
-    // the conflict target, and the insert policy requires `id = auth.uid()`
-    // too — a client that lies about it is refused rather than believed.
-    .upsert({ id: user.id, data: payload, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    // tier (docs/security/postgrest-hardening.md). `id` is sent because the
+    // insert policy requires `id = auth.uid()` — a client that lies about it
+    // is refused rather than believed.
+    const { data: rows, error } = await c
+      .from('journals')
+      .insert({ id: user.id, data: payload })
+      .select('updated_at')
+    // 23505 is unique_violation: the row appeared between our pull and this
+    // insert. Same race, other side.
+    if (error) {
+      if (error.code === '23505') return { ok: false, reason: 'stale' }
+      throw error
+    }
+    if (skipped) notePhotosSkipped(skipped)
+    return { ok: true, updatedAt: (rows?.[0]?.updated_at as string) ?? new Date().toISOString() }
+  }
+
+  const { data: rows, error } = await c
+    .from('journals')
+    .update({ data: payload })
+    .eq('id', user.id)
+    .eq('updated_at', ifUnchangedSince)
+    .select('updated_at')
   if (error) throw error
+  // Zero rows is the guard firing, not a failure to reach the server.
+  if (!rows || rows.length === 0) return { ok: false, reason: 'stale' }
   if (skipped) notePhotosSkipped(skipped)
+  return { ok: true, updatedAt: (rows[0].updated_at as string) ?? ifUnchangedSince }
 }
 
 /**
@@ -318,15 +385,34 @@ export async function pushAccount(data: JournalData): Promise<void> {
  * perfectly good object and is not a journal, and which `migrate` would happily
  * hand back as an empty one.
  */
-export async function pullAccount(): Promise<JournalData | null> {
+export interface PullResult {
+  /** The journal, or null when the account has never synced. */
+  journal: JournalData | null
+  /**
+   * The server's stamp on the row we just read, or null when there was no row.
+   *
+   * This is the half that makes a safe push possible: it is the value the next
+   * `pushAccount` sends as `ifUnchangedSince`, so a write can refuse if the
+   * row moved underneath it. Reading the journal without carrying this is what
+   * made the account the only blind writer in the app.
+   */
+  updatedAt: string | null
+}
+
+export async function pullAccount(): Promise<PullResult> {
   const c = sb()
-  if (!c) return null
+  if (!c) return { journal: null, updatedAt: null }
   const user = await currentUser()
-  if (!user) return null
-  const { data: row, error } = await c.from('journals').select('data').eq('id', user.id).maybeSingle()
+  if (!user) return { journal: null, updatedAt: null }
+  const { data: row, error } = await c
+    .from('journals')
+    .select('data, updated_at')
+    .eq('id', user.id)
+    .maybeSingle()
   if (error) throw error
+  const seen = (row?.updated_at as string | undefined) ?? null
   const stored = row?.data as unknown
-  if (stored == null) return null
+  if (stored == null) return { journal: null, updatedAt: seen }
   if (typeof stored !== 'object' || Array.isArray(stored)) {
     throw new Error('The stored journal is not in a format this version understands.')
   }
@@ -336,5 +422,5 @@ export async function pullAccount(): Promise<JournalData | null> {
       + 'Open it on a device that has the sync passphrase and export it, then sign in here again.',
     )
   }
-  return externalizeImages(stored as JournalData)
+  return { journal: await externalizeImages(stored as JournalData), updatedAt: seen }
 }

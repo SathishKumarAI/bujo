@@ -1,6 +1,6 @@
 import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { Card, Empty, Input, Segmented } from '../components/ui'
@@ -79,6 +79,17 @@ export function Insights() {
   const radar = weeklyRadar(data)
   const radarAt = (axis: string) => radar.find((r) => r.axis === axis)?.value
   const left = pace(data)
+  /* Days in the current month, so "left · this month" has a denominator. From
+     the journal's own today rather than `new Date()` — the app lets you move
+     the day you are looking at, and a progress bar that disagreed with the
+     date in the header would be its own small bug. */
+  const monthDays = useMemo(() => {
+    const [yy, mm] = todayISO().split('-').map(Number)
+    return new Date(yy, mm, 0).getDate()
+  }, [])
+  /* Null rather than zero when the week has too little mood logged to average.
+     `radarAt` returns null for that case and the old call site swallowed it. */
+  const mood7 = radarAt('Mood') ?? null
 
   /* A query crosses domains. Searching for "sleep debt" while the rail sits
      on Records must not return nothing — the search is how you find a card
@@ -239,12 +250,43 @@ export function Insights() {
             looking for, not a summary of the page under it. */
         <StatBar
           facts={[
+            /* ── Three of these four have a range, and one does not ────────
+               A streak has no denominator — there is no "out of" a run of
+               days, and drawing one would invent a target nobody set. It
+               stays a plain figure, which is the rule working rather than the
+               rule being skipped: a number gets a shape when it has something
+               to compare against, and not otherwise. */
             { label: 'current streak', value: `${streak}d`, onClick: () => nav('trackers') },
-            { label: 'tasks done', value: `${tasks.pct}%`, onClick: () => nav('today') },
-            { label: 'mood · 7d', value: `${radarAt('Mood') ?? 0}/10` },
+            {
+              label: 'tasks done',
+              value: `${tasks.pct}%`,
+              amount: tasks.done,
+              of: tasks.total,
+              tone: 'blue' as const,
+              onClick: () => nav('today'),
+            },
+            {
+              label: 'mood · 7d',
+              /* `?? 0` was printing a zero for "not enough days to average",
+                 which is the exact mistake CLAUDE.md records costing a trend
+                 two months of phantom failure. An em dash says nobody has
+                 told us yet; zero says you felt nothing. */
+              value: mood7 == null ? '—' : `${mood7}/10`,
+              amount: mood7,
+              of: mood7 == null ? null : 10,
+              tone: 'green' as const,
+            },
             /* The one fact here that is not a record: everything else on this
-               page is over, and this is what is left of the month. */
-            { label: 'left · this month', value: `${left.month.left}d` },
+               page is over, and this is what is left of the month. Shown
+               against the month's own length, so "18d" reads as how much
+               runway rather than as a bare count. */
+            {
+              label: 'left · this month',
+              value: `${left.month.left}d`,
+              amount: monthDays - left.month.left,
+              of: monthDays,
+              tone: 'mauve' as const,
+            },
           ]}
         />
       }

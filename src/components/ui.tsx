@@ -81,7 +81,7 @@ export const CARD = {
   // stays a rule when you do not. Zero layout shift: the negative margin
   // cancels the padding at rest.
   band:
-    'group/card min-w-0 -mx-3 rounded-card border-b border-line px-3 py-6 transition-colors duration-200 hover:border-line-strong hover:bg-ink-1 sm:py-7',
+    'card-band group/card min-w-0 -mx-3 rounded-card border-b border-line px-3 py-6 transition-colors duration-200 hover:border-line-strong hover:bg-ink-1 sm:py-7',
   /** Enlarge-modal backdrop + panel (with entrance motion). */
   modalBackdrop: 'modal-backdrop-in fixed inset-0 z-50 grid place-items-center bg-crust/70 p-4 backdrop-blur-sm',
   modalPanel: 'modal-panel-in relative max-h-[92vh] w-full max-w-6xl overflow-auto rounded-card border border-line bg-popover p-6 shadow-float',

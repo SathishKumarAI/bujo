@@ -60,6 +60,33 @@ export function mayPush(s: AccountSyncState, opts: { isDemo: boolean }): boolean
   return s.verified
 }
 
+/** Where the last account to own this device's journal is remembered. */
+export const OWNER_KEY = 'bujo:account.owner'
+
+/**
+ * The account this device's journal last belonged to, across reloads.
+ *
+ * In-memory state cannot answer this. `prev.userId` is null after a sign-out
+ * and null again on a fresh page load, so both of the dangerous sequences look
+ * identical to a first-ever sign-in.
+ */
+export function lastOwner(): string | null {
+  try {
+    return typeof localStorage === 'undefined' ? null : localStorage.getItem(OWNER_KEY)
+  } catch {
+    return null
+  }
+}
+
+/** Remember who this journal belongs to. Called once a pull has settled. */
+export function rememberOwner(userId: string | null): void {
+  try {
+    if (typeof localStorage === 'undefined') return
+    if (userId) localStorage.setItem(OWNER_KEY, userId)
+    else localStorage.removeItem(OWNER_KEY)
+  } catch { /* storage blocked — the sync still runs, it just cannot remember */ }
+}
+
 /**
  * What a sign-in or account switch means for the journal already in memory.
  *
@@ -67,13 +94,38 @@ export function mayPush(s: AccountSyncState, opts: { isDemo: boolean }): boolean
  * merged the previous user's journal into the new one. The merge machinery is
  * right for "the same person on two devices" and catastrophically wrong for
  * "two people on one device" — it cannot tell them apart, so the caller has to.
+ *
+ * ── COD-135 was only half closed, and this is the other half ──────────────
+ *
+ * The original fix compared `prev.userId` with the incoming id, which is
+ * in-memory and therefore blind to the two sequences that actually happen:
+ *
+ *   alice -> bob            caught      (prev.userId is 'alice')
+ *   alice -> null -> bob    MISSED      sign out, then sign in as someone else
+ *   alice -> reload -> bob  MISSED      no in-memory prev at all
+ *
+ * Both misses end the same way: alice's journal is merged into bob's account
+ * and pushed there. The second is not exotic — signing out is the obvious
+ * thing to do before handing someone your laptop.
+ *
+ * `remembered` is the persisted owner, so the comparison survives a sign-out
+ * and a reload. It is passed in rather than read here to keep this function
+ * pure: every one of these decisions is a data-loss question, and a question
+ * you can only answer by driving a browser is a question that goes untested.
  */
-export function onAccountChange(prev: AccountSyncState, nextUserId: string | null): {
+export function onAccountChange(
+  prev: AccountSyncState,
+  nextUserId: string | null,
+  remembered: string | null = null,
+): {
   state: AccountSyncState
   /** True when the local journal must NOT be merged into the incoming one. */
   discardLocal: boolean
 } {
-  const switched = prev.userId !== null && nextUserId !== null && prev.userId !== nextUserId
+  // The last account known to own this journal: whatever is live in memory,
+  // else whatever survived the last reload.
+  const previousOwner = prev.userId ?? remembered
+  const switched = previousOwner !== null && nextUserId !== null && previousOwner !== nextUserId
   return {
     state: { userId: nextUserId, verified: false, unusable: false },
     discardLocal: switched,

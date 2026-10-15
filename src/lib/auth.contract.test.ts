@@ -231,6 +231,33 @@ describe('what leaves for the account is bounded, even though it is no longer en
     expect(code(src).some((l) => /\bblob\b/.test(l))).toBe(false)
   })
 
+  it('never writes the row without saying what it expected to find', () => {
+    // F-1. The account path was the only network writer in this app that
+    // pushed blind: `App.tsx` (twice) and `ServerSync.tsx` all compare
+    // `updatedAt` first, and this one upserted over whatever was there.
+    //
+    // Two devices is all it takes. Phone pulls at 09:00 and goes in a pocket,
+    // laptop works all morning, phone wakes and its debounce overwrites the
+    // lot — no error, and the laptop's next pull adopts the loss as truth.
+    //
+    // An `upsert` cannot express "only if unchanged", so its absence is the
+    // assertion. The conditional update is `.eq('updated_at', …)`, and the
+    // insert branch exists only for the no-row-yet case.
+    const src = client()
+    expect(code(src).some((l) => /\.upsert\(/.test(l)), 'a blind upsert is back').toBe(false)
+    expect(code(src).some((l) => /\.eq\('updated_at', ifUnchangedSince\)/.test(l))).toBe(true)
+    expect(src).toMatch(/ifUnchangedSince/)
+  })
+
+  it('reads the stamp back out, or a safe push is impossible', () => {
+    // Half a guard is no guard: writing conditionally but never learning the
+    // new stamp means the NEXT push sends a stale one and every write after
+    // the first reports a conflict. The pull has to carry it too.
+    const src = client()
+    expect(code(src).some((l) => /select\('data, updated_at'\)/.test(l))).toBe(true)
+    expect(src).toMatch(/updatedAt/)
+  })
+
   it('still refuses a row left behind by the encrypted design', () => {
     // `isEncryptedBlob` is kept for exactly one purpose: a COD-271 row is a
     // perfectly good object and is NOT a journal, and `migrate()` would hand it

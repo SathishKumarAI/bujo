@@ -1,3 +1,4 @@
+import { generateDemoData } from './demo'
 import { describe, expect, it, vi } from 'vitest'
 import { resolveIncoming, mergeJournals } from './conflict'
 import { emptyJournal } from './storage'
@@ -132,5 +133,69 @@ describe('mergeJournals · no collection is left behind', () => {
     expect(out.settings.duprLog).toBeUndefined()
     expect(out.settings.programDone).toBeUndefined()
     expect(out.settings.programActuals).toBeUndefined()
+  })
+})
+
+describe('a map-shaped collection survives a merge too', () => {
+  /**
+   * THE HOLE THE ARRAY GUARD ABOVE STRUCTURALLY CANNOT SEE.
+   *
+   * That test derives its key list with `Array.isArray`, so a collection
+   * stored as `Record<string, …>` is invisible to it — and `MAPS` in
+   * `conflict.ts` is a hand-written list, which is the other half of the same
+   * problem. `mindsetPractice` was missing from it: a merge took
+   * `out = { ...winner }`, so every day the LOSING device had practised a
+   * principle on was dropped, silently, with no error and nothing in the UI to
+   * notice.
+   *
+   * ── Why this derives from the DEMO seed and not `emptyJournal()` ─────────
+   *
+   * Because `emptyJournal()` is where the array guard's blind spot came from.
+   * Map collections are optional, so most of them are simply absent from an
+   * empty journal — a guard built on it can only ever check the keys that
+   * happen to be initialised, which is 5 of the 7 that exist. The demo seed is
+   * the most populated journal available at runtime, so it is the closest
+   * thing to the real key space a test can reach.
+   *
+   * It is still not the type. A map key that the seed never writes stays
+   * invisible here, and the honest answer to that is the assertion below on
+   * the count: if the seed stops populating these, this test says so instead
+   * of quietly checking nothing.
+   */
+  const mapKeys = (j: Record<string, unknown>) =>
+    Object.entries(j)
+      .filter(([k, v]) =>
+        // `settings` is merged field-by-field by its own rules above, not as a
+        // map, so it is deliberately out of scope here.
+        k !== 'settings' && v != null && typeof v === 'object' && !Array.isArray(v))
+      .map(([k]) => k)
+
+  it('keeps a loser-only day in EVERY map collection the demo seeds', () => {
+    const seeded = generateDemoData() as unknown as Record<string, unknown>
+    const keys = mapKeys(seeded)
+
+    // The tripwire. A scan that silently matches nothing passes, and this repo
+    // has shipped two of those.
+    expect(keys.length, `found map keys: ${keys.join(', ')}`).toBeGreaterThan(3)
+
+    const winner = { ...emptyJournal(), updatedAt: '2026-06-15T12:00:00.000Z' } as Record<string, unknown>
+    const loser = { ...emptyJournal(), updatedAt: '2026-06-15T10:00:00.000Z' } as Record<string, unknown>
+    for (const k of keys) {
+      winner[k] = { '2026-01-01': ['winner-side'] }
+      loser[k] = { '2026-01-01': ['winner-side'], '2026-02-02': ['loser-only'] }
+    }
+
+    const out = mergeJournals(winner as never, loser as never) as unknown as Record<string, Record<string, unknown>>
+
+    const dropped = keys.filter((k) => out[k]?.['2026-02-02'] == null)
+    expect(dropped, `merge dropped the loser's day from: ${dropped.join(', ')}`).toEqual([])
+  })
+
+  it('still lets the winner win on a key both sides hold', () => {
+    // The other half of the rule. Union must not become "loser wins".
+    const winner = { ...emptyJournal(), updatedAt: '2026-06-15T12:00:00.000Z', mindsetPractice: { d: ['w'] } }
+    const loser = { ...emptyJournal(), updatedAt: '2026-06-15T10:00:00.000Z', mindsetPractice: { d: ['l'] } }
+    const out = mergeJournals(winner as never, loser as never) as unknown as { mindsetPractice: Record<string, string[]> }
+    expect(out.mindsetPractice.d).toEqual(['w'])
   })
 })
