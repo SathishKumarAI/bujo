@@ -61,6 +61,7 @@ export function PageLayout({
   stacked = false,
   zone1,
   zone2,
+  actShut = false,
   zone3,
   className = '',
 }: {
@@ -84,6 +85,8 @@ export function PageLayout({
   zone1?: ReactNode
   /** Act. The page's single primary button lives in here. */
   zone2?: ReactNode
+  /** Zone 2 is collapsed to its rail: the review takes the width back. */
+  actShut?: boolean
   /** Review. Summary, signature visual, list. */
   zone3?: ReactNode
   className?: string
@@ -166,7 +169,7 @@ export function PageLayout({
     // and again onto the review column, whose children are the cards. That is
     // where the ladder was always aimed.
     <div className={cn('page-shell mx-auto w-full', TIER_WIDTH[tier], className)}>
-      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single')}>
+      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
           // When the act column FITS the viewport it is sticky, as before.

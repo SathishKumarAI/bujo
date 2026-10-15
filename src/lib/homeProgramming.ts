@@ -117,7 +117,7 @@ export const HOME_PRINCIPLES: Principle[] = [
 ]
 
 export const HOME_EQUIPMENT: EquipmentItem[] = [
-  { item: 'Nothing', spec: 'Thirty-odd movements in this library need no equipment at all, at every difficulty from a wall push-up to a pistol squat. Start here and buy later.' },
+  { item: 'Nothing', noBuy: true, spec: 'Thirty-odd movements in this library need no equipment at all, at every difficulty from a wall push-up to a pistol squat. Start here and buy later.' },
   { item: 'A sturdy chair or step', spec: 'The highest-value thing you already own: incline and decline push-ups, dips, step-ups, Bulgarian split squats and elevated pike push-ups all come from it. Check it does not slide.' },
   { item: 'Resistance bands', spec: 'The cheapest way to add real load, and the only way to train rows and pulldowns without a bar. Pick the strength that lets you do 10–15 reps with the shape under control; colour schemes differ by brand, but lighter usually means easier. Hardest at the end of the range, which is the opposite of a dumbbell.', url: 'https://www.hss.edu/health-library/move-better/resistance-band-workout' },
   { item: 'Adjustable dumbbells', spec: 'The single best purchase if you make one. Load in small steps is what makes progressive overload simple instead of a puzzle, and they open the whole press, row, curl and hinge list.' },
@@ -132,6 +132,23 @@ export const HOME_EQUIPMENT: EquipmentItem[] = [
 export interface Routine {
   id: string
   name: string
+  /**
+   * The name on a chip, where the full one does not fit.
+   *
+   * `Conditioning · fifteen minutes` is 30 characters in a 424px act column,
+   * so seven of these wrapped to four lines and read, in the report that
+   * prompted this, as "looking very bad". The full `name` stays the accessible
+   * name and the hover title — see `FAMILY_SHORT` for the same rule one
+   * component over.
+   *
+   * Cut a second time to put all seven on **one line**, which was asked for
+   * directly. `Full body · Upper · Legs · Core · 10m · Dumbbells · Cardio ·
+   * 15m · Beginner` measured **590px of chips in a 384px card**; these measure
+   * what the comment at the call site records. The durations moved into the
+   * hover hint rather than being dropped — a chip that says `Core · 10m` is
+   * carrying a fact the row underneath it can carry instead.
+   */
+  short: string
   /** What it trains, for the chip hint. */
   focus: string
   /** What you need in the room. */
@@ -150,18 +167,18 @@ export interface Routine {
 }
 
 export const HOME_ROUTINES: Routine[] = [
-  { id: 'fullbody', name: 'Full body · no kit', focus: 'Everything, nothing needed', needs: 'Nothing', how: 'Three rounds. Rest a minute between movements and two between rounds.',
+  { id: 'fullbody', name: 'Full body · no kit', short: 'Full', focus: 'Everything, nothing needed', needs: 'Nothing', how: 'Three rounds. Rest a minute between movements and two between rounds.',
     items: ['pushup', 'squat', 'reverselunge', 'glutebridge', 'superman', 'plank'] },
-  { id: 'upper', name: 'Upper body', focus: 'Push and pull, matched', needs: 'A bar or a band', how: 'Three rounds, alternating a push with a pull so one rests while the other works.',
+  { id: 'upper', name: 'Upper body', short: 'Upper', focus: 'Push and pull, matched', needs: 'A bar or a band', how: 'Three rounds, alternating a push with a pull so one rests while the other works.',
     items: ['pushup', 'invertedrow', 'pikepushup', 'bandrow', 'tricepdip', 'bandpullapart'] },
-  { id: 'lower', name: 'Legs and hips', focus: 'Squat, hinge and single leg', needs: 'Nothing', how: 'Three rounds. The hinge movements come after the squats on purpose.',
+  { id: 'lower', name: 'Legs and hips', short: 'Legs', focus: 'Squat, hinge and single leg', needs: 'Nothing', how: 'Three rounds. The hinge movements come after the squats on purpose.',
     items: ['squat', 'splitsquat', 'slglutebridge', 'sidelunge', 'calfraise', 'wallsit'] },
-  { id: 'core', name: 'Core · ten minutes', focus: 'Anti-movement, not sit-ups', needs: 'Nothing', how: 'Two rounds, 40 seconds on and 20 off. End a set when the shape breaks.',
+  { id: 'core', name: 'Core · ten minutes', short: 'Core', focus: 'Anti-movement, not sit-ups', needs: 'Nothing', how: 'Two rounds, 40 seconds on and 20 off. End a set when the shape breaks.',
     items: ['deadbug', 'plank', 'sideplank', 'birddog', 'hollowhold', 'lyinglegraise'] },
-  { id: 'dumbbell', name: 'Dumbbell full body', focus: 'Loaded, in small steps', needs: 'Dumbbells', how: 'Three or four sets each, 8–12 reps, two minutes between sets.',
+  { id: 'dumbbell', name: 'Dumbbell full body', short: 'DB', focus: 'Loaded, in small steps', needs: 'Dumbbells', how: 'Three or four sets each, 8–12 reps, two minutes between sets.',
     items: ['dbbenchpress', 'dbrow', 'dbshoulderpress', 'dbrdl', 'dblunge', 'dbcurl'] },
-  { id: 'conditioning', name: 'Conditioning · fifteen minutes', focus: 'Breathing work', needs: 'Nothing', how: 'Five rounds of 40 seconds on, 20 off. Stop the set when the landings get loud.',
+  { id: 'conditioning', name: 'Conditioning · fifteen minutes', short: 'Cardio', focus: 'Breathing work', needs: 'Nothing', how: 'Five rounds of 40 seconds on, 20 off. Stop the set when the landings get loud.',
     items: ['jumpingjack', 'highknees', 'mountainclimber', 'lateralskater', 'burpee'] },
-  { id: 'beginner', name: 'First two weeks', focus: 'Learn the shapes', needs: 'A chair', how: 'Two rounds, 10 reps each, three days a week with a day between. Add a rep per set each session.',
+  { id: 'beginner', name: 'First two weeks', short: 'New', focus: 'Learn the shapes', needs: 'A chair', how: 'Two rounds, 10 reps each, three days a week with a day between. Add a rep per set each session.',
     items: ['inclinepushup', 'chairsquat', 'reverselunge', 'glutebridge', 'deadbug', 'birddog'] },
 ]

@@ -16,6 +16,21 @@ happens to be checked out.
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
 
+## Two documents to read before changing a page
+
+- **`docs/USER-CONTROL.md`** — what a person must always be able to do with
+  anything they record. `add` without `edit` is a bug; delete asks first and
+  names what it removes; an edit rewrites *every* stored shape, not the one the
+  list renders; every chip row has an escape hatch; a shortened label is still
+  announced in full. Written after Home Workout shipped a history whose only
+  affordance was a `×` that deleted on the first click — while `updateWorkout`
+  had been in the store the whole time with two call sites.
+- **`docs/REUSABLE-PATTERNS.md`** — the six pieces Pull-ups and Home Workout
+  left behind, each with the measurement that decided its shape: the shared
+  panel card, one bar per review zone, draw-short/announce-long chips, the
+  record editor, links built from a name rather than pinned, and the capped
+  list. Read it before building any of them a third time.
+
 ## Running the browser gates
 
 `npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a
@@ -347,6 +362,73 @@ utilities (that is the `.zone-act input` vs `.hidden` trap one section down), so
 deliberately-styled link could no longer override itself. And do not guard it with
 `:not([class*='text-'])` — that also matches `hover:text-…`, which left the
 glossary's own source links inheriting body colour.
+
+Trap: **`open` is not the page's length, and quoting it against the `shipped`
+budget manufactures a fault.** Home Workout reported **9.6 desktop screens
+open** and a rail pass was planned on that number alone; decomposed per
+section it ships at **2.34**, and the ten screens are an 83-movement catalogue
+unfolding from an 80px collapsed card — a catalogue behaving correctly. The
+budget in `space-audit` is a *desktop `open`* budget, and a page whose folds
+hold a catalogue will blow it by design. **Both columns, always, and name which
+one you are quoting.**
+
+The sharper half: that page's real fault was not length at all. It carried
+**two navigations** — three peer sections stacked above a Manual holding its
+own twelve-row `SectionRail` — and no pixel count can see that. When a page
+"feels like a mess", the first measurement is **how many navigations the zone
+has**, not how tall it is. A page can be the right length and the wrong shape.
+
+Trap: **a card is for a named item WITH a body; a row is for one without.**
+Putting the thirty-one entries of `HOME_SOURCES` on `PanelCard` measured **5.44
+desktop screens and 10.95 on a phone** against **2.50 / 4.72** for the list they
+replaced — more than twice the page for the same thirty-one facts, because a
+source is a link and a publisher and has no body for the card to hold. Two
+columns of two-line rows landed at **1.93 / 4.56**, better than either. The same
+arithmetic trimmed a per-card link from a bordered footer row to an inline line.
+"Use the card everywhere" is not the rule; the rule is that the card earns its
+border by having something to put inside it.
+
+Trap: **"the URLs are not working" was thirteen of fifteen rows having no URL
+at all.** Reported against both equipment panels. Of the eight rows in
+`HOME_EQUIPMENT` exactly one carried a `url`, of the seven in
+`PULLUP_EQUIPMENT` exactly one, and **both pinned URLs answered 200**. Nothing
+was broken; `{e.url && <a>}` simply rendered nothing fourteen times. **Count how
+many rows carry the field before debugging the field's value** — and fix it the
+way `lib/video.ts` already says to, by *building* the link from the name rather
+than pinning one, because a pinned page rots and a search always lands.
+
+Trap: **count a chip row's lines by row height over its tallest child, and
+cross-check against the sum of the widths.** The `top`-value method is already
+recorded below as wrong; this is the method that is right, and it found a real
+defect the wrong one hid. Pull-ups' Rounds row measured **218px of controls in
+a 184px half** — four `px-3` chips, a `w-14` escape input and four 6px gaps —
+so it had been wrapping the input onto its own line, the exact shape that file
+calls "a broken control rather than an overflow". `dense` plus a `w-10` input
+is **170px in 184px**. Arithmetic is the cross-check: `span > box` wraps, and
+if a probe says "wraps" while `span < box`, the probe is wrong.
+
+Trap: **a comment that records a measurement goes stale when a neighbour
+changes width.** The comment above that Rounds row said "five chips plus the
+escape hatch is exactly one row in the act column" and had been false for some
+time — it was measured when the card was wider. A pinned geometry comment is
+evidence with a date on it that nobody wrote down. **Re-measure the comment
+when you touch the card**, and when a comment and the code disagree, find out
+which one is lying before trusting either.
+
+Trap: **the control you need has usually already solved it.** `ChipPick` has
+carried three separate fields for a shortened chip — a visible `label`, a
+`name` for the accessible name and a `hint` for the hover title — since it was
+written, with its own comment saying "a shortened label is a shortened *name*
+unless it is said somewhere", and **nothing had ever used all three together**.
+Drawing `H push` while announcing `Horizontal push` needed no new prop. Read
+the component's props before adding one.
+
+Trap: **a dead field is found by grepping the FIELD, not the module.**
+`lib/homeProgramming.ts` was imported, rendered and plainly alive, and inside it
+`Routine.needs` and `Routine.how` had **no call site at all** — the data said
+what to have in the room and how to run the session, and the page rendered
+neither. `chapterFor()` was the same, with `Manual.tsx` having retyped its one
+line. A module's import does not vouch for its exports: grep each field.
 
 Trap: **`space-audit` and `a11y` measure only the group a rail opens on.** A
 `SectionRail` renders one group at a time, so every space number quoted for a rail
