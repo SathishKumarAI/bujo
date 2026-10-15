@@ -68,7 +68,12 @@ export function AccountSync() {
       setAccountStatus({ phase: 'checking' })
       void (async () => {
         try {
-          const remote = await pullAccount()
+          const { journal: remote, updatedAt } = await pullAccount()
+          // The stamp the next push will send back as `ifUnchangedSince`. Held
+          // in a ref rather than state: the push effect reads it inside a
+          // timeout, where a stale closure over state would send a stamp from
+          // before the pull and make every write look conflicted.
+          seenAt.current = updatedAt
           if (remote == null) {
             // Row empty: first sign-in for this account. The local journal is
             // the only copy, so it is the one to keep and upload.
@@ -100,6 +105,16 @@ export function AccountSync() {
 
   // ── Debounced push ───────────────────────────────────────────────────────
   const lastPushed = useRef('')
+  /**
+   * The server stamp on the row as this device last saw it.
+   *
+   * `null` means "there was no row when I pulled", which is what tells
+   * `pushAccount` to insert rather than update. Every successful write
+   * replaces it with the stamp the server chose — never with a local clock,
+   * because the `journals_touch_updated_at` trigger exists precisely so the
+   * ordering is not decided by whichever device is furthest ahead.
+   */
+  const seenAt = useRef<string | null>(null)
   useEffect(() => {
     if (!isConfigured()) return
     if (!mayPush(state, { isDemo: isDemo(data) })) {
@@ -118,7 +133,35 @@ export function AccountSync() {
       try {
         setAccountStatus({ phase: 'uploading' })
         lastPushed.current = JSON.stringify(latest.current)
-        await pushAccount(latest.current)
+        const res = await pushAccount(latest.current, seenAt.current)
+
+        if (!res.ok) {
+          // ── Somebody else wrote this row since we last looked ───────────
+          //
+          // Not an error, and deliberately not reported as one: it is the
+          // guard working. Before this, the account was the only network
+          // writer in the app that did not compare — phone pulls at 09:00,
+          // sits in a pocket while the laptop works all morning, then wakes
+          // and overwrites the lot. No error, and the laptop's next pull
+          // adopts the loss as the truth.
+          //
+          // Pull, union, and let the next change push the result. `migrate`
+          // first because the other device may be on an older build, and
+          // `resolveIncoming` because a union is exactly what two edits to one
+          // journal want — the same machinery the sign-in path uses.
+          const fresh = await pullAccount()
+          seenAt.current = fresh.updatedAt
+          if (fresh.journal) {
+            const merged = await resolveIncoming(latest.current, migrate(fresh.journal), askRef.current)
+            if (merged) replaceAll(merged)
+          }
+          // Clear the echo guard so the merged result is allowed to push.
+          lastPushed.current = ''
+          setAccountStatus({ phase: 'checking' })
+          return
+        }
+
+        seenAt.current = res.updatedAt
         markSynced()
       } catch {
         // Offline, or the token expired past its refresh. The whole journal is
