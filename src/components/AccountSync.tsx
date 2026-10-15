@@ -1,8 +1,7 @@
-import { getSyncPassphrase } from '../lib/syncSecret'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { isConfigured, onAuthChange, pullAccount, pushAccount } from '../lib/supabase'
-import { mayPush, onAccountChange, afterPull, isDemo, initialState, MISMATCH_MESSAGE, type AccountSyncState } from '../lib/accountSync'
+import { mayPush, onAccountChange, afterPull, isDemo, initialState, UNUSABLE_MESSAGE, type AccountSyncState } from '../lib/accountSync'
 import { setAccountStatus, markSynced } from '../lib/accountStatus'
 import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
 import { useConfirm } from './ConfirmDialog'
@@ -12,24 +11,24 @@ import { notify } from '../lib/notify'
 /**
  * Account sync glue: pull the account's journal on sign-in, push it debounced
  * on change. No-op unless a Supabase project is configured AND someone is
- * signed in AND a passphrase exists.
+ * signed in.
  *
  * Every decision this makes lives in `lib/accountSync.ts` as a pure function,
  * tested there. This file is the wiring, and deliberately holds no judgement of
  * its own — the judgements are the data-loss ones and they belong somewhere a
  * test can reach without a browser.
  *
- * ── The passphrase ─────────────────────────────────────────────────────────
+ * ── There is no passphrase on this path any more ───────────────────────────
  *
- * The same `bujo:sync` passphrase the blob sync uses, on purpose. Two cloud
- * targets with two secrets is two things to lose, and the account card already
- * tells the user "your sync passphrase is what opens it". Set it in
- * Settings → Sync & privacy. Without one this component idles: there is nothing
- * to encrypt with, and uploading a journal in the clear is not a fallback.
+ * COD-309. This component used to read `bujo:sync` and idle when there was
+ * none, which made "signed in and nothing ever uploads" the default state of a
+ * new account. Signing in is now the whole of the setup.
  *
- * It is stored in plaintext, which is COD-228 and is disclosed on screen. An
- * account does not make that better and must not be allowed to make it feel
- * more official than it is.
+ * `bujo:sync` still exists and still belongs to the **blob sync** — the
+ * self-host / bring-your-own-storage target in `lib/bujocloud.ts`, which is
+ * still end-to-end encrypted and still asks for a passphrase. The two targets
+ * were sharing one secret; they no longer share anything, which is the honest
+ * shape: one is an account, the other is a shared secret.
  */
 export function AccountSync() {
   const { data, replaceAll } = useJournal()
@@ -44,8 +43,6 @@ export function AccountSync() {
   const askRef = useRef(askConflict)
   useEffect(() => { askRef.current = askConflict }, [askConflict])
 
-  const pass = () => getSyncPassphrase()
-
   // ── Sign-in / sign-out / account switch ──────────────────────────────────
   useEffect(() => {
     if (!isConfigured()) return
@@ -58,18 +55,10 @@ export function AccountSync() {
       // COD-135 — which shipped. Drop it, then read the new account's row.
       if (discardLocal) replaceAll(emptyJournal())
 
-      const p = pass()
-      // Nothing to encrypt with, so NOTHING IS UPLOADED and nothing will be.
-      // This used to be a bare `return` whose comment said "the card explains",
-      // and the card did not: it said "Signed in — your journal syncs to your
-      // account" either way. Publishing the phase is what makes the three
-      // surfaces able to say the true thing instead (COD-291).
-      if (!p) { setAccountStatus({ phase: 'no-passphrase' }); return }
-
       setAccountStatus({ phase: 'checking' })
       void (async () => {
         try {
-          const remote = await pullAccount(p)
+          const remote = await pullAccount()
           if (remote == null) {
             // Row empty: first sign-in for this account. The local journal is
             // the only copy, so it is the one to keep and upload.
@@ -87,11 +76,13 @@ export function AccountSync() {
           setState((s) => afterPull(s, { row: 'read' }))
           markSynced()
         } catch {
-          // `pullAccount` throws on a failed decrypt, and that is NOT "the
-          // remote is broken" — it is "this row is not mine to overwrite".
+          // A throw here is "I could not read the row", never "the row is
+          // empty". `pullAccount` is written so those two are distinguishable
+          // — null for absent, a throw for anything else — because collapsing
+          // them here would upload over a journal we failed to fetch.
           setState((s) => afterPull(s, { row: 'unreadable' }))
-          setAccountStatus({ phase: 'locked' })
-          notify.error('Journal locked', MISMATCH_MESSAGE)
+          setAccountStatus({ phase: 'unusable' })
+          notify.error('Nothing was uploaded', UNUSABLE_MESSAGE)
         }
       })()
     })
@@ -101,15 +92,14 @@ export function AccountSync() {
   const lastPushed = useRef('')
   useEffect(() => {
     if (!isConfigured()) return
-    const p = pass()
-    if (!mayPush(state, { hasPassphrase: !!p, isDemo: isDemo(data) })) {
+    if (!mayPush(state, { isDemo: isDemo(data) })) {
       // Every refusal here is silent by design — `mayPush` answers "no" to
       // every unknown — and silence is exactly what made this feature look
-      // broken. Name the two refusals a signed-in user can actually sit in, so
-      // the card stops claiming a sync that is not happening. `mismatch` has
-      // already set `locked` on the pull path.
-      if (state.userId && !p) setAccountStatus({ phase: 'no-passphrase' })
-      else if (state.userId && isDemo(data)) setAccountStatus({ phase: 'demo' })
+      // broken. One refusal is left that a signed-in user can sit in
+      // indefinitely without being told, so it is named; `unusable` has
+      // already published its own phase on the pull path, and the rest resolve
+      // themselves within a tick.
+      if (state.userId && isDemo(data)) setAccountStatus({ phase: 'demo' })
       return
     }
     const snapshot = JSON.stringify(data)
@@ -118,7 +108,7 @@ export function AccountSync() {
       try {
         setAccountStatus({ phase: 'uploading' })
         lastPushed.current = JSON.stringify(latest.current)
-        await pushAccount(p!, latest.current)
+        await pushAccount(latest.current)
         markSynced()
       } catch {
         // Offline, or the token expired past its refresh. The whole journal is

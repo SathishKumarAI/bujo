@@ -51,7 +51,7 @@ import type { Gender } from '../../lib/types'
  * header menu because whether you want a nudge is a decision you revisit; the
  * *time* is set once, so it is only here.
  */
-export function AccountTab({ onGoToSync }: { onGoToSync?: () => void }) {
+export function AccountTab() {
   const { data, setSettings } = useJournal()
   const s = data.settings
 
@@ -67,10 +67,11 @@ export function AccountTab({ onGoToSync }: { onGoToSync?: () => void }) {
   return (
     <>
       {/* The act zone, and the only full-bleed card on the tab: it is the one
-          thing you came here to do. `onGoToSync` is a tab switch now rather
-          than a navigation — the passphrase it sends you to is two tabs away in
-          the same place, which is the entire point of this change. */}
-      <AccountCard onGoToSync={onGoToSync} />
+          thing you came here to do. It used to carry a second button — "Set a
+          sync passphrase", a tab switch — because signing in alone did not
+          start a sync. COD-309 removed the need, and the button with it: the
+          act is now one button, which is what an act zone is for. */}
+      <AccountCard />
 
       <div className="mt-5">
         <CardGrid>

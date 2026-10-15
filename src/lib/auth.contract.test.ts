@@ -194,30 +194,49 @@ describe('the round trip takes the stronger of two defaults', () => {
   })
 })
 
-describe('the journal never reaches the account unencrypted', () => {
+describe('what leaves for the account is bounded, even though it is no longer encrypted', () => {
   /**
-   * The property the whole design rests on, and the one most easily lost by a
-   * well-meaning refactor: a push must encrypt, and it must go through the
-   * egress boundary first.
+   * ── This block asserted the opposite until COD-309 ────────────────────────
    *
-   * `egress.contract.test.ts` independently asserts that this module calls
-   * `forEgress`, and its inventory tripwire fails on any NEW `lib` module that
-   * types a `JournalData` and calls out. This is the other half: that what
-   * leaves here is ciphertext.
+   * It required `encryptString(` in the client and **forbade** a `data:`
+   * column, on the grounds that a plain-JSONB row was the design
+   * `docs/security/account-sync-plan.md` §0 explicitly rejected. That rejection
+   * was reversed on request, and this test is re-aimed in the same commit
+   * rather than deleted — the same move this file's own header describes making
+   * when accounts came back. An assertion quietly dropped is a decision nobody
+   * can find later.
+   *
+   * What survives the reversal is the half that was never about encryption:
+   * **`forEgress` is the only boundary left**, so it matters more now, not
+   * less. It strips the cycle log and this device's other sync tokens, and
+   * under COD-271 anything that slipped past it was at least ciphertext on the
+   * wire. There is no second line any more.
    */
-  it('encrypts in the client module', () => {
-    const src = scannable.find(([p]) => p === CLIENT)?.[1]
-    expect(src, 'the client module is missing from the scan').toBeDefined()
-    expect(src!).toMatch(/encryptString\(/)
-    expect(src!).toMatch(/forEgress\(/)
+  const client = () => scannable.find(([p]) => p === CLIENT)?.[1] ?? ''
+
+  it('passes everything bound for the account through forEgress', () => {
+    const src = client()
+    expect(src, 'the client module is missing from the scan').not.toBe('')
+    expect(src).toMatch(/forEgress\(/)
   })
 
-  it('never selects or upserts a column holding a plain journal', () => {
-    // The row holds `blob`. A `data` column would be the plaintext design that
-    // `docs/security/account-sync-plan.md` §0 explicitly rejected, and this is
-    // what would catch someone re-introducing it for convenience.
-    const src = scannable.find(([p]) => p === CLIENT)?.[1] ?? ''
+  it('writes the journal to `data`, and no longer to `blob`', () => {
+    // Pinned in both directions. A revert to `blob` here, with the schema left
+    // on `data`, writes a column that does not exist — PostgREST answers that
+    // with a 400, and the sync path swallows a 400 into `phase: 'error'`, which
+    // on screen reads as "offline". Much cheaper to fail here.
+    const src = client()
     expect(code(src).some((l) => /from\(['"]journals['"]\)/.test(l))).toBe(true)
-    expect(src).not.toMatch(/\.upsert\(\s*\{[^}]*\bdata:\s*(?!null)/)
+    expect(code(src).some((l) => /\bdata:\s*payload\b/.test(l))).toBe(true)
+    expect(code(src).some((l) => /\bblob\b/.test(l))).toBe(false)
+  })
+
+  it('still refuses a row left behind by the encrypted design', () => {
+    // `isEncryptedBlob` is kept for exactly one purpose: a COD-271 row is a
+    // perfectly good object and is NOT a journal, and `migrate()` would hand it
+    // back as an empty one — which the sync path would then treat as readable
+    // and upload over. The guard is three lines and the failure it prevents is
+    // silent and total.
+    expect(code(client()).some((l) => /isEncryptedBlob\(/.test(l))).toBe(true)
   })
 })

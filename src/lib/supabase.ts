@@ -1,24 +1,47 @@
-// Account identity (Google) + an end-to-end-encrypted journal row. COD-271.
+// Account identity (Google) + the journal row it owns. COD-271, COD-309.
 //
 // ── Read this before changing anything here ────────────────────────────────
 //
-// This file reverses a decision. Accounts were removed from this app on
-// 2026-09-11 and `lib/auth.contract.test.ts` existed to keep them out; both
-// `docs/AUTH.md` and that test are rewritten alongside this, because a
-// mechanism that contradicts its own documentation is worse than either.
+// This file has now reversed a decision twice, and both reversals are recorded
+// rather than performed quietly. Accounts were removed from this app on
+// 2026-09-11 and `lib/auth.contract.test.ts` existed to keep them out; COD-271
+// brought them back with an end-to-end-encrypted row; COD-309 took the
+// encryption off that row. `docs/AUTH.md` and that contract test are rewritten
+// alongside each change, because a mechanism that contradicts its own
+// documentation is worse than either.
 //
-// **The server never sees a journal.** Google says *who* you are and picks
-// which row is yours; a separate passphrase derives the key, and the journal is
-// encrypted in this browser before it is uploaded. Supabase holds a blob of
-// `{v, salt, iv, data}` and nothing else. That is a deliberate choice, made
-// explicitly over the simpler plaintext-JSONB design, and it has a cost worth
-// restating every time someone reads this file:
+// **The server can read your journal, and row-level security is what makes it
+// yours.** Google says who you are, Postgres RLS says which row that is, and
+// `data` holds the journal as JSON. There is no passphrase on this path.
 //
-//   **The account is recoverable. The data is not.** Lose the passphrase and
-//   the row is still yours, still syncing, and permanently unreadable. An
-//   account normally implies "I can always get back in"; here it means "I can
-//   always get back to my ciphertext". Any copy written near this feature has
-//   to say so — see the words table in `docs/AUTH.md`.
+// ── Why the encryption came off, since removing it looks like a regression ─
+//
+// Because it cannot coexist with the thing an account is for. **A server that
+// can hand your journal to a brand-new device is a server that can read your
+// journal.** The passphrase was the only secret the server never saw, and
+// therefore the only thing that could open data the server could not read; the
+// price was a second secret to carry to every device, and a lost-passphrase
+// case that lost the journal permanently. Asked for directly — *"I don't want
+// a passphrase. I just want to sign in. The data needs to sync directly, just
+// like some other SaaS application"* — and that is a coherent product, not a
+// misunderstanding. Notion, Todoist and Google Keep all work this way and all
+// of them can read your content; Signal and 1Password cannot read yours and all
+// of them make you carry a second secret. Nobody has both.
+//
+// What that costs, stated plainly so nothing downstream has to guess: someone
+// holding a database admin key, or a dump, now gets the journal where before
+// they got ciphertext. RLS is unchanged and forced, so no *account* reaches
+// another's row. See `docs/AUTH.md` for the words every surface uses.
+//
+// (Spelled "admin key" rather than with the literal role name on purpose —
+// `auth.contract.test.ts` forbids that string anywhere under `src/`, and that
+// guard is worth more than this sentence's precision. The role is named in
+// `supabase/schema.sql` and in `docs/AUTH.md`, neither of which is scanned.)
+//
+// **The cycle log is still not here.** `forEgress` strips it from this path as
+// from every other, and `egress.contract.test.ts` fails the build if a new sync
+// target forgets. That was never about encryption — it is the one domain that
+// does not leave the device at all — and it survived this change deliberately.
 //
 // ── Absent by default ──────────────────────────────────────────────────────
 //
@@ -29,7 +52,10 @@
 // cloning it will never set these — a sign-in button that throws on click is a
 // worse first run than no sign-in button.
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
-import { encryptString, decryptString, isEncryptedBlob, type EncryptedBlob } from './crypto'
+// `isEncryptedBlob` only — this path no longer encrypts. It is kept so a row
+// written by COD-271 is recognised and REFUSED rather than mistaken for a
+// journal; see `pullAccount`.
+import { isEncryptedBlob } from './crypto'
 import { inlineImagesWithinBudget, notePhotosSkipped, externalizeImages } from './imageStore'
 import { forEgress } from './cyclePrivacy'
 import { markSignInStarted, clearSignInPending } from './authReturn'
@@ -244,49 +270,71 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Push the journal to this account's row, encrypted with `passphrase`.
+ * Push the journal to this account's row.
  *
  * `forEgress` first, like every other network target — it drops the cycle log
  * and this device's sync secrets, and `egress.contract.test.ts` enforces that
- * this path calls it. Applied before image inlining so a withheld domain never
- * reaches the encryptor at all.
+ * this path calls it. **It matters more now, not less.** While the row was
+ * ciphertext, a withheld domain that slipped through was at least unreadable
+ * server-side; it is the only boundary left on this path, so it runs first,
+ * before image inlining, so a withheld domain is never even assembled into the
+ * payload.
  */
-export async function pushAccount(passphrase: string, data: JournalData): Promise<void> {
+export async function pushAccount(data: JournalData): Promise<void> {
   const c = sb()
   if (!c) throw new Error('Sign-in is not configured in this build.')
   const user = await currentUser()
   if (!user) throw new Error('Not signed in.')
   const { payload, skipped } = await inlineImagesWithinBudget(forEgress(data))
-  const blob = await encryptString(JSON.stringify(payload), passphrase)
   const { error } = await c
     .from('journals')
     // No `owner` in the payload: the column defaults to `auth.uid()` and the
     // RLS `with check` refuses anything else, so it cannot be spoofed and does
     // not need to be trusted from here. Same rule as the self-host PostgREST
-    // tier (docs/security/postgrest-hardening.md).
-    .upsert({ id: user.id, blob, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    // tier (docs/security/postgrest-hardening.md). `id` is sent because it is
+    // the conflict target, and the insert policy requires `id = auth.uid()`
+    // too — a client that lies about it is refused rather than believed.
+    .upsert({ id: user.id, data: payload, updated_at: new Date().toISOString() }, { onConflict: 'id' })
   if (error) throw error
   if (skipped) notePhotosSkipped(skipped)
 }
 
 /**
- * Read this account's journal back, or null when the row is empty.
+ * Read this account's journal back, or null when the account has never synced.
  *
- * Throws on a wrong passphrase — `decryptString` does, and it must stay a throw
- * rather than a null: "nothing stored" and "you typed the wrong passphrase"
- * look identical to a caller that cannot tell them apart, and one of them is
- * recoverable by trying again.
+ * **`null` means "no journal stored", and nothing else.** It is the one answer
+ * that lets the caller overwrite the row, so every other outcome has to be
+ * distinguishable from it: a transport error throws, and a row holding
+ * something this build cannot use throws. A `catch` that turned either into
+ * `null` would turn "I could not read your journal" into "you have no journal"
+ * and then upload over it, which is the single failure `lib/accountSync.ts`
+ * exists to prevent.
+ *
+ * The shape check is deliberately minimal — an object, not an array, not a
+ * scalar. `migrate()` in `lib/storage.ts` is what actually reconciles an older
+ * journal, and duplicating its knowledge here would give two places an opinion
+ * about what a journal looks like. What this catches is a row left behind by a
+ * *different* design: COD-271's `{v, salt, iv, data}` ciphertext, which is a
+ * perfectly good object and is not a journal, and which `migrate` would happily
+ * hand back as an empty one.
  */
-export async function pullAccount(passphrase: string): Promise<JournalData | null> {
+export async function pullAccount(): Promise<JournalData | null> {
   const c = sb()
   if (!c) return null
   const user = await currentUser()
   if (!user) return null
-  const { data, error } = await c.from('journals').select('blob').eq('id', user.id).maybeSingle()
+  const { data: row, error } = await c.from('journals').select('data').eq('id', user.id).maybeSingle()
   if (error) throw error
-  const blob = data?.blob as EncryptedBlob | undefined
-  if (!blob) return null
-  if (!isEncryptedBlob(blob)) throw new Error('The stored journal is not in a format this version understands.')
-  const json = await decryptString(blob, passphrase)
-  return externalizeImages(JSON.parse(json) as JournalData)
+  const stored = row?.data as unknown
+  if (stored == null) return null
+  if (typeof stored !== 'object' || Array.isArray(stored)) {
+    throw new Error('The stored journal is not in a format this version understands.')
+  }
+  if (isEncryptedBlob(stored)) {
+    throw new Error(
+      'This account still holds an encrypted journal from an older version of the app. '
+      + 'Open it on a device that has the sync passphrase and export it, then sign in here again.',
+    )
+  }
+  return externalizeImages(stored as JournalData)
 }

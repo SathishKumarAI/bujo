@@ -41,7 +41,6 @@ describe('the account sync status store', () => {
   it('does not light the pill for the phases that are not activity', () => {
     const on = vi.fn()
     window.addEventListener('bujo:sync', on)
-    setAccountStatus({ phase: 'no-passphrase' })
     setAccountStatus({ phase: 'demo' })
     setAccountStatus({ phase: 'signed-out' })
     window.removeEventListener('bujo:sync', on)

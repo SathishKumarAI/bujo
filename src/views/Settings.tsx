@@ -116,7 +116,7 @@ export function Settings() {
             navigation. That is the whole shape of this change: the thing the
             Account tab tells you is missing is two tabs away in the same place,
             so the fix for it should not be a journey. */}
-        <TabsContent value="account"><AccountTab onGoToSync={() => setTab('sync')} /></TabsContent>
+        <TabsContent value="account"><AccountTab /></TabsContent>
         <TabsContent value="feel"><AppearanceTab /></TabsContent>
         <TabsContent value="sync"><SyncTab /></TabsContent>
         <TabsContent value="data"><DataTab /></TabsContent>
