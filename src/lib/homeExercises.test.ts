@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   HOME_EXERCISES, EQUIPMENT_ORDER, FAMILY_LABEL,
   exerciseById, exercisesForKit, filterExercises, musclesOf, progressionChain,
-  demoUrl, searchUrl,
+  demoUrl, searchUrl, homeSetRows, parseRepSpec,
   type Family,
 } from './homeExercises'
+import { weeklySetsPerMuscle } from './fitness'
+import { emptyJournal } from './storage'
 
 /**
  * These counts are a GATE, not trivia. `views/Pullups.tsx` once had "cards from
@@ -199,5 +201,76 @@ describe('every family label is used', () => {
     const used = new Set(HOME_EXERCISES.map((e) => e.family))
     const unused = (Object.keys(FAMILY_LABEL) as Family[]).filter((f) => !used.has(f))
     expect(unused).toEqual([])
+  })
+})
+
+/**
+ * A home session used to be invisible to every strength analytic: `logSession`
+ * wrote `sets: ['Push-ups 3×12']` and no `setRows`, and `fitness.parseSet`
+ * requires an `@ <weight>` segment a home line has never had, so it returned
+ * `null` for all of them. These are the gate on the structured path — the last
+ * `it` is the end-to-end one, and it is written in both directions on purpose:
+ * a scan that silently matches nothing passes, so the bug's own shape is
+ * asserted to still fail beside the fix asserted to work.
+ */
+describe('a built session becomes structured rows', () => {
+  it('reads every rep spec in the library', () => {
+    const unreadable = HOME_EXERCISES.filter((e) => {
+      const spec = parseRepSpec(e.reps)
+      return !(spec.sets >= 1) || (/[x×]\s*\d+$/.test(e.reps) && spec.reps == null)
+    })
+    expect(unreadable.map((e) => `${e.name} ${e.reps}`)).toEqual([])
+  })
+
+  it('does not double a per-side spec', () => {
+    // Three sets of ten per side is three sets. The per-side detail stays in
+    // the stored line, where a human reads it.
+    expect(parseRepSpec('3×10/side')).toEqual({ sets: 3, reps: 10 })
+    expect(parseRepSpec('3×12')).toEqual({ sets: 3, reps: 12 })
+    expect(parseRepSpec('5×10')).toEqual({ sets: 5, reps: 10 })
+  })
+
+  it('gives a time hold no reps, but still counts its sets', () => {
+    // Thirty seconds is not thirty repetitions, and `WorkoutSet` has nowhere to
+    // put a duration. A plank is still three sets.
+    expect(parseRepSpec('3×30s')).toEqual({ sets: 3, reps: undefined })
+    expect(parseRepSpec('5×60s')).toEqual({ sets: 5, reps: undefined })
+    expect(parseRepSpec('3×30s/side')).toEqual({ sets: 3, reps: undefined })
+    // Adjacent `s` only — otherwise "3x12 slow" logs as a twelve-second hold.
+    expect(parseRepSpec('3x12 slow')).toEqual({ sets: 3, reps: 12 })
+  })
+
+  it('records one set for something it cannot read', () => {
+    // The field is editable. A free-typed target still means a set happened.
+    expect(parseRepSpec('as many as possible')).toEqual({ sets: 1 })
+    expect(parseRepSpec('')).toEqual({ sets: 1 })
+  })
+
+  it('writes one row per set, at zero load', () => {
+    const rows = homeSetRows([{ name: 'Push-ups', reps: '3×12' }, { name: 'Plank', reps: '3×30s' }])
+    // Six rows, not two: `weeklySetsPerMuscle` adds one per ROW, so a grouped
+    // row would count three sets as one everywhere downstream.
+    expect(rows).toHaveLength(6)
+    expect(rows.every((r) => r.weight === 0 && r.kind === 'working')).toBe(true)
+    expect(rows.filter((r) => r.exercise === 'Push-ups').map((r) => r.reps)).toEqual([12, 12, 12])
+    expect(rows.filter((r) => r.exercise === 'Plank').every((r) => r.reps === undefined)).toBe(true)
+  })
+
+  it('makes a home session count toward the muscle analytics', () => {
+    const items = [{ name: 'Push-ups', reps: '3×12' }]
+    const withRows = emptyJournal()
+    withRows.workouts = [{
+      id: 'h1', date: '2026-06-11', activity: 'homeWorkout', notes: '',
+      sets: items.map((i) => `${i.name} ${i.reps}`), setRows: homeSetRows(items),
+    }]
+    const counted = weeklySetsPerMuscle(withRows, '2026-06-11')
+    expect(counted.length).toBeGreaterThan(0)
+    expect(counted.every((c) => c.sets === 3)).toBe(true)
+
+    // And the shape that shipped: the same session without `setRows` falls back
+    // to parsing the strings, and a home line has no `@ <weight>` to parse.
+    const stringsOnly = emptyJournal()
+    stringsOnly.workouts = [{ ...withRows.workouts[0], setRows: undefined }]
+    expect(weeklySetsPerMuscle(stringsOnly, '2026-06-11')).toEqual([])
   })
 })

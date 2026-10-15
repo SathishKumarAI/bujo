@@ -21,6 +21,7 @@
 
 import { videoUrl, videoSearchUrl } from './video'
 import { muscleWorkFor, type MuscleWork } from './exerciseMuscles'
+import type { WorkoutSet } from './types'
 
 export type Muscle = 'chest' | 'legs' | 'glutes' | 'core' | 'back' | 'shoulders' | 'arms' | 'full body' | 'cardio'
 
@@ -89,6 +90,55 @@ export function demoUrl(ex: HomeExercise): string {
 /** Always-available "find more" search link (the fallback the user asked for). */
 export function searchUrl(ex: HomeExercise): string {
   return videoSearchUrl(ex.name)
+}
+
+/**
+ * Sets and reps on a rep spec — `'3×12'`, `'3×10/side'`, `'5×60s'`.
+ *
+ * `/side` is **not** doubled: three sets of ten per side is three sets, and the
+ * per-side detail stays in the stored line where a human reads it. A time hold
+ * (`'3×30s'`) returns no `reps` rather than `reps: 30` — thirty seconds is not
+ * thirty repetitions, and `WorkoutSet` has nowhere to put a duration. It still
+ * counts as a set, which is what the muscle analytics ask of it.
+ *
+ * Tolerant because the field is editable in the session card: anything it cannot
+ * read is one set with no reps, so a free-typed "as many as possible" still
+ * records that a set of this movement happened. The `s` must be adjacent to the
+ * digits, or "3x12 slow" would log as a twelve-second hold.
+ */
+export function parseRepSpec(spec: string): { sets: number; reps?: number } {
+  const m = spec.match(/(\d+)\s*[x×]\s*(\d+)(s)?/i)
+  if (!m) return { sets: 1 }
+  return { sets: Math.max(1, Number(m[1])), reps: m[3] ? undefined : Number(m[2]) }
+}
+
+/**
+ * Structured rows for a built session — **one row per set**, which is the shape
+ * `lib/fitness.ts` counts: `weeklySetsPerMuscle` adds one per row, so a grouped
+ * `3×12` row would count as a single set everywhere downstream. Same convention
+ * `lib/pullups.ts setLines` writes, for the same reason.
+ *
+ * Why this exists: `logSession` used to write `sets: ['Push-up 3×12']` and no
+ * `setRows` at all, and `fitness.parseSet` requires an `@ <weight>` segment a
+ * home line has never had — so it returned `null` for every one of them and
+ * every muscle, volume and frequency analytic counted a home session as zero.
+ * 83 movements, a session builder, and nothing downstream could see any of it.
+ *
+ * `weight: 0` because these are bodyweight: `sessionVolume` multiplies by it so
+ * a home session adds no load volume, and `exerciseProgression`/`e1rmProgression`
+ * both skip a zero. All three are right — the set COUNT is what was missing.
+ *
+ * Both writers call this, `views/HomeWorkout.tsx logSession` and the demo seed
+ * in `lib/demo.ts`. Two writers each holding their own opinion of the stored
+ * shape is a bug this repo has already shipped twice.
+ */
+export function homeSetRows(items: { name: string; reps: string }[]): WorkoutSet[] {
+  return items.flatMap(({ name, reps }) => {
+    const spec = parseRepSpec(reps)
+    return Array.from({ length: spec.sets }, () => ({
+      exercise: name, reps: spec.reps, weight: 0, kind: 'working' as const,
+    }))
+  })
 }
 
 /**

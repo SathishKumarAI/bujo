@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button'
 import { PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame } from '../components/page'
 import { ExerciseLibrary, Manual, SessionCard, type SessionItem } from '../components/homeworkout'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
-import { HOME_EXERCISES, type HomeExercise } from '../lib/homeExercises'
+import { HOME_EXERCISES, homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { notify } from '../lib/notify'
 import { ShowMore } from '../components/ShowMore'
 import { useCappedList } from '../lib/useCappedList'
@@ -27,10 +27,15 @@ import { useCappedList } from '../lib/useCappedList'
  * the page just had no shape, which is the fault `PAGE-SHAPE.md` was written
  * about.
  *
- * A session is stored as a plain `Workout` with `activity: 'homeWorkout'` —
- * unchanged, because the existing analytics, CSV export, achievements and search
- * already read it and none of them needs to know this page was rebuilt. The
- * library, the manual and the programming live in `lib/homeExercises.ts`,
+ * A session is stored as a plain `Workout` with `activity: 'homeWorkout'`, so
+ * the CSV export, achievements and search read it without knowing this page
+ * exists. The *analytics* did not: this docstring used to claim they already
+ * read it, and they did not, because the session carried only free-text `sets`
+ * lines and `fitness.parseSet` cannot read one without an `@ <weight>`. It now
+ * writes `setRows` through `homeSetRows` as well — see that helper for why one
+ * row per set and why zero load.
+ *
+ * The library, the manual and the programming live in `lib/homeExercises.ts`,
  * `lib/homeManual.ts` and `lib/homeProgramming.ts`; **this view imports them and
  * does not restate them**, which is the whole lesson of 531596f.
  */
@@ -75,6 +80,13 @@ export function HomeWorkout() {
       activity: 'homeWorkout',
       durationMin: dur ? Number(dur) : undefined,
       sets: items.map((i) => `${i.name} ${i.reps}`),
+      /* The strings stay exactly as they were — the history list below renders
+         them verbatim and three counters on this page read `sets.length` as an
+         exercise count, so expanding them into one line per set would silently
+         relabel "exercises" as "sets". `setRows` is the structured path every
+         analytic in `lib/fitness.ts` prefers, and this logger was the only one
+         in the app writing neither it nor a weight-bearing line. */
+      setRows: homeSetRows(items),
       notes: notes.trim(),
     })
     setItems([]); setDur(''); setNotes(''); setDate(today)

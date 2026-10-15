@@ -4,7 +4,7 @@ import { seedJournal, uid } from './storage'
 import { addDays, fromISODay, todayISO, ymOf } from './date'
 import { lapseDays } from './moodPatterns'
 import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
-import { HOME_EXERCISES } from './homeExercises'
+import { HOME_EXERCISES, homeSetRows } from './homeExercises'
 import { FOODS } from './foods'
 import { kindsFor } from '../domain/activities'
 import { repScheme, setLines } from './pullups'
@@ -126,7 +126,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 15
+export const DEMO_VERSION = 16
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -549,6 +549,10 @@ export function generateDemoData(today = todayISO()): JournalData {
         subActivity: hwKinds[Math.floor(randSub() * hwKinds.length)],
         durationMin: 18 + Math.floor(rand3() * 25),
         sets: picked.map((e) => `${e.name} ${e.reps}`),
+        // Through the same helper `logSession` calls, so the seed cannot hold
+        // its own opinion of the stored shape — the mistake that made the
+        // pull-up page's data module go dead.
+        setRows: homeSetRows(picked),
         rpe: 5 + Math.floor(rand3() * 4),
         notes: rand3() > 0.6 ? 'Living-room session, no kit.' : '',
       })
