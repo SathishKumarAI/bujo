@@ -631,10 +631,13 @@ body.handwriting textarea {
    part-way through an opacity ramp reports a contrast failure describing a
    pairing that exists nowhere in the app (CLAUDE.md, three investigations). */
 
-/* Each week rises a few pixels as the list mounts, staggered by `--i`. The
-   stagger is what makes twelve rows read as a sequence rather than a block. */
-@keyframes week-in { from { transform: translateY(7px); } to { transform: none; } }
-.week-in { animation: week-in var(--dur-base) var(--ease-rise) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
+/* Each row rises a few pixels as its list mounts, staggered by `--i`. The
+   stagger is what makes a list read as a sequence rather than a block, and it
+   is what the manual chapters use as well — renamed off `week-in` the moment
+   the second caller appeared, because a class named for one call site is how
+   the third one ends up writing its own. */
+@keyframes settle-in { from { transform: translateY(7px); } to { transform: none; } }
+.settle-in { animation: settle-in var(--dur-base) var(--ease-rise) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
 
 /* The node pops when you tick a week. Applied to ONE node — the one just
    toggled — and removed on animationend, so it can run again next time and so
@@ -657,7 +660,7 @@ body.handwriting textarea {
 .bar-grow { animation: bar-grow var(--dur-slow) var(--ease-emphasis) backwards; transform-origin: left; }
 
 @media (prefers-reduced-motion: reduce) {
-  .week-in, .node-pop, .now-ring, .bar-grow { animation: none; }
+  .settle-in, .node-pop, .now-ring, .bar-grow { animation: none; }
 }
 
 /* ── Scroll-settled reference lists ────────────────────────────────────────

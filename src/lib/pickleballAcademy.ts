@@ -16,10 +16,31 @@ export interface AcademyLevel {
   /** The ONE thing that moves you up. Not a list — a list is what the `skills`
    *  column already is, and a list is why people plateau working on six. */
   unlock: string
+  /**
+   * The DUPR band this rung covers: lower inclusive, upper exclusive.
+   *
+   * Separate from the `dupr` STRING above, which is what a person reads
+   * ("2.0–2.5", "4.5+") and is useless to compare a rating against. The bands
+   * are contiguous and cover the whole line, so `levelForRating` always
+   * returns a rung — a rating of 2.9 belongs somewhere, and the honest answer
+   * is the rung whose band contains it rather than `undefined`.
+   */
+  band: [number, number]
+}
+
+/**
+ * Which rung a DUPR rating puts you on.
+ *
+ * Takes the LATEST rating, not the best one. A ladder that remembers your peak
+ * is a ladder that tells you to work on something you have already stopped
+ * being able to do.
+ */
+export function levelForRating(rating: number): AcademyLevel {
+  return ACADEMY_LEVELS.find((l) => rating >= l.band[0] && rating < l.band[1]) ?? ACADEMY_LEVELS[ACADEMY_LEVELS.length - 1]
 }
 
 export const ACADEMY_LEVELS: AcademyLevel[] = [
-  { id: 'beginner', name: 'Beginner', dupr: '2.0–2.5', color: 'green', skills: [
+  { id: 'beginner', name: 'Beginner', dupr: '2.0–2.5', band: [0, 2.75], color: 'green', skills: [
     'Rules, scoring & the two-bounce rule',
     'Continental grip + athletic ready position',
     'Underhand serve (below waist, deep, cross-court)',
@@ -34,7 +55,7 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     ],
     unlock: 'Get every serve in and every return deep — then walk to the kitchen line and stay there. Placement and position beat every shot you do not have yet.',
   },
-  { id: 'novice', name: 'Adv. Beginner', dupr: '3.0', color: 'teal', skills: [
+  { id: 'novice', name: 'Adv. Beginner', dupr: '3.0', band: [2.75, 3.25], color: 'teal', skills: [
     'Shot consistency — placement over power',
     'Consistent dinking (15–20 in a row)',
     'Third-shot drop — net it? swing higher, not harder',
@@ -49,7 +70,7 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     ],
     unlock: 'The third-shot drop. It is the one gate between 3.0 and 3.5, and if it keeps hitting the net the answer is a higher, wider swing — not a harder one.',
   },
-  { id: 'intermediate', name: 'Intermediate', dupr: '3.5', color: 'sky', skills: [
+  { id: 'intermediate', name: 'Intermediate', dupr: '3.5', band: [3.25, 3.75], color: 'sky', skills: [
     'Purposeful dinking — angle to the backhand',
     'Transition-zone footwork',
     'Reset from the transition zone (soft hands)',
@@ -64,7 +85,7 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     ],
     unlock: 'The reset: absorb the drive with an open paddle and no backswing, and only move forward on a ball above the net. Advancing on a low ball is what keeps feeding them the attack.',
   },
-  { id: 'advanced', name: 'Advanced', dupr: '4.0', color: 'mauve', skills: [
+  { id: 'advanced', name: 'Advanced', dupr: '4.0', band: [3.75, 4.25], color: 'mauve', skills: [
     'Consistent resets under pressure',
     'Offensive cross-court dinking',
     'Speed-ups and counters',
@@ -79,7 +100,7 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     ],
     unlock: 'Shot selection. The 3.5→4.0 leap is mostly cognitive: drive the pop-ups, drop the rest, and know which pattern you are building before you start it.',
   },
-  { id: 'pro', name: 'Pro', dupr: '4.5+', color: 'peach', skills: [
+  { id: 'pro', name: 'Pro', dupr: '4.5+', band: [4.25, Infinity], color: 'peach', skills: [
     'Elite hand battles — absorb pace with soft blocks',
     'Advanced spin serves',
     'Deception & disguise',

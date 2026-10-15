@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ACADEMY_DRILLS, ACADEMY_LEVELS, DRILL_FIXES, MINDSET, TECHNIQUES, TWELVE_WEEK,
-  ACADEMY_TOTAL_WEEKS,
+  ACADEMY_TOTAL_WEEKS, levelForRating,
 } from './pickleballAcademy'
 import { COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUrl } from './pickleballSafety'
 
@@ -122,5 +122,35 @@ describe('the safety content', () => {
       // somebody has pinned a page, and a pinned page rots.
       expect(decodeURIComponent(url), s.name).toContain(s.name)
     }
+  })
+})
+
+describe('levelForRating', () => {
+  it('puts a rating on the rung whose band contains it', () => {
+    expect(levelForRating(2.1).id).toBe('beginner')
+    expect(levelForRating(3.0).id).toBe('novice')
+    expect(levelForRating(3.4).id).toBe('intermediate')
+    expect(levelForRating(4.0).id).toBe('advanced')
+    expect(levelForRating(4.9).id).toBe('pro')
+  })
+
+  it('leaves no gap between the rungs', () => {
+    // The bands have to cover the whole line: a rating of 2.9 belongs
+    // somewhere, and `undefined` is not an answer a ladder can draw.
+    for (let r = 0; r <= 6; r += 0.05) expect(levelForRating(Number(r.toFixed(2))), `rating ${r}`).toBeTruthy()
+    for (let i = 0; i < ACADEMY_LEVELS.length - 1; i++) {
+      expect(ACADEMY_LEVELS[i].band[1], `${ACADEMY_LEVELS[i].id} → ${ACADEMY_LEVELS[i + 1].id}`)
+        .toBe(ACADEMY_LEVELS[i + 1].band[0])
+    }
+  })
+
+  it('the demo seed lands inside a band and not on an edge', () => {
+    // A seed sitting on a boundary makes the marked rung depend on whether the
+    // comparison is inclusive, which is a test's job to pin and a seed's job
+    // not to lean on.
+    const seeded = 3.4
+    const lvl = levelForRating(seeded)
+    expect(seeded).toBeGreaterThan(lvl.band[0])
+    expect(seeded).toBeLessThan(lvl.band[1])
   })
 })

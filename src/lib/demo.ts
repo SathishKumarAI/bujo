@@ -127,7 +127,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 17
+export const DEMO_VERSION = 18
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -532,6 +532,27 @@ export function generateDemoData(today = todayISO()): JournalData {
    * literal `'drill:figure-8'` here would keep passing after the slug rules
    * changed and the seed would quietly stop lining up with the page.
    */
+  /**
+   * A DUPR HISTORY, because `settings.duprLog` was a field with two readers
+   * and no seed.
+   *
+   * `pickleball.ts` has drawn a rating trend from it since it was written and
+   * the Coaching ladder now marks the rung you are standing on from it — and
+   * neither had ever been rendered with data by any gate, at any theme, on any
+   * viewport. Same unseeded-domain trap as `data.cycle` and the pull-up
+   * history before it.
+   *
+   * Three points, rising, landing at 3.4 — inside the Intermediate band
+   * (3.25–3.75) on purpose. A rating that sat on a band edge would make the
+   * ladder's marked rung depend on whether the comparison is inclusive, which
+   * is a test's job to pin down and a seed's job not to depend on.
+   */
+  j.settings.duprLog = [
+    { date: addDays(today, -94), rating: 3.11 },
+    { date: addDays(today, -52), rating: 3.26 },
+    { date: addDays(today, -13), rating: 3.4 },
+  ]
+
   j.settings.practiceLog = {
     [practiceKey('drill', 'Figure-8')]: [today],
     [practiceKey('drill', 'Return-and-rush')]: [addDays(today, -16), addDays(today, -9), addDays(today, -2)],
