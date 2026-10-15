@@ -92,8 +92,21 @@ begin
         'here and will be dropped with the column: they cannot be decrypted by anyone.', encrypted);
     end if;
 
-    raise notice 'No encrypted rows; dropping the blob column.';
-    alter table public.journals drop column blob;
+    -- RENAME, not drop. A drop is irreversible against a live project, and
+    -- the only thing that makes it feel safe is the guard above being right —
+    -- which it was not, on its first outing. A rename costs one column of
+    -- dead weight and buys the ability to undo this with one statement.
+    -- Delete it by hand once a real sync has been seen to work.
+    raise notice 'No recoverable journals; renaming blob -> blob_legacy_20261014.';
+    alter table public.journals rename column blob to blob_legacy_20261014;
+
+    -- **Required, and easy to miss.** The old column is `not null`
+    -- (`schema.sql`), and a rename carries the constraint with it. Leave it
+    -- and every insert the app makes — `{id, data, updated_at}`, no legacy
+    -- column — fails with 23502, which the sync path swallows into
+    -- `phase: 'error'` and the card reports as "not reaching your account".
+    -- That is a renamed column silently behaving like an outage.
+    alter table public.journals alter column blob_legacy_20261014 drop not null;
   end if;
 end $$;
 
