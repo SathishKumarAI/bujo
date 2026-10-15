@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Segmented } from '../ui'
-import { Track } from '../ui/Stat'
+import { Track, Ramp } from '../ui/Stat'
 
 export interface StatFact {
   label: string
@@ -22,6 +22,15 @@ export interface StatFact {
   amount?: number | null
   /** The target or total `amount` is measured against. Both are needed to draw. */
   of?: number | null
+  /**
+   * A run of day states, when WHICH days matters more than how many.
+   *
+   * "5 of 12 done" and a seven-day ramp answer different questions: the first
+   * is how much is left, the second is whether the week has been even or
+   * whether everything is piled on Thursday. Where both are true the ramp
+   * wins, because the count is already in the value text beside it.
+   */
+  ramp?: readonly boolean[]
   /** Token name for the track. Defaults to the brand hue. */
   tone?: 'mauve' | 'blue' | 'green' | 'peach' | 'red' | 'teal' | 'yellow' | 'pink' | 'fg-2'
   /** Optional destination — a fact you can act on becomes a button. */
@@ -120,7 +129,9 @@ function Fact({ fact, first }: { fact: StatFact; first: boolean }) {
           relationship between them readable at a glance. Drawn only when both
           halves are real: a target with no amount, or an amount with no
           target, is a scale with one end missing. */}
-      {fact.amount != null && fact.of != null && fact.of > 0 ? (
+      {fact.ramp && fact.ramp.length > 0 ? (
+        <span className="mt-1 block"><Ramp days={fact.ramp} tone={fact.tone} height={5} /></span>
+      ) : fact.amount != null && fact.of != null && fact.of > 0 ? (
         <span className="mt-1 block"><Track value={fact.amount} max={fact.of} tone={fact.tone} height={4} /></span>
       ) : null}
     </>

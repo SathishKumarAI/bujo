@@ -72,8 +72,8 @@ Three shadow steps, named for what they are, not how big they are:
 The three names were right and stay; only the values change, in one line each.
 
 ```
---radius-control  0.625rem  10px   buttons, inputs, segments, steppers — you operate it
---radius-card     1rem      16px   cards, sheets, modals, panels — you read it
+--radius-control  0.5rem    8px    buttons, inputs, segments, steppers — you operate it
+--radius-card     0.75rem   12px   cards, sheets, modals, panels — you read it
 --radius-pill     9999px    full   chips, tags, avatars — shaped by its own text
 ```
 
@@ -177,10 +177,60 @@ each one leaves the app coherent.
 | 0 | `PRODUCT.md`, this file | ✅ |
 | 1 | Tokens + primitives — every view restyled at once | ✅ (#216) |
 | 2 | Shell: header, nav, page frame, book | ✅ (#217, and the header rows centred in a follow-up) |
-| 3 | Today · Plan · Body · Mind · Insights | ☐ |
+| 3 | Today · Plan · Body · Mind · Insights | ◐ in progress — see below |
 | 4 | The long tail — 20 remaining views | ☐ |
 | 5 | Motion + polish pass | ☐ |
 
 Phase 1 is deliberately token-and-primitive only. Nothing under `views/` is
 touched, so the diff that changes all 28 screens stays reviewable and any
 regression is one file away.
+
+### What phases 3–5 being unchecked actually cost
+
+They sat unchecked from #219 to #391 — about 170 PRs — and in that time the
+app became the un-rolled-out state of a design that was fully built. Measured
+in a real browser at `bf8dbda`, across 14 views and two themes:
+
+| | measured |
+|---|---|
+| Numbers printed as text : shown as a shape | **14.43 : 1** (1,414 : 98) |
+| Views encoding nothing at all | **5 of 14** |
+| Cards rendered as `band` (hairline only) | **86.7%** — 216 of 249 |
+| Boxed cards rendered, any view | **0** |
+| Page → panel contrast | **1.17 : 1** |
+| Viewport carrying no chroma | **97.7–99.7%** |
+| Largest text ÷ body | **1.47×**, and on 12 of 14 views the largest thing was the page's own name |
+| `shadow-lift` direct call sites | **0** |
+| Colour tokens defined and never referenced | **8 of 63** |
+
+Reported, accurately, as *"it looks like UI without any life… it just looks
+like a plain kind of HTML page."* None of the four gates could see any of it:
+`contrast` reads token values, `design` greps for hex, `a11y` reads the tree,
+`clipped` asks whether an element shows what it holds. A page can pass all
+four and still say nothing.
+
+**`npm run density` is the fifth gate, and it closes that hole.** It counts
+numbers printed against numbers encoded, from the live DOM — because the
+source cannot answer it: the same `<Stat>` prints a figure or draws a track
+depending on whether the caller had a range to give it. It is a **ratchet**:
+it fails when a view gets worse, never when it fails to be perfect, so
+unreached pages are not blockers and fixed pages cannot regress.
+
+### The rule phase 3 is applying
+
+**A number gets a shape when it has a range, and not otherwise.**
+
+Decoration on an unbounded figure is worse than plain text — it implies a
+scale the reader then tries to read off. So `Stat`, `SummaryStrip` and
+`StatBar` choose their encoding from what the caller can actually supply: a
+target earns a track (which can overflow, because beating a target is
+information), a series earns a sparkline, a run of days earns a ramp, and
+nothing earns nothing. Insights' streak and Plan's overdue pile are
+deliberately left as plain figures: neither has a denominator.
+
+### And one step was added to the scale
+
+`--text-answer` (40px, 2.67× body) sits above `display`, reserved for the ONE
+figure per page that answers the question the page asks. The constraint is the
+feature: a page with two answers has none. Before it, the top two steps held
+3% of call sites and the largest thing on most screens was a page title.
