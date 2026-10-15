@@ -101,6 +101,18 @@ describe('the manual is the library, not a copy of it', () => {
    */
   it('still carries every workout format and progression', () => {
     expect(PULLUP_WORKOUTS.length).toBe(14)
+    // Every field, on every row. `profile` became three fields, and a format
+    // missing one renders a card with a hole in it rather than failing —
+    // the same shape as the data module that went dead without anything
+    // erroring (see this file's header).
+    for (const w of PULLUP_WORKOUTS) {
+      expect(w.volume, `${w.name} volume`).toBeTruthy()
+      expect(w.intensity, `${w.name} intensity`).toBeTruthy()
+      expect(w.minutes, `${w.name} minutes`).toMatch(/min/)
+      expect(w.how.length, `${w.name} how`).toBeGreaterThan(20)
+      expect(w.rx, `${w.name} rx`).toBeTruthy()
+      expect(w.scale, `${w.name} scale`).toBeTruthy()
+    }
     expect(PULLUP_PROGRESSIONS.length).toBe(9)
   })
 

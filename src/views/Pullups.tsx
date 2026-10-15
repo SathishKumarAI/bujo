@@ -1,5 +1,5 @@
 import { useStickyState } from '../lib/useStickyState'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
@@ -76,14 +76,29 @@ export function Pullups() {
     .reduce((a, s) => a + repsOf(s.sets), 0)
   const last = sessions[0]
 
+  /**
+   * TWO facts, not four. The contract's test is whether a fact changes what you
+   * do in the next thirty seconds, and the two that were dropped failed it by
+   * being said better somewhere else on the same screen:
+   *
+   * - *Weekly target* was a bare range (`75–150 progression reps`) with nothing
+   *   to compare it against, while the `ability` panel states daily AND weekly
+   *   for every group. It is now the denominator of the fact beside it, which
+   *   is what a target is for — and that fact gets a track, so the week reads
+   *   without being parsed.
+   * - *Last session* is the first row of the log form, next to the button that
+   *   repeats it (`20 reps · Wed, Oct 14`). On an empty journal both read
+   *   `None yet` / `0 reps`, so half of zone 1 was a bar of absences.
+   */
+  const weeklyFloor = Number(ability.weekly.match(/\d+/)?.[0]) || null
+
   const facts = [
-    { label: 'Training set', value: `${ability.trainingSet} rep${ability.trainingSet === 1 ? '' : 's'}` },
-    { label: 'This week', value: `${weekReps} reps` },
-    { label: 'Weekly target', value: ability.weekly, prose: true },
+    { label: 'Training set', value: `${ability.trainingSet} rep${ability.trainingSet === 1 ? '' : 's'}/set` },
     {
-      label: 'Last session',
-      value: last ? `${repsOf(last.sets)} reps · ${prettyDay(last.date)}` : 'None yet',
-      prose: true,
+      label: 'This week',
+      value: `${weekReps} of ${ability.weekly}`,
+      amount: weekReps,
+      of: weeklyFloor,
     },
   ]
 
@@ -117,6 +132,136 @@ export function Pullups() {
       }
     />
   )
+}
+
+/**
+ * The `formats` panel · fourteen session structures, laid out rather than
+ * listed.
+ *
+ * It was fourteen `<li>`s of four grey paragraphs each — name, a
+ * `'High volume · moderate intensity · 10–20 min'` string, the execution line,
+ * and an `RX: … · Scale: …` run-on — which is the longest panel on the page at
+ * **1.91 desktop screens and 3.68 on a phone** and the hardest to use, because
+ * choosing a format means comparing three ratings across fourteen items and
+ * every one of them read as the same paragraph.
+ *
+ * Same facts, given a shape:
+ *
+ * - **The duration sits beside the name**, right-aligned, because "how long
+ *   have I got" is the first question asked of this list and it was the third
+ *   clause of a sentence.
+ * - **Volume and intensity are tags**, so the eye can run down one column and
+ *   compare them. They are `PullupWorkout` fields now, not a string this view
+ *   splits — see the interface for why.
+ * - **RX and Scale are a labelled pair**, one per line, rather than a sentence
+ *   with two colons in it. `RX` is the prescription and `Scale` is the way in;
+ *   on a card that someone reads *because* they cannot yet do the prescribed
+ *   version, those two lines are the point.
+ *
+ * Two columns, on a **container** query, and that is load-bearing. The review
+ * column is 678px while the window is 1440, so `CardGrid`'s viewport `md:` and
+ * `2xl:` steps would give three columns of 210px inside it; `MasonryGrid`
+ * breaks at `@3xl` (768px) and would silently do nothing at all. `@lg` is
+ * 512px, which this column clears and a phone does not. Both failures are
+ * written up in CLAUDE.md, from either side.
+ */
+/**
+ * Solo first, otherwise the authored order.
+ *
+ * `sort` is stable in every engine this ships to, so the eleven solo formats keep
+ * the order `lib/pullups.ts` lists them in and the three partner ones fall to
+ * the end in theirs. Sorting here rather than in the data module because the
+ * data's order is editorial — Ladders and Pyramids lead because they are what
+ * the guide teaches first — and this is one panel's view of it.
+ */
+const SOLO_FIRST = [...PULLUP_WORKOUTS].sort(
+  (a, b) => Number(a.needs === 'partner') - Number(b.needs === 'partner'))
+
+function Formats() {
+  return (
+    <PanelGrid>
+      {SOLO_FIRST.map((w) => (
+        <PanelCard key={w.name} title={w.name} right={<span className="num text-label text-fg-2">{w.minutes}</span>}>
+          <div className="mb-2 flex flex-wrap gap-1">
+            <Tag>{w.volume} volume</Tag>
+            <Tag>{w.intensity} intensity</Tag>
+            {/* Only the ones that need someone else are tagged. Tagging all
+                fourteen would put a label on every card and distinguish
+                nothing, which is the point of the sort doing half the work. */}
+            {w.needs === 'partner' && <Tag>Needs a partner</Tag>}
+          </div>
+          <p className="text-label text-fg-2">{w.how}</p>
+          <DefList rows={[['RX', w.rx], ['Scale', w.scale]]} />
+        </PanelCard>
+      ))}
+    </PanelGrid>
+  )
+}
+
+/**
+ * ── The five reference panels share three pieces ──────────────────────────
+ *
+ * Form, Principles, Formats, Progressions and Equipment were five different
+ * answers to the same question — two used `border-t` separated `<li>`s, one
+ * used `space-y-3` bare `<div>`s, one put its two facts in a run-on sentence
+ * with two colons in it, and one wrote its name and body as
+ * `<strong>Name:</strong> body`. They hold the same shape of thing: a named
+ * item, an optional figure beside the name, and a short body. One card, used
+ * five times, is also what makes the two-column grid safe to apply once.
+ */
+function PanelGrid({ children }: { children: React.ReactNode }) {
+  /*
+    `@lg` = 512px of CONTAINER. The review column is 678px while the window is
+    1440, so `CardGrid`'s viewport `md:`/`2xl:` steps would put three 210px
+    columns in it, and `MasonryGrid` breaks at `@3xl` (768px) and would do
+    nothing at all here. Both failures are in CLAUDE.md, from opposite sides.
+    The container is `@container/page`, declared by `Review` above.
+  */
+  return <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 @lg/page:grid-cols-2">{children}</ul>
+}
+
+function PanelCard({
+  title, right, titleColor, children,
+}: {
+  title: string
+  /** A figure that belongs beside the name — a duration, a video link, an index. */
+  right?: React.ReactNode
+  /** An inline accent for the title only; `PULLUP_PRINCIPLES` carries one each. */
+  titleColor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <li className="flex flex-col rounded-card border border-line bg-ink-1 p-3">
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <h3 className="text-body font-medium text-fg-1" style={titleColor ? { color: titleColor } : undefined}>{title}</h3>
+        {right && <span className="shrink-0">{right}</span>}
+      </div>
+      {children}
+    </li>
+  )
+}
+
+/** Term and detail, aligned down the card. A `<dl>` because that is what two
+ *  labelled facts are, and a grid because the default flow puts the detail on
+ *  its own line and loses the column. */
+function DefList({ rows }: { rows: [string, React.ReactNode][] }) {
+  return (
+    <dl className="mt-2 grid grid-cols-[2.9rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 border-t border-line pt-2 text-label">
+      {rows.map(([term, detail]) => (
+        <Fragment key={term}>
+          <dt className="text-fg-2">{term}</dt>
+          <dd className="text-fg-1">{detail}</dd>
+        </Fragment>
+      ))}
+    </dl>
+  )
+}
+
+/** A rating, as a quiet pill. No accent: fourteen cards of coloured tags is the
+ *  six-colour stats row DESIGN.md argues against, and neither rating is a
+ *  warning — they are both just facts about the session. */
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-2">{children}</span>
 }
 
 /**
@@ -481,29 +626,63 @@ function LogSessionCard({
  * scroll past the other seven to reach it. So there is now one navigation in
  * the review zone and nothing stacked beside it.
  *
- * History is the default panel, not Form. The page's act is logging a session;
- * what you look at immediately afterwards is the thing you just added to.
- * Form was the right default while this rail held only reference.
+ * The default panel is the program's current day — see `PU_PANELS` for the
+ * whole ordering argument. The act column is always there on the right, so
+ * logging never depends on which panel is open.
  *
- * ── `railAt="2xl"`, and the grid breakpoint that must match it ─────────────
+ * ── A bar, not a side rail ────────────────────────────────────────────────
  *
+ * `railAt="never"`, so the eight panels are a chip row across the top of the
+ * panel at every width — the same control a phone already got, kept on the
+ * desktop. A side rail spends the gutter and shows every group at once, which
+ * is worth 192px plus a 32px gap when the groups are twenty-four analytics
+ * cards; for eight it reads as a second sidebar beside the app's own, and it
+ * takes the width from a column that has a calendar and a 14-row table in it.
+ *
+ * Worth knowing what was tried first, because the default is a trap here:
  * `SectionRail` defaults to `@4xl` (896px) and **zone 3 at the 1180 tier is
- * 722px**, so this call site could never reach it: the rail has been rendering
- * its phone chip strip on desktop since it shipped, which is the exact case
- * the component's `railAt` prop was added for. Eight rows made it visible —
- * six chips fitted the 722px box and eight do not.
+ * 722px**, so a rail placed there can never reach its own breakpoint and ships
+ * its phone strip on a desktop by accident. `2xl` makes the side rail actually
+ * appear — measured at 192px, vertical, with the panel at 678px — and that is
+ * the version this replaces.
  *
  * No "All" row: the panels do not overlap, and all eight at once is the page
  * this replaces.
  */
+/**
+ * Ordered for someone about to train, not for someone reading about training.
+ *
+ * The first order here was History, Program, Form, Principles, Training set,
+ * Formats, Progressions, Equipment — which is roughly the order the sections
+ * happened to be written in, and it opens the page on what you have already
+ * done. The bar is read left to right and the leftmost row is the default, so
+ * that order decides whether arriving means *doing something* or *reading
+ * about it*.
+ *
+ * Doing first, in the order the questions actually arrive:
+ *
+ * 1. **Today** — the program's current day, with its boxes to tick. The one
+ *    panel that answers "what am I doing right now" with a specific answer.
+ * 2. **Formats** — the menu, for a session off-program.
+ * 3. **Training set** — the numbers for whichever you picked.
+ * 4. **Form** — the cues, which are read *while* doing it.
+ *
+ * Then the record, then the reference:
+ *
+ * 5. **History** · 6. **Progressions** · 7. **Principles** · 8. **Equipment**
+ *
+ * Progressions sits with the reference rather than with the acts even though
+ * it is a set of exercises, because it is the answer to "I cannot do one yet"
+ * — a question you ask once and then work from for weeks.
+ */
 const PU_PANELS = [
-  { id: 'history', label: 'History', blurb: 'Sessions, volume and the calendar' },
-  { id: 'program', label: 'Program', blurb: 'Starting From Zero, week by week' },
-  { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
-  { id: 'principles', label: 'Principles', blurb: 'How the program is meant to be run' },
+  { id: 'program', label: 'Today', blurb: 'Starting From Zero · your current day' },
+  { id: 'formats', label: 'Formats', blurb: `${PULLUP_WORKOUTS.length} session structures, solo first` },
   { id: 'ability', label: 'Training set', blurb: 'Your max → set, schemes, volume' },
-  { id: 'formats', label: 'Workout formats', blurb: `${PULLUP_WORKOUTS.length} session structures` },
+  { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
+  { id: 'history', label: 'History', blurb: 'Sessions, volume and the calendar' },
   { id: 'progressions', label: 'Progressions', blurb: 'Building toward a first strict rep' },
+  { id: 'principles', label: 'Principles', blurb: 'How the program is meant to be run' },
   { id: 'equipment', label: 'Equipment', blurb: 'Bar heights and what is worth buying' },
 ] as const
 
@@ -521,7 +700,7 @@ function Review({
   onRemove: (id: string) => void
 }) {
   const [chapter, setChapter] = useStickyState<string>(
-    'pullups.chapter', 'history', PU_PANELS.map((c) => c.id),
+    'pullups.chapter', 'program', PU_PANELS.map((c) => c.id),
   )
   const current = PU_PANELS.find((c) => c.id === chapter) ?? PU_PANELS[0]
 
@@ -532,13 +711,14 @@ function Review({
           min-content sizes the only implicit track and the page scrolls
           sideways. Both in docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+      {/* One column: the bar is a row of the grid, not a column of it. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
         <SectionRail
           label="Pull-up sections"
-          railAt="2xl"
+          railAt="never"
           groups={PU_PANELS.map((c) => ({ id: c.id, label: c.label }))}
           value={chapter}
-          onChange={(id: string | null) => setChapter(id ?? 'history')}
+          onChange={(id: string | null) => setChapter(id ?? 'program')}
         />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
@@ -587,27 +767,30 @@ function Review({
               controls — the largest single thing on the page, and nothing you
               need while logging today's set. */}
           {chapter === 'program' && <ProgramTracker only="pullup-zero" />}
-          {chapter === 'form' && (<>
-        <div className="space-y-3">
-          {PULLUP_FORM.map((f) => (
-            <div key={f.phase}>
-              <p className="text-body text-fg-1">{f.phase}</p>
-              <ul className="mt-1 space-y-1 text-label text-fg-2">
-                {f.cues.map((c) => <li key={c}>· {c}</li>)}
-              </ul>
-            </div>
-          ))}
-        </div>
-          </>)}
-          {chapter === 'principles' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_PRINCIPLES.map((p) => (
-            <li key={p.name}>
-              <strong style={{ color: onRaised(p.color) }}>{p.name}:</strong> {p.body}
-            </li>
-          ))}
-        </ul>
-          </>)}
+          {chapter === 'form' && (
+            <PanelGrid>
+              {PULLUP_FORM.map((f, i) => (
+                <PanelCard key={f.phase} title={f.phase} right={<span className="num text-label text-fg-2">{i + 1}</span>}>
+                  <ul className="space-y-1 text-label text-fg-2">
+                    {f.cues.map((c) => <li key={c} className="pl-3 -indent-3">· {c}</li>)}
+                  </ul>
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
+          {chapter === 'principles' && (
+            <PanelGrid>
+              {PULLUP_PRINCIPLES.map((p) => (
+                /* The per-principle accent stays, and moves from a run-on
+                   `<strong>Name:</strong> body` to the card's title — same
+                   colour, same meaning, and the body is no longer a sentence
+                   that starts with a colon. */
+                <PanelCard key={p.name} title={p.name} titleColor={onRaised(p.color)}>
+                  <p className="text-label text-fg-2">{p.body}</p>
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
           {chapter === 'ability' && (<>
         <TrainingSetCalc max={max} maxInput={maxInput} onMax={onMax} logged={best} />
         <table className="w-full text-left text-label">
@@ -634,49 +817,30 @@ function Review({
           </tbody>
         </table>
           </>)}
-          {chapter === 'formats' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_WORKOUTS.map((w) => (
-            <li key={w.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <p className="text-body text-fg-1">{w.name}</p>
-              <p>{w.profile}</p>
-              <p className="mt-1">{w.how}</p>
-              <p className="mt-1">
-                <span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}
-              </p>
-            </li>
-          ))}
-        </ul>
-          </>)}
-          {chapter === 'progressions' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_PROGRESSIONS.map((p) => (
-            <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-body text-fg-1">{p.name}</span>
-                <VideoLink name={p.name} size="sm" />
-              </div>
-              <p><strong>Why:</strong> {p.why}</p>
-              <p className="mt-1"><strong>How:</strong> {p.how}</p>
-            </li>
-          ))}
-        </ul>
-          </>)}
-          {chapter === 'equipment' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_EQUIPMENT.map((e) => (
-            <li key={e.item} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <span className="text-body text-fg-1">{e.item}</span>
-              <p>{e.spec}</p>
-              {e.url && (
-                <a href={e.url} target="_blank" rel="noreferrer" className="text-blue hover:underline">
-                  {e.item} · suppliers
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-          </>)}
+          {chapter === 'formats' && <Formats />}
+          {chapter === 'progressions' && (
+            <PanelGrid>
+              {PULLUP_PROGRESSIONS.map((p) => (
+                <PanelCard key={p.name} title={p.name} right={<VideoLink name={p.name} size="sm" />}>
+                  <DefList rows={[['Why', p.why], ['How', p.how]]} />
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
+          {chapter === 'equipment' && (
+            <PanelGrid>
+              {PULLUP_EQUIPMENT.map((e) => (
+                <PanelCard key={e.item} title={e.item}>
+                  <p className="text-label text-fg-2">{e.spec}</p>
+                  {e.url && (
+                    <a href={e.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-label text-blue underline">
+                      Suppliers for {e.item}
+                    </a>
+                  )}
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
         </div>
       </div>
       </div>

@@ -74,17 +74,50 @@ export interface RailRow {
  */
 const ORIENT = {
   '4xl': {
+    pos: 'sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0',
     nav: '@4xl/page:mx-0 @4xl/page:flex-col @4xl/page:gap-0.5 @4xl/page:overflow-visible @4xl/page:px-0 @4xl/page:pb-0',
     row: '@4xl/page:flex @4xl/page:w-full @4xl/page:items-baseline @4xl/page:justify-between @4xl/page:gap-3 @4xl/page:rounded-control @4xl/page:px-2.5 @4xl/page:py-1.5',
     count: '@4xl/page:ml-0',
     clear: '@4xl/page:mt-2 @4xl/page:w-full @4xl/page:justify-start @4xl/page:border-t @4xl/page:border-line @4xl/page:pt-2.5',
   },
   '2xl': {
+    pos: 'sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0',
     nav: '@2xl/page:mx-0 @2xl/page:flex-col @2xl/page:gap-0.5 @2xl/page:overflow-visible @2xl/page:px-0 @2xl/page:pb-0',
     row: '@2xl/page:flex @2xl/page:w-full @2xl/page:items-baseline @2xl/page:justify-between @2xl/page:gap-3 @2xl/page:rounded-control @2xl/page:px-2.5 @2xl/page:py-1.5',
     count: '@2xl/page:ml-0',
     clear: '@2xl/page:mt-2 @2xl/page:w-full @2xl/page:justify-start @2xl/page:border-t @2xl/page:border-line @2xl/page:pt-2.5',
   },
+  /**
+   * NEVER a side rail — the chip row at every width, a bar across the top of
+   * the panel it switches.
+   *
+   * The side rail buys two things: it spends the gutter, and it shows every
+   * group at once in a column that does not compete with the content. It costs
+   * the panel 192px plus a 32px gap, which a 722px review column feels, and it
+   * puts the navigation beside the thing rather than above it — fine for
+   * twenty-four analytics cards, heavier than it needs to be for eight.
+   *
+   * Empty strings rather than a missing key so `ORIENT[railAt]` stays total and
+   * the base classes (which already describe the chip row) are the whole
+   * answer.
+   */
+  /*
+    NOT sticky, and that is the difference that matters.
+
+    A side rail sticks because it is a column beside content that scrolls past
+    it — the rail staying put is the whole reason it is a column. A bar sits
+    ABOVE its panel, so sticking means painting over the thing it switches:
+    reported as "it's overlapping with the text". The alternative asked about
+    was hiding it on scroll, which is `useHideOnScroll` — and that is the
+    mechanism behind COD-202, where the phone's only navigation slid out of
+    frame and a browser gate declared the destination retired having scanned
+    zero views. A navigation that moves is a navigation that has to be found.
+
+    Not sticking costs a scroll back to the top to change panel, on a panel
+    measured at 1.11 desktop screens (1.9 for the longest). That is the cheaper
+    side of the trade.
+  */
+  never: { pos: '', nav: 'flex-wrap overflow-x-visible', row: '', count: '', clear: '' },
 } as const
 
 export function SectionRail({ label, groups, value, onChange, allLabel = 'All', allCount, filtering, onClear, railAt = '4xl' }: {
@@ -107,8 +140,15 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
    * breakpoint must match this one** — they disagreeing is worse than either
    * alone, because the grid gives the rail a 192px column and the rail fills it
    * with a horizontal strip.
+   *
+   * `'never'` keeps the chip row at every width — a bar above the panel rather
+   * than a column beside it. It **wraps** instead of scrolling, which is the
+   * one difference from the phone strip: a strip wider than its box scrolls
+   * sideways with nothing advertising that it does, and eight pull-up labels
+   * come to roughly 820px against a 678px review column. A bar that wraps to
+   * two lines shows all eight; a bar that scrolls shows five and hides three.
    */
-  railAt?: '4xl' | '2xl'
+  railAt?: '4xl' | '2xl' | 'never'
 }) {
   const o = ORIENT[railAt]
   const rows: { key: string; label: string; count?: number; value: string | null }[] = [
@@ -139,7 +179,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
     <nav
       aria-label={label}
       className={`
-        sticky top-[calc(var(--header-h,4rem)+0.75rem)] z-10 self-start bg-ink-0
+        ${o.pos}
         -mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 pb-2
         ${o.nav}
       `}

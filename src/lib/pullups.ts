@@ -11,29 +11,70 @@
 // program, and it is what `PROGRAMS` is for.
 
 // ── Pull-up workout formats (the "menu" of session types) ────────────────────
+/**
+ * One five-step rating, shared by volume and intensity.
+ *
+ * One type rather than two unions: the first draft gave each its own, and
+ * `low–moderate intensity` (Moving Walkways) failed to compile against a union
+ * that happened to list `Moderate–high` only — the two scales are the same
+ * scale, and splitting them encodes which values have been used so far rather
+ * than which values exist.
+ */
+export type PullupRating = 'Low' | 'Low–moderate' | 'Moderate' | 'Moderate–high' | 'High'
+
+/**
+ * One session format.
+ *
+ * `profile` used to be the single string `'High volume · moderate intensity ·
+ * 10–20 min'`, and the view printed it as a line of prose. Three facts in one
+ * string cannot be laid out — the duration cannot sit beside the name, the two
+ * ratings cannot become tags, and a panel of fourteen of them is fourteen
+ * identical grey paragraphs. Splitting it at render would mean re-deciding the
+ * separator at every call site, which is the trap this repo already documents
+ * twice; the fields are the data, so they live here.
+ */
 export interface PullupWorkout {
   name: string
-  profile: string // volume/intensity + suggested duration
+  /** Training volume: how many reps the format asks for. */
+  volume: PullupRating
+  /** Intensity: how close to failure each set is. */
+  intensity: PullupRating
+  /** Suggested session length, already written as a range with its unit. */
+  minutes: string
+  /**
+   * Whether you can run it on your own.
+   *
+   * A field rather than a grep over `scale` for the word "Partner", which is
+   * what the first draft did: `how` and `scale` both mention a partner for
+   * different reasons — Ladders *scales* with a spotter but is a solo session,
+   * while Cliffhangers *is* two people taking turns on the bar. A string match
+   * cannot tell those apart and gets three of fourteen wrong.
+   *
+   * It is also the sort order. Three of these fourteen need someone else in the
+   * room, and a list that opens with one is a list that opens with something
+   * you cannot do today.
+   */
+  needs: 'solo' | 'partner'
   rx: string // prescribed standard
   scale: string // scaled option
   how: string // one-line execution
 }
 
 export const PULLUP_WORKOUTS: PullupWorkout[] = [
-  { name: 'Ladders', profile: 'High volume · moderate intensity · 10–20 min', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Ascending sets 1,2,3… up to your training set; 3+ min between ladders.' },
-  { name: 'Pyramids', profile: 'High volume · moderate intensity · 10–20 min', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: '1,2,…,n,…,2,1; rest 10–20s within, 3+ min between pyramids.' },
-  { name: 'Escalators', profile: 'High intensity · moderate volume · 10–15 min', rx: 'Unbroken strict sets', scale: 'Jumping pull-ups', how: 'EMOM +1 rep each minute until you miss — last on the bar wins. Max once/month.' },
-  { name: 'Elevators', profile: 'Moderate–high intensity · low volume · 10–20 min', rx: 'Strict + holds', scale: 'Partial ROM / dead-hangs', how: 'Coach calls "floors" (basement→roof-top); hold each position till the next call.' },
-  { name: 'Bus Stops', profile: 'High volume · moderate intensity · 10–20 min', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Pause at top/bottom for set seconds; keep rep schemes low, not to failure.' },
-  { name: 'Moving Walkways', profile: 'High volume · low–moderate intensity · 15–25 min', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: '1 pull-up every 10/15/20/30s for set rounds or until you miss.' },
-  { name: 'EMOMs', profile: 'High volume · moderate intensity · 15–20 min', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: 'Fixed reps every minute (a straight set = your training set) for set time.' },
-  { name: 'Cliffhangers', profile: 'High volume · moderate intensity · 10–20 min', rx: 'Strict pull-ups', scale: 'Partial ROM', how: 'Partner "I-go-you-go" ascending ladder without dismounting the bar.' },
-  { name: 'Sally', profile: 'Low volume · high intensity · 3 min', rx: 'Unbroken strict sets', scale: 'Jumping pull-ups', how: 'Pull-ups to "Bring Sally Up" — 30 pull-ups across the 3-min song.' },
-  { name: 'Burpee Pull-ups', profile: 'High volume · moderate intensity · 15–20 min', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: 'Straight sets / ladders / pyramids where every rep is a burpee pull-up.' },
-  { name: 'Super-Sets', profile: 'High volume · moderate intensity · 15–20 min', rx: 'Pull-ups + hanging leg-raises', scale: 'Jumping pull-ups / knees-to-elbow', how: 'Pair each pull-up set with a set of hanging leg-raises.' },
-  { name: 'Face Off', profile: 'Low volume · high intensity · 1–3 min', rx: 'Strict pull-ups', scale: 'Partial ROM', how: 'Two athletes match sets of "1" until one misses. Max once/month.' },
-  { name: 'Ladders+', profile: 'High volume · mod–high intensity · 15–20 min', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Ladders where the top set = 50% of your max set; 3+ min recovery.' },
-  { name: 'Pyramids+', profile: 'High volume · mod–high intensity · 15–20 min', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Pyramids where the peak = 50% of your max set; 3+ min recovery.' },
+  { name: 'Ladders', volume: 'High', intensity: 'Moderate', minutes: '10–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Ascending sets 1,2,3… up to your training set; 3+ min between ladders.' },
+  { name: 'Pyramids', volume: 'High', intensity: 'Moderate', minutes: '10–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: '1,2,…,n,…,2,1; rest 10–20s within, 3+ min between pyramids.' },
+  { name: 'Escalators', volume: 'Moderate', intensity: 'High', minutes: '10–15 min', needs: 'solo', rx: 'Unbroken strict sets', scale: 'Jumping pull-ups', how: 'EMOM +1 rep each minute until you miss — last on the bar wins. Max once/month.' },
+  { name: 'Elevators', volume: 'Low', intensity: 'Moderate–high', minutes: '10–20 min', needs: 'partner', rx: 'Strict + holds', scale: 'Partial ROM / dead-hangs', how: 'Coach calls "floors" (basement→roof-top); hold each position till the next call.' },
+  { name: 'Bus Stops', volume: 'High', intensity: 'Moderate', minutes: '10–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Pause at top/bottom for set seconds; keep rep schemes low, not to failure.' },
+  { name: 'Moving Walkways', volume: 'High', intensity: 'Low–moderate', minutes: '15–25 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: '1 pull-up every 10/15/20/30s for set rounds or until you miss.' },
+  { name: 'EMOMs', volume: 'High', intensity: 'Moderate', minutes: '15–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: 'Fixed reps every minute (a straight set = your training set) for set time.' },
+  { name: 'Cliffhangers', volume: 'High', intensity: 'Moderate', minutes: '10–20 min', needs: 'partner', rx: 'Strict pull-ups', scale: 'Partial ROM', how: 'Partner "I-go-you-go" ascending ladder without dismounting the bar.' },
+  { name: 'Sally', volume: 'Low', intensity: 'High', minutes: '3 min', needs: 'solo', rx: 'Unbroken strict sets', scale: 'Jumping pull-ups', how: 'Pull-ups to "Bring Sally Up" — 30 pull-ups across the 3-min song.' },
+  { name: 'Burpee Pull-ups', volume: 'High', intensity: 'Moderate', minutes: '15–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Jumping pull-ups', how: 'Straight sets / ladders / pyramids where every rep is a burpee pull-up.' },
+  { name: 'Super-Sets', volume: 'High', intensity: 'Moderate', minutes: '15–20 min', needs: 'solo', rx: 'Pull-ups + hanging leg-raises', scale: 'Jumping pull-ups / knees-to-elbow', how: 'Pair each pull-up set with a set of hanging leg-raises.' },
+  { name: 'Face Off', volume: 'Low', intensity: 'High', minutes: '1–3 min', needs: 'partner', rx: 'Strict pull-ups', scale: 'Partial ROM', how: 'Two athletes match sets of "1" until one misses. Max once/month.' },
+  { name: 'Ladders+', volume: 'High', intensity: 'Moderate–high', minutes: '15–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Ladders where the top set = 50% of your max set; 3+ min recovery.' },
+  { name: 'Pyramids+', volume: 'High', intensity: 'Moderate–high', minutes: '15–20 min', needs: 'solo', rx: 'Strict pull-ups', scale: 'Partner-assisted', how: 'Pyramids where the peak = 50% of your max set; 3+ min recovery.' },
 ]
 
 // ── Pull-up progression exercises (how to build toward a first pull-up) ───────
