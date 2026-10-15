@@ -51,7 +51,23 @@ warning and a perfectly valid class list. It looks exactly like a breakpoint
 you chose wrong. Declare the container on a WRAPPER (an element cannot query
 itself) and **verify by measuring the box**, not by reading the classes. Same
 family as the stale-utility-class trap above: Tailwind v4 does not fail a build
-over a rule that can never match.
+over a rule that can never match. **Third instance, COD-328:** Pickleball's
+Today's-drill strip sat one level ABOVE the `@container/page` wrapper, so its
+`@min-[58rem]/page:grid-cols-…` matched at no width at all and the strip stayed
+four stacked lines in a 1110px column. The tell is always the same — a
+responsive rule that never fires at ANY width, rather than at the wrong one.
+
+Trap (COD-328): **a collapse has to be excluded from EVERY
+`grid-template-columns` rule, and the one you miss shows up at one width.**
+`PageLayout`'s `collapsibleAct` adds `.page-zones-actless`, and
+`styles/layout.css` sets the zone columns twice — `62fr 38fr` at a 900px
+container and `1fr 32rem` at 1365px, the second capping the act on wide
+screens. Only the first excluded the collapsed state, so hiding the act gave
+the review the full width at 1280, 1440 and 1680 and left it **beside a 512px
+empty track at 1920 (1062 of 1590) and 2560 (1398 of 1926)**. Reported as "when
+I hide the log the content is not scaling", and invisible to a first round of
+measurements taken at 1440 only. **Measure a layout change at more than one
+width** — and grep for every rule that sets the property you are overriding.
 
 Trap: **`hidden` on a grid child leaves its track behind.** Hiding a 19rem
 aside that way keeps the column and the list stays narrow beside a gap —
@@ -827,6 +843,16 @@ sessions worth nothing; and **check what group the seeded numbers land in** —
 topping out at a best set of 5 put the demo in Novice, whose training set is
 `1`, so the calculator opened on "1 rep/set · Ladder 1 · Pyramid 1", which
 reads as broken rather than as beginner.
+
+Trap (COD-328): **a seeded generator is a shared resource, and taking from it
+in a new place rewrites everything downstream.** `lib/demo.ts` draws every
+domain from ONE deterministic stream, so four extra `rand()` calls added inside
+the pickleball loop shifted every number drawn after it: `cycleSnapshot.test.ts`
+went red on a coverline that moved **97.41 → 97.42** — a temperature fixture
+failing because of a pickleball change, with nothing in the diff to connect
+them. Derive new seeded fields from something already in hand (the loop index,
+a value already drawn) rather than from a fresh `rand()`, and if you must draw,
+expect every snapshot fixture after that point to move.
 
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load

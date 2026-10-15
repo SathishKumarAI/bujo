@@ -1,4 +1,4 @@
-# Reusable patterns — what Pull-ups, Home Workout and Coaching built that other pages can take
+# Reusable patterns — what Pull-ups, Home Workout, Coaching and Pickleball built that other pages can take
 
 > **This file is in two halves and they arrive on two branches.** PR #405 adds
 > **§1–6**, out of the Pull-ups and Home Workout pass: the shared panel card,
@@ -10,7 +10,11 @@
 > allocated so the two slot together without renumbering.
 >
 > §1–6 are about *where a thing goes*. §7–14 are about *how it behaves, how it
-> moves, and how you keep its content honest*.
+> moves, and how you keep its content honest*. §15–22 came out of the
+> Pickleball pass (COD-328) and are about *what a page says, and how it
+> scales*: the sentence at the top, sub-sections, the grid that answers to its
+> column, the act you can put away, and the way back from a figure to the rows
+> behind it.
 
 Every one of these was written twice before it was written once. This file is
 so the third page does not write them a third time. Each entry says what it is,
@@ -269,6 +273,18 @@ And then, for a page that is a programme rather than a catalogue:
 11. **Does any new animation touch opacity on text?** (§10.) If so, it will
     eventually be blamed on a colour token.
 
+And then, for a page that RECORDS something and reads it back:
+
+12. **Does zone 1 say what to do next, or only what is true?** (§15.)
+13. **Is the act permanent furniture?** Give it a hide (§18) — and check every
+    `grid-template-columns` rule excludes the collapsed state, at more than one
+    viewport width.
+14. **Do the grid's steps come from the card's needs or from a breakpoint
+    scale?** (§19.)
+15. **Can you get from a figure to the rows behind it?** (§20.)
+16. **Is a comparison of more than about five things drawn as tiles?** (§21.)
+17. **Is "today" one block, and is it out of the record?** (§22.)
+
 ---
 
 ## 15 · One sentence that says what to do next — `lib/pickleball.ts`'s `nextStep`
@@ -364,3 +380,144 @@ contents is read. It wraps rather than scrolling — a strip wider than its box
 scrolls with nothing advertising it, which is how three of eight chapters went
 missing on Pull-ups — and it must not be sticky, because a bar that sticks
 paints over the panel it switches (COD-202).
+
+---
+
+## 18 · The act you can put away — `PageLayout collapsibleAct`
+
+**What it is.** A "Hide the log" control in zone 1 that removes the act COLUMN,
+and gives its width to the review.
+
+**Reach for it** on any page whose act is permanent furniture: a log form is on
+screen whether or not you are logging, and on a phone it is the first thing
+under the orient bar. Pickleball's was **1078px of form** before the record
+started.
+
+```tsx
+<PageLayout tier={1180} collapsibleAct={{ key: 'pickleball', label: 'log' }} … />
+```
+
+`key` namespaces the remembered state (`bujo.ui.act.<key>`), `label` completes
+"Hide the …". It is opt-in: the control is page chrome, and fourteen contract
+pages should not gain it in one commit with no measurement behind any of them.
+
+**Three things that are not optional, each of which went wrong first:**
+
+| Rule | What happened without it |
+|---|---|
+| The toggle lives OUTSIDE the column it toggles | A control inside the panel it hides cannot bring the panel back |
+| Give it a home in an existing zone, not a grid row of its own | `.zone-act`/`.zone-review` are explicitly placed with no explicit rows, so an extra auto-placed child landed at **y=1113** — under the whole page |
+| Exclude the collapsed state from **every** `grid-template-columns` rule | `layout.css` has a second one at `@container (min-width: 1365px)`; with it missed, the review sat beside a **512px empty track** at 1920 and 2560 while every width below looked right |
+
+Measured: review **678px → 1110px** at 1440, and 1590 / 1926 at 1920 / 2560.
+The bug only appeared above a 1680px viewport, which is why the first round of
+measurements said it was fine — **measure a layout change at more than one
+width**.
+
+---
+
+## 19 · A card grid whose steps are solved, not copied — `PanelGrid`
+
+**What it is.** The review panel's grid, breaking on its **container**, with
+thresholds derived from how wide a card has to be.
+
+**The arithmetic.** A card holding four stat tiles and a sentence reads as a
+column below about **450px**. So the steps are `n × 450 + gaps`: **58rem /
+88rem / 116rem** for 2 / 3 / 4 columns. Copying `@3xl/@6xl` from a breakpoint
+scale instead gave four **382px** columns at 1920 — the same too-narrow card
+the grid existed to fix, arrived at from the other side.
+
+**Spell every step the same way.** Tailwind has no `@8xl`, so a fourth step
+written that way emitted nothing and the grid silently stayed at three columns
+on a 1926px panel; and mixing named with arbitrary variants of one family sorts
+by neither number nor source order. One spelling — all arbitrary — sorts by
+value.
+
+**Charts go in a grid of their own, below the cards, not inside one.** A nested
+grid is a grid inside ONE CELL of the outer one: three charts stacked in a
+single column beside a column of stat cards.
+
+| container | columns | card | when |
+|---|---|---|---|
+| < 928px | 1 | the whole panel | 1440 with the log open |
+| ≥ 928px | 2 | ~545 | 1440 with the log hidden |
+| ≥ 1408px | 3 | ~517 | 1920 with the log hidden |
+| ≥ 1856px | 4 | ~466 | 2560 with the log hidden |
+
+---
+
+## 20 · Every figure leads back to the entries behind it
+
+**What it is.** A weekday bar, a partner, a venue — anything an aggregate is
+grouped by — is a button that opens the record filtered to exactly those rows.
+
+**Reach for it** the moment a page has a read-only summary and an editable
+list, which is every page in this app. Reported as *"I need to be able to edit
+them as well, my entries, not the visualizations."* The sessions behind a
+figure were a rail row away in a list of everything.
+
+**The three rules that keep it honest:**
+
+- **The filter states itself**, as a chip with the count and a way off:
+  `Sun sessions · 1 of 5 ×`. A list that is quietly short reads as broken.
+- **It clears when the reader changes subject** — picking another rail row
+  drops it. A filter you cannot see is a list that looks wrong.
+- **It is not persisted and not in the URL.** Like a sub-section chip, it is a
+  narrowing you do while reading, not a place you return to.
+
+Verified in the browser rather than by reading the handler: clicking Sun took
+the list from **5 rows to 1**.
+
+---
+
+## 21 · A comparison of seven things is bars, not tiles
+
+**What it is.** One row per item: label, a track, the figure, the sample. Not a
+grid of cells.
+
+**Measured on "Performance by weekday".** Seven 44px cells inside a 353px card,
+each holding a weekday, a percentage and a games count: `100%` needs 38px, so
+the figure was the whole cell, and four-up on a phone wrapped a week into 4+3 —
+which loses the one shape a week has. A bar per day reads at **348px and at
+702px** with no breakpoint.
+
+**Colour goes on the bar, never behind the text.** Every played day wore the
+same wash before, so 100% and 60% looked identical — colour that carries no
+value. A tinted ground under a percentage is also the accent-on-wash trap this
+repo has measured at **3.64:1**; a bar is a graphic at 3:1, text is 4.5.
+
+**Three steps, not a gradient** — under 40 red, under 60 peach, else green —
+because nobody can read a value off a continuous ramp, and because that is
+already the three-step scale Plan and Trackers use.
+
+**And the subtitle says the finding**, not the title again: *"Best on Sun ·
+100% of 2 games"*.
+
+---
+
+## 22 · One block for today, and a rail that reads in order
+
+**Today is one block.** The next-step sentence, the totals and whatever you are
+meant to do today belong in a single bordered unit in zone 1 — not a row, then
+a bar, then a strip pinned at the top of the review. Pinned there, the strip
+read as the first panel and ran into the first heading under it: *"the sessions
+look completely collapsed into"* the drill. Merging them also gives the strip a
+container to ask about (`@container/orient`), which is what lets it split into
+two columns at width: **155px → 90px**.
+
+**A thing to do today is not part of the record.** That is the test for whether
+something belongs in zone 1 or zone 3, and it is cheaper than any amount of
+arguing about card order.
+
+**Order the rail by the question, not by the build.** Results · Sessions ·
+Activity · Matchups · Competition — what a scoreline page is for, then what you
+logged, then whether you are playing enough, then who and where, then the few
+times a year you enter something.
+
+**The default row need not be the first one.** The order is for finding things;
+the default is for the thirty seconds after the primary button — which on a
+logging page is the list you just added to.
+
+**And the heading above a bar is `sr-only`.** The bar names every row; a grey
+"The record" above it is furniture, and with the act column hidden it is
+furniture 1110px wide. Keep the heading for the document outline, draw nothing.
