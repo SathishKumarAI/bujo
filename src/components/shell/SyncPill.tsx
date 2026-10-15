@@ -96,7 +96,7 @@ export function SyncPill() {
       // link can override it — which this is. A pill has a shape, a dot and a
       // hover fill doing that job already, and an underline on a chip reads as
       // a stray link rather than as a control.
-      className="ml-auto flex shrink-0 items-center gap-2 rounded-pill px-2 py-1 text-label text-fg-2 no-underline transition-colors hover:bg-ink-2 hover:text-fg-1"
+      className="flex w-full min-w-0 items-center gap-2 rounded-control px-2 py-1 text-label text-fg-2 no-underline transition-colors hover:bg-ink-2 hover:text-fg-1"
       // The dot is decorative; this is the accessible name, and it carries the
       // whole sentence rather than the two-word summary, because a screen
       // reader has no second glance.
@@ -108,7 +108,7 @@ export function SyncPill() {
           and its subtitle already want the room, and a two-word status cut to
           an ellipsis is worse than a dot on its own — which still carries the
           tone and still has the full sentence in its accessible name. */}
-      <span className="hidden whitespace-nowrap lg:inline">{copy.short}</span>
+      <span className="truncate">{copy.short}</span>
     </a>
   )
 }

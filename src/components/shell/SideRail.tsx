@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { Kbd } from '../Kbd'
 import { Button } from '../ui/button'
 import { AccountMenu } from './AccountMenu'
+import { SyncPill } from './SyncPill'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { RailToggle } from './RailToggle'
 import { WeekStrip } from './WeekStrip'
@@ -237,6 +238,11 @@ export function SideRail({
           narrow widths — a 208px column has room for the word, and "Quick
           add" is worth more than a `+`. */}
       <div className="mt-auto flex flex-col gap-1.5 border-t border-line pt-3">
+        {/* Moved down from the top bar when that came off most views. It
+            belongs here better anyway: the rail is present on every desktop
+            screen and never scrolls away, and "where is my journal" is
+            ambient state rather than something you go and ask for. */}
+        <SyncPill />
         <Button
           variant="primary"
           primaryScope={SHELL_SCOPE}
