@@ -8,11 +8,122 @@ A single-exercise coaching hub, and the only place a pull-up session is
 recorded as a scheme rather than as a duration. A six-week "Starting From Zero"
 program with a day-by-day checklist, an ability calculator that turns your max
 strict pull-ups into a prescribed training set, a session recorder, and the
-training manual underneath.
+training manual — all of it now behind one bar of eight panels, with the log
+form alone in the act column beside them.
 
-The audit below was written against the older version, which **told you what to
-do** without recording what you did — that was its strength and the source of
-most of its problems. The next section says which of those are closed.
+The audit at the bottom of this file was written against the first version,
+which **told you what to do** without recording what you did — that was its
+strength and the source of most of its problems. The two "What shipped"
+sections below say which of those are closed, newest first.
+
+## What shipped · COD-312, 2026-10-15 (PR #400)
+
+The page had grown back into the shape the `SectionRail` was added to fix. The
+review zone was four stacked peer sections — the program tracker, the history
+list, an "Analytics" heading, and the six-chapter manual rail **last**, so the
+table of contents was the final thing on the page.
+
+| Was | Now |
+|---|---|
+| Four peer sections stacked, the rail among them | **One rail, eight panels**, one at a time: Today · Formats · Training set · Form · History · Progressions · Principles · Equipment |
+| The rail was a side column at `railAt` default `@4xl` | **A horizontal bar** (`railAt="never"`, new), across the top of the panel it switches. It wraps rather than scrolling |
+| Sticky, so it painted over the panel on scroll | **Not sticky.** A side rail sticks because it is a column beside content; a bar sits above its panel |
+| Zone 2 held the calculator *and* the log form | **The log form alone**, in the right-hand act column. The calculator is the head of the Training set panel, above the ability table it was restating |
+| Zone 1 carried four facts, two of them absences on an empty journal | **Two.** Weekly target became the denominator of `This week` (with a track); Last session is already the log form's first row |
+| Five reference panels, five different list idioms | One `PanelCard` in a two-column container-query grid |
+| The program map was a `<div>` per week, columns aligned by coincidence | **One grid**, week as a row header. A probe asserts every day column has one left edge |
+| Formats were fourteen four-paragraph `<li>`s | Cards: duration beside the name, volume/intensity as tags, RX/Scale as a labelled pair, **solo first** |
+| Panels ordered as the sections were written, opening on History | **Ordered for doing** — Today (the program's current day, with its boxes) is the default |
+
+### Measured (built bundle, `?demo=1`)
+
+| | before | after |
+|---|---|---|
+| desktop page | 1885px · **2.09 screens** | 995–1720px · **1.11–1.91 per panel** |
+| phone page | 3490px · **4.14 screens** | 1761–4158px per panel |
+| card headers, 8 views | 23 subtitled, **1075px** | 23 subtitled, **687px** |
+| program map (here, desktop) | 377px, 125px cells | **298px**, 104px cells |
+| program map (Program, phone) | 171px, 30px cells | **130px**, 42px cells |
+| the bar, desktop | — | 1 row, **635px of chips in 686px** |
+| the bar, phone | — | 4 rows, 101px — eight labels do not fit 324px |
+
+Supersedes the **1.7 screens** figure in the older audit below; that number
+described a different page.
+
+### Six defects found on the way
+
+1. **The demo seed produced no `activity: 'pullups'` workout at all.** The
+   history list rendered its empty frame at 47px, the summary strip read
+   `0 · 0 · 0`, the heatmap drew 84 blank cells — at five themes and two
+   viewports, on every `npm run a11y` run, for the life of the page. Sibling of
+   the unseeded `data.cycle`. Seeded, with five tests armed against a planted
+   empty seed: three failed, **two passed vacuously** (`every([])` is true,
+   `0 < 40` is true) and both now carry a floor.
+2. **`SectionRail`'s default breakpoint cannot fire in a review column.**
+   `@4xl` is 896px and zone 3 at the 1180 tier is 722px, so the rail had been
+   drawing its *phone* chip strip on a 1440 desktop since it shipped.
+3. **`ChipPick` put accent text on a 15% wash of itself.** `brand-wash` /
+   `brand-text` is the only solved pair in `index.css`. Measured selected,
+   composited over the first opaque ancestor: latte **4.25 / 3.64 / 4.33 /
+   4.40**, dawn **4.54 / 3.81 / 4.59 / 4.70** — seven of ten under 4.5, and
+   `teal` and `peach` shipped that way at every call site. Worst of twenty
+   readings now **6.42**.
+4. **`PullupWorkout.profile` was three facts in one string.** Now `volume`,
+   `intensity` and `minutes` with a shared `PullupRating`, and the test asserts
+   every field on every row.
+5. **Zone 1 clipped a phone.** `320 of 120–210 pull-ups` needs **200px against
+   138**; caught by `npm run clipped`. The floor behind its track was
+   `weekly.match(/\d+/)` — a parse over our own data — so `PULLUP_ABILITY` now
+   carries `weeklyLow` / `weeklyHigh`, with a test that the sentence starts
+   with them.
+6. **Two viewport queries in `ProgramMap` should have been container queries.**
+   `?view=program` draws the same map in a ~300px card on a 1440 screen, where
+   `sm:` answered "plenty of room" to a 39px cell.
+
+Filed, not fixed: **COD-313** (the demo banner overflows a 390px phone by 24px
+on every view) and **COD-314** (Cycle's `text-fg-3` day label at 4.01–4.16 and
+Mindset's inline `rgb(0,0,0)` on a brand fill at 3.19–3.92 — the seven serious
+violations `npm run a11y` reports, all of them also on `main`).
+
+### Gates
+
+| gate | result |
+|---|---|
+| `verify` | 141 files, **1928 tests**, `tsc -b` + eslint + build clean |
+| `clipped` | **0** across 23 views at 1440 / 1024 / 390 |
+| `space -- pullups program` | 1.1 / 1.0 desktop, 2.6 / 1.9 phone — inside budget |
+| `a11y` | Pull-ups **0 serious on all 7 shards** |
+| per-panel axe probe | **56 scans, 0 serious**, armed with a planted violation |
+
+Both rendering gates grade only the panel the bar opens on (COD-237), so a
+throwaway probe drove all eight panels at five desktop themes and two phone
+themes. It was armed first: a planted contrast violation fired **on Equipment
+alone**, which is also what proves the panel switching was real rather than
+eight scans of the same DOM.
+
+### Which of the audit below this closes
+
+- **P2 · "Two 620px cards of near-identical weight"** — zone 2 is one card now,
+  and the calculator sits with the table it explains.
+- **P2 · "The ability table is a reference document dropped into the page"** —
+  it is a panel you choose, with your own row calculated at the top of it.
+- **P1 · "The page never says what to do first"** — the default panel is the
+  program's current day, with its boxes.
+
+Still open from that list: the checklist does not capture reps (the recorder
+beside it does), and **P2 · "max strict pull-ups" assumes the reader knows what
+*strict* means**.
+
+### The honest weak spot
+
+The **phone**. The bar wraps to four rows (101px) because eight labels do not
+fit 324px, and the two-column cards cost height in a single column — Formats
+went **3.68 → 4.93 screens** there while desktop went 1.91 → 1.84. Taken
+deliberately: a bar that scrolls instead of wrapping hides three of its eight
+rows behind a scroll nothing advertises. It is the first thing a phone user
+would notice.
+
+---
 
 ## What shipped · COD-13, 2026-08-27
 
