@@ -1,4 +1,4 @@
-# Reusable patterns — what Pull-ups, Home Workout and Coaching built that other pages can take
+# Reusable patterns — what Pull-ups, Home Workout, Coaching and Pickleball built that other pages can take
 
 > **This file is in two halves and they arrive on two branches.** PR #405 adds
 > **§1–6**, out of the Pull-ups and Home Workout pass: the shared panel card,
@@ -10,7 +10,11 @@
 > allocated so the two slot together without renumbering.
 >
 > §1–6 are about *where a thing goes*. §7–14 are about *how it behaves, how it
-> moves, and how you keep its content honest*.
+> moves, and how you keep its content honest*. §15–22 came out of the
+> Pickleball pass (COD-328) and are about *what a page says, and how it
+> scales*: the sentence at the top, sub-sections, the grid that answers to its
+> column, the act you can put away, and the way back from a figure to the rows
+> behind it.
 
 Every one of these was written twice before it was written once. This file is
 so the third page does not write them a third time. Each entry says what it is,
@@ -19,168 +23,6 @@ shape.
 
 Companion to `PAGE-SHAPE.md` (where a thing goes) and `DESIGN.md` (what it
 looks like). This is *which component already does it*.
-
----
-
-## 1 · The panel card — `components/page/Panel.tsx`
-
-`PanelGrid`, `PanelCard`, `DefList`, `Tag`.
-
-**What it is.** A named item, an optional figure beside the name, and a short
-body, in a two-column grid that breaks on its **container** (`@lg/page` = 512px)
-rather than the viewport.
-
-**Reach for it** whenever a panel holds a list of named things: form cues,
-principles, equipment, session formats, logged sessions.
-
-**Why container and not viewport:** a review column is 678px while the window is
-1440, so `CardGrid`'s viewport steps would put three 210px columns in it, and
-`MasonryGrid` breaks at 768px and would do nothing at all. Both failures are
-recorded in `CLAUDE.md`, from opposite sides.
-
-**The limit, measured.** A card earns its border by having a body. Putting the
-31 entries of `HOME_SOURCES` on `PanelCard` measured **5.44 desktop screens and
-10.95 on a phone**, against **2.50 / 4.72** for the plain list they replaced —
-more than twice the page for the same facts, because a source is a link and a
-publisher and has nothing to put inside the box. Two columns of two-line rows
-landed at **1.93 / 4.56**, better than either. *A row for a named item with no
-body; a card for one with.*
-
----
-
-## 2 · One bar per review zone — `SectionRail` with `railAt="never"`
-
-**What it is.** A horizontal strip of panel names above the panel, one panel
-shown at a time. Pull-ups has eight rows; Home Workout has five.
-
-**Reach for it** when a review zone has grown past about four peer sections.
-
-**The rule that keeps it true:** *a review zone has one navigation in it.* A new
-section beside a rail is a new rail row, or it belongs on another page. Home
-Workout had three peer sections stacked above a Manual carrying **its own
-twelve-row rail** — two tables of contents on one page — and the page shipped at
-2.34 desktop screens, which is to say **no pixel count could see the fault**.
-One bar took it to 1.10.
-
-**Row count is the constraint.** Fourteen chips is the 1085px strip in a 730px
-box `CLAUDE.md` already records. Five fit. If you are over, look for rows that
-are a *facet* of another row rather than a peer of it: nine of Home Workout's
-twelve were movement families, which are a filter on the catalogue, so they
-moved inside it and nine rows disappeared without losing anything.
-
-**Known ceiling (COD-237):** a rail has no `aria-expanded`, so `npm run a11y`
-and `npm run space` grade only the panel it opens on. Drive every panel by hand
-with a throwaway probe and say what you measured.
-
----
-
-## 3 · Draw short, announce long — `ChipPick`'s `label` / `name` / `hint`
-
-**What it is.** Three fields that already existed on `components/ui/quickpick`
-and had never been used together: the visible `label`, the `name` that becomes
-the accessible name, and the `hint` that becomes the hover title.
-
-**Reach for it** whenever a chip row wraps. Shorten what is *drawn*; the full
-value keeps being announced and shown on hover.
-
-**Measured.** Nine family names wrapped to three lines on a phone; drawn as
-`H push · V push · H pull · V pull · Squat · Single leg · Hip hinge · Core ·
-Conditioning` they fit, and every one still announces in full. Seven routine
-names measured **590px of chips in a 384px card** and wrapped to four lines; the
-short set is **381px in 384px — one line, 3px of margin**.
-
-**Pair it with an order.** `Object.keys` gave `H push · V push · V pull · H
-pull`, which alternates direction mid-row and reads as a mistake once the labels
-are short. An explicit `FAMILY_ORDER` pairs push with push.
-
-**And write the margin down.** A 3px margin is a measurement with no date on it:
-the next rename breaks it silently. The comment above `Rounds` on the pull-up
-log card claimed "exactly one row" and had been false for some time — that row
-measured **218px in a 184px half** and had been wrapping its escape input onto
-its own line.
-
----
-
-## 4 · Correcting a record — `SessionEditor` and `useConfirm`
-
-**What it is.** An inline editor on a history card, plus a confirmation that
-names what it is about to delete.
-
-**Reach for it** on any list of things the person created. The full contract is
-in `USER-CONTROL.md`; the short version is that `add` without `edit` is a bug,
-and an edit must rewrite **every** stored shape of the record, not the one the
-list renders.
-
-**Measured.** Editing one exercise from `3×12` to `9×99` moved the stored
-`setRows` from 12 to 18. A version that rewrote only the human-readable string
-would have looked identical on screen and been wrong in every muscle chart.
-
----
-
-## 5 · Links built from a name, never pinned — `lib/video.ts`
-
-`videoUrl`, `videoSearchUrl`, `buyingGuideUrl`.
-
-**What it is.** A link constructed from the thing's name, with an optional
-pinned override.
-
-**Reach for it** for any outbound reference that is *about* an item rather than
-*part of* it — a form demo, a buying guide.
-
-**Why.** A pinned URL rots and a dead link is worse than a search, which always
-lands somewhere useful. And the failure is quiet: of fifteen equipment rows
-across two pages, **thirteen carried no `url` at all**, so `{e.url && <a>}`
-rendered nothing fourteen times while both pinned URLs answered **200**. The
-report was "the URLs are not working". Count how many rows carry the field
-before debugging the field's value.
-
----
-
-## 6 · A capped list with an honest affordance — `useCappedList` + `ShowMore`
-
-**What it is.** Show the first N, keep the rest one click away, and put the
-total in the button.
-
-**Reach for it** for any list long enough to dominate its panel. The catalogue
-of 83 movements measured **7.28 desktop screens and 16.06 on a phone** fully
-expanded; capped at twelve it is **1.71 / 4.40**.
-
-**The label carries the total** — `Show all (83)`, never `Show all` — because a
-list collapsed to twelve with an unlabelled button cannot be told from a list
-that only ever had twelve. Same reasoning as the urge-coverage card that prints
-`3 of 5` and names what is missing.
-
-**Do not cap by collapsing instead.** `npm run a11y` walks the rendered page, so
-a fold that starts shut hides its contents from the gate — shortening a page
-that way makes violations disappear rather than content.
-
----
-
-## Applying these to the next page
-
-In order, because each answers a different question:
-
-1. **Count the navigations** in the review zone. More than one is the fault,
-   whatever the page's height says.
-2. **Group peers into rail rows**, and move any row that is a *facet* of another
-   inside it.
-3. **Put named items on `PanelCard`** — unless they have no body, in which case
-   a two-column row list is shorter and reads the same.
-4. **Cap the long list**, with the total in the affordance.
-5. **Check `USER-CONTROL.md`** against anything the page records.
-6. **Measure both viewports and report the one that did not improve.**
-
-And then, for a page that is a programme rather than a catalogue:
-
-7. **Does the list have a "where you are"?** If so it wants a spine (§7), and
-   the marker wants real data or an honest line saying there is none.
-8. **Is the act under the reference?** Give it an aside (§9), and make shutting
-   it give the width back.
-9. **Does the content say WHEN, or only WHAT?** (§12.) If only what, it is true
-   and unusable.
-10. **Is there more than one warning on the surface?** (§11.)
-11. **Does any new animation touch opacity on text?** (§10.) If so, it will
-    eventually be blamed on a colour token.
 
 ---
 
@@ -413,3 +255,412 @@ Companion to `PAGE-SHAPE.md` (where a thing goes) and `DESIGN.md` (what it looks
 like). This is *which component already does it*.
 
 ---
+
+## 1 · The panel card — `components/page/Panel.tsx`
+
+`PanelGrid`, `PanelCard`, `DefList`, `Tag`.
+
+**What it is.** A named item, an optional figure beside the name, and a short
+body, in a two-column grid that breaks on its **container** (`@lg/page` = 512px)
+rather than the viewport.
+
+**Reach for it** whenever a panel holds a list of named things: form cues,
+principles, equipment, session formats, logged sessions.
+
+**Why container and not viewport:** a review column is 678px while the window is
+1440, so `CardGrid`'s viewport steps would put three 210px columns in it, and
+`MasonryGrid` breaks at 768px and would do nothing at all. Both failures are
+recorded in `CLAUDE.md`, from opposite sides.
+
+**The limit, measured.** A card earns its border by having a body. Putting the
+31 entries of `HOME_SOURCES` on `PanelCard` measured **5.44 desktop screens and
+10.95 on a phone**, against **2.50 / 4.72** for the plain list they replaced —
+more than twice the page for the same facts, because a source is a link and a
+publisher and has nothing to put inside the box. Two columns of two-line rows
+landed at **1.93 / 4.56**, better than either. *A row for a named item with no
+body; a card for one with.*
+
+---
+
+## 2 · One bar per review zone — `SectionRail` with `railAt="never"`
+
+**What it is.** A horizontal strip of panel names above the panel, one panel
+shown at a time. Pull-ups has eight rows; Home Workout has five.
+
+**Reach for it** when a review zone has grown past about four peer sections.
+
+**The rule that keeps it true:** *a review zone has one navigation in it.* A new
+section beside a rail is a new rail row, or it belongs on another page. Home
+Workout had three peer sections stacked above a Manual carrying **its own
+twelve-row rail** — two tables of contents on one page — and the page shipped at
+2.34 desktop screens, which is to say **no pixel count could see the fault**.
+One bar took it to 1.10.
+
+**Row count is the constraint.** Fourteen chips is the 1085px strip in a 730px
+box `CLAUDE.md` already records. Five fit. If you are over, look for rows that
+are a *facet* of another row rather than a peer of it: nine of Home Workout's
+twelve were movement families, which are a filter on the catalogue, so they
+moved inside it and nine rows disappeared without losing anything.
+
+**Known ceiling (COD-237):** a rail has no `aria-expanded`, so `npm run a11y`
+and `npm run space` grade only the panel it opens on. Drive every panel by hand
+with a throwaway probe and say what you measured.
+
+---
+
+## 3 · Draw short, announce long — `ChipPick`'s `label` / `name` / `hint`
+
+**What it is.** Three fields that already existed on `components/ui/quickpick`
+and had never been used together: the visible `label`, the `name` that becomes
+the accessible name, and the `hint` that becomes the hover title.
+
+**Reach for it** whenever a chip row wraps. Shorten what is *drawn*; the full
+value keeps being announced and shown on hover.
+
+**Measured.** Nine family names wrapped to three lines on a phone; drawn as
+`H push · V push · H pull · V pull · Squat · Single leg · Hip hinge · Core ·
+Conditioning` they fit, and every one still announces in full. Seven routine
+names measured **590px of chips in a 384px card** and wrapped to four lines; the
+short set is **381px in 384px — one line, 3px of margin**.
+
+**Pair it with an order.** `Object.keys` gave `H push · V push · V pull · H
+pull`, which alternates direction mid-row and reads as a mistake once the labels
+are short. An explicit `FAMILY_ORDER` pairs push with push.
+
+**And write the margin down.** A 3px margin is a measurement with no date on it:
+the next rename breaks it silently. The comment above `Rounds` on the pull-up
+log card claimed "exactly one row" and had been false for some time — that row
+measured **218px in a 184px half** and had been wrapping its escape input onto
+its own line.
+
+---
+
+## 4 · Correcting a record — `SessionEditor` and `useConfirm`
+
+**What it is.** An inline editor on a history card, plus a confirmation that
+names what it is about to delete.
+
+**Reach for it** on any list of things the person created. The full contract is
+in `USER-CONTROL.md`; the short version is that `add` without `edit` is a bug,
+and an edit must rewrite **every** stored shape of the record, not the one the
+list renders.
+
+**Measured.** Editing one exercise from `3×12` to `9×99` moved the stored
+`setRows` from 12 to 18. A version that rewrote only the human-readable string
+would have looked identical on screen and been wrong in every muscle chart.
+
+---
+
+## 5 · Links built from a name, never pinned — `lib/video.ts`
+
+`videoUrl`, `videoSearchUrl`, `buyingGuideUrl`.
+
+**What it is.** A link constructed from the thing's name, with an optional
+pinned override.
+
+**Reach for it** for any outbound reference that is *about* an item rather than
+*part of* it — a form demo, a buying guide.
+
+**Why.** A pinned URL rots and a dead link is worse than a search, which always
+lands somewhere useful. And the failure is quiet: of fifteen equipment rows
+across two pages, **thirteen carried no `url` at all**, so `{e.url && <a>}`
+rendered nothing fourteen times while both pinned URLs answered **200**. The
+report was "the URLs are not working". Count how many rows carry the field
+before debugging the field's value.
+
+---
+
+## 6 · A capped list with an honest affordance — `useCappedList` + `ShowMore`
+
+**What it is.** Show the first N, keep the rest one click away, and put the
+total in the button.
+
+**Reach for it** for any list long enough to dominate its panel. The catalogue
+of 83 movements measured **7.28 desktop screens and 16.06 on a phone** fully
+expanded; capped at twelve it is **1.71 / 4.40**.
+
+**The label carries the total** — `Show all (83)`, never `Show all` — because a
+list collapsed to twelve with an unlabelled button cannot be told from a list
+that only ever had twelve. Same reasoning as the urge-coverage card that prints
+`3 of 5` and names what is missing.
+
+**Do not cap by collapsing instead.** `npm run a11y` walks the rendered page, so
+a fold that starts shut hides its contents from the gate — shortening a page
+that way makes violations disappear rather than content.
+
+---
+
+## Applying these to the next page
+
+In order, because each answers a different question:
+
+1. **Count the navigations** in the review zone. More than one is the fault,
+   whatever the page's height says.
+2. **Group peers into rail rows**, and move any row that is a *facet* of another
+   inside it.
+3. **Put named items on `PanelCard`** — unless they have no body, in which case
+   a two-column row list is shorter and reads the same.
+4. **Cap the long list**, with the total in the affordance.
+5. **Check `USER-CONTROL.md`** against anything the page records.
+6. **Measure both viewports and report the one that did not improve.**
+
+And then, for a page that is a programme rather than a catalogue:
+
+7. **Does the list have a "where you are"?** If so it wants a spine (§7), and
+   the marker wants real data or an honest line saying there is none.
+8. **Is the act under the reference?** Give it an aside (§9), and make shutting
+   it give the width back.
+9. **Does the content say WHEN, or only WHAT?** (§12.) If only what, it is true
+   and unusable.
+10. **Is there more than one warning on the surface?** (§11.)
+11. **Does any new animation touch opacity on text?** (§10.) If so, it will
+    eventually be blamed on a colour token.
+
+And then, for a page that RECORDS something and reads it back:
+
+12. **Does zone 1 say what to do next, or only what is true?** (§15.)
+13. **Is the act permanent furniture?** Give it a hide (§18) — and check every
+    `grid-template-columns` rule excludes the collapsed state, at more than one
+    viewport width.
+14. **Do the grid's steps come from the card's needs or from a breakpoint
+    scale?** (§19.)
+15. **Can you get from a figure to the rows behind it?** (§20.)
+16. **Is a comparison of more than about five things drawn as tiles?** (§21.)
+17. **Is "today" one block, and is it out of the record?** (§22.)
+
+---
+
+## 15 · One sentence that says what to do next — `lib/pickleball.ts`'s `nextStep`
+
+**What it is.** A priority list of rules over the page's own data, returning
+ONE sentence and the panel that holds its detail. Zone 1 renders it above the
+totals; it is a button when a panel answers it and a paragraph when none does.
+
+**Reach for it** on any page whose orient zone is a row of totals. Four true
+numbers are four things that change nothing about today; the thing that does —
+an event on Saturday, a goal two games short, eleven days of silence — is
+usually somewhere in zone 3 behind a navigation choice.
+
+**The order is urgency, and getting it wrong is visible immediately.** It
+shipped as event → goal → lapse, and the demo journal — ten days quiet, weekly
+goal of twelve — rendered *"12 more games this week and you hit your goal of
+12"*: arithmetically true, and nagging, because at a 3.8-day cadence that week
+was already gone. Lapse above goal now. A target inside a week you have not
+started is worth less than the fact that you stopped.
+
+| rule | fires when |
+|---|---|
+| `first` | nothing logged — a record with no rows cannot say anything else |
+| `event` | a dated thing within 14 days; the date is not movable |
+| `lapse` | silence longer than twice your cadence |
+| `goal` | a target you set, this period, not met |
+| `milestone` | always, as the floor — something to aim at beats a blank line |
+
+**Every window-comparing rule needs a coverage floor on both sides and must
+state its sample.** The lapse rule wants four play days (three gaps) before it
+will call anything a lapse, and says so in the sentence: *"across 5 play days
+your cadence is about every 3.8 days"*. Without that it is the
+momentum-indicator bug in CLAUDE.md, where a two-day sample against a seven-day
+one reported a lapse as an improvement.
+
+**Make the function total.** It always returns a sentence, which is what lets
+the page render it without a conditional that would leave a hole at the top.
+
+**Colour means urgency on that row and nothing else**, in the left edge and the
+icon, with `fg-1` text — never the accent as text on a wash of itself.
+
+---
+
+## 16 · Sub-sections, and the single source that keeps them honest
+
+**What it is.** A second, lighter chip row under a rail row, for the groups big
+enough to need one. Pickleball's Performance holds nine cards and Trends seven;
+the chips split them by the question they answer — *How I am playing · How hard
+· Turning up · Badges*.
+
+**Reach for it** at about five panels in one group. Below that a sub-navigation
+costs more than it saves: Competition (3) and Opponents (4) have none.
+
+**The rule that makes it safe:** the chips and the cards read ONE source. A
+`has` map of booleans is declared once, the chip counts are computed from it,
+and each card renders behind `has.x`. The obvious shape — a chip list written
+beside the render conditions — is the hand-written list resolved against
+another source that this repo has been bitten by three times (`BottomNav`'s
+`PRIMARY`, `view-ids.mjs`, the a11y `VIEWS`), and it fails the same way: a chip
+that selects nothing, or a card no chip can reach. Measured against the demo
+journal the chips read `All 7 · 2 · 2 · 2 · 1` — seven, not the nine that
+exist, because two have no data yet.
+
+**`Facet` is module-level with `active` as a prop.** Declared inside the render
+it is a new component type every render, so React remounts the whole subtree:
+every chart re-enters and every fold inside it snaps shut. eslint's
+`no-create-component-during-render` catches it before any of that is visible.
+
+**Not sticky, and not in the URL.** A sub-section is a narrowing you do while
+reading. Persist it and somebody opens the page a week later with four cards
+missing and no memory of hiding them — the opposite of the rail row, which IS
+a place you return to.
+
+---
+
+## 17 · A rail panel is a page-split column, so `CardGrid` — not `MasonryGrid`
+
+`MasonryGrid` breaks on its **container** at 64rem. A review panel beside a
+13rem rail measures **870px at a 1440 viewport** (an 1180px shell minus the
+rail and a 2rem gap), so it draws one column however wide the window is —
+seven cards, 1561px, with `@min-[64rem]:columns-2` sitting in the class list
+looking correct. It only ever worked at 1920.
+
+`CardGrid` asks about the **viewport**, which is the right question when the
+column's width is decided by the page split rather than by the card. Measured
+on the swap: **1561px → 1022px**, and the page from 2.84 to 2.24 desktop
+screens. The cost is the row pocket masonry exists to avoid (~200px beside the
+shortest card), which is the right side of that trade.
+
+**And then prefer a bar to a column.** `railAt="never"` gives the panel the
+full 1110px and puts the four rows left to right, which is how a short table of
+contents is read. It wraps rather than scrolling — a strip wider than its box
+scrolls with nothing advertising it, which is how three of eight chapters went
+missing on Pull-ups — and it must not be sticky, because a bar that sticks
+paints over the panel it switches (COD-202).
+
+---
+
+## 18 · The act you can put away — `PageLayout collapsibleAct`
+
+**What it is.** A "Hide the log" control in zone 1 that removes the act COLUMN,
+and gives its width to the review.
+
+**Reach for it** on any page whose act is permanent furniture: a log form is on
+screen whether or not you are logging, and on a phone it is the first thing
+under the orient bar. Pickleball's was **1078px of form** before the record
+started.
+
+```tsx
+<PageLayout tier={1180} collapsibleAct={{ key: 'pickleball', label: 'log' }} … />
+```
+
+`key` namespaces the remembered state (`bujo.ui.act.<key>`), `label` completes
+"Hide the …". It is opt-in: the control is page chrome, and fourteen contract
+pages should not gain it in one commit with no measurement behind any of them.
+
+**Three things that are not optional, each of which went wrong first:**
+
+| Rule | What happened without it |
+|---|---|
+| The toggle lives OUTSIDE the column it toggles | A control inside the panel it hides cannot bring the panel back |
+| Give it a home in an existing zone, not a grid row of its own | `.zone-act`/`.zone-review` are explicitly placed with no explicit rows, so an extra auto-placed child landed at **y=1113** — under the whole page |
+| Exclude the collapsed state from **every** `grid-template-columns` rule | `layout.css` has a second one at `@container (min-width: 1365px)`; with it missed, the review sat beside a **512px empty track** at 1920 and 2560 while every width below looked right |
+
+Measured: review **678px → 1110px** at 1440, and 1590 / 1926 at 1920 / 2560.
+The bug only appeared above a 1680px viewport, which is why the first round of
+measurements said it was fine — **measure a layout change at more than one
+width**.
+
+---
+
+## 19 · A card grid whose steps are solved, not copied — `PanelGrid`
+
+**What it is.** The review panel's grid, breaking on its **container**, with
+thresholds derived from how wide a card has to be.
+
+**The arithmetic.** A card holding four stat tiles and a sentence reads as a
+column below about **450px**. So the steps are `n × 450 + gaps`: **58rem /
+88rem / 116rem** for 2 / 3 / 4 columns. Copying `@3xl/@6xl` from a breakpoint
+scale instead gave four **382px** columns at 1920 — the same too-narrow card
+the grid existed to fix, arrived at from the other side.
+
+**Spell every step the same way.** Tailwind has no `@8xl`, so a fourth step
+written that way emitted nothing and the grid silently stayed at three columns
+on a 1926px panel; and mixing named with arbitrary variants of one family sorts
+by neither number nor source order. One spelling — all arbitrary — sorts by
+value.
+
+**Charts go in a grid of their own, below the cards, not inside one.** A nested
+grid is a grid inside ONE CELL of the outer one: three charts stacked in a
+single column beside a column of stat cards.
+
+| container | columns | card | when |
+|---|---|---|---|
+| < 928px | 1 | the whole panel | 1440 with the log open |
+| ≥ 928px | 2 | ~545 | 1440 with the log hidden |
+| ≥ 1408px | 3 | ~517 | 1920 with the log hidden |
+| ≥ 1856px | 4 | ~466 | 2560 with the log hidden |
+
+---
+
+## 20 · Every figure leads back to the entries behind it
+
+**What it is.** A weekday bar, a partner, a venue — anything an aggregate is
+grouped by — is a button that opens the record filtered to exactly those rows.
+
+**Reach for it** the moment a page has a read-only summary and an editable
+list, which is every page in this app. Reported as *"I need to be able to edit
+them as well, my entries, not the visualizations."* The sessions behind a
+figure were a rail row away in a list of everything.
+
+**The three rules that keep it honest:**
+
+- **The filter states itself**, as a chip with the count and a way off:
+  `Sun sessions · 1 of 5 ×`. A list that is quietly short reads as broken.
+- **It clears when the reader changes subject** — picking another rail row
+  drops it. A filter you cannot see is a list that looks wrong.
+- **It is not persisted and not in the URL.** Like a sub-section chip, it is a
+  narrowing you do while reading, not a place you return to.
+
+Verified in the browser rather than by reading the handler: clicking Sun took
+the list from **5 rows to 1**.
+
+---
+
+## 21 · A comparison of seven things is bars, not tiles
+
+**What it is.** One row per item: label, a track, the figure, the sample. Not a
+grid of cells.
+
+**Measured on "Performance by weekday".** Seven 44px cells inside a 353px card,
+each holding a weekday, a percentage and a games count: `100%` needs 38px, so
+the figure was the whole cell, and four-up on a phone wrapped a week into 4+3 —
+which loses the one shape a week has. A bar per day reads at **348px and at
+702px** with no breakpoint.
+
+**Colour goes on the bar, never behind the text.** Every played day wore the
+same wash before, so 100% and 60% looked identical — colour that carries no
+value. A tinted ground under a percentage is also the accent-on-wash trap this
+repo has measured at **3.64:1**; a bar is a graphic at 3:1, text is 4.5.
+
+**Three steps, not a gradient** — under 40 red, under 60 peach, else green —
+because nobody can read a value off a continuous ramp, and because that is
+already the three-step scale Plan and Trackers use.
+
+**And the subtitle says the finding**, not the title again: *"Best on Sun ·
+100% of 2 games"*.
+
+---
+
+## 22 · One block for today, and a rail that reads in order
+
+**Today is one block.** The next-step sentence, the totals and whatever you are
+meant to do today belong in a single bordered unit in zone 1 — not a row, then
+a bar, then a strip pinned at the top of the review. Pinned there, the strip
+read as the first panel and ran into the first heading under it: *"the sessions
+look completely collapsed into"* the drill. Merging them also gives the strip a
+container to ask about (`@container/orient`), which is what lets it split into
+two columns at width: **155px → 90px**.
+
+**A thing to do today is not part of the record.** That is the test for whether
+something belongs in zone 1 or zone 3, and it is cheaper than any amount of
+arguing about card order.
+
+**Order the rail by the question, not by the build.** Results · Sessions ·
+Activity · Matchups · Competition — what a scoreline page is for, then what you
+logged, then whether you are playing enough, then who and where, then the few
+times a year you enter something.
+
+**The default row need not be the first one.** The order is for finding things;
+the default is for the thirty seconds after the primary button — which on a
+logging page is the list you just added to.
+
+**And the heading above a bar is `sr-only`.** The bar names every row; a grey
+"The record" above it is furniture, and with the act column hidden it is
+furniture 1110px wide. Keep the heading for the document outline, draw nothing.

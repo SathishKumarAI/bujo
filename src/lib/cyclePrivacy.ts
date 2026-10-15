@@ -148,6 +148,11 @@ export function mergePulled(local: JournalData, pulled: JournalData): JournalDat
 export const CYCLE_BACKUP_VERSION = 1
 
 export interface CycleBackup {
+  /* The marker stays `bujo-cycle-backup` though the product is called Cadence:
+     it is written INSIDE every backup file anybody has already exported, and
+     renaming it would make those files unreadable by the importer that is
+     supposed to accept them. The sentences a person reads say Cadence; the
+     bytes on disk do not move. Same rule as the `bujo:` storage prefix. */
   kind: 'bujo-cycle-backup'
   version: number
   exportedAt: string
@@ -158,7 +163,12 @@ export interface CycleBackup {
 /** Everything needed to restore the cycle log, and nothing else from the journal. */
 export function buildBackup(data: JournalData, now = new Date()): CycleBackup {
   return {
-    kind: 'bujo-cycle-backup',
+    /* The marker stays `bujo-cycle-backup` though the product is called Cadence:
+     it is written INSIDE every backup file anybody has already exported, and
+     renaming it would make those files unreadable by the importer that is
+     supposed to accept them. The sentences a person reads say Cadence; the
+     bytes on disk do not move. Same rule as the `bujo:` storage prefix. */
+  kind: 'bujo-cycle-backup',
     version: CYCLE_BACKUP_VERSION,
     exportedAt: now.toISOString(),
     // The unit travels with the readings. Without it a °C backup restored on an
@@ -189,9 +199,9 @@ export interface BackupCheck {
 export function checkBackup(parsed: unknown): BackupCheck {
   if (typeof parsed !== 'object' || parsed === null) return { ok: false, problem: 'That file is not a backup.' }
   const b = parsed as Partial<CycleBackup>
-  if (b.kind !== 'bujo-cycle-backup') return { ok: false, problem: 'That file is not a bujo cycle backup.' }
+  if (b.kind !== 'bujo-cycle-backup') return { ok: false, problem: 'That file is not a Cadence cycle backup.' }
   if (typeof b.version !== 'number' || b.version > CYCLE_BACKUP_VERSION) {
-    return { ok: false, problem: `That backup was written by a newer version of bujo (v${String(b.version)}).` }
+    return { ok: false, problem: `That backup was written by a newer version of Cadence (v${String(b.version)}).` }
   }
   if (!Array.isArray(b.cycle)) return { ok: false, problem: 'That backup has no cycle data in it.' }
   const bad = b.cycle.find((e) => typeof e?.date !== 'string' || !Array.isArray(e?.flags))

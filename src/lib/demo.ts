@@ -127,7 +127,14 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 18
+/* 20, and it only ever goes up: `?demo=1` re-seeds when this number moves, so
+   taking the lower one from either side of a merge would leave every existing
+   demo journal on an older shape with nothing to notice it. Coaching's pass
+   took it to 18; `?demo=1` re-seeds only when this number moves, and the
+   pickleball seed gained a future event, a location, an opponent, a level and
+   points. Taking main's 17 here would leave every existing demo journal on the
+   old shape with no way to notice. */
+export const DEMO_VERSION = 20
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -454,6 +461,45 @@ export function generateDemoData(today = todayISO()): JournalData {
         gamesWon: won, gamesLost: lost, durationMin: 45 + Math.floor(rand() * 45),
         partner: rand() > 0.5 ? 'Sam' : 'Mara', rpe: 5 + Math.floor(rand() * 4),
         /*
+         * WHERE, AGAINST WHOM, AT WHAT LEVEL, AND FOR HOW MANY POINTS.
+         *
+         * The seed wrote a score, a duration, a partner and an RPE, and
+         * nothing else — so `venueStats`, `opponentRecords`, `levelMatchup`,
+         * `pointDifferential` and `scoringStats` all returned empty and the
+         * five cards that render only when they are non-empty had never been
+         * drawn by anything: **Opponents showed 1 card of 4 and Performance 7
+         * of 9**, at five themes and two viewports, on every gate run. Same
+         * trap as the events that were all in the past — a branch the seed
+         * never takes cannot fail.
+         *
+         * NOT on every row. A location on all of them makes "where do you
+         * play" a single bar; a level on all of them makes the matchup table
+         * one line. The gaps are the point: `recentThenFrequent` is supposed
+         * to be asked for the court you went to last, and the log form's chips
+         * are supposed to have something to leave out.
+         */
+        /* DERIVED FROM `i`, NOT FROM `rand()`, and that is not a style
+           choice. The whole seed draws from ONE deterministic stream, so four
+           extra `rand()` calls inside this loop shift every number drawn after
+           it — the cycle fixture's coverline moved 97.41 → 97.42 and
+           `cycleSnapshot.test.ts` went red on a change that never touched
+           temperatures. A seeded generator is a shared resource: take from it
+           in a new place and you have rewritten everything downstream. */
+        location: i % 4 === 0 ? undefined : i % 8 < 4 ? 'Riverside Courts' : 'Eastside Rec',
+        opponent: i % 3 === 0 ? 'Dan & Priya' : i % 3 === 1 ? 'The Thursday pair' : undefined,
+        level: i % 5 === 0 ? '4.0' : i % 5 === 2 ? '3.5' : undefined,
+        /* Points only where a score was kept, and consistent with the games:
+           a won game is 11-ish points for, a lost one 11-ish against. A seed
+           that drifts from its own score teaches the page to show a margin
+           nobody played. */
+        ...(i % 3 !== 2
+          ? {
+            scoring: '11' as const,
+            pointsFor: won * 11 + (i % 5) - 2,
+            pointsAgainst: lost * 11 + (i % 4) - 1,
+          }
+          : {}),
+        /*
          * Some carry a note, some do not. The Coaching week record renders the
          * note only when there is one, so a seed where every row has one never
          * exercises the other branch — the latte-yellow trap in CLAUDE.md, one
@@ -652,9 +698,28 @@ export function generateDemoData(today = todayISO()): JournalData {
   }
 
   // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──
+  /**
+   * TWO PLAYED, AND ONE STILL TO COME.
+   *
+   * Every event here was in the PAST, so `upcomingEvents` returned empty and
+   * the whole Upcoming-events card — the countdown, the prep checklist inside
+   * it, and the `event` rule in `nextStep` — rendered for nobody. Not a bug
+   * anybody could see: the card is conditional, so a page with no future event
+   * simply has one card fewer, and every browser gate therefore scanned a
+   * Competition panel with a third of it missing. Same family as the unseeded
+   * `data.cycle` and the pull-up sessions the seed never wrote: a branch the
+   * seed never takes cannot fail.
+   *
+   * Dated +9 days on purpose. Inside `nextStep`'s fourteen-day window so the
+   * sentence at the top of the page can be the event one, and outside the
+   * `soon` threshold (≤1 day) so the card renders its ordinary state rather
+   * than its alarm — the alarm is reachable by moving the clock, the ordinary
+   * state is what a screenshot should show.
+   */
   j.pickleballEvents = [
     { id: uid('pke'), date: addDays(today, -21), name: 'Spring Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', wins: 4, losses: 2, placement: 'Bronze', partner: 'Maya' },
     { id: uid('pke'), date: addDays(today, -7), name: 'Tuesday Night Ladder', kind: 'league', format: 'ladder', division: '3.5–4.0', wins: 3, losses: 1, placement: '2nd of 8' },
+    { id: uid('pke'), date: addDays(today, 9), name: 'Riverside Autumn Open', kind: 'tournament', format: 'pool-play', division: '3.5 Mixed Doubles', partner: 'Mara' },
   ]
   j.settings.pickleballPlanStart = addDays(today, -22) // mid-plan, ~phase 2
 

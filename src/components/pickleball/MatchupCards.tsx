@@ -5,14 +5,26 @@ import { cat, onRaised } from '../../lib/colors'
 import type { PartnerStat, VenueStat, OpponentRecord, LevelBucket } from '../../lib/pickleball'
 
 /** Partner chemistry · win rate by doubles partner. */
-export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) {
+/**
+ * `onPick` turns a row into a way back to YOUR ENTRIES.
+ *
+ * Asked for as *"I need to be able to edit them as well — my entries, not the
+ * visualizations"*: every aggregate on this page is read-only, and the
+ * sessions behind it were four rail rows away in a list of everything. A row
+ * here now opens Sessions filtered to it, where Edit and × already live.
+ */
+export function PartnerChemistryCard({ partners, onPick }: { partners: PartnerStat[]; onPick?: (partner: string) => void }) {
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Users} size="md" className="text-mauve" /> Partner chemistry</span>} subtitle="Win rate by doubles partner, most-played first" collapsible>
       <ul className="space-y-3">
         {partners.map((p) => (
           <li key={p.partner}>
-            <div className="mb-1 flex items-baseline justify-between text-body">
-              <span className="min-w-0 truncate text-fg-1">{p.partner}</span>
+            <div className="mb-1 flex items-baseline justify-between gap-2 text-body">
+              {onPick ? (
+                <button type="button" onClick={() => onPick(p.partner)} className="min-w-0 truncate text-left text-fg-1 underline-offset-2 hover:underline" aria-label={`Show the sessions with ${p.partner}`}>{p.partner}</button>
+              ) : (
+                <span className="min-w-0 truncate text-fg-1">{p.partner}</span>
+              )}
               <span className="shrink-0 text-fg-2">{p.sessions} {p.sessions === 1 ? 'session' : 'sessions'} · {p.games} games · <span style={{ color: onRaised('green') }}>{p.winPct}%</span></span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={`${p.partner} win rate ${p.winPct}% over ${p.games} games`}>
@@ -27,13 +39,17 @@ export function PartnerChemistryCard({ partners }: { partners: PartnerStat[] }) 
 }
 
 /** Courts & venues · games & win % by location. */
-export function VenuesCard({ venues }: { venues: VenueStat[] }) {
+export function VenuesCard({ venues, onPick }: { venues: VenueStat[]; onPick?: (venue: string) => void }) {
   return (
     <Card band title={<span className="inline-flex items-center gap-2"><Icon as={MapPin} size="md" className="text-teal" /> Courts &amp; venues</span>} subtitle="Games &amp; win % by where you play" collapsible>
       <ul className="divide-y divide-surface0">
         {venues.map((v) => (
           <li key={v.location} className="flex items-center justify-between gap-2 py-2 text-body">
-            <span className="min-w-0 truncate text-fg-1">{v.location}</span>
+            {onPick ? (
+              <button type="button" onClick={() => onPick(v.location)} className="min-w-0 truncate text-left text-fg-1 underline-offset-2 hover:underline" aria-label={`Show the sessions at ${v.location}`}>{v.location}</button>
+            ) : (
+              <span className="min-w-0 truncate text-fg-1">{v.location}</span>
+            )}
             <span className="flex shrink-0 items-center gap-2 text-fg-2">
               {v.sessions} {v.sessions === 1 ? 'visit' : 'visits'} · {v.games} games
               <Pill color="teal" size="micro" className="px-2">{v.winPct}%</Pill>

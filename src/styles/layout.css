@@ -103,7 +103,7 @@
    columns come out ~554 and ~340; 340 is wider than the 358 a phone gives the
    same form, which it handles. */
 @container (min-width: 900px) {
-  .page-zones:not(.page-zones-single) {
+  .page-zones:not(.page-zones-single):not(.page-zones-act-shut) {
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
   }
 
@@ -114,6 +114,33 @@
      both adopters: review 678px → 1054px, act 416px → 40px. */
   .page-zones.page-zones-act-shut:not(.page-zones-single) {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* THE ACT FROM THE TOP, beside zone 1 rather than under it.
+
+     Three explicit placements, because auto-placement only ever moves forward:
+     zone 1 takes column 1 row 1, the act takes column 2 and SPANS both rows,
+     and the review falls to column 1 row 2. Without the span the act would sit
+     in row 1 only and the review would start below the taller of the two,
+     which is a gap the width of the page.
+
+     `align-self: start` on the act so a short form does not stretch to the
+     height of a long review — the sticky rule below then has something to
+     stick within. Measured on Pickleball at 1440: orient 1110 → 830px with the
+     log beside it, and the page's first screen holds the sentence, the totals,
+     the drill AND the form instead of three of the four. */
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-orient {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-act {
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-review {
+    grid-row: 2;
   }
 
   /* Review LEFT and act RIGHT, against the DOM order, because the two rules
@@ -159,8 +186,18 @@
      reachable at a 1440 viewport is the dashboard tier's 1344px, 21px short.
      Measured after: act 450 → 450 at 1440 (untouched), 450 → 512 at 2560 while
      the review goes 722 → 1472. */
+  /* `:not(.page-zones-act-shut)` is load-bearing, and its absence is a bug you
+     can only see past a 1680px viewport. The 900px rule above excludes the
+     shut state and this one did not, so with the act shut the grid still
+     resolved to `1fr 32rem` — the review sat beside a 512px track holding a
+     40px strip. Measured on Pickleball, review width with the log shut:
+     1280 → 950 of a 950 shell, 1440 → 1110 of 1110, 1680 → 1350 of 1350 (all
+     correct, because the container is under 1365), then **1920 → 1062 of a
+     1590 shell** and **2560 → 1398 of 1926**. Reported as "when I hide the log
+     the content is not scaling", which is exactly what it was — and it applies
+     to Home Workout and Pull-ups on a wide screen too. */
   @container (min-width: 1365px) {
-    .page-zones:not(.page-zones-single) {
+    .page-zones:not(.page-zones-single):not(.page-zones-act-shut) {
       grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
     }
   }

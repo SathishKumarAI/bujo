@@ -6,27 +6,87 @@ import type { PointDiff, PickleHours, ScoringStat, PlayConsistency } from '../..
 
 type Weekday = { day: string; games: number; gamesWon: number; winPct: number }
 
-/** Win % & games played by day of week. */
-export function WeekdayPerformanceCard({ weekdays }: { weekdays: Weekday[] }) {
+/**
+ * Win % by day of week, as a row of BARS rather than seven tiny tiles.
+ *
+ * It shipped as a 7-column grid of `rounded-control` cells, 44px wide inside a
+ * 353px card, each holding a weekday, a percentage and a games count. Three
+ * problems, all measured:
+ *
+ * - **"100%" needs 38px** and the cell gave it 44 minus padding, so the figure
+ *   was the whole cell and the card read as a wall of numbers.
+ * - **Colour said nothing.** Every day that had any play used the same
+ *   `blue14` wash, so 100% and 60% were identical, and the thing the card is
+ *   about — which days go well — was carried only by the digits.
+ * - Four-up on a phone wrapped the week into 4+3, which loses the one shape a
+ *   week has.
+ *
+ * A bar per day reads at any width: the label and the figures are text on the
+ * card ground, and the bar is the comparison. **The colour is a ramp on the
+ * BAR, never behind the text** — a tinted ground under a percentage is the
+ * accent-on-wash trap this repo has measured at 3.64:1, and a bar is a graphic
+ * at 3:1 rather than text at 4.5.
+ *
+ * Three steps, not a gradient: a continuous ramp invites reading a colour as a
+ * value, and nobody can. Under 40% red, under 60% peach, else green — the same
+ * three-step scale Plan and Trackers already use.
+ */
+function winTone(pct: number): string {
+  return pct < 40 ? 'red' : pct < 60 ? 'peach' : 'green'
+}
+
+export function WeekdayPerformanceCard({ weekdays, onPick }: {
+  weekdays: Weekday[]
+  /** Open this weekday's sessions. Omit and the rows are not interactive. */
+  onPick?: (day: string) => void
+}) {
+  const played = weekdays.filter((w) => w.games > 0)
+  const best = played.length ? played.reduce((a, b) => (b.winPct > a.winPct ? b : a)) : null
   return (
-    <Card band title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-blue" /> Performance by weekday</span>} subtitle="Win % &amp; games played by day of week" collapsible>
-      {/* Seven columns is a week, but a week does not fit on a phone: 358px
-          across seven cells leaves 24px of content each, and "100%" needs 38.
-          The gate caught three of these showing a fraction of their own value.
-          Four-up wraps to 4+3, which costs the week its shape and buys back
-          every figure — and an unreadable week has no shape either. */}
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+    <Card
+      band
+      title={<span className="inline-flex items-center gap-2"><Icon as={CalendarBlank} size="md" className="text-blue" /> Performance by weekday</span>}
+      subtitle={best ? `Best on ${best.day} · ${best.winPct}% of ${best.games} games` : 'Win % and games played by day of week'}
+      collapsible
+    >
+      <ul className="space-y-1">
         {weekdays.map((w) => {
           const has = w.games > 0
+          const tone = winTone(w.winPct)
+          const row = (
+            <>
+              <span className="w-9 shrink-0 text-label text-fg-2">{w.day}</span>
+              {/* The track is always drawn, so a rest day is a visible gap in
+                  the week rather than a missing row. */}
+              <span aria-hidden className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                {has && <span className="block h-full rounded-pill" style={{ width: `${Math.max(3, w.winPct)}%`, background: cat(tone) }} />}
+              </span>
+              <span className="w-11 shrink-0 text-right text-label font-medium" style={{ color: has ? onRaised(tone) : cat('overlay0') }}>
+                {has ? `${w.winPct}%` : '—'}
+              </span>
+              <span className="w-12 shrink-0 text-right text-micro text-fg-2">{has ? `${w.gamesWon}/${w.games}` : ''}</span>
+            </>
+          )
           return (
-            <div key={w.day} className="rounded-control p-1.5 text-center" style={{ background: has ? cat('blue') + '14' : cat('surface0') }} title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won · ${w.winPct}%` : `${w.day}: no games`}>
-              <div className="text-micro font-medium text-fg-2">{w.day}</div>
-              <div className="mt-0.5 text-body font-medium" style={{ color: has ? cat('blue') : cat('overlay0') }}>{has ? `${w.winPct}%` : '—'}</div>
-              <div className="text-micro text-fg-2">{has ? `${w.games}g` : ''}</div>
-            </div>
+            <li key={w.day}>
+              {onPick && has ? (
+                <button
+                  type="button"
+                  onClick={() => onPick(w.day)}
+                  className="flex w-full items-center gap-2 rounded-control px-1 py-0.5 text-left transition-colors hover:bg-ink-2"
+                  aria-label={`${w.day}: ${w.gamesWon} of ${w.games} games won, ${w.winPct}% — show these sessions`}
+                >
+                  {row}
+                </button>
+              ) : (
+                <span className="flex w-full items-center gap-2 px-1 py-0.5" title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won` : `${w.day}: no games`}>
+                  {row}
+                </span>
+              )}
+            </li>
           )
         })}
-      </div>
+      </ul>
     </Card>
   )
 }

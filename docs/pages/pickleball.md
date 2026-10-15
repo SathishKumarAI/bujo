@@ -1,125 +1,118 @@
 # Pickleball
 
-`src/views/Pickleball.tsx` · nav: Sports → Pickleball · `?view=pickleball`
+`src/views/Pickleball.tsx` · nav: Body → Pickleball · `?view=pickleball`
 
 ## What this page is
 
-Everything pickleball except coaching: log a session (format, games won/lost,
-scoring), a record summary, history, DUPR rating over time, leagues and
-tournaments, injury-prevention notes, a format playbook, and four collapsed
-analytics groups.
+Everything pickleball except coaching: log a session, then read what the
+sessions add up to. Coaching owns the teaching (`?view=coaching`); this page
+owns the record.
 
-## Measured (1440×900, demo data)
+## What shipped · COD-328, 2026-10-15
 
-**4.2 screens · 12 top-level blocks** — the longest page in the app.
+It was the last sport page on the legacy `shell/Page`: a hand-rolled
+1.6fr/1fr split, the history list and a practice card beside the form, and the
+record on a 13rem side rail under all of it — three layout decisions on one
+page, none of them shared with any other page in the app.
 
-| Block | Height | State |
+### Shape
+
+`PageLayout` tier 1180, the same shell as Home Workout and Pull-ups.
+
+| zone | holds |
+|---|---|
+| 1 · orient | **one bordered block**: the `nextStep` sentence, four totals, and Today's drill |
+| 2 · act | Log a session, sticky 38% column, one primary button, **Hide the log** |
+| 3 · review | one bar of five rows, each with its own sub-section chips |
+
+**The rail reads in order, and the default is not the first row.**
+
+| # | row | the question | sub-sections |
+|---|---|---|---|
+| 1 | Results | am I winning | Form · Margins · Days |
+| 2 | Sessions | what did I log, and can I fix that score | — |
+| 3 | Activity | am I playing enough, and how hard | Volume · Effort · Cadence · Badges |
+| 4 | Matchups | who with, who against, where | — |
+| 5 | Competition | entries, DUPR, league results | — |
+
+The page opens on **Sessions**: the order is for finding things, the default is
+for the thirty seconds after pressing Log session.
+
+**Results and Activity replaced Performance and Trends**, which were a split by
+widget — stat cards in one row, charts in the other — and could not survive the
+question "what is the difference?". Each chart now sits beside the figures it
+explains.
+
+### The orient block
+
+One line that says what to do next (`nextStep` in `lib/pickleball.ts`), by
+priority: `first` → `event` (within 14 days) → `lapse` → `goal` → `milestone`.
+It is a button into the panel that answers it, and a paragraph when none does.
+Lapse outranks goal because the demo proved the other order wrong: ten days
+quiet against a weekly goal of twelve rendered "12 more games this week and you
+hit your goal of 12", which is true and useless.
+
+Today's drill shares the block: one of Coaching's twenty-one, chosen by the
+date, with the symptom it cures (`DRILL_FIXES`) and a `PracticeTick` writing
+into the same key space the manual uses.
+
+### Figures lead back to your entries
+
+Every weekday bar, partner and venue is a button. It opens Sessions filtered to
+exactly those rows, where Edit and × already live, and the filter states itself
+as a chip you can take off. Asked for as *"I need to be able to edit them as
+well, my entries, not the visualizations"*.
+
+## Measured · `?demo=1`, preview server
+
+| | before the pass | after |
 |---|---|---|
-| At a glance | 267px | open |
-| Log a session | 644px | open |
-| History | 409px | open |
-| DUPR rating | 266px | open, **empty** |
-| Leagues & tournaments | 600px | open |
-| Practice today & improve | 103px | open |
-| Form & momentum | 50px | collapsed |
-| Opponents, partners & venues | 50px | collapsed |
-| Deeper signals | 50px | collapsed |
-| Charts | 50px | collapsed |
-| Play safe · physio & trainer notes | 396px | open |
-| Format playbook | 536px | open |
+| desktop landing (1440) | 2568px · 2.85 screens | **1136px · 1.26** |
+| phone landing (390) | 4200px · 4.98 screens | **2598px · 3.08** |
+| worst panel, desktop, log open | 2.85 | 2.90 (Activity) |
+| worst panel, desktop, log hidden | — | **1.92** (Results) |
+| review width, log hidden, 1440 / 1920 / 2560 | — | 1110 / 1590 / 1926 |
+| cards per row, log open → hidden (1440) | 2 × 353px either way | 1 × 702 → **2 × 545** |
+| orient zone | 175px | **135px** + the drill |
+| `views/Pickleball.tsx` | 1233 lines | 406 |
+| `<details>` in `#main` | 1 (invisible to the a11y gate) | 0 |
+| `body.scrollWidth` at 390 | 414 (sideways scroll) | 390 |
 
-## The finding that matters
+**a11y per panel**: `npm run a11y:panels` drives all five rows at five desktop
+themes and two phone themes — **35 scans, 0 serious, 0 critical** — and is
+armed on a planted violation (`BUJO_CANARY=1` → 8 criticals), because a scan
+that silently matches nothing passes. This is COD-237's answer for this page;
+five more rail pages still need it.
 
-**P1 · The page expands its reference material and collapses your data.**
-"Play safe" (396px) and "Format playbook" (536px) are static articles — the same
-text for every user, forever — and both are open. Meanwhile *your* form, your
-opponents, your signals and your charts are four collapsed 50px strips. Nearly
-**1,000px of content that never changes** outranks everything the app learned
-about you.
+## Files
 
-Flip it: analytics open, reference collapsed. That one change removes ~900px
-from the default page and puts the personal content first.
+| Change | File |
+|---|---|
+| The shell, zone 1, the log form | `src/views/Pickleball.tsx` |
+| The bar, the sub-section chips, Sessions / Results / Activity / Matchups | `src/components/pickleball/Review.tsx` |
+| Today's drill | `src/components/pickleball/TodayDrill.tsx` |
+| Events, DUPR, leagues | `src/components/pickleball/CompetitionPanel.tsx` |
+| The seven charts | `src/components/pickleball/TrendCharts.tsx` |
+| The five rail rows and what each says about when to read it | `src/components/pickleball/panels.ts` |
+| The container-query card grid | `src/components/pickleball/PanelGrid.tsx` |
+| Show-if-selected | `src/components/pickleball/Facet.tsx` |
+| Stat cards | `FormCards.tsx` · `SignalCards.tsx` · `MatchupCards.tsx` |
+| Every aggregate, and `nextStep` | `src/lib/pickleball.ts` |
 
-## UX / IA
+## Traps this page paid for
 
-**P1 · Four identical collapsed strips in a row.** Form & momentum · Opponents,
-partners & venues · Deeper signals · Charts — 50px each, same chrome, stacked.
-It reads as a filing cabinet, not a page, and "Deeper signals" versus "Form &
-momentum" gives no clue which drawer holds what.
-
-**P2 · An empty 266px card for DUPR.** "No DUPR ratings logged yet · add one
-above to start the trend" occupies a quarter-screen between History and Leagues.
-Empty and open is the worst of both: it costs full height and shows nothing. It
-should be a one-line prompt until it has data.
-
-**P2 · Leagues & tournaments is a second full logging form** (600px, six event
-formats, its own stat row) inside a page that already has one. Two forms, both
-open, 1,244px combined. For most users this is an occasional feature sitting
-permanently in the main flow.
-
-**P3 · "Practice today & improve" is a 103px pointer to the Coaching page**
-placed in the middle of the stack, where it reads as another feature rather than
-a link out.
-
-## UI
-
-**P2 · "At a glance" is the strongest block and it is not the biggest.**
-`6 sessions · 20 games · 75% win · 1 day streak`, then "This week: 7 games · 100%
-won" and a weekly goal — the whole story in 267px, sitting above a 644px form.
-
-**P3 · History rows carry `Edit` and `×` per row**, always visible, so a
-six-session list shows twelve secondary controls. Reveal on hover would give the
-scores the row back.
-
-**P3 · The scoring picker is four options wide** (`to 11 · to 15 · to 21 ·
-rally 21`) on a form most people fill the same way every time. It should
-remember the last value.
-
-## Copy
-
-**P2 · "Deeper signals"** and **"Form & momentum"** are titles that describe a
-mood, not a content. A reader cannot predict what is inside either. Compare
-"Opponents, partners & venues", which says exactly what it holds.
-
-**P3 · "Tap Edit to fix a score, × to remove"** is a manual for two visible
-buttons. If the buttons need the sentence, the buttons are unclear; if they are
-clear, the sentence is clutter.
-
-**P3 · "Log your DUPR over time, watch the trend climb"** presumes the trend
-climbs. It is a nice line and slightly overconfident.
-
-## Upgrades, ranked
-
-1. **P1 · Collapse the reference, open the analytics.** Play safe and Format
-   playbook closed; Form, Opponents, Signals and Charts open. Removes ~900px and
-   inverts the priority correctly.
-2. **P1 · Merge the four collapsed strips** into one "Analytics" section with
-   internal tabs, or give them names that predict their contents.
-3. **P2 · Collapse DUPR to a single line while empty.**
-4. **P2 · Move Leagues & tournaments behind a disclosure** — it is the
-   occasional path, not the daily one.
-5. **P3 · Remember the last scoring format** instead of asking every time.
-6. **P3 · Reveal row actions on hover** in History.
-
-## Leave alone
-
-- **"At a glance".** Four numbers, a this-week line and a goal — the model other
-  pages should copy.
-- **The physio content itself.** Genuinely useful and clearly specialist; it
-  just should not be open by default.
-- **Format playbook as content.** Same: valuable, wrongly prominent.
-- **Games won / lost as the core unit.** Right primitive for the sport.
-
----
-
-## Update — the grid landed
-
-**4.2 → 2.6 screens.** The twelve stacked blocks now flow three across
-(`CardGrid`, see `docs/redesign/12-three-column-grid.md`); "At a glance" spans
-two columns, and the six charts inside *Form & momentum* became two rows of
-three instead of a six-card column.
-
-**Still open, and still the headline:** the page expands ~1,000px of static
-reference (Play safe, Format playbook) while collapsing all four analytics
-groups built from your own data. The grid made the page shorter; it did not fix
-the priority.
+- **A conditional card the demo cannot reach has never been rendered by any
+  gate.** Every seeded event was in the past and no session carried a location,
+  opponent, level or points — so Matchups showed 1 card of 4 and Results/Activity
+  7 of 9, at every theme, on every run. `DEMO_VERSION` 18 → 20.
+- **A seeded generator is a shared resource.** Adding `rand()` calls to the
+  pickleball seed shifted every number drawn after it and turned a *cycle
+  temperature* test red. Derive from the loop index instead.
+- **A container query against a missing container is silent.** The drill strip
+  sat outside `@container/page`, so its two-column rule matched at no width.
+- **A second `grid-template-columns` rule can undo a collapse.** `layout.css`
+  caps the act at 32rem past a 1365px container; that rule did not exclude the
+  collapsed state, so hiding the log left a 512px empty track at 1920 and 2560
+  only — every width below looked correct.
+- **A raw `<details>` is invisible to `npm run a11y`** — the third disclosure
+  implementation in this repo to learn it.

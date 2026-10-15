@@ -62,6 +62,8 @@ export function PageLayout({
   zone1,
   zone2,
   actShut = false,
+  actTop = false,
+  actLast = false,
   zone3,
   className = '',
 }: {
@@ -87,6 +89,41 @@ export function PageLayout({
   zone2?: ReactNode
   /** Zone 2 is collapsed to its rail: the review takes the width back. */
   actShut?: boolean
+  /**
+   * The act column starts at the TOP, beside zone 1, instead of under it.
+   *
+   * The default is zone 1 spanning both columns, because an orientation bar is
+   * a header and a fact that moves into a column stops being one. That holds
+   * while zone 1 is four numbers. It stops holding when zone 1 is a BLOCK —
+   * Pickleball's carries the next-step sentence, the totals and today's drill,
+   * and at full width it is a wide shallow band with the thing you came to do
+   * pushed below it.
+   *
+   * Asked for as *"move the log session to the right side of this one, like a
+   * well built-in mannerism you can see in other places"* — and it is the
+   * shape Coaching already uses for its aside: read on the left, act on the
+   * right, both from the top.
+   *
+   * Opt-in, because it is only right for a page whose zone 1 is a block.
+   */
+  actTop?: boolean
+  /**
+   * Render zone 3 BEFORE zone 2 in the DOM.
+   *
+   * Only visible when the layout stacks (container under 900px), because above
+   * that both columns are placed explicitly and the DOM order does not decide
+   * anything. Stacked, the default order is act-then-review — "a phone still
+   * gets the form first", which is right for a page whose act is short.
+   *
+   * It is wrong for a page whose act is a 726px form: at a 1024 or 1152px
+   * window the rail and every panel sat **more than a screen down**, under the
+   * whole form, and picking a row looked like the page was running away
+   * downwards. Reported exactly that way.
+   *
+   * A DOM reorder rather than `order-*`, because CSS order lies to a screen
+   * reader and to tab order; this moves the real thing.
+   */
+  actLast?: boolean
   /** Review. Summary, signature visual, list. */
   zone3?: ReactNode
   className?: string
@@ -169,8 +206,34 @@ export function PageLayout({
     // and again onto the review column, whose children are the cards. That is
     // where the ladder was always aimed.
     <div className={cn('page-shell mx-auto w-full', TIER_WIDTH[tier], className)}>
-      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut')}>
+      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut', actTop && 'page-zones-act-top')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
+{actLast ? (<>
+        {zone3 && <div className="zone-review page-enter flex min-w-0 flex-col gap-4">{zone3}</div>}
+        {zone2 && (
+          // When the act column FITS the viewport it is sticky, as before.
+          // When it outgrows it, it used to drop to static — and then the two
+          // columns scrolled as one, so reading a chart on the left dragged
+          // the half-filled form on the right off screen. Now it becomes its
+          // own scrollport instead (`data-panel`, styles in layout.css):
+          // wheel over the right panel scrolls only the right panel,
+          // `overscroll-behavior` stops it handing the leftover scroll to the
+          // page. Focusable + labelled because a scroll region no keyboard
+          // can reach is the axe `scrollable-region-focusable` failure this
+          // repo has already shipped once (CalendarHeatmap).
+          <div
+            ref={act}
+            className="zone-act min-w-0"
+            data-sticky={sticky}
+            data-panel={panel}
+            tabIndex={panel ? 0 : undefined}
+            role={panel ? 'region' : undefined}
+            aria-label={panel ? 'Actions panel, scrollable' : undefined}
+          >
+            {zone2}
+          </div>
+        )}
+</>) : (<>
         {zone2 && (
           // When the act column FITS the viewport it is sticky, as before.
           // When it outgrows it, it used to drop to static — and then the two
@@ -195,6 +258,7 @@ export function PageLayout({
           </div>
         )}
         {zone3 && <div className="zone-review page-enter flex min-w-0 flex-col gap-4">{zone3}</div>}
+</>)}
       </div>
     </div>
   )

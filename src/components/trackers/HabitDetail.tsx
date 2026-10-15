@@ -87,13 +87,13 @@ export function HabitDetail({
     }
     ctx.globalAlpha = 1
     ctx.fillStyle = cat('overlay0'); ctx.font = '11px Inter, system-ui, sans-serif'
-    ctx.fillText('bujo', M, H - 11)
+    ctx.fillText('Cadence', M, H - 11)
     canvas.toBlob((blob) => {
       if (!blob) return
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `bujo-${h.name.replace(/[^\w-]+/g, '-').toLowerCase()}-grid.png`
+      a.download = `cadence-${h.name.replace(/[^\w-]+/g, '-').toLowerCase()}-grid.png`
       a.click()
       URL.revokeObjectURL(url)
     })

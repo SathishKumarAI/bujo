@@ -48,7 +48,7 @@ export function CycleWelcome({ onAccept }: { onAccept: (version: number) => void
           this page — protect your device accordingly.
         </p>
         <p>
-          <strong className="font-medium">This is not medical care.</strong> bujo is for personal
+          <strong className="font-medium">This is not medical care.</strong> Cadence is for personal
           tracking and education. Predictions are estimates based on your own entries and can be
           wrong. Temperature and symptom tracking is not a method of contraception. Nothing here
           diagnoses, treats, or replaces advice from a clinician.

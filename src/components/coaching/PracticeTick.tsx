@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Check } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
@@ -38,11 +39,21 @@ export function PracticeTick({ kind, name, className = '' }: {
   const key = practiceKey(kind, name)
   const stat = practiceStat(data.settings.practiceLog, key, today)
   const verb = kind === 'drill' ? 'Drilled' : 'Practised'
+  /* MOTION TIED TO THE STATE CHANGE, NOT TO THE PAGE EXISTING.
+     `node-pop` is cleared on `animationend`, so a page that loads with the
+     drill already ticked does not pop on arrival — §10 of
+     docs/REUSABLE-PATTERNS.md, the rule the roadmap's twelve nodes needed. It
+     is a transform, so it cannot move a computed colour into a mid-animation
+     blend the contrast gate would read as a failure. */
+  const [popped, setPopped] = useState(false)
 
   return (
     <button
       type="button"
-      onClick={() => setSettings({ practiceLog: togglePractice(data.settings.practiceLog ?? {}, key, today) })}
+      onClick={() => {
+        if (!stat.onDate) setPopped(true)
+        setSettings({ practiceLog: togglePractice(data.settings.practiceLog ?? {}, key, today) })
+      }}
       aria-pressed={stat.onDate}
       aria-label={
         stat.onDate
@@ -58,7 +69,7 @@ export function PracticeTick({ kind, name, className = '' }: {
       {/* Green for "done", which is the only thing green means on this page.
           The box is empty rather than a different colour when it is not — an
           unticked control that is also coloured reads as a second state. */}
-      <span aria-hidden className={`grid h-3.5 w-3.5 place-items-center rounded-[4px] ${stat.onDate ? 'bg-green' : 'border border-line-strong'}`}>
+      <span aria-hidden onAnimationEnd={() => setPopped(false)} className={`grid h-3.5 w-3.5 place-items-center rounded-[4px] ${popped ? 'node-pop' : ''} ${stat.onDate ? 'bg-green' : 'border border-line-strong'}`}>
         {stat.onDate && <Icon as={Check} size="sm" className="h-2.5 w-2.5 text-ink-0" />}
       </span>
       <span aria-hidden>

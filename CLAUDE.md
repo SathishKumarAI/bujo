@@ -51,7 +51,23 @@ warning and a perfectly valid class list. It looks exactly like a breakpoint
 you chose wrong. Declare the container on a WRAPPER (an element cannot query
 itself) and **verify by measuring the box**, not by reading the classes. Same
 family as the stale-utility-class trap above: Tailwind v4 does not fail a build
-over a rule that can never match.
+over a rule that can never match. **Third instance, COD-328:** Pickleball's
+Today's-drill strip sat one level ABOVE the `@container/page` wrapper, so its
+`@min-[58rem]/page:grid-cols-…` matched at no width at all and the strip stayed
+four stacked lines in a 1110px column. The tell is always the same — a
+responsive rule that never fires at ANY width, rather than at the wrong one.
+
+Trap (COD-328): **a collapse has to be excluded from EVERY
+`grid-template-columns` rule, and the one you miss shows up at one width.**
+`PageLayout`'s `collapsibleAct` adds `.page-zones-actless`, and
+`styles/layout.css` sets the zone columns twice — `62fr 38fr` at a 900px
+container and `1fr 32rem` at 1365px, the second capping the act on wide
+screens. Only the first excluded the collapsed state, so hiding the act gave
+the review the full width at 1280, 1440 and 1680 and left it **beside a 512px
+empty track at 1920 (1062 of 1590) and 2560 (1398 of 1926)**. Reported as "when
+I hide the log the content is not scaling", and invisible to a first round of
+measurements taken at 1440 only. **Measure a layout change at more than one
+width** — and grep for every rule that sets the property you are overriding.
 
 Trap: **`hidden` on a grid child leaves its track behind.** Hiding a 19rem
 aside that way keeps the column and the list stays narrow beside a gap —
@@ -359,14 +375,22 @@ walk is load-bearing; and `Card` can cap its `right` slot at `max-w-full` but
 **cannot wrap a cluster whose markup it does not own** — an over-wide child just
 changes which edge it leaves by, so the call site needs `flex-wrap` itself.
 
-Trap: **`MasonryGrid` in a zone under 768px silently does nothing**, and the
-class list cannot tell you. It breaks on its *container* (`@3xl` = 768px), so a
-review zone measured at **722px** — 46px short — resolves three groups to a
-single column. Gym's first packing pass therefore packed nothing, and only the
-before/after numbers showed it: `open` moved 4.7 to 4.6. Use `CardGrid` when the
-column width is decided by the page split rather than by the card; it asks about
-the viewport. Second page this has bitten (Stats' habit masonry in a 580px cell
-was the first), which is why it is here and not only in `CardGrid.tsx`.
+Trap: **`MasonryGrid` in a column narrower than its threshold silently does
+nothing**, and the class list cannot tell you. It breaks on its *container*, and
+**the thresholds have since moved up to 64/96/120rem** — so the number to beat
+for a second column is now **1024px**, not the 768px this entry was written
+about. Gym's first packing pass measured a 722px review zone against the old
+768 and packed nothing (`open` moved 4.7 to 4.6); Pickleball's rail panel
+measures **870px at a 1440 viewport** — a 1180px shell minus a 13rem rail and a
+2rem gap — and so drew one column for seven cards, **1561px**, while reading
+`@min-[64rem]:columns-2` and looking correct. It only ever worked at 1920, where
+that panel is 1350px. Use `CardGrid` when the column width is decided by the
+page split rather than by the card; it asks about the viewport, and a rail takes
+its 13rem whatever the window does. Measured on the swap: Performance's review
+zone **1561px → 1022px**, the landing **2.84 → 2.24 desktop screens**, at the
+cost of the row pocket masonry exists to avoid (~200px beside the shortest
+card). Third page this has bitten, after Stats' habit masonry in a 580px cell,
+which is why it is here and not only in `CardGrid.tsx`.
 
 Trap: **do not `npm run build` while `npm run a11y` is running.** `vite preview`
 serves the half-written `dist` and the gate reports `[Plan] rendered 0
@@ -900,6 +924,16 @@ sessions worth nothing; and **check what group the seeded numbers land in** —
 topping out at a best set of 5 put the demo in Novice, whose training set is
 `1`, so the calculator opened on "1 rep/set · Ladder 1 · Pyramid 1", which
 reads as broken rather than as beginner.
+
+Trap (COD-328): **a seeded generator is a shared resource, and taking from it
+in a new place rewrites everything downstream.** `lib/demo.ts` draws every
+domain from ONE deterministic stream, so four extra `rand()` calls added inside
+the pickleball loop shifted every number drawn after it: `cycleSnapshot.test.ts`
+went red on a coverline that moved **97.41 → 97.42** — a temperature fixture
+failing because of a pickleball change, with nothing in the diff to connect
+them. Derive new seeded fields from something already in hand (the loop index,
+a value already drawn) rather than from a fresh `rand()`, and if you must draw,
+expect every snapshot fixture after that point to move.
 
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
