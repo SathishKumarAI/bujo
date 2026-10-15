@@ -1,5 +1,5 @@
 import { useState, type ComponentProps, type ReactNode } from 'react'
-import { Heartbeat, ShieldPlus, ShieldWarning, Timer, Warning } from '@/components/icons'
+import { Heartbeat, ShieldPlus, Timer, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Pill } from '../ui'
 import { ChipPick } from '../ui/quickpick'
@@ -8,8 +8,7 @@ import { useCappedList } from '../../lib/useCappedList'
 import { onRaised } from '../../lib/colors'
 import { KNEE_REHAB, type RehabEquip } from '../../lib/pickleballAcademy'
 import {
-  AFTER_PLAY, COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_DISCLAIMER, SAFETY_SOURCES, WARMUP,
-  sourceSearchUrl,
+  AFTER_PLAY, COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUrl,
 } from '../../lib/pickleballSafety'
 
 /**
@@ -50,21 +49,17 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
 
   return (
     <>
-      {/* The long disclaimer, in the one chapter that makes claims about
-          bodies. Every chapter carries the short line above the panel. */}
-      <div className="mb-3 flex items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
-        <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
-        <ul className="min-w-0 space-y-0.5">
-          {SAFETY_DISCLAIMER.long.map((t) => <li key={t}>{t}</li>)}
-        </ul>
-      </div>
-
       {part === 'prep' && <>
       <Section icon={Timer} title="Warm up — eight minutes, in this order"
         blurb="Temperature, then range, then load, then the movements of the game, then the shot at 60%.">
-        <ol className="scroll-settle space-y-1.5">
+        {/* Two columns from 512px of CONTAINER. Seven short blocks in one
+            column left most of a 1110px panel empty — reported as "why do I
+            need to waste the space". `@lg/page` and not a viewport step: the
+            panel is the container, and a viewport breakpoint would read the
+            window instead (CLAUDE.md, `MasonryGrid` vs `CardGrid`). */}
+        <ol className="scroll-settle grid grid-cols-[minmax(0,1fr)] gap-1.5 @lg/page:grid-cols-2">
           {WARMUP.map((w) => (
-            <li key={w.name} className="grid grid-cols-[3.2rem_minmax(0,1fr)] gap-x-2 rounded-card bg-ink-2 p-2.5">
+            <li key={w.name} className="grid grid-cols-[3.2rem_minmax(0,1fr)] gap-x-2 rounded-card bg-ink-2 p-2.5 transition-colors hover:bg-ink-1">
               <span className="num text-label text-fg-2">{w.mins}</span>
               <span className="min-w-0">
                 <span className="block text-body font-medium text-fg-1">{w.name}</span>

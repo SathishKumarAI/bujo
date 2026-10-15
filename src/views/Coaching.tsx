@@ -1,6 +1,6 @@
 import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useJournal } from '../store'
 import { Card, Input, Pill } from '../components/ui'
 import { CommitField } from '../components/CommitField'
@@ -109,7 +109,13 @@ export function Coaching() {
     if (ok) setSettings(coachingResetPatch())
   }
 
+  /* Which node just changed, so exactly ONE pops. Cleared on animationend so
+     it can run again next time — and so a journal that loads with four weeks
+     already done does not pop four times on arrival. */
+  const [popped, setPopped] = useState<number | null>(null)
+
   function toggleWeek(w: number) {
+    setPopped(w)
     setSettings({ coachingWeeksDone: done.includes(w) ? done.filter((x) => x !== w) : [...done, w] })
   }
 
@@ -203,10 +209,33 @@ export function Coaching() {
             sections cannot land you somewhere it is missing. The long version
             is in `SafetyChapter`, where the claims are about bodies.
           */}
-          <p className="mt-2 mb-3 flex items-start gap-1.5 text-label text-fg-2">
-            <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-peach" />
-            {SAFETY_DISCLAIMER.short}
-          </p>
+          {/*
+            ONE warning per section, and only one.
+
+            It was two on every safety section and the page read as nagging:
+            this short line above the panel, and `SafetyChapter` opening with
+            the long points under it. Reported as "duplicate warnings, why do I
+            need to waste the space".
+
+            So the section decides which single form it gets. The two sections
+            that make claims about bodies get the full points, full width; the
+            other six get the one line. Nothing stacks.
+          */}
+          {section === 'prep' || section === 'rehab' ? (
+            <div className="mt-2 mb-3 flex w-full items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
+              <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
+              <ul className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-x-5 gap-y-0.5 @lg/page:grid-cols-2">
+                {SAFETY_DISCLAIMER.long.map((t) => (
+                  <li key={t} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{t}</span></li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="mt-2 mb-3 flex items-start gap-1.5 text-label text-fg-2">
+              <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-peach" />
+              {SAFETY_DISCLAIMER.short}
+            </p>
+          )}
           {section !== 'program' ? <Manual chapter={section} /> : <>
           <TodaySession slot={todaySlot} dow={todayDow} />
           <Card
@@ -221,14 +250,31 @@ export function Coaching() {
                 <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
               </div>
             ) : (
-              <div className="mb-3">
-                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
-                  <div className="h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
+              <div className="mb-3 flex items-center gap-3">
+                <div className="h-2.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  {/* `bar-grow` scales the already-sized fill from zero on
+                      mount, so the bar states the progress instead of simply
+                      being a shape that was always that long. The width
+                      transition still carries it when you tick a week. */}
+                  <div className="bar-grow h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
                 </div>
+                <span className="num shrink-0 text-label text-fg-2">{done.length} of 12</span>
               </div>
             )}
+            {/*
+              THE TWELVE WEEKS AS A SPINE, not twelve boxes in a stack.
+
+              The nodes move out of the cards into a gutter and a line joins
+              them — green behind the weeks you have finished, quiet ahead of
+              them. Progress stops being a 2.5px bar at the top and becomes the
+              shape of the list itself, which is the one place on this page
+              worth spending boldness; everything around it stays flat.
+
+              `--i` staggers each row's rise by 28ms. Transform only — the
+              keyframes in index.css carry the reason nothing here fades.
+            */}
             <ol className="space-y-1.5">
-              {TWELVE_WEEK.map((w) => {
+              {TWELVE_WEEK.map((w, i) => {
                 const isDone = done.includes(w.week)
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
@@ -237,9 +283,14 @@ export function Coaching() {
                 // one. See `lib/coachingWeek.ts`.
                 const played = start ? rowsInCoachingWeek(sessions, start, w.week) : []
                 const note = weekNotes[String(w.week)] ?? ''
+                const last = i === TWELVE_WEEK.length - 1
                 return (
-                  <li key={w.week} className={`rounded-control border transition-colors ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0'}`}>
-                    <div className="flex items-start gap-2.5 p-2.5">
+                  <li key={w.week} className="week-in flex gap-3" style={{ '--i': i } as CSSProperties}>
+                    {/* The gutter: the node, then the line down to the next
+                        one. `-mb-1.5` eats the list gap so the spine is
+                        continuous rather than dashed by the space between
+                        rows. */}
+                    <div className="flex w-7 shrink-0 flex-col items-center">
                       {/* `aria-pressed`, which these twelve toggles never carried. A bare
                           button announces as "Mark week 6 done" whether or not week 6
                           IS done, so the state of the page's only act was unreadable to
@@ -247,7 +298,8 @@ export function Coaching() {
                           by `aria-pressed`, which is how a probe over every view
                           reported this page as having zero tick controls. */}
                       <button onClick={() => toggleWeek(w.week)} aria-pressed={isDone} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
-                        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-control text-caption font-medium"
+                        onAnimationEnd={() => setPopped(null)}
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-caption font-medium transition-transform hover:scale-110 active:scale-90 ${popped === w.week ? 'node-pop' : ''} ${isNow ? 'now-ring' : ''}`}
                         // The untaken weeks are a surface tone, not a brand fill, so
                         // crust-on-surface1 was the failing pair — those get `text`.
                         style={
@@ -257,6 +309,13 @@ export function Coaching() {
                         }>
                         {isDone ? <Icon as={Check} size="sm" /> : w.week}
                       </button>
+                      {!last && (
+                        <span aria-hidden className="-mb-1.5 mt-1 w-0.5 flex-1 rounded-pill transition-colors"
+                          style={{ background: isDone ? cat('green') : cat('surface1') }} />
+                      )}
+                    </div>
+                    <div className={`min-w-0 flex-1 rounded-control border transition-[background-color,border-color,transform] hover:-translate-y-px ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0 hover:border-line-strong hover:bg-ink-1'}`}>
+                    <div className="flex items-start gap-2.5 p-2.5">
                       <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
                         <span className="text-body font-medium text-fg-1">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
                         {/* Wraps rather than truncates — see the note on `t.what` below.
@@ -275,10 +334,10 @@ export function Coaching() {
                           </span>
                         )}
                       </button>
-                      <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
+                      <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2 transition-transform hover:scale-125 hover:text-fg-1">{isOpen ? '▴' : '▾'}</button>
                     </div>
                     {isOpen && (
-                      <div className="space-y-2 border-t border-line px-3 py-2.5 text-body">
+                      <div className="collapse-in space-y-2 border-t border-line px-3 py-2.5 text-body">
                         <p className="text-fg-1">{w.doThis}</p>
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-2">Drills</p>
@@ -300,6 +359,7 @@ export function Coaching() {
                         <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: onRaised('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
                       </div>
                     )}
+                    </div>
                   </li>
                 )
               })}
@@ -485,17 +545,17 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
         the rail having no `aria-expanded` (COD-237): when a gate walks the
         DOM, ask what is not in it.
       */}
-      <div className="mt-3 rounded-card bg-ink-2 p-3">
+      <div className="mt-3 rounded-card bg-ink-2 p-3 transition-colors hover:bg-ink-1">
         <button
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex w-full items-center justify-between gap-2 text-left text-body font-medium text-fg-1"
+          className="group flex w-full items-center justify-between gap-2 text-left text-body font-medium text-fg-1"
         >
           A 45–60 min session
-          <span aria-hidden className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
+          <span aria-hidden className="shrink-0 text-fg-2 transition-transform group-hover:scale-125 group-hover:text-fg-1">{open ? '▴' : '▾'}</span>
         </button>
         {open && (
-          <ul className="mt-2 space-y-1">
+          <ul className="collapse-in mt-2 space-y-1">
             {SESSION_TEMPLATE.map((b) => (
               <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
             ))}
@@ -507,7 +567,11 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
           lost half their letters. */}
       <div className="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7">
         {WEEKLY_TEMPLATE.map((d, i) => (
-          <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
+          /* Today is RAISED, not merely tinted — a week is a row of seven
+             equal boxes and the one you are standing in should be the one that
+             reads first. The others answer the pointer so the row feels like
+             something rather than a printed table. */
+          <div key={d.day} className={`rounded-card p-1.5 text-center text-micro transition-[transform,background-color] ${i === (dow + 6) % 7 ? 'scale-105 bg-teal/20 text-teal ring-1 ring-teal/40' : 'bg-ink-0 text-fg-2 hover:-translate-y-px hover:bg-ink-2 hover:text-fg-1'}`} title={d.focus}>
             <div className="font-medium">{d.day}</div>
             <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
           </div>

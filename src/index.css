@@ -624,6 +624,42 @@ body.handwriting textarea {
   .caret-turn { transition: none; }
 }
 
+/* ── Coaching roadmap: the twelve weeks as a spine ─────────────────────────
+   Three one-shot animations, each tied to a state change rather than running
+   because the page loaded. TRANSFORM AND SHADOW ONLY, never opacity on text —
+   `npm run a11y` reads colour from the rendered page and an element parked
+   part-way through an opacity ramp reports a contrast failure describing a
+   pairing that exists nowhere in the app (CLAUDE.md, three investigations). */
+
+/* Each week rises a few pixels as the list mounts, staggered by `--i`. The
+   stagger is what makes twelve rows read as a sequence rather than a block. */
+@keyframes week-in { from { transform: translateY(7px); } to { transform: none; } }
+.week-in { animation: week-in var(--dur-base) var(--ease-rise) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
+
+/* The node pops when you tick a week. Applied to ONE node — the one just
+   toggled — and removed on animationend, so it can run again next time and so
+   a page that loads with four weeks already done does not pop four times. */
+@keyframes node-pop { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
+.node-pop { animation: node-pop var(--dur-base) var(--ease-emphasis); }
+
+/* One ring, once, on the week you are actually in — an arrival, not a
+   heartbeat. An infinite pulse is noise that you learn to stop seeing, and it
+   never stops costing a repaint. */
+@keyframes now-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-mauve) 55%, transparent); }
+  to { box-shadow: 0 0 0 12px transparent; }
+}
+.now-ring { animation: now-ring 1.5s var(--ease-rise); }
+
+/* The progress fill grows from nothing to its width on mount, so the bar
+   states the progress rather than just being a shape that is already there. */
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-grow { animation: bar-grow var(--dur-slow) var(--ease-emphasis) backwards; transform-origin: left; }
+
+@media (prefers-reduced-motion: reduce) {
+  .week-in, .node-pop, .now-ring, .bar-grow { animation: none; }
+}
+
 /* ── Scroll-settled reference lists ────────────────────────────────────────
    A scroll-driven animation: no JS, no IntersectionObserver, no library. Rows
    arrive 12px low and settle as they enter the viewport.
