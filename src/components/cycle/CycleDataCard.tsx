@@ -47,7 +47,7 @@ export function CycleDataCard() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `bujo-cycle-backup-${todayISO()}.json`
+      a.download = `cadence-cycle-backup-${todayISO()}.json`
       a.click()
       URL.revokeObjectURL(url)
       setSettings({ cycleLastBackup: new Date().toISOString() })

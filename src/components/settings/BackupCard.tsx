@@ -90,7 +90,7 @@ export function BackupCard() {
         replaceAll(importJSON(String(reader.result)), { stamp: true })
         notify.success('Backup imported')
       } catch {
-        notify.error('Could not read that file', 'Is it a valid bujo backup?')
+        notify.error('Could not read that file', 'Is it a valid Cadence backup?')
       }
     }
     reader.readAsText(file)

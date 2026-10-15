@@ -130,7 +130,7 @@ export function LogSession({
         ) : (
           <label className="text-label text-fg-2">
             Project
-            <input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="bujo, work…" className={field} />
+            <input value={f.project} onChange={(e) => set({ project: e.target.value })} placeholder="Cadence, work…" className={field} />
           </label>
         )}
 
