@@ -756,3 +756,94 @@ export function recentThenFrequent(
   const rest = seen.slice(recentSlots).sort((a, b) => (freq.get(b)! - freq.get(a)!) || (a < b ? -1 : 1))
   return [...recent, ...rest].map((k) => display.get(k)!)
 }
+
+/**
+ * ONE SENTENCE AT THE TOP OF THE PAGE, SAYING WHAT TO DO NEXT.
+ *
+ * Zone 1 was four totals and a weekly-goal field: `Sessions 12 · Games 48 ·
+ * Win % 62 · Day streak 3`. Every one of them is true, none of them changes
+ * what you do today, and the thing that does — an event on Saturday, a goal
+ * two games short, eleven days since you last played — was spread over three
+ * cards in the review zone behind a rail row you had to choose.
+ *
+ * So: the first rule that fires, and nothing else. Order is URGENCY, not
+ * interest, and each rule says what it measured rather than only its verdict.
+ *
+ * | id | fires when | why it is above the one below it |
+ * |---|---|---|
+ * | `first` | nothing logged | A record with no rows cannot say anything else |
+ * | `event` | an event within 14 days | It has a date, and the date is not movable |
+ * | `lapse` | silence longer than twice your cadence | A habit breaking is louder than a target inside it |
+ * | `goal` | a weekly goal set and not met | It is this week, and you chose it |
+ * | `milestone` | always, as the floor | Something to aim at beats a blank line |
+ *
+ * **The lapse rule has a coverage floor and the others do not need one.** A
+ * cadence computed from one gap is not a cadence, so it wants four play days
+ * (three gaps) before it will call anything a lapse — the same shape as the
+ * momentum-indicator bug in CLAUDE.md, where a two-day sample was compared
+ * against a seven-day one and reported a lapse as an improvement. It also
+ * states the cadence it used, so the sentence can be checked rather than
+ * believed, and it never fires before three days: playing every other day and
+ * resting a day is not a lapse.
+ *
+ * **Lapse above goal, which is not the order it shipped in.** Measured on the
+ * demo journal — ten days since the last session, a weekly goal of twelve —
+ * the goal rule said "12 more games this week and you hit your goal of 12",
+ * which is arithmetically true and useless: at that cadence the week is
+ * already gone, and the sentence reads as nagging rather than as information.
+ * A target inside a week you have not started is worth less than the fact that
+ * you stopped.
+ *
+ * Pure, and total — it always returns a sentence, which is what lets the page
+ * render it without a conditional that would leave a hole at the top.
+ */
+export interface PickleNextStep {
+  /** Which rule fired. The page colours and icons by this; the test asserts it. */
+  id: 'first' | 'event' | 'goal' | 'lapse' | 'milestone'
+  /** One sentence, one idea. */
+  text: string
+  /** The rail group that holds the detail behind it, where one does. */
+  group?: 'competition' | 'performance'
+}
+
+export function nextStep(data: JournalData, today = todayISO()): PickleNextStep {
+  const all = pickleTotals(data)
+  if (all.sessions === 0) {
+    return { id: 'first', text: 'Nothing logged yet — your first session is the one that starts the record.' }
+  }
+
+  const soon = upcomingEvents(data, today).find((e) => e.daysUntil <= 14)
+  if (soon) {
+    const when = soon.daysUntil === 0 ? 'today' : soon.daysUntil === 1 ? 'tomorrow' : `in ${soon.daysUntil} days`
+    return { id: 'event', text: `${soon.name} is ${when} — the prep checklist is under Competition.`, group: 'competition' }
+  }
+
+  const pace = playConsistency(data, 8, today)
+  // Four play days = three gaps. Below that the average is an anecdote.
+  if (pace.daysPlayed >= 4 && pace.daysSinceLast != null && pace.avgGap > 0) {
+    const overdue = Math.max(3, Math.round(pace.avgGap * 2))
+    if (pace.daysSinceLast > overdue) {
+      return {
+        id: 'lapse',
+        text: `${pace.daysSinceLast} days since you last played — across ${pace.daysPlayed} play days your cadence is about every ${pace.avgGap} day${pace.avgGap === 1 ? '' : 's'}.`,
+        group: 'performance',
+      }
+    }
+  }
+
+  const goal = data.settings.pickleballGoalGames ?? 0
+  const week = pickleTotals(data, 7, today)
+  if (goal > 0 && week.games < goal) {
+    const left = goal - week.games
+    return { id: 'goal', text: `${left} more game${left === 1 ? '' : 's'} this week and you hit your goal of ${goal}.` }
+  }
+
+  // The floor. Nearest badge by what is left, so the sentence names the one
+  // you could actually reach rather than the first in the list.
+  const open = pickleMilestones(data).filter((m) => !m.done)
+  if (open.length > 0) {
+    const next = open.reduce((a, b) => (b.target - b.current < a.target - a.current ? b : a))
+    return { id: 'milestone', text: `${next.label} — ${next.target - next.current} to go.`, group: 'performance' }
+  }
+  return { id: 'milestone', text: `Every badge is done — ${all.games} games at ${all.winPct}%.`, group: 'performance' }
+}

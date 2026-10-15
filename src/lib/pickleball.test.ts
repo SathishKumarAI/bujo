@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent, nextStep } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -501,5 +501,94 @@ describe('recentThenFrequent', () => {
   it('is stable — the same input gives the same order', () => {
     const v = ['A', 'B', 'C', 'D', 'E', 'D', 'E']
     expect(recentThenFrequent(v)).toEqual(recentThenFrequent(v))
+  })
+})
+
+/**
+ * `nextStep` is a priority list, so every test here names the rule it expects
+ * AND arranges for the rules above it not to fire. A test that only asserts
+ * the text would pass against a function that returned the same sentence for
+ * every journal, which is why each one asserts `id`.
+ */
+describe('nextStep', () => {
+  const journalWithDays = (days: string[]) => {
+    const d = emptyJournal()
+    d.pickleball = days.map((x) => s(x, 2, 1))
+    return d
+  }
+
+  it('an empty record asks for the first session, not a badge', () => {
+    expect(nextStep(emptyJournal(), '2026-06-12').id).toBe('first')
+  })
+
+  it('an event inside a fortnight outranks everything below it', () => {
+    const d = journalWithDays(['2026-06-11'])
+    d.settings.pickleballGoalGames = 99 // the goal rule would fire; the event is first
+    d.pickleballEvents = [{ id: 'e1', date: '2026-06-18', name: 'Riverside Open', kind: 'tournament', format: 'pool-play' }]
+    const n = nextStep(d, '2026-06-12')
+    expect(n.id).toBe('event')
+    expect(n.text).toContain('Riverside Open')
+    expect(n.text).toContain('in 6 days')
+  })
+
+  it('an event further out than a fortnight does not', () => {
+    const d = journalWithDays(['2026-06-11'])
+    d.pickleballEvents = [{ id: 'e1', date: '2026-07-30', name: 'Far Open', kind: 'tournament', format: 'pool-play' }]
+    expect(nextStep(d, '2026-06-12').id).not.toBe('event')
+  })
+
+  it('an unmet weekly goal says how many games are left', () => {
+    const d = journalWithDays(['2026-06-11'])
+    d.settings.pickleballGoalGames = 10
+    const n = nextStep(d, '2026-06-12')
+    expect(n.id).toBe('goal')
+    expect(n.text).toContain('7 more games')
+  })
+
+  it('a met weekly goal falls through', () => {
+    const d = journalWithDays(['2026-06-11'])
+    d.settings.pickleballGoalGames = 2
+    expect(nextStep(d, '2026-06-12').id).not.toBe('goal')
+  })
+
+  /* THE COVERAGE FLOOR, which is the whole reason this rule has a test.
+     Three play days give two gaps, and an average of two gaps is an anecdote —
+     the same shape as the momentum bug that reported a lapse as a 5.0 → 6.5
+     improvement. Below the floor the page must say something else rather than
+     invent a cadence. */
+  it('calls a lapse only once there are four play days to average over', () => {
+    const thin = journalWithDays(['2026-05-01', '2026-05-03', '2026-05-05'])
+    expect(nextStep(thin, '2026-06-12').id).toBe('milestone')
+
+    const enough = journalWithDays(['2026-05-01', '2026-05-03', '2026-05-05', '2026-05-07'])
+    const n = nextStep(enough, '2026-06-12')
+    expect(n.id).toBe('lapse')
+    expect(n.text).toContain('36 days')
+    expect(n.text).toContain('4 play days')
+    expect(n.text).toContain('every 2')
+  })
+
+  /* The order this shipped in was goal-then-lapse, and the demo journal caught
+     it: ten days quiet with a weekly goal of twelve rendered "12 more games
+     this week and you hit your goal of 12" — true, and nagging. */
+  it('a lapse outranks an unmet weekly goal', () => {
+    const d = journalWithDays(['2026-05-01', '2026-05-03', '2026-05-05', '2026-05-07'])
+    d.settings.pickleballGoalGames = 12
+    expect(nextStep(d, '2026-06-12').id).toBe('lapse')
+  })
+
+  it('playing on your usual cadence is not a lapse', () => {
+    const d = journalWithDays(['2026-06-04', '2026-06-06', '2026-06-08', '2026-06-11'])
+    expect(nextStep(d, '2026-06-12').id).toBe('milestone')
+  })
+
+  it('the floor names the nearest badge, not the first one', () => {
+    const d = journalWithDays(['2026-06-11', '2026-06-12'])
+    const n = nextStep(d, '2026-06-12')
+    expect(n.id).toBe('milestone')
+    // 2 of 10 sessions (8 to go) vs 4 of 25 games won (21) vs a 2-session win
+    // streak of 3 (1 to go) — the nearest, and the last of the three in order.
+    expect(n.text).toContain('Win streak: 3')
+    expect(n.text).toContain('1 to go')
   })
 })

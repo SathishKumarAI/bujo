@@ -14,7 +14,7 @@ import { useStickyState } from '../lib/useStickyState'
 import { CalendarHeatmap, DisclosureRow, StatBar, SectionRail } from '../components/page'
 import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent } from '../lib/pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
 import { ACADEMY_DRILLS, DRILL_FIXES } from '../lib/pickleballAcademy'
 import { PracticeTick } from '../components/coaching/PracticeTick'
@@ -261,6 +261,9 @@ export function Pickleball() {
     'pickleball.group', 'performance', PB_GROUPS.map((g) => g.id),
   )
   const currentGroup = PB_GROUPS.find((g) => g.id === group) ?? PB_GROUPS[1]
+  // The one sentence at the top of the page. See `nextStep`'s docstring for the
+  // priority order; it is total, so there is no empty state to design here.
+  const step = nextStep(data, today)
   const heat = [...byDay].map(([date, value]) => ({ date, value }))
 
   // ── Leagues & tournaments ──
@@ -398,6 +401,53 @@ export function Pickleball() {
    */
   const atAGlance = (
     <>
+      {/* THE SENTENCE, ABOVE THE NUMBERS.
+
+          Four totals are four true things that change nothing about today. The
+          one that does — an event on Saturday, a goal two games short, eleven
+          days of silence — was spread across three cards in the review zone,
+          behind a rail row you had to pick first. `nextStep` is the priority
+          list (lib/pickleball.ts), and it always returns a sentence so this
+          never renders as a hole.
+
+          COLOUR MEANS URGENCY HERE AND NOTHING ELSE — peach has a date on it,
+          yellow is a habit going quiet, teal is a goal you set, mauve is
+          something to aim at. The accent stays in the left edge and the icon;
+          the text is `fg-1`. Putting an accent on a wash of itself is the
+          calibration trap in CLAUDE.md, and this row would have been the
+          twenty-first call site of it.
+
+          It is a BUTTON when the detail exists, and a paragraph when it does
+          not: the rail groups are the detail, and a row that looks pressable
+          and does nothing is worse than a row that does not. */}
+      {(() => {
+        const tone = { first: 'mauve', event: 'peach', goal: 'teal', lapse: 'yellow', milestone: 'mauve' }[step.id]
+        const StepIcon = { first: Plus, event: CalendarDot, goal: Target, lapse: Gauge, milestone: Trophy }[step.id]
+        const body = (
+          <>
+            <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
+            <span className="min-w-0 text-body text-fg-1">{step.text}</span>
+            {step.group && (
+              <span className="ml-auto shrink-0 text-label text-fg-2">
+                {PB_GROUPS.find((g) => g.id === step.group)?.label} →
+              </span>
+            )}
+          </>
+        )
+        const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
+        return step.group ? (
+          <button
+            type="button"
+            onClick={() => setGroup(step.group!)}
+            className={`${shell} transition-colors hover:bg-ink-2`}
+            style={{ borderLeftColor: cat(tone) }}
+          >
+            {body}
+          </button>
+        ) : (
+          <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+        )
+      })()}
       {/* ONE BAR, NOT A CARD.
 
           This was a titled card wrapping four `StatTile`s, a "this week"
