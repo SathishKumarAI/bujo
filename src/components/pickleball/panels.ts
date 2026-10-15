@@ -7,6 +7,15 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  */
 
 /*
+ * ONE OR TWO WORDS PER ROW, AND THE SENTENCE UNDER THE HEADING.
+ *
+ * They were "Competition & rating", "Trends & volume" and "Opponents, partners
+ * & venues" — three labels that are summaries, not names. On a phone the five
+ * of them wrapped the bar to THREE lines, and "Opponents, partners & venues"
+ * alone is wider than half the screen. The row names the subject; the blurb
+ * under the heading, which is right there once you pick it, says what is in it
+ * and when to read it.
+ *
  * THE BLURB SAYS WHEN YOU READ IT, NOT WHAT IS IN IT.
  *
  * They used to restate the label — "Performance · form, streaks, effort and
@@ -21,8 +30,8 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  */
 export const PB_PANELS = [
   { id: 'sessions', label: 'Sessions', blurb: 'Straight after you log \u00b7 every session, newest first, and a score you can still fix', icon: Clock, color: 'green' },
-  { id: 'competition', label: 'Competition & rating', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
+  { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
   { id: 'performance', label: 'Performance', blurb: 'Straight after a session · form, effort, and whether you are getting on court at all', icon: PersonSimpleRun, color: 'sky' },
-  { id: 'trends', label: 'Trends & volume', blurb: 'Once a month · win rate over time, games per week, where the habit is going', icon: ChartBar, color: 'teal' },
-  { id: 'matchups', label: 'Opponents, partners & venues', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' }
+  { id: 'trends', label: 'Trends', blurb: 'Once a month · win rate over time, games per week, where the habit is going', icon: ChartBar, color: 'teal' },
+  { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' }
 ] as const

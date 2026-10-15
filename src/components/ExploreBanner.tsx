@@ -97,7 +97,12 @@ export function ExploreBanner() {
         You’re exploring sample data. Nothing here is yours yet —{' '}
         <strong className="text-fg-1">clear it out when you want to start for real.</strong>
       </span>
-      <div className="ml-auto flex items-center gap-2">
+      {/* `flex-wrap`, and the reason is measured: the four controls come to
+          about 300px, the sentence takes the rest, and on a 390px phone the
+          row pushed `document.body.scrollWidth` to **414** — so EVERY page in
+          demo mode scrolled 24px sideways and every card looked cut off at the
+          right edge. It reads as a broken page, and it was the banner. */}
+      <div className="ml-auto flex min-w-0 flex-wrap items-center gap-2">
         {/* First, and the non-destructive one. It was missing entirely: every
             exit from demo mode deleted the journal, so "I want to keep what I
             have written since" had no answer and sync stayed blocked forever. */}

@@ -241,6 +241,7 @@ export function Pickleball() {
   return (
     <PageLayout
       tier={1180}
+      collapsibleAct={{ key: 'pickleball', label: 'log' }}
       zone1={atAGlance}
       zone2={
         <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
@@ -284,6 +285,7 @@ export function Pickleball() {
             <ChipPick
               label="On court for"
               tone="teal"
+              dense
               value={numOrUndef(f.durationMin) ?? null}
               onChange={(v) => set({ durationMin: String(v) })}
               options={durationOptions([30, 45, 60, 90, 120])}
@@ -292,7 +294,7 @@ export function Pickleball() {
                   type="number"
                   value={f.durationMin}
                   onChange={(e) => set({ durationMin: e.target.value })}
-                  placeholder="Other"
+                  placeholder="Mins"
                   aria-label="Minutes on court"
                   className="w-20 py-1"
                 />
@@ -302,6 +304,13 @@ export function Pickleball() {
             <ChipPick
               label="Effort (RPE)"
               tone="peach"
+              /* `dense`, because ten chips at the default `px-3` come to 437px
+                 against a 416px act column and wrap 9 + 1 — a single orphan
+                 chip on its own line, which reads as a mistake rather than as
+                 a scale. The prop exists for this: a call site passing its own
+                 `className` would re-decide the chip geometry, which is how
+                 two rows of one control come to disagree. */
+              dense
               value={numOrUndef(f.rpe) ?? null}
               onChange={(v) => set({ rpe: String(v) })}
               options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: n, label: String(n) }))}
@@ -325,10 +334,10 @@ export function Pickleball() {
                     <Input
                       value={f.partner}
                       onChange={(e) => set({ partner: e.target.value })}
-                      placeholder="Someone else"
+                      placeholder="Add a name"
                       aria-label="Partner"
                       list="pb-partners"
-                      className="w-36 py-1"
+                      className="w-36 min-w-0 max-w-full py-1"
                     />
                     <datalist id="pb-partners">
                       {allPartners.map((n) => <option key={n} value={n} />)}
@@ -349,10 +358,10 @@ export function Pickleball() {
                   <Input
                     value={f.location}
                     onChange={(e) => set({ location: e.target.value })}
-                    placeholder="Somewhere else"
+                    placeholder="Add a court"
                     aria-label="Location"
                     list="pb-venues"
-                    className="w-36 py-1"
+                    className="w-36 min-w-0 max-w-full py-1"
                   />
                   <datalist id="pb-venues">
                     {allVenues.map((n) => <option key={n} value={n} />)}

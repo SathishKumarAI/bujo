@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowSquareOut, Barbell, Target } from '@/components/icons'
+import { ArrowSquareOut, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { Card, Empty, Input, Pill, Segmented, Textarea } from '../ui'
@@ -207,9 +207,13 @@ export function PickleballReview({ panel, onPanel }: {
     winTrend: 'winning', winLoss: 'winning', byFormat: 'winning',
     perWeek: 'volume', perMonth: 'volume', cumulative: 'volume', heatmap: 'volume',
   }
+  /* Plain nouns, because the first set were sentences pretending to be chips:
+     "How I am playing · How hard · Turning up" read as broken English in a
+     192px row and wrapped to three lines on a phone. A chip is a label, not a
+     question — the heading above it already asked the question. */
   const FACET_LABELS: Record<string, string> = {
-    form: 'How I am playing', effort: 'How hard', cadence: 'Turning up', badges: 'Badges',
-    winning: 'Winning', volume: 'Volume',
+    form: 'Form', effort: 'Effort', cadence: 'Consistency', badges: 'Badges',
+    winning: 'Win rate', volume: 'Volume',
   }
   const FACETS_BY_GROUP: Record<string, string[]> = {
     performance: ['form', 'effort', 'cadence', 'badges'],
@@ -256,36 +260,42 @@ export function PickleballReview({ panel, onPanel }: {
             `prep` chapter, eight minutes of it, and two copies of a safety
             instruction is the worse failure mode of the two. The row below
             says where it went. ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Today&apos;s focus</span>} subtitle="One drill, picked for today · tick it when you have done it" collapsible>
-        <div className="rounded-card bg-ink-2 p-3">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <span className="text-body font-medium text-fg-1">{drill.name}</span>
-            <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
-            <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
-          </div>
-          <p className="text-label text-fg-2">{drill.how}</p>
-          {/* The complaint, not the category. Rendered only when the group has
-              one — a lookup that silently returns undefined is the trap
-              `pickleballAcademy.test.ts` guards, and an empty line here would
-              read as a missing sentence rather than as an absent key. */}
-          {DRILL_FIXES[drill.skill] && (
-            <p className="mt-2 text-label text-fg-1">
-              <span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}
-            </p>
-          )}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line pt-3">
-          <Button variant="ghost" onClick={() => nav('coaching')} className="h-auto gap-1.5 p-0 text-label text-fg-1 hover:no-underline">
-            <Icon as={Barbell} size="sm" className="text-green" />
-            Warm-up, {ACADEMY_DRILLS.length} drills &amp; the 12-week program
+      {/* A STRIP, NOT A CARD — and it says where it comes from.
+
+          It shipped as a titled, collapsible card called "Today's focus" with
+          a subtitle, which asked three questions nobody wanted: what is a
+          focus, why is it in my record, and what happens if I fold it. It is
+          one drill out of Coaching's twenty-one, chosen by the date, and the
+          only thing to do with it is tick it — so it is a strip with a label
+          that says exactly that, and `from Coaching` is a link to the page
+          that owns the drills.
+
+          Pinned above the bar because it is not one of the five subjects: it
+          is today, and it stays on screen whichever row you are reading. */}
+      <section aria-label="Today's drill" className="rounded-card border border-line bg-ink-1 p-3">
+        <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <h3 className="inline-flex items-center gap-1.5 text-label font-medium text-fg-1">
+            <Icon as={Target} size="sm" className="text-mauve" /> Today&apos;s drill
+          </h3>
+          <Button variant="ghost" onClick={() => nav('coaching')} className="h-auto p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
+            from Coaching · {ACADEMY_DRILLS.length} more, plus the warm-up →
           </Button>
-          {RESOURCES.map((r) => (
-            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
-              {r.name} <Icon as={ArrowSquareOut} size="sm" />
-            </a>
-          ))}
+          <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
         </div>
-      </Card>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-body font-medium text-fg-1">{drill.name}</span>
+          <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
+        </p>
+        {/* The complaint, not the category — and FIRST, because it is the line
+            that tells you whether today's drill is your problem. Rendered only
+            when the group has one: a lookup that silently returns undefined is
+            the trap `pickleballAcademy.test.ts` guards, and an empty line here
+            would read as a missing sentence rather than an absent key. */}
+        {DRILL_FIXES[drill.skill] && (
+          <p className="mt-1 text-label text-fg-1"><span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}</p>
+        )}
+        <p className="mt-1 text-label text-fg-2">{drill.how}</p>
+      </section>
 
         {/* A BAR ACROSS THE TOP, NOT A COLUMN DOWN THE SIDE.
 
@@ -396,6 +406,14 @@ export function PickleballReview({ panel, onPanel }: {
           <p className="mt-2 text-label text-fg-2">Showing 5 of {sessions.length} · scroll for the rest</p>
         )}
       </Card>
+        <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-label text-fg-2">
+          Rules and reading:
+          {RESOURCES.map((r) => (
+            <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue hover:underline">
+              {r.name} <Icon as={ArrowSquareOut} size="sm" />
+            </a>
+          ))}
+        </p>
             </>)}
             {panel === 'competition' && <CompetitionPanel />}
             {panel === 'performance' && (<>

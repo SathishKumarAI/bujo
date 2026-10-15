@@ -27,10 +27,10 @@ import { AxeBuilder } from '@axe-core/playwright'
 const BASE = process.env.BUJO_URL ?? 'http://localhost:4173'
 const GROUPS = {
   sessions: 'Sessions',
-  competition: 'Competition & rating',
+  competition: 'Competition',
   performance: 'Performance',
-  trends: 'Trends & volume',
-  matchups: 'Opponents, partners & venues',
+  trends: 'Trends',
+  matchups: 'Matchups',
 }
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

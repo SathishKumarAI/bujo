@@ -102,8 +102,22 @@
    between a tablet and a laptop where it was always meant to. At 1280 the
    columns come out ~554 and ~340; 340 is wider than the 358 a phone gives the
    same form, which it handles. */
+/* SHUTTING THE ACT GIVES THE WIDTH BACK.
+
+   `display: none` on the act alone would leave its 38% track behind and the
+   review would sit narrow beside a gap — measured on Coaching's aside before
+   this rule existed: the roadmap went 790px to 1110px only once the COLUMN
+   went, not the panel. So the collapsed state changes `grid-template-columns`
+   and the hidden column stops existing.
+
+   The toggle itself lives outside `.zone-act` (see `PageLayout`), because a
+   control inside the panel it hides cannot bring the panel back. */
+.page-zones-actless .zone-act {
+  display: none;
+}
+
 @container (min-width: 900px) {
-  .page-zones:not(.page-zones-single) {
+  .page-zones:not(.page-zones-single):not(.page-zones-actless) {
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
   }
 
