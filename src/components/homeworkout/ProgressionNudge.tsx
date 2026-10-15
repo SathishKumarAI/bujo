@@ -37,13 +37,23 @@ export function ProgressionNudge({ rows, onAdd }: {
 }) {
   if (rows.length === 0) return null
 
+  /* Three, because `readyToProgress` sorts by evidence and this is a suggestion
+     rather than a list: four at once is not four times as useful, and measured
+     on a phone each row costs ~240px on a page already over its budget. The
+     rest are named in the subtitle rather than dropped silently — a count that
+     shrinks with no explanation is how "3 of 5" becomes "there are only 3". */
+  const shown = rows.slice(0, 3)
+  const more = rows.length - shown.length
+
   return (
     <Card
       title="Ready to progress"
-      subtitle={`${rows.length} movement${rows.length === 1 ? '' : 's'} you have been completing`}
+      subtitle={more > 0
+        ? `${shown.length} of ${rows.length} movements you have been completing — best evidenced first`
+        : `${rows.length} movement${rows.length === 1 ? '' : 's'} you have been completing`}
     >
       <ul className="space-y-2">
-        {rows.map((r) => (
+        {shown.map((r) => (
           <li key={r.from.id} className="min-w-0 rounded-card bg-ink-2 p-3">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="text-label text-fg-2">{r.from.name}</span>
@@ -75,7 +85,11 @@ export function ProgressionNudge({ rows, onAdd }: {
                 className="ml-auto text-fg-1 hover:border-mauve"
                 aria-label={`Add ${r.to.name} ${r.to.reps} to today’s session`}
               >
-                <Icon as={Plus} size="sm" /> {r.to.reps}
+                {/* "Add 3×12", not the bare spec the library tile uses — there
+                    the movement name sits directly above the button, and here
+                    the row already carries a different rep spec in its evidence
+                    line. Two numbers, one of them a button, needs the verb. */}
+                <Icon as={Plus} size="sm" /> Add {r.to.reps}
               </Button>
             </div>
           </li>
