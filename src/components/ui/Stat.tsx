@@ -208,6 +208,20 @@ export interface StatProps {
   decimals?: number
   /** Raise it onto the act plane. Off by default — most stats are read, not used. */
   raised?: boolean
+  /**
+   * This is THE answer to the question the page asks.
+   *
+   * Renders at `--text-answer` (40px, 2.67x body) in the display face, which
+   * is the one step above everything else. Measured at `bf8dbda`: the largest
+   * text on 12 of 14 views was the 22px page title — the view's own name —
+   * and nothing rendered above 26px anywhere. Largest over body was 1.47x,
+   * which is not a hierarchy.
+   *
+   * **One per page.** A page with two answers has none, and the step stops
+   * meaning anything the second time it is used. If two figures are competing
+   * for it, the page is asking two questions and wants splitting.
+   */
+  answer?: boolean
   className?: string
 }
 
@@ -229,6 +243,7 @@ export function Stat({
   tone = TONE_FALLBACK,
   decimals = 0,
   raised = false,
+  answer = false,
   className = '',
 }: StatProps) {
   const known = value != null && Number.isFinite(value)
@@ -256,7 +271,10 @@ export function Stat({
       ].filter(Boolean).join(' ')}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-display font-display leading-none tabular-nums" style={{ color: cat(known ? tone : 'overlay0') }}>
+        <span
+          className={`${answer ? 'text-answer' : 'text-display'} font-display leading-none tabular-nums`}
+          style={{ color: cat(known ? tone : 'overlay0') }}
+        >
           {known ? `${value.toFixed(decimals)}${suffix}` : '—'}
         </span>
         {hasRange && known ? (
