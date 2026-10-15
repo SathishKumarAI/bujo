@@ -38,8 +38,9 @@
 // flash on someone's first second in the app.
 //
 // **2. The URL must not be carrying an auth round trip.** This is the one that
-// matters. Supabase returns from Google with `#access_token=…` (implicit flow,
-// which is this client's default — `flowType` is unset) or `?code=…`, and
+// matters. Supabase returns from Google with `?code=…` (PKCE, set explicitly in
+// `lib/supabase.ts`) or `#access_token=…` (the implicit flow auth-js defaults
+// to, which a sign-in begun under an older bundle can still come back on), and
 // `detectSessionInUrl` reads it from `window.location` asynchronously after the
 // client is constructed. A reload at that instant **discards the fragment before
 // the session is persisted**, and the user lands signed-out with nothing to
