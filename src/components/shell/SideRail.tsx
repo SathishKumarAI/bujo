@@ -5,6 +5,7 @@ import { Kbd } from '../Kbd'
 import { Button } from '../ui/button'
 import { AccountMenu } from './AccountMenu'
 import { SyncPill } from './SyncPill'
+import { RailTimer } from './RailTimer'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { RailToggle } from './RailToggle'
 import { WeekStrip } from './WeekStrip'
@@ -238,6 +239,11 @@ export function SideRail({
           narrow widths — a 208px column has room for the word, and "Quick
           add" is worth more than a `+`. */}
       <div className="mt-auto flex flex-col gap-1.5 border-t border-line pt-3">
+        {/* Start a block from wherever you are. It is above the sync pill
+            because it is an ACT and that is ambient state — and above Quick
+            add's divider rather than beside it, so the two primary verbs of
+            this app (capture, focus) sit together at the foot of the rail. */}
+        <RailTimer />
         {/* Moved down from the top bar when that came off most views. It
             belongs here better anyway: the rail is present on every desktop
             screen and never scrolls away, and "where is my journal" is

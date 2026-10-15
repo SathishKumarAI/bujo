@@ -20,6 +20,7 @@ import { useDevice } from './device'
 import { useHeaderHeight } from './useHeaderHeight'
 import { EXTRA_JUMPS, SECTIONS, landingOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
+import { useFocusTimerRunner } from '../../lib/useFocusTimerRunner'
 
 /**
  * Owns the page frame and the global quick-add dialog.
@@ -62,6 +63,12 @@ export function AppShell({
   const [helpOpen, setHelpOpen] = useState(false)
   const { data, setSettings } = useJournal()
   const { day } = useCursor()
+  // The focus timer's single completion owner. Mounted here because the
+  // shell is the one place guaranteed to exist exactly once — both the rail
+  // control and the Focus page render the same store, and either of them
+  // handling the end of a block would log the session twice.
+  useFocusTimerRunner()
+
   const isMobile = useDevice() === 'mobile'
 
   // Desktop rail visibility. `useJournal` rather than local state: the whole

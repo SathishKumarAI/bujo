@@ -55,7 +55,30 @@ export const PRESETS: readonly Preset[] = [
   { w: 50, b: 10, label: '50 / 10' },
 ]
 
+/** Accent tokens a focus block may wear. All exist in all five themes. */
+export const TIMER_TONES = ['red', 'peach', 'mauve', 'blue', 'teal', 'green'] as const
+export type TimerTone = (typeof TIMER_TONES)[number]
+
 export interface TimerState {
+  /**
+   * The work block's colour.
+   *
+   * **Red by default, and that is the point of it.** A focus block is a
+   * deadline you set for yourself, and the one thing the colour has to do is
+   * make the remaining time feel like it is running out — which mauve, the
+   * app's calm brand accent, deliberately does not. Red is the only hue in
+   * this palette that reads as a clock rather than as decoration.
+   *
+   * Choosable, because urgency is not universal: red is pressure for some
+   * people and anxiety for others, and a timer that makes you avoid opening it
+   * is worse than no timer. Six accents, all of which clear contrast in all
+   * five themes (`npm run contrast` guards that).
+   *
+   * The BREAK is always green and is not choosable. A break is the one phase
+   * whose whole job is to say "stop" — letting it be red would invert the
+   * single piece of meaning this colour carries.
+   */
+  tone: TimerTone
   presetIndex: number
   mode: Mode
   /** Epoch ms the current phase ends, or null when not running. */
@@ -68,7 +91,7 @@ export interface TimerState {
 
 const KEY = 'bujo:focus.timer'
 
-const EMPTY: TimerState = { presetIndex: 1, mode: 'work', endsAt: null, pausedLeft: null, blocks: 0 }
+const EMPTY: TimerState = { tone: 'red', presetIndex: 1, mode: 'work', endsAt: null, pausedLeft: null, blocks: 0 }
 
 function read(): TimerState {
   try {
@@ -77,6 +100,7 @@ function read(): TimerState {
     const p = JSON.parse(raw) as Partial<TimerState>
     const i = typeof p.presetIndex === 'number' && PRESETS[p.presetIndex] ? p.presetIndex : 1
     return {
+      tone: TIMER_TONES.includes(p.tone as TimerTone) ? (p.tone as TimerTone) : 'red',
       presetIndex: i,
       mode: p.mode === 'break' ? 'break' : 'work',
       endsAt: typeof p.endsAt === 'number' ? p.endsAt : null,
@@ -135,6 +159,11 @@ export function resume(now = Date.now()): void {
 /** Back to the start of the current phase, stopped. */
 export function reset(): void {
   publish({ ...state, endsAt: null, pausedLeft: null })
+}
+
+export function setTone(tone: TimerTone): void {
+  if (!TIMER_TONES.includes(tone)) return
+  publish({ ...state, tone })
 }
 
 export function setPreset(i: number): void {
