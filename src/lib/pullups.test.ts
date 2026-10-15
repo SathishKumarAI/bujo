@@ -100,6 +100,14 @@ describe('the manual is the library, not a copy of it', () => {
    * failed: the exports simply went unread. These counts are the gate.
    */
   it('still carries every workout format and progression', () => {
+    // The weekly range is written twice — as a sentence for the table and as
+    // two numbers for zone 1 — so assert they say the same thing. Checked
+    // against a planted mismatch before being trusted.
+    for (const a of PULLUP_ABILITY) {
+      expect(a.weekly, `${a.group} weekly`).toMatch(new RegExp(`^${a.weeklyLow}\\u2013${a.weeklyHigh}\\b`))
+      expect(a.weeklyHigh, `${a.group} range`).toBeGreaterThan(a.weeklyLow)
+    }
+
     expect(PULLUP_WORKOUTS.length).toBe(14)
     // Every field, on every row. `profile` became three fields, and a format
     // missing one renders a card with a hole in it rather than failing —

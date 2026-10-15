@@ -90,15 +90,21 @@ export function Pullups() {
    *   repeats it (`20 reps · Wed, Oct 14`). On an empty journal both read
    *   `None yet` / `0 reps`, so half of zone 1 was a bar of absences.
    */
-  const weeklyFloor = Number(ability.weekly.match(/\d+/)?.[0]) || null
-
   const facts = [
     { label: 'Training set', value: `${ability.trainingSet} rep${ability.trainingSet === 1 ? '' : 's'}/set` },
     {
+      /*
+        `320 / 120–210`, not `320 of 120–210 pull-ups`. Two facts share the bar,
+        so each gets about 138px on a 390px phone, and the long form measured
+        **200px needed against 138 shown** — caught by `npm run clipped`, which
+        is the gate for exactly this and the reason the unit is not here. The
+        unit is in the Training set panel, which states daily and weekly in
+        full for every group.
+      */
       label: 'This week',
-      value: `${weekReps} of ${ability.weekly}`,
+      value: `${weekReps} / ${ability.weeklyLow}–${ability.weeklyHigh}`,
       amount: weekReps,
-      of: weeklyFloor,
+      of: ability.weeklyLow,
     },
   ]
 

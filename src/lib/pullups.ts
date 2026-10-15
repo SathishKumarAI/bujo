@@ -103,16 +103,31 @@ export interface PullupAbility {
   trainingSet: number // reps per working set
   daily: string // recommended daily volume
   weekly: string // recommended weekly volume
+  /**
+   * The weekly range again, as numbers.
+   *
+   * `weekly` is a sentence — "75–150 progression reps", "120–210 pull-ups" —
+   * because the unit changes by group and the table prints it whole. Zone 1
+   * needs the two numbers: one to draw a track against, one to print short
+   * enough for a 138px phone slot. The first version took them with
+   * `weekly.match(/\d+/)`, which is a parse over our own data and exactly what
+   * splitting `PullupWorkout.profile` was for.
+   *
+   * Two spellings of one fact, so `pullups.test.ts` asserts the sentence
+   * starts with the numbers. That is the tripwire; without it they drift.
+   */
+  weeklyLow: number
+  weeklyHigh: number
 }
 
 export const PULLUP_ABILITY: PullupAbility[] = [
-  { group: 'Beginner', range: '<1', trainingSet: 3, daily: '25–50 progression reps', weekly: '75–150 progression reps' },
-  { group: 'Novice', range: '1–5', trainingSet: 1, daily: '30–60 reps', weekly: '90–180 reps' },
-  { group: 'Intermediate', range: '6–8', trainingSet: 2, daily: '40–70 pull-ups', weekly: '120–210 pull-ups' },
-  { group: 'Intermediate+', range: '9–12', trainingSet: 3, daily: '50–80 pull-ups', weekly: '150–240 pull-ups' },
-  { group: 'Advanced', range: '13–16', trainingSet: 4, daily: '60–90 pull-ups', weekly: '180–270 pull-ups' },
-  { group: 'Expert', range: '17–20', trainingSet: 5, daily: '75–120 pull-ups', weekly: '225–360 pull-ups' },
-  { group: 'Elite', range: '21–24', trainingSet: 6, daily: '100–175 pull-ups', weekly: '300–525 pull-ups' },
+  { group: 'Beginner', range: '<1', trainingSet: 3, daily: '25–50 progression reps', weekly: '75–150 progression reps' , weeklyLow: 75, weeklyHigh: 150 },
+  { group: 'Novice', range: '1–5', trainingSet: 1, daily: '30–60 reps', weekly: '90–180 reps' , weeklyLow: 90, weeklyHigh: 180 },
+  { group: 'Intermediate', range: '6–8', trainingSet: 2, daily: '40–70 pull-ups', weekly: '120–210 pull-ups' , weeklyLow: 120, weeklyHigh: 210 },
+  { group: 'Intermediate+', range: '9–12', trainingSet: 3, daily: '50–80 pull-ups', weekly: '150–240 pull-ups' , weeklyLow: 150, weeklyHigh: 240 },
+  { group: 'Advanced', range: '13–16', trainingSet: 4, daily: '60–90 pull-ups', weekly: '180–270 pull-ups' , weeklyLow: 180, weeklyHigh: 270 },
+  { group: 'Expert', range: '17–20', trainingSet: 5, daily: '75–120 pull-ups', weekly: '225–360 pull-ups' , weeklyLow: 225, weeklyHigh: 360 },
+  { group: 'Elite', range: '21–24', trainingSet: 6, daily: '100–175 pull-ups', weekly: '300–525 pull-ups' , weeklyLow: 300, weeklyHigh: 525 },
 ]
 
 /** Your ability group from a max strict-pull-up count. */
