@@ -194,13 +194,39 @@ export function Coaching() {
             hiding it on scroll is COD-202, where the phone's only navigation
             slid out of frame.
           */}
-          <SectionRail
-            label="Coaching sections"
-            groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label, count: 'count' in c ? c.count : undefined }))}
-            value={section}
-            onChange={(id) => setSection(id ?? 'program')}
-            railAt="never"
-          />
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+            <SectionRail
+              label="Coaching sections"
+              groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label, count: 'count' in c ? c.count : undefined }))}
+              value={section}
+              onChange={(id) => setSection(id ?? 'program')}
+              railAt="never"
+            />
+            {/*
+              A BADGE, NOT A SENTENCE ACROSS THE PAGE.
+
+              The one-line disclaimer took a full row above every panel and read
+              as furniture. On the six sections that are coaching rather than
+              medicine it is now a mark at the end of the bar — the place an
+              alert belongs, out of the reading line but never off the page.
+
+              Shortened in what it DRAWS only: the full sentence is the `title`
+              for a pointer and an `sr-only` span for a screen reader, which is
+              the contract `docs/USER-CONTROL.md` rule 4 states — a shortened
+              label is a shortened name unless it is said somewhere.
+
+              The two safety sections do NOT get this. They make claims about
+              bodies, and a claim about bodies does not get to be a badge.
+            */}
+            {section !== 'prep' && section !== 'rehab' && (
+              <span title={SAFETY_DISCLAIMER.short}
+                className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-peach/15 px-2 py-0.5 text-label text-fg-2">
+                <Icon as={ShieldWarning} size="sm" className="text-peach" />
+                Educational only
+                <span className="sr-only">{SAFETY_DISCLAIMER.short}</span>
+              </span>
+            )}
+          </div>
           {/*
             EVERY SECTION SAYS WHAT IT IS, not just the one about knees.
 
@@ -227,7 +253,7 @@ export function Coaching() {
             that make claims about bodies get the full points, full width; the
             other six get the one line. Nothing stacks.
           */}
-          {section === 'prep' || section === 'rehab' ? (
+          {(section === 'prep' || section === 'rehab') && (
             <div className="mt-2 mb-3 flex w-full items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
               <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
               <ul className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-x-5 gap-y-0.5 @lg/page:grid-cols-2">
@@ -236,11 +262,6 @@ export function Coaching() {
                 ))}
               </ul>
             </div>
-          ) : (
-            <p className="mt-2 mb-3 flex items-start gap-1.5 text-label text-fg-2">
-              <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-peach" />
-              {SAFETY_DISCLAIMER.short}
-            </p>
           )}
           {section !== 'program' ? <Manual chapter={section} /> : <>
           <TodaySession slot={todaySlot} dow={todayDow} />

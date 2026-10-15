@@ -35,7 +35,20 @@ and the rows were never seen — **count the rows before quoting a total.**
 COD-323 and COD-324 filed In Progress for the fix and the feature, COD-325
 (the multi-sport question) and COD-326 (follow-ups) in Backlog.
 
-**Next action:** push and open the PR against `main`, citing COD-288.
+**PR #407** is open against `main`.
+
+Then the pass kept going, on the same branch and in the same PR:
+
+| commit | what |
+|---|---|
+| `4bb6b26` | the twelve weeks become a spine; one warning per section |
+| `66a6b9e` | the manual chapters get a pulse; the act gets a side card |
+| *(this)* | the disclaimer becomes a badge; the docs |
+
+**Next action:** re-run `npm run a11y` (the last full run predates the spine,
+the side card and the badge), then merge #407. The badge is the only one of
+those that touches a colour pairing — `bg-peach/15` with `text-fg-2` — and it
+is the one to look for in the table.
 
 ### What the page is now
 

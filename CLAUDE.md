@@ -43,6 +43,51 @@ that the string says anything — `src/lib/pickleballAcademy.test.ts` is the
 pattern: point count, per-point length floor, and no point that is a copy of the
 field beside it.
 
+Trap: **a container query against a missing container never matches, and
+nothing says so.** `PageLayout` declares no `@container/page`, so a
+`@3xl/page:grid-cols-[minmax(0,1fr)_19rem]` inside zone 2 simply did not apply
+— the aside rendered **1110px wide, i.e. full width**, with no error, no
+warning and a perfectly valid class list. It looks exactly like a breakpoint
+you chose wrong. Declare the container on a WRAPPER (an element cannot query
+itself) and **verify by measuring the box**, not by reading the classes. Same
+family as the stale-utility-class trap above: Tailwind v4 does not fail a build
+over a rule that can never match.
+
+Trap: **`hidden` on a grid child leaves its track behind.** Hiding a 19rem
+aside that way keeps the column and the list stays narrow beside a gap —
+"shutting it" gives back the height and not the width. Change `grid-cols`
+instead. Measured on Coaching's week panel: roadmap **790px → 1110px** only
+once the column itself went.
+
+Trap: **`fillMap` is lossy for anything whose value is a list.** It is a
+shallow merge, so on a key collision the winner's array replaces the loser's
+outright. That is correct for `coachingWeekNotes` (one sentence, last edit
+wins) and silent data loss for `practiceLog` (the days you ticked a drill on
+the other device). `unionListMap` is the one to copy, and remember the
+delete-if-both-sides-lacked-it loop or a merge invents an empty map.
+
+Trap: **a raw `<details>` is invisible to `npm run a11y`.** `openFolds()` finds
+content by `[aria-expanded="false"]` and a `<summary>` carries no such
+attribute, so Coaching's session template had never been opened by the gate at
+any theme or viewport. Grep for `<details` before trusting a fold count — and
+note this is the THIRD disclosure implementation the repo has had to learn
+about, after `CollapsibleSection` and `Card collapsible`.
+
+Trap: **a facet merge can expire.** Play safe was folded into the knee chapter
+on a real measurement — five one-line tips, 0.36 desktop screens, a facet
+rather than a peer. Then the chapter gained content and measured **3.32 desktop
+and 7.53 phone screens**, the worst on the page by a factor of two. The rule did
+not stop being true; the thing it was applied to stopped being small.
+**Re-measure a merge after you add to either half**, and split on WHEN SOMEBODY
+READS IT rather than on what the original rows happened to be called.
+
+Trap: **a CSS class named for one call site is how the third one writes its
+own.** `.week-in` was the roadmap's stagger; the manual chapters wanted exactly
+the same 7px rise and the honest options were to reuse a class whose name lies
+or to duplicate the keyframes. Renamed to `.settle-in` the moment the second
+caller appeared — which is the cheapest possible moment, and the only one where
+the rename is a two-line diff.
+
 ## Running the browser gates
 
 `npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a

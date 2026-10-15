@@ -11,6 +11,84 @@ library, knee rehab/prehab, and a mental-game track.
 This is the app's most *editorial* page — it teaches rather than records — and
 it is the best-structured page in the product.
 
+## What shipped · COD-288 / COD-323 / COD-324, 2026-10-15
+
+The page was two surfaces stacked: 1640px of act (today's session plus a
+twelve-row roadmap) and, under all of it, the manual's own bar of seven
+chapters. The table of contents was the last thing on the page.
+
+### Shape
+
+**One navigation for the whole page.** A horizontal `SectionRail` at the top —
+`Program · Shots · Drills · Skill ladder · Warm-up · Injuries · Mental game ·
+Formats` — with the programme as its first row and its default, so landing
+still lands on the act. There is no zone 3.
+
+**The act is a sticky aside** holding the 45–60 min session template, the week
+record and the programme's foot (start date, Reset). Shutting it removes the
+COLUMN, not just the content: roadmap **790px → 1110px**.
+
+**Today is a strip**, not a card: the focus, its instruction and seven inline
+day chips on one line. 232px → one row.
+
+| | before | after |
+|---|---|---|
+| desktop, landing | 2429px · 2.70 screens | **1471px** |
+| desktop, worst section | 1220px | 1943px (Injuries), none over 3 screens |
+| phone, chapters reachable without a sideways scroll | **3 of 7** | **8 of 8** |
+| `<details>` in `#main` | 1, invisible to the gate | **0** |
+| disclaimers per section | 1 of 8 sections carried one | **8 of 8, exactly one each** |
+
+### Content
+
+Every section gained the scenario the reference was missing — the shapes are
+written up in `docs/REUSABLE-PATTERNS.md` §12:
+
+- **6 court injuries** (`lib/pickleballSafety.ts`): where on court, the
+  mechanism, the first hour, prevention, and red flags.
+- **An 8-minute warm-up as a sequence**, each block naming the injury it
+  prevents; an after-play block; gear with its **limit** on every row.
+- `when` / `do` on all 16 mindset principles; `youAreHere` / `unlock` on all 5
+  ladder rungs; `when` on all 14 shots; `DRILL_FIXES` per drill group.
+- Points, never paragraphs — every read field is `string[]`.
+
+**Sources are credited and the links are built from each body's name** rather
+than pinned. Nothing here cites a URL that was not checked, because nothing
+cites a URL at all.
+
+### What it records now
+
+`settings.practiceLog` — a dated tick per drill and per shot, on the week's
+prescribed drills, on every library row and beside each shot. Days rather than
+a count, merged per key by `unionListMap` in `lib/conflict.ts`.
+
+`settings.coachingStart` is editable (it was not; Reset was the only control
+and it cost twelve ticks), and Reset now names what it removes and clears the
+week notes it used to orphan.
+
+### How it feels
+
+- The twelve weeks are a **spine** — nodes in a gutter joined by a line, green
+  behind the weeks you have finished. So is the skill ladder, which marks your
+  rung from `settings.duprLog`.
+- Hover reveals a shot or a drill group; clicking **pins** it.
+- Colour means exactly three things: **green** done or prevents harm, **red**
+  stop, **mauve** now. Eight chapter accents are gone; the ladder's
+  green→peach ramp survives because it is an *order*.
+- All motion is transform-only and off under `prefers-reduced-motion`. See
+  `REUSABLE-PATTERNS.md` §10 for why nothing fades.
+
+### Known, and tracked
+
+- **`PanelCard` is not used here.** `components/page/Panel.tsx` lands with PR
+  #405 and is not on `main`, so the chapters still hand-roll their card markup.
+  COD-326.
+- **A rail has no `aria-expanded`**, so `npm run a11y` grades the row the page
+  opens on. Seven of eight rows are unscanned — COD-237's shape. COD-326.
+- **Formats is the one section with no scenario.**
+- **Is this pickleball or a shape?** The structure is sport-agnostic and the
+  content is not. Costed three ways in `docs/QUESTIONS.md`; COD-325.
+
 ## What shipped · COD-22, 2026-08-28
 
 Rebuilt onto the three-zone contract, matching Pull-ups — the two pages are the
