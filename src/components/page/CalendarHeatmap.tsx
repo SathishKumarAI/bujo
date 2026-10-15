@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { DayGrid, type DayCell } from '../ui/day-grid'
 import { addDays, fromISODay, prettyDay, todayISO } from '../../lib/date'
 import { quartileLevels } from '../../lib/viz'
+import { useStickyState } from '../../lib/useStickyState'
+import { Segmented } from '../ui'
 
 export interface HeatDatum {
   date: string
@@ -32,6 +34,8 @@ export function CalendarHeatmap({
   size,
   fluid = false,
   color = 'mauve',
+  ranges = false,
+  storageKey,
 }: {
   weeks?: number
   data: HeatDatum[]
@@ -62,14 +66,56 @@ export function CalendarHeatmap({
    * categorical. Nothing here colours a series by which addiction it is.
    */
   color?: string
+  /**
+   * Offer a range switch, and open on THIS MONTH.
+   *
+   * ── Why the default shrank ─────────────────────────────────────────────
+   *
+   * Call sites asked for 26 and 53 weeks. On Fitness that drew half a year of
+   * cells of which eight were filled — a grid that is overwhelmingly empty
+   * does not read as "you rested", it reads as a page that failed to load,
+   * and it spends the most horizontal space on the page to say the least.
+   *
+   * Reported directly: *"why should I focus on yearly? I want to focus on
+   * this month and this week."* That is also the right instinct — a month is
+   * the window you can still act on, and the year answers a different
+   * question ("is this a habit yet") that you ask occasionally rather than
+   * every time you open the page.
+   *
+   * `storageKey` persists the choice, so someone who does want the year gets
+   * the year every visit instead of re-picking it.
+   */
+  ranges?: boolean
+  /** Where the chosen range is remembered. Give each grid its own. */
+  storageKey?: string
 }) {
+  /**
+   * Weeks per range.
+   *
+   * A "month" is 5 weeks, not 4: the grid winds back to the Sunday on or
+   * before the window, so four weeks of columns can show as few as 22 days
+   * once that alignment is paid for. Five always covers a calendar month.
+   * "Week" is 2, for the same reason — a single column is a stripe, not a
+   * grid, and you want last week beside this one to see a change.
+   */
+  const RANGE_WEEKS = { week: 2, month: 5, year: 53 } as const
+  type Range = keyof typeof RANGE_WEEKS
+  const [range, setRange] = useStickyState<Range>(
+    `heat.range.${storageKey ?? 'default'}`,
+    'month',
+    ['week', 'month', 'year'] as const,
+  )
+  // With `ranges` off the caller still owns the window, so every existing call
+  // site renders exactly as it did until it opts in.
+  const shownWeeks = ranges ? RANGE_WEEKS[range] : weeks
+
   const days = useMemo<DayCell[]>(() => {
     const byDate = new Map<string, number>()
     for (const d of data) byDate.set(d.date, (byDate.get(d.date) ?? 0) + d.value)
 
     // Wind back to the Sunday on or before the start of the window, so every
     // column is a whole week and the weekday rows line up.
-    const start = addDays(today, -(weeks * 7 - 1))
+    const start = addDays(today, -(shownWeeks * 7 - 1))
     const gridStart = addDays(start, -fromISODay(start).getDay())
 
     const dates: string[] = []
@@ -91,10 +137,11 @@ export function CalendarHeatmap({
         srLabel: value > 0 ? `${prettyDay(date)}: ${round(value)}${unit && ` ${unit}`}` : `${prettyDay(date)}: rest day`,
       }
     })
-  }, [data, weeks, today, unit])
+  }, [data, shownWeeks, today, unit])
 
   const trained = days.filter((d) => d.level > 0).length
-  return (
+
+  const grid = (
     // Focusable, because it scrolls. A `overflow-x-auto` box that no control
     // inside can be tabbed to is unreachable by keyboard — axe `serious:
     // scrollable-region-focusable`, and true: the grid is a table of static
@@ -119,8 +166,31 @@ export function CalendarHeatmap({
         fluid={fluid}
         months
         color={color}
-        label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${weeks} weeks`}
+        label={label ?? `Training calendar: ${trained} active ${trained === 1 ? 'day' : 'days'} in the last ${shownWeeks} weeks`}
       />
+    </div>
+  )
+
+  // No switch means no wrapper: a caller that has not opted in renders exactly
+  // the markup it did before, so the `fluid` width maths that divides the
+  // container is untouched.
+  if (!ranges) return grid
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-end">
+        <Segmented
+          tone="neutral"
+          value={range}
+          onChange={setRange}
+          options={[
+            { value: 'week' as Range, label: 'Week' },
+            { value: 'month' as Range, label: 'Month' },
+            { value: 'year' as Range, label: 'Year' },
+          ]}
+        />
+      </div>
+      {grid}
     </div>
   )
 }

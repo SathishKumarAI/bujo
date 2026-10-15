@@ -146,7 +146,8 @@ export function AddictionBreakdownCard({
                 lands in — a fixed 11px cell cannot be right at both a 340px
                 half-column and a 690px enlarged card. */}
             <CalendarHeatmap
-              weeks={12}
+              ranges
+              storageKey="recovery"
               data={profile.heat}
               color="red"
               unit={quantified ? 'times' : ''}

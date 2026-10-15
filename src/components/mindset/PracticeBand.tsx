@@ -42,7 +42,8 @@ export function PracticeBand({
               18.8px in the same cell — a shade smaller than today, double the
               window, and no dead space at any width. */}
           <CalendarHeatmap
-            weeks={26}
+            ranges
+            storageKey="mindset"
             fluid
             today={today}
             data={practiceData(log)}

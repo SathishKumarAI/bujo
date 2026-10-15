@@ -9,9 +9,28 @@ import { Input } from '../ui'
  * targets around the field you were always going to type into, and reaching 42
  * from 0 in steps of 5 is nine taps. The unit lives inside the field so the
  * label does not have to say it twice.
+ *
+ * ── A field is as wide as what you type in it ───────────────────────
+ *
+ * These carried `control-max`, the 380px cap. That number exists so a *text*
+ * input stops advertising more room than you need — a 700px text box is a
+ * stranded caret. Applied to a field holding `5`, it is the same mistake an
+ * order of magnitude worse: a 380px box for one digit says "write me an
+ * essay" about your distance.
+ *
+ * Reported exactly that way: *"why taking that much width for 5 miles?"*
+ *
+ * `--field-num` is 9rem — wide enough for `1234.5` plus the unit suffix at
+ * this type size, which covers every value these fields take (minutes in a
+ * day, kilometres in an ultra, calories in a day). `wide` is the escape hatch
+ * for a number that genuinely runs long, and nothing uses it yet; if a field
+ * needs it, that is a signal the value is not really a number.
+ *
+ * The cap is `max-width`, not `width`, so on a phone the field still shrinks
+ * to the column rather than overflowing it.
  */
 export function NumField({
-  label, value, onChange, suffix, step, placeholder,
+  label, value, onChange, suffix, step, placeholder, wide = false,
 }: {
   label: string
   value: string
@@ -19,14 +38,19 @@ export function NumField({
   suffix: string
   step?: string
   placeholder?: string
+  /** Opt out of the numeric width for a value that genuinely runs long. */
+  wide?: boolean
 }) {
   return (
-    <label className="block text-body text-fg-1">
+    <label className="block min-w-0 text-body text-fg-1">
       {label}
-      {/* `control-max` on the wrapper as well as the input: the suffix is
-          positioned against this box, so without the same cap it would sit at
-          the far right of the column while the field ended 380px in. */}
-      <span className="control-max relative mt-1 block w-full">
+      {/* The cap goes on the wrapper as well as the input: the suffix is
+          positioned against this box, so without the same width it would sit
+          at the far right of the column while the field ended 9rem in. */}
+      <span
+        className={`relative mt-1 block w-full ${wide ? 'control-max' : ''}`}
+        style={wide ? undefined : { maxWidth: '9rem' }}
+      >
         <Input
           type="number"
           inputMode="decimal"

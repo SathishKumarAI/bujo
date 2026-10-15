@@ -297,7 +297,7 @@ export function Fitness() {
                   here and ~10px on a phone with no breakpoint, and the window
                   doubles because the space was already paid for. */}
               <div className="mt-3">
-                <CalendarHeatmap weeks={26} fluid data={heat} unit="min" />
+                <CalendarHeatmap ranges storageKey="fitness" fluid data={heat} unit="min" />
               </div>
             </section>
           )}
