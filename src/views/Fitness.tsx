@@ -140,8 +140,31 @@ export function Fitness() {
   // the mono face, so "Whenever the court is free" and "Target met — anything
   // you like" came out in the typewriter — mono is this app's signature on
   // numerals, and spending it on prose spends it on nothing.
+  // ── The one fact on this page that has a target ──────────────────────────
+  //
+  // Only cardio measures against a goal. Strength counts sessions and sport
+  // counts games — neither has a denominator, so neither gets a track, and
+  // inventing one would draw a scale that does not exist. The audit measured
+  // this view printing 249 numbers and drawing zero shapes; the fix is not to
+  // give all 249 a bar, it is to give the ones with a range their range.
+  //
+  // `amount`/`of` rather than parsing `WEEK[mode]`: the string is already a
+  // formatted answer and re-deriving numbers out of it would be a second
+  // source of truth for the same fact.
+  const weekRange: Partial<Record<Mode, { amount: number; of: number }>> = {
+    cardio: { amount: minutes, of: goal },
+  }
+
   const facts = [
-    { label: MODE_COPY[mode].weekLabel, value: WEEK[mode] },
+    {
+      label: MODE_COPY[mode].weekLabel,
+      value: WEEK[mode],
+      ...weekRange[mode],
+      // Green once the target is met, so beating it reads as beating it. Below
+      // target the track stays the brand hue rather than turning red: you are
+      // mid-week, not failing.
+      tone: mode === 'cardio' && minutes >= goal ? ('green' as const) : ('mauve' as const),
+    },
     { label: 'Next up', value: NEXT[mode], prose: true },
     { label: 'Last session', value: last ? `${fullLabelOf(last.activity, last.subActivity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
   ]

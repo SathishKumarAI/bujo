@@ -1,9 +1,29 @@
 import type { ReactNode } from 'react'
 import { Segmented } from '../ui'
+import { Track } from '../ui/Stat'
 
 export interface StatFact {
   label: string
   value: ReactNode
+  /**
+   * ── The range, which is what turns a fact into information ──────────────
+   *
+   * Optional, and the whole point of it being optional is that a fact with
+   * nothing to compare against must stay a plain figure. Decoration on an
+   * unbounded number implies a scale the reader then tries to read off.
+   *
+   * Zone 1 is where this matters most. `377 / 150 min` is the clearest case
+   * in the app: it means the week's target was beaten two and a half times
+   * over, and the old markup said it in the same voice as a date. The string
+   * is kept as `value` — it is still the precise answer — and the track under
+   * it is what makes the relationship legible without reading.
+   */
+  /** Current amount, as a number. Needed because `value` is often preformatted. */
+  amount?: number | null
+  /** The target or total `amount` is measured against. Both are needed to draw. */
+  of?: number | null
+  /** Token name for the track. Defaults to the brand hue. */
+  tone?: 'mauve' | 'blue' | 'green' | 'peach' | 'red' | 'teal' | 'yellow' | 'pink' | 'fg-2'
   /** Optional destination — a fact you can act on becomes a button. */
   onClick?: () => void
   /**
@@ -95,6 +115,14 @@ function Fact({ fact, first }: { fact: StatFact; first: boolean }) {
         the column is real, and truncating it is the safer failure.
       */}
       <span className={`block text-body font-medium text-fg-1 ${fact.prose ? '' : 'num truncate'}`}>{fact.value}</span>
+      {/* The track sits under the figure rather than replacing it, because the
+          exact numbers are still the answer — the shape only makes the
+          relationship between them readable at a glance. Drawn only when both
+          halves are real: a target with no amount, or an amount with no
+          target, is a scale with one end missing. */}
+      {fact.amount != null && fact.of != null && fact.of > 0 ? (
+        <span className="mt-1 block"><Track value={fact.amount} max={fact.of} tone={fact.tone} height={4} /></span>
+      ) : null}
     </>
   )
   // The divider is a left border on every fact but the first, so the bar never
