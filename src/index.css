@@ -624,6 +624,79 @@ body.handwriting textarea {
   .caret-turn { transition: none; }
 }
 
+/* ── Coaching roadmap: the twelve weeks as a spine ─────────────────────────
+   Three one-shot animations, each tied to a state change rather than running
+   because the page loaded. TRANSFORM AND SHADOW ONLY, never opacity on text —
+   `npm run a11y` reads colour from the rendered page and an element parked
+   part-way through an opacity ramp reports a contrast failure describing a
+   pairing that exists nowhere in the app (CLAUDE.md, three investigations). */
+
+/* Each row rises a few pixels as its list mounts, staggered by `--i`. The
+   stagger is what makes a list read as a sequence rather than a block, and it
+   is what the manual chapters use as well — renamed off `week-in` the moment
+   the second caller appeared, because a class named for one call site is how
+   the third one ends up writing its own. */
+@keyframes settle-in { from { transform: translateY(7px); } to { transform: none; } }
+.settle-in { animation: settle-in var(--dur-base) var(--ease-rise) backwards; animation-delay: calc(var(--i, 0) * 28ms); }
+
+/* The node pops when you tick a week. Applied to ONE node — the one just
+   toggled — and removed on animationend, so it can run again next time and so
+   a page that loads with four weeks already done does not pop four times. */
+@keyframes node-pop { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
+.node-pop { animation: node-pop var(--dur-base) var(--ease-emphasis); }
+
+/* One ring, once, on the week you are actually in — an arrival, not a
+   heartbeat. An infinite pulse is noise that you learn to stop seeing, and it
+   never stops costing a repaint. */
+@keyframes now-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-mauve) 55%, transparent); }
+  to { box-shadow: 0 0 0 12px transparent; }
+}
+.now-ring { animation: now-ring 1.5s var(--ease-rise); }
+
+/* The progress fill grows from nothing to its width on mount, so the bar
+   states the progress rather than just being a shape that is already there. */
+@keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-grow { animation: bar-grow var(--dur-slow) var(--ease-emphasis) backwards; transform-origin: left; }
+
+@media (prefers-reduced-motion: reduce) {
+  .settle-in, .node-pop, .now-ring, .bar-grow { animation: none; }
+}
+
+/* ── Scroll-settled reference lists ────────────────────────────────────────
+   A scroll-driven animation: no JS, no IntersectionObserver, no library. Rows
+   arrive 12px low and settle as they enter the viewport.
+
+   TRANSFORM ONLY, AND DELIBERATELY NOT OPACITY. A fade here would be the
+   mid-fade blend CLAUDE.md records: `npm run a11y` reads colour from the
+   rendered page, so an element parked part-way through an opacity ramp reports
+   an arithmetically perfect contrast failure describing a pairing that exists
+   nowhere in the app. It cost three separate investigations once already. A
+   translate cannot change a computed colour, so this is invisible to the gate
+   in the right way — it has nothing to see rather than something wrong.
+
+   The resting state is the VISIBLE one and `@supports` guards the only rule
+   that moves anything, so a browser without `animation-timeline` (Firefox at
+   time of writing) renders the list exactly as it would have. */
+@keyframes scroll-settle {
+  from { transform: translateY(12px); }
+  to { transform: none; }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-settle > * {
+      /* fill-both-ok — a scroll-driven animation is only "running" inside its
+         range, so `backwards` alone would drop the row back to its 12px offset
+         the moment it finished entering. `both` is the required recipe here
+         and the held end state is `transform: none`, which is the element's
+         natural state rather than an off-position one. */
+      animation: scroll-settle linear both; /* fill-both-ok */
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
 /* Plate load: the barbell visualiser's discs slide onto their sleeve from
    outside the bar when the calculator's target changes — right side from the
    right, left side mirrored — with a small per-disc stagger set inline, so a

@@ -1,21 +1,27 @@
 import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useJournal } from '../store'
-import { Card, Pill } from '../components/ui'
+import { Card, Input, Pill } from '../components/ui'
 import { CommitField } from '../components/CommitField'
+import { ShowMore } from '../components/ShowMore'
+import { useCappedList } from '../lib/useCappedList'
+import { useConfirm } from '../components/ConfirmDialog'
 import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
-import { coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
+import { coachingResetPatch, coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
 import type { PickleballSession } from '../lib/types'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
-  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, type RehabEquip, TECHNIQUES,
+  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, TECHNIQUES, DRILL_FIXES, levelForRating,
 } from '../lib/pickleballAcademy'
+import { COURT_INJURIES, SAFETY_DISCLAIMER, WARMUP } from '../lib/pickleballSafety'
+import { SafetyChapter } from '../components/coaching/SafetyChapter'
+import { PracticeTick } from '../components/coaching/PracticeTick'
 
 /**
  * COACHING · the 12-week pickleball program, and the manual that teaches it.
@@ -75,7 +81,47 @@ export function Coaching() {
   const todayDow = new Date(today + 'T00:00:00').getDay()
   const todaySlot = WEEKLY_TEMPLATE[(todayDow + 6) % 7] // Mon-first index
 
+  const confirm = useConfirm()
+  /**
+   * Reset named what it destroys, and destroying ALL of it.
+   *
+   * It was a bare ghost button that wiped the start date and twelve week ticks
+   * on the first click with no confirmation — the same shape as the Home
+   * Workout history's `×` that `docs/USER-CONTROL.md` was written for. And it
+   * cleared two of the three things the program stores; `coachingResetPatch`
+   * owns the third, with the reason.
+   */
+  async function resetProgram() {
+    const notes = Object.keys(weekNotes).length
+    const ok = await confirm({
+      title: 'Reset the 12-week program?',
+      description: (
+        <>
+          Removes the start date ({prettyDay(start!)}), {done.length} week tick{done.length === 1 ? '' : 's'}
+          {notes > 0 && ` and ${notes} week note${notes === 1 ? '' : 's'}`}. The{' '}
+          {sessions.length} pickleball session{sessions.length === 1 ? '' : 's'} you logged stay — they belong to the
+          days they happened on, not to the program. This cannot be undone.
+        </>
+      ),
+      confirmLabel: 'Reset the program',
+      destructive: true,
+    })
+    if (ok) setSettings(coachingResetPatch())
+  }
+
+  /* Which node just changed, so exactly ONE pops. Cleared on animationend so
+     it can run again next time — and so a journal that loads with four weeks
+     already done does not pop four times on arrival. */
+  const [popped, setPopped] = useState<number | null>(null)
+  /* Sticky, because a panel you shut should stay shut across a reload — the
+     folds this page started as all persisted, and losing that would be a
+     regression dressed as a feature. */
+  const [panel, setPanel] = useStickyState<'open' | 'shut'>('coaching.panel', 'open', ['open', 'shut'])
+  const panelOpen = panel === 'open'
+  const setPanelOpen = (v: boolean) => setPanel(v ? 'open' : 'shut')
+
   function toggleWeek(w: number) {
+    setPopped(w)
     setSettings({ coachingWeeksDone: done.includes(w) ? done.filter((x) => x !== w) : [...done, w] })
   }
 
@@ -86,10 +132,28 @@ export function Coaching() {
   const firstUnfinished = TWELVE_WEEK.find((w) => !done.includes(w.week))?.week ?? ACADEMY_TOTAL_WEEKS
   const [openWeek, setOpenWeek] = useState<number | null>(start ? firstUnfinished : 1)
 
+  /* Sticky so the section survives a reload — the seven folds this page
+     started as each did, and losing that would be a regression dressed as a
+     redesign. Same key as the manual's old chapter state, so a reader who
+     left it on `drills` comes back to `drills`; `playsafe` is no longer in
+     the allowed list and falls back to the default, which is what should
+     happen to a row that no longer exists. */
+  const [section, setSection] = useStickyState<string>('coaching.chapter', 'program', CHAPTERS.map((c) => c.id))
+
+  /* Whichever week is open, else the calendar week — collapsing every row
+     must not take the only text field on the page away with it. */
+  const recordWeek = start ? (openWeek ?? week) : null
+
   const pct = Math.round((done.length / ACADEMY_TOTAL_WEEKS) * 100)
 
+  /*
+    `Today` is NOT a fact here any more. It was the first StatBar fact, the
+    title of the card immediately below it, AND the lit cell in the weekday
+    strip inside that card — the same sentence three times in the first 232px
+    of the page. Zone 1 answers "where am I in the program"; the focus and its
+    instruction are one thing, said once, on the card that carries the detail.
+  */
   const facts = [
-    { label: 'Today', value: todaySlot.focus, prose: true },
     { label: 'Week', value: start ? `${week}/12` : 'Not started' },
     { label: 'Weeks done', value: `${done.length}/12` },
     { label: 'Progress', value: `${pct}%` },
@@ -117,6 +181,89 @@ export function Coaching() {
       zone1={<StatBar facts={facts} />}
       zone2={
         <>
+          {/*
+            THE BAR IS THE PAGE, and it sits above everything it switches.
+
+            There is no zone 3 any more. The review zone held the manual and
+            its own bar, under 1640px of act — so the seven chapters were a
+            table of contents you reached by scrolling past the thing it was
+            an alternative to. Reported as "why do I need to scroll down".
+
+            Not sticky, deliberately: `SectionRail`'s own note explains that a
+            bar above its panel paints over the panel when it sticks, and that
+            hiding it on scroll is COD-202, where the phone's only navigation
+            slid out of frame.
+          */}
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+            <SectionRail
+              label="Coaching sections"
+              groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label, count: 'count' in c ? c.count : undefined }))}
+              value={section}
+              onChange={(id) => setSection(id ?? 'program')}
+              railAt="never"
+            />
+            {/*
+              A BADGE, NOT A SENTENCE ACROSS THE PAGE.
+
+              The one-line disclaimer took a full row above every panel and read
+              as furniture. On the six sections that are coaching rather than
+              medicine it is now a mark at the end of the bar — the place an
+              alert belongs, out of the reading line but never off the page.
+
+              Shortened in what it DRAWS only: the full sentence is the `title`
+              for a pointer and an `sr-only` span for a screen reader, which is
+              the contract `docs/USER-CONTROL.md` rule 4 states — a shortened
+              label is a shortened name unless it is said somewhere.
+
+              The two safety sections do NOT get this. They make claims about
+              bodies, and a claim about bodies does not get to be a badge.
+            */}
+            {section !== 'prep' && section !== 'rehab' && (
+              <span title={SAFETY_DISCLAIMER.short}
+                className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-peach/15 px-2 py-0.5 text-label text-fg-2">
+                <Icon as={ShieldWarning} size="sm" className="text-peach" />
+                Educational only
+                <span className="sr-only">{SAFETY_DISCLAIMER.short}</span>
+              </span>
+            )}
+          </div>
+          {/*
+            EVERY SECTION SAYS WHAT IT IS, not just the one about knees.
+
+            It sat at the bottom of the rehab chapter and nowhere else, which
+            put it after twenty-three exercises and under the fold — and the
+            program, the shot guide and the ladder make confident claims too.
+            They are gathered from published coaching material and from
+            playing; none of it is instruction from anybody qualified to give
+            it, and the page should say so before it says anything else.
+
+            One line, above the panel rather than inside it, so switching
+            sections cannot land you somewhere it is missing. The long version
+            is in `SafetyChapter`, where the claims are about bodies.
+          */}
+          {/*
+            ONE warning per section, and only one.
+
+            It was two on every safety section and the page read as nagging:
+            this short line above the panel, and `SafetyChapter` opening with
+            the long points under it. Reported as "duplicate warnings, why do I
+            need to waste the space".
+
+            So the section decides which single form it gets. The two sections
+            that make claims about bodies get the full points, full width; the
+            other six get the one line. Nothing stacks.
+          */}
+          {(section === 'prep' || section === 'rehab') && (
+            <div className="mt-2 mb-3 flex w-full items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
+              <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
+              <ul className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-x-5 gap-y-0.5 @lg/page:grid-cols-2">
+                {SAFETY_DISCLAIMER.long.map((t) => (
+                  <li key={t} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{t}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {section !== 'program' ? <Manual chapter={section} /> : <>
           <TodaySession slot={todaySlot} dow={todayDow} />
           <Card
             band
@@ -130,14 +277,141 @@ export function Coaching() {
                 <Button variant="secondary" onClick={() => setSettings({ coachingStart: today })}>Start the program</Button>
               </div>
             ) : (
-              <div className="mb-3">
-                <div className="h-2.5 overflow-hidden rounded-pill bg-ink-2">
-                  <div className="h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
+              <div className="mb-3 flex items-center gap-3">
+                <div className="h-2.5 flex-1 overflow-hidden rounded-pill bg-ink-2">
+                  {/* `bar-grow` scales the already-sized fill from zero on
+                      mount, so the bar states the progress instead of simply
+                      being a shape that was always that long. The width
+                      transition still carries it when you tick a week. */}
+                  <div className="bar-grow h-full rounded-pill transition-[width]" style={{ width: `${pct}%`, background: cat('green') }} />
                 </div>
+                <span className="num shrink-0 text-label text-fg-2">{done.length} of 12</span>
               </div>
             )}
-            <ol className="space-y-1.5">
-              {TWELVE_WEEK.map((w) => {
+            {/*
+              THE TWELVE WEEKS AS A SPINE, not twelve boxes in a stack.
+
+              The nodes move out of the cards into a gutter and a line joins
+              them — green behind the weeks you have finished, quiet ahead of
+              them. Progress stops being a 2.5px bar at the top and becomes the
+              shape of the list itself, which is the one place on this page
+              worth spending boldness; everything around it stays flat.
+
+              `--i` staggers each row's rise by 28ms. Transform only — the
+              keyframes in index.css carry the reason nothing here fades.
+            */}
+            {/*
+              THE RECORD IS A SIDE CARD, not the bottom of the page.
+
+              It sat under twelve weeks with the start date and Reset under
+              that, so writing down what you drilled meant scrolling past the
+              whole programme to reach the one field only you can fill. Asked
+              for directly, pointing at Home Workout, which solved the same
+              thing by giving the act its own column.
+
+              Explicit grid placement rather than `order-*`: the aside comes
+              FIRST in the DOM, so a phone and a screen reader both meet the
+              act before the twelve-row catalogue, and `col-start-2` puts it on
+              the right from 768px of container — the side the app already
+              treats as the act column (`layout.css` puts `.zone-act` there).
+
+              Sticky from the same breakpoint, offset by `--header-h`, so it
+              stays beside whichever week you have scrolled to.
+            */}
+            {/* The container the grid below queries. `PageLayout` does not
+                declare one, and `@3xl/page` against a missing container is a
+                rule that simply never matches — the aside measured 1110px
+                wide, i.e. full width, with no error anywhere. An element
+                cannot query itself, so this wrapper is separate from the grid
+                it sizes. */}
+            <div className="@container/page">
+            {/*
+              SHUTTING THE PANEL GIVES ITS WIDTH BACK.
+
+              Not `hidden` on the aside — that leaves the 19rem track behind
+              and the roadmap stays narrow beside a gap. The COLUMN goes, so
+              the twelve weeks take the whole panel. Home Workout learned the
+              same thing one page over.
+
+              The toggle sits above the grid rather than inside the aside, so
+              there is one control in one place whichever state you are in; a
+              control that lives inside the thing it hides cannot bring it
+              back.
+            */}
+            <div className="mb-2 flex justify-end">
+              <Button variant="ghost" onClick={() => setPanelOpen(!panelOpen)} aria-expanded={panelOpen}
+                className="h-auto p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
+                {panelOpen ? 'Hide this week' : 'Show this week'}
+                <span aria-hidden className="ml-1">{panelOpen ? '▸' : '◂'}</span>
+              </Button>
+            </div>
+            <div className={`grid gap-4 ${panelOpen ? '@3xl/page:grid-cols-[minmax(0,1fr)_19rem]' : '@3xl/page:grid-cols-[minmax(0,1fr)]'}`}>
+              {panelOpen && <aside className="@3xl/page:col-start-2 @3xl/page:row-start-1 @3xl/page:sticky @3xl/page:top-[calc(var(--header-h,0px)+0.75rem)] @3xl/page:self-start">
+                {/*
+                  THE SESSION TEMPLATE LIVES HERE NOW.
+
+                  It was a fold inside the Today card at the top of the page,
+                  which is the wrong place for it twice over: it is the shape
+                  of the hour you are about to spend, so you want it beside
+                  the week you are doing it for — and a page with one side
+                  card and one in-flow fold is two places to look for "what am
+                  I doing". One card, two things, one place.
+                */}
+                <div className="rounded-card border border-line bg-ink-1 p-3">
+                  <p className="text-label font-medium text-fg-2">A 45–60 min session</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {SESSION_TEMPLATE.map((b) => (
+                      <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
+                    ))}
+                  </ul>
+                </div>
+                {recordWeek != null && (
+                  <div className="mt-3 rounded-card border border-line bg-ink-1 p-3">
+                    <p className="mb-1.5 text-label font-medium text-fg-2">
+                      Week {recordWeek}{recordWeek === week ? ' · this week' : ''}
+                    </p>
+                    <WeekRecord
+                      week={recordWeek}
+                      start={start}
+                      played={start ? rowsInCoachingWeek(sessions, start, recordWeek) : []}
+                      note={weekNotes[String(recordWeek)] ?? ''}
+                      onNote={setWeekNote}
+                    />
+                  </div>
+                )}
+                {start && (
+                  /*
+                    THE FOOT OF THE PROGRAM, now the foot of the side card: the
+                    date you can fix, then the button that throws it all away —
+                    in that order, because the reversible control goes first
+                    (docs/USER-CONTROL.md rule 2) and because for the whole life
+                    of this page the only way to correct a start date was Reset,
+                    which also cost you twelve ticks.
+                  */
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-2.5">
+                    <label className="flex items-center gap-2 text-label text-fg-2">
+                      Started
+                      {/* A native date input, the control `CommitmentCard`
+                          already uses for a quit date. `max` is today: the
+                          component above ignores a future start (an imported
+                          journal can carry one), and a picker that cannot offer
+                          the broken state beats a guard that silently corrects
+                          it. */}
+                      <Input
+                        type="date"
+                        value={start}
+                        max={today}
+                        onChange={(e) => { if (e.target.value) setSettings({ coachingStart: e.target.value }) }}
+                        aria-label="Program start date"
+                        className="h-8 w-auto py-1 text-label"
+                      />
+                    </label>
+                    <Button variant="ghost" onClick={resetProgram} className="h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+                  </div>
+                )}
+              </aside>}
+              <ol className="space-y-1.5 @3xl/page:col-start-1 @3xl/page:row-start-1">
+              {TWELVE_WEEK.map((w, i) => {
                 const isDone = done.includes(w.week)
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
@@ -146,9 +420,14 @@ export function Coaching() {
                 // one. See `lib/coachingWeek.ts`.
                 const played = start ? rowsInCoachingWeek(sessions, start, w.week) : []
                 const note = weekNotes[String(w.week)] ?? ''
+                const last = i === TWELVE_WEEK.length - 1
                 return (
-                  <li key={w.week} className={`rounded-control border transition-colors ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0'}`}>
-                    <div className="flex items-start gap-2.5 p-2.5">
+                  <li key={w.week} className="settle-in flex gap-3" style={{ '--i': i } as CSSProperties}>
+                    {/* The gutter: the node, then the line down to the next
+                        one. `-mb-1.5` eats the list gap so the spine is
+                        continuous rather than dashed by the space between
+                        rows. */}
+                    <div className="flex w-7 shrink-0 flex-col items-center">
                       {/* `aria-pressed`, which these twelve toggles never carried. A bare
                           button announces as "Mark week 6 done" whether or not week 6
                           IS done, so the state of the page's only act was unreadable to
@@ -156,7 +435,8 @@ export function Coaching() {
                           by `aria-pressed`, which is how a probe over every view
                           reported this page as having zero tick controls. */}
                       <button onClick={() => toggleWeek(w.week)} aria-pressed={isDone} aria-label={isDone ? `Mark week ${w.week} not done` : `Mark week ${w.week} done`}
-                        className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-control text-caption font-medium"
+                        onAnimationEnd={() => setPopped(null)}
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-caption font-medium transition-transform hover:scale-110 active:scale-90 ${popped === w.week ? 'node-pop' : ''} ${isNow ? 'now-ring' : ''}`}
                         // The untaken weeks are a surface tone, not a brand fill, so
                         // crust-on-surface1 was the failing pair — those get `text`.
                         style={
@@ -166,6 +446,13 @@ export function Coaching() {
                         }>
                         {isDone ? <Icon as={Check} size="sm" /> : w.week}
                       </button>
+                      {!last && (
+                        <span aria-hidden className="-mb-1.5 mt-1 w-0.5 flex-1 rounded-pill transition-colors"
+                          style={{ background: isDone ? cat('green') : cat('surface1') }} />
+                      )}
+                    </div>
+                    <div className={`min-w-0 flex-1 rounded-control border transition-[background-color,border-color,transform] hover:-translate-y-px ${isNow ? 'border-mauve bg-mauve/5' : 'border-line bg-ink-0 hover:border-line-strong hover:bg-ink-1'}`}>
+                    <div className="flex items-start gap-2.5 p-2.5">
                       <button onClick={() => setOpenWeek(isOpen ? null : w.week)} className="min-w-0 flex-1 text-left">
                         <span className="text-body font-medium text-fg-1">Week {w.week}: {w.focus}{isNow ? ' · now' : ''}</span>
                         {/* Wraps rather than truncates — see the note on `t.what` below.
@@ -184,32 +471,42 @@ export function Coaching() {
                           </span>
                         )}
                       </button>
-                      <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2">{isOpen ? '▴' : '▾'}</button>
+                      <button onClick={() => setOpenWeek(isOpen ? null : w.week)} aria-expanded={isOpen} aria-label={`${isOpen ? 'Collapse' : 'Expand'} week ${w.week}`} className="shrink-0 text-fg-2 transition-transform hover:scale-125 hover:text-fg-1">{isOpen ? '▴' : '▾'}</button>
                     </div>
                     {isOpen && (
-                      <div className="space-y-2 border-t border-line px-3 py-2.5 text-body">
+                      <div className="collapse-in space-y-2 border-t border-line px-3 py-2.5 text-body">
                         <p className="text-fg-1">{w.doThis}</p>
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-2">Drills</p>
-                          <ul className="space-y-0.5">
-                            {w.drills.map((d) => <li key={d} className="flex gap-1.5 text-label text-fg-2"><Icon as={Barbell} size="sm" className="mt-0.5 shrink-0 text-green" /> {d}</li>)}
+                          {/* The tick is the point. A week prescribes three
+                              to five named drills and the page could only ever
+                              record that the WEEK was done — which of the
+                              drills you actually ran was unanswerable the
+                              moment the week ended. */}
+                          <ul className="space-y-1">
+                            {w.drills.map((d) => (
+                              <li key={d} className="flex flex-wrap items-start gap-x-2 gap-y-1 text-label text-fg-2">
+                                <Icon as={Barbell} size="sm" className="mt-0.5 shrink-0 text-fg-2" />
+                                <span className="min-w-0 flex-1">{d}</span>
+                                <PracticeTick kind="drill" name={d} />
+                              </li>
+                            ))}
                           </ul>
                         </div>
                         <p className="inline-flex items-center gap-1.5 rounded-card bg-secondary/50 p-2 text-label" style={{ color: onRaised('green') }}><Icon as={Target} size="sm" /> Goal: {w.goal}</p>
-                        <WeekRecord week={w.week} start={start} played={played} note={note} onNote={setWeekNote} />
                       </div>
                     )}
+                    </div>
                   </li>
                 )
               })}
-            </ol>
-            {start && (
-              <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
-            )}
+              </ol>
+            </div>
+            </div>
           </Card>
+          </>}
         </>
       }
-      zone3={<Manual />}
     />
   )
 }
@@ -307,38 +604,45 @@ function WeekRecord({ week, start, played, note, onNote }: {
   )
 }
 
-/** Zone 2 · what to do in the next hour, and where it sits in the week. */
+/**
+ * TODAY, AS ONE STRIP — not a card.
+ *
+ * It was a full `Card`: a title, a subtitle, the detail sentence, a fold
+ * holding the session template, and a seven-cell grid of weekday boxes. **232
+ * desktop pixels and 285 on a phone**, above a twelve-week programme that is
+ * what the page is actually for, and reported as exactly that — reduce this
+ * space, focus on the roadmap.
+ *
+ * What it says has not changed; what it spends saying it has. The focus and
+ * its instruction share one line, the week is seven inline chips rather than a
+ * grid of boxes, and the session template moved into the side card beside the
+ * week you are doing it for. No card chrome at all: a strip of orientation
+ * above the act does not need a border and a title to be read.
+ *
+ * The chips keep their `title`, which is where each day's full focus lives —
+ * drawn short, said in full, the same contract `ChipPick` states for a
+ * shortened label.
+ */
 function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow: number }) {
   return (
-    <Card
-      band
-      title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-teal" /> Today: {slot.focus}</span>}
-      subtitle={`${WEEKDAYS[dow]}, your scheduled focus`}
-      help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day."
-    >
-      <p className="text-body text-fg-1">{slot.detail}</p>
-      <details className="mt-3 rounded-card bg-ink-2 p-3">
-        <summary className="cursor-pointer text-body font-medium text-fg-1">A 45–60 min session</summary>
-        <ul className="mt-2 space-y-1">
-          {SESSION_TEMPLATE.map((b) => (
-            <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
-          ))}
-        </ul>
-      </details>
-      {/* 4-up on a phone — see `pickleball/SignalCards.tsx`. At seven columns
-          each cell held 26px and the focus words ("Dinking", "Transition")
-          lost half their letters. */}
-      <div className="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7">
+    <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
+      <p className="flex items-baseline gap-1.5 text-body font-medium text-fg-1">
+        <Icon as={Target} size="sm" className="translate-y-0.5 text-teal" />
+        {WEEKDAYS[dow]} · {slot.focus}
+      </p>
+      <p className="min-w-0 flex-1 text-label text-fg-2">{slot.detail}</p>
+      <div className="flex flex-wrap gap-1">
         {WEEKLY_TEMPLATE.map((d, i) => (
-          <div key={d.day} className={`rounded-card p-1.5 text-center text-micro ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal' : 'bg-ink-0 text-fg-2'}`} title={d.focus}>
-            <div className="font-medium">{d.day}</div>
-            <div className="mt-0.5 leading-tight">{d.focus.split(' ')[0]}</div>
-          </div>
+          <span key={d.day} title={`${d.day} · ${d.focus}`}
+            className={`rounded-pill px-1.5 py-0.5 text-micro transition-colors ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal ring-1 ring-teal/40' : 'bg-ink-2 text-fg-2 hover:bg-ink-1 hover:text-fg-1'}`}>
+            {d.day}
+          </span>
         ))}
       </div>
-    </Card>
+    </div>
   )
 }
+
 /**
  * Zone 3 · the manual, as seven chapters behind a rail.
  *
@@ -357,68 +661,133 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
  * Same `SectionRail` as Insights. No "All" row: the chapters do not overlap
  * and nobody wants all seven at once — that is the page this replaces.
  */
+/**
+ * THE PAGE'S ONE NAVIGATION · the program first, then the manual it teaches.
+ *
+ * It was two surfaces stacked: 1640px of act (today's session plus a
+ * twelve-row roadmap) and then, below the fold on every viewport, a bar of
+ * seven manual chapters. Reaching "Third-shot drop" meant scrolling past a
+ * roadmap you were not reading — and the fault is the one
+ * `docs/REUSABLE-PATTERNS.md` names: **a page has one navigation in it.** A
+ * bar at the bottom of the page is a table of contents you have to reach the
+ * end to use.
+ *
+ * So the program is a row. It is the default row, so landing on the page still
+ * lands on the act, and nothing about the act changed — but the manual is now
+ * one click from the top instead of 1640px down.
+ *
+ * **Play safe is gone as a row**, folded into `rehab`. Five physio tips and
+ * twenty-three knee exercises are the same subject (0.36 screens of it), and
+ * the row budget is the constraint a bar lives under: a facet goes inside the
+ * row it is a facet of.
+ *
+ * The counts are on the chips on purpose, against this file's own older note
+ * that a count here "would be a number about nothing". That was true of a
+ * count of *chapters*; these are counts of items — 14 shots, 21 drills — and
+ * they say where the bulk is before you open it. `program` carries none
+ * because "12" would be a week number competing with the StatBar.
+ */
 const CHAPTERS = [
-  { id: 'shots', color: 'mauve', label: 'How to play every shot', blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
-  { id: 'drills', color: 'green', label: 'Drill library', blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
-  { id: 'ladder', color: 'sky', label: 'Skill ladder', blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
-  { id: 'rehab', color: 'red', label: 'Knee rehab & prehab', blurb: "ACL / MCL · prevent and recover, with or without equipment", icon: Heartbeat },
-  { id: 'playsafe', color: 'green', label: 'Play safe', blurb: "Physio & trainer notes · injury-prevention basics for the court", icon: ShieldPlus },
-  { id: 'mental', color: 'peach', label: 'Mental game', blurb: "The mindset that wins close games", icon: Brain },
-  { id: 'formats', color: 'blue', label: 'Format playbook', blurb: "How each league & tournament format works", icon: Medal }
+  { id: 'program', label: 'Program', title: 'Your 12-week program', blurb: 'Today, and the twelve weeks', icon: Target },
+  { id: 'shots', label: 'Shots', title: 'How to play every shot', count: TECHNIQUES.length, blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
+  { id: 'drills', label: 'Drills', title: 'Drill library', count: ACADEMY_DRILLS.length, blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
+  { id: 'ladder', label: 'Skill ladder', count: ACADEMY_LEVELS.length, blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
+  { id: 'prep', label: 'Warm-up', title: 'Warm up, cool down, and what gear does', count: WARMUP.length, blurb: "Eight minutes before, three things after, and the honest half of every piece of kit", icon: ShieldPlus },
+  { id: 'rehab', label: 'Injuries', title: 'Where it goes wrong, and the knee that does not', count: COURT_INJURIES.length, blurb: `${COURT_INJURIES.length} court scenarios · the moment each happens, and ${KNEE_REHAB.length} exercises against them`, icon: Heartbeat },
+  { id: 'mental', label: 'Mental game', count: MINDSET.length, blurb: "The mindset that wins close games", icon: Brain },
+  { id: 'formats', label: 'Formats', title: 'Format playbook', count: PICKLE_FORMATS.length, blurb: "How each league & tournament format works", icon: Medal },
 ] as const
 
-function Manual() {
+/** One chapter of the manual. The bar that chooses it lives in `Coaching`. */
+function Manual({ chapter }: { chapter: string }) {
   const drillSkills = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
   const [openSkill, setOpenSkill] = useState<string | null>(drillSkills[0])
   const [openTech, setOpenTech] = useState<string | null>(null)
-  const [equip, setEquip] = useState<RehabEquip | 'all'>('all')
-  const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
-  const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
-  /* Sticky so the chapter survives a reload — the seven folds each did, and
-     losing that would be a regression dressed as a redesign. */
-  const [chapter, setChapter] = useStickyState<string>(
-    /* Drills, not the first chapter. The rail always shows something, so the
-       default is a real choice — and `shots` is the longest chapter (2,921px
-       against `playsafe`'s 2,119px), which makes the biggest one the landing
-       page. Drills is what you open beside a twelve-week program: "pick 1–2
-       a session" is the sentence next to the act above it. */
-    'coaching.chapter', 'drills', CHAPTERS.map((c) => c.id),
-  )
+  /* Hover is a SECOND, weaker kind of open: it reveals, and it never survives
+     the pointer leaving. Pinning is what the click is for. */
+  const [hoverTech, setHoverTech] = useState<string | null>(null)
+  const [hoverSkill, setHoverSkill] = useState<string | null>(null)
+  /* The latest logged rating, and which rungs are behind it. `duprLog` is
+     dated and unsorted on write, so take the max DATE rather than the last
+     element — the array order is whatever the log happened to be written in. */
+  const { data } = useJournal()
+  const log = data.settings.duprLog ?? []
+  const rating = log.length ? [...log].sort((a, b) => (a.date < b.date ? -1 : 1))[log.length - 1].rating : null
+  const here = rating == null ? null : levelForRating(rating).id
+  const hereIndex = here == null ? -1 : ACADEMY_LEVELS.findIndex((l) => l.id === here)
+  const behind = hereIndex < 0 ? [] : ACADEMY_LEVELS.slice(0, hereIndex).map((l) => l.id)
+
+  const mindset = useCappedList(MINDSET, 8)
   const current = CHAPTERS.find((c) => c.id === chapter) ?? CHAPTERS[0]
 
   return (
     <section>
-      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
-      {/* Container on the outer div, grid on the inner: an element cannot
-          query itself. Phone column spelled out, or the chip row's
-          min-content sizes the only implicit track and the page scrolls
-          sideways. Both documented in docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
-        <SectionRail
-          label="Manual chapters"
-          groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
-          value={chapter}
-          onChange={(id) => setChapter(id ?? 'drills')}
-        />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+            {/*
+              ONE PAGE, NOT EIGHT COLOUR SCHEMES.
+
+              Each chapter carried its own accent — mauve, green, sky, red,
+              peach, blue, teal — so moving along the bar repainted the page
+              and the colour said nothing except "this is a different tab".
+              That is the six-colour stats row DESIGN.md argues against,
+              reported here as looking "dumb and slop".
+
+              Colour on this page now means exactly three things and nothing
+              else: GREEN is done or prevents harm, RED is stop, and MAUVE is
+              now — the current week, and the selected chip the rail already
+              paints. A chapter heading is none of those, so its icon is the
+              same quiet foreground as the text beside it.
+
+              The one survivor is the skill ladder's green→peach ramp, which is
+              kept because it is an ORDER: the colour is the level, and five
+              rungs with no ramp lose information rather than noise.
+            */}
             <h3 className="flex items-center gap-2 text-heading font-medium text-fg-1">
-              <Icon as={current.icon} size="md" style={{ color: onRaised(current.color) }} />
-              {current.label}
+              <Icon as={current.icon} size="md" className="text-fg-2" />
+              {'title' in current ? current.title : current.label}
             </h3>
             <p className="text-label text-fg-2">{current.blurb}</p>
           </div>
           {chapter === 'shots' && (<>
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
-            <p className="mb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
-            <ul className="space-y-1.5">
+            <p className="mb-1 border-b border-line pb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
+            <ul className="scroll-settle space-y-1.5">
               {TECHNIQUES.filter((t) => t.group === group).map((t) => {
-                const open = openTech === t.name
+                const pinned = openTech === t.name
+                const open = pinned || hoverTech === t.name
                 return (
-                  <li key={t.name} className="rounded-control bg-ink-2">
-                    <button onClick={() => setOpenTech(open ? null : t.name)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${t.name}`} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
+                  /*
+                    HOVER REVEALS, CLICK PINS.
+
+                    Asked for directly: "why do I need to click to reveal the
+                    information? I have a mouse." So pointing at a shot opens
+                    it and moving away closes it again; clicking pins it open
+                    so it survives the mouse leaving.
+
+                    Done in JS rather than with `group-hover` and a `0fr` grid
+                    row, which was the shorter diff: that keeps all fourteen
+                    bodies in the DOM at zero height, so `aria-expanded="false"`
+                    becomes a lie — a screen reader reads every one of them
+                    regardless of state. Hover state that the ARIA attribute
+                    agrees with is worth the extra handler.
+
+                    `onFocus`/`onBlur` as well as the mouse, so a keyboard
+                    walking the list gets the same reveal, and the hover pair
+                    sits on the LI rather than the button so moving the pointer
+                    down into the body does not close it under you.
+                  */
+                  <li
+                    key={t.name}
+                    className="rounded-control bg-ink-2 ring-1 ring-transparent transition-[background-color,box-shadow] hover:bg-ink-1 hover:ring-line-strong"
+                    onMouseEnter={() => setHoverTech(t.name)}
+                    onMouseLeave={() => setHoverTech((h) => (h === t.name ? null : h))}
+                    onFocus={() => setHoverTech(t.name)}
+                    onBlur={() => setHoverTech((h) => (h === t.name ? null : h))}
+                  >
+                    <button onClick={() => setOpenTech(pinned ? null : t.name)} aria-expanded={open} aria-label={`${pinned ? 'Unpin' : 'Pin open'} ${t.name}`} className="flex w-full items-center justify-between gap-2 p-2.5 text-left">
                       <span className="min-w-0">
                         <span className="text-body font-medium text-fg-1">{t.name}</span>
                         {/*
@@ -435,10 +804,24 @@ function Manual() {
                         */}
                         <span className="block text-label text-fg-2">{t.what}</span>
                       </span>
-                      <span aria-hidden className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
+                      {/* The caret says PINNED, not open — open is what the
+                          pointer is already telling you. */}
+                      <span aria-hidden className="shrink-0 text-fg-2">{pinned ? '▴' : '▾'}</span>
                     </button>
                     {open && (
-                      <div className="space-y-2.5 border-t border-line px-3 py-2.5">
+                      <div className="collapse-in space-y-2.5 border-t border-line px-3 py-2.5">
+                        {/* WHEN, before HOW. `what` on the closed row says what
+                            the shot is; the decision people at 3.0–3.5 get
+                            wrong is which shot to pick, not how to swing. */}
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1 rounded-card bg-ink-0 p-2 text-label text-fg-2">
+                            <p className="font-medium text-fg-1">When to hit it</p>
+                            <ul className="mt-0.5 space-y-0.5">
+                              {t.when.map((x) => <li key={x} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{x}</span></li>)}
+                            </ul>
+                          </div>
+                          <PracticeTick kind="shot" name={t.name} />
+                        </div>
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-1">How to do it</p>
                           <ol className="space-y-1">
@@ -466,21 +849,42 @@ function Manual() {
           </>)}
           {chapter === 'drills' && (<>
         <div className="space-y-2">
-          {drillSkills.map((skill) => {
+          {drillSkills.map((skill, i) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
-            const open = openSkill === skill
+            const pinned = openSkill === skill
+            const open = pinned || hoverSkill === skill
             return (
-              <div key={skill} className="rounded-control bg-ink-2">
+              <div
+                key={skill}
+                className="settle-in rounded-control bg-ink-2 ring-1 ring-transparent transition-[background-color,box-shadow] hover:bg-ink-1 hover:ring-line-strong"
+                style={{ '--i': i } as CSSProperties}
+                onMouseEnter={() => setHoverSkill(skill)}
+                onMouseLeave={() => setHoverSkill((h) => (h === skill ? null : h))}
+                onFocus={() => setHoverSkill(skill)}
+                onBlur={() => setHoverSkill((h) => (h === skill ? null : h))}
+              >
                 {/* `aria-expanded` was missing here and nowhere else on the page,
                     so these were the only disclosures a screen reader could not
                     tell the state of — and the reason the page census counted 32
                     folds rather than 38. */}
-                <button onClick={() => setOpenSkill(open ? null : skill)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${skill} drills`} className="flex w-full items-center justify-between p-2.5 text-left text-body font-medium text-fg-1">
-                  {skill} <span className="text-label text-fg-2">{list.length}<span aria-hidden>{open ? ' ▴' : ' ▾'}</span></span>
+                <button onClick={() => setOpenSkill(pinned ? null : skill)} aria-expanded={open} aria-label={`${pinned ? 'Unpin' : 'Pin open'} ${skill} drills`} className="flex w-full items-start justify-between gap-2 p-2.5 text-left">
+                  <span className="min-w-0">
+                    <span className="block text-body font-medium text-fg-1">{skill}</span>
+                    {/* The symptom, on the CLOSED row. A list of drill names
+                        cannot tell you which group your problem is in, which
+                        is the only question somebody arrives with. */}
+                    {DRILL_FIXES[skill] && <span className="block text-label text-fg-2">{DRILL_FIXES[skill]}</span>}
+                  </span>
+                  <span className="shrink-0 text-label text-fg-2">{list.length}<span aria-hidden>{pinned ? ' ▴' : ' ▾'}</span></span>
                 </button>
                 {open && (
-                  <ul className="space-y-1 px-3 pb-3">
-                    {list.map((d) => <li key={d.name} className="text-label"><span className="text-fg-1">{d.name}</span> <span className="text-fg-2">· {d.how}</span></li>)}
+                  <ul className="collapse-in space-y-1 px-3 pb-3">
+                    {list.map((d) => (
+                      <li key={d.name} className="flex flex-wrap items-start gap-x-2 gap-y-1 text-label">
+                        <span className="min-w-0 flex-1"><span className="text-fg-1">{d.name}</span> <span className="text-fg-2">· {d.how}</span></span>
+                        <PracticeTick kind="drill" name={d.name} />
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -489,76 +893,97 @@ function Manual() {
         </div>
           </>)}
           {chapter === 'ladder' && (<>
-        <div className="space-y-3">
-          {ACADEMY_LEVELS.map((lvl) => (
-            <div key={lvl.id} className="rounded-card bg-ink-2 p-3">
-              <div className="mb-1.5 flex items-center gap-2">
+        {/*
+          THE LADDER KNOWS WHERE YOU ARE STANDING.
+
+          Five rungs of advice is a poster; five rungs with YOUR rung marked is
+          a position. `settings.duprLog` already held a dated rating history
+          with a trend chart on Pickleball reading it, and nothing else in the
+          app ever asked it a question — so the ladder asks the only one that
+          matters here, and takes the LATEST rating rather than the best: a
+          ladder that remembers your peak tells you to work on something you
+          have already stopped being able to do.
+
+          Same visual language as the roadmap one section over — a rail, filled
+          behind you and quiet ahead, with the rung you are on ringed in mauve.
+          Two devices for one idea would be two ideas.
+        */}
+        {rating == null && (
+          <p className="mb-3 rounded-card bg-ink-2 p-2.5 text-label text-fg-2">
+            No DUPR rating logged, so no rung is marked. Add one on the{' '}
+            <span className="text-fg-1">Pickleball</span> tab and this ladder will say where you are standing.
+          </p>
+        )}
+        <ol className="space-y-3">
+          {ACADEMY_LEVELS.map((lvl, i) => (
+            <li key={lvl.id} className="settle-in flex gap-3" style={{ '--i': i } as CSSProperties}>
+              <div className="flex w-7 shrink-0 flex-col items-center">
+                <span aria-hidden
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-caption font-medium ${here === lvl.id ? 'now-ring' : ''}`}
+                  style={
+                    here === lvl.id ? { background: cat('mauve'), color: onAccent(cat('mauve')) }
+                      : behind.includes(lvl.id) ? { background: cat('green'), color: onAccent(cat('green')) }
+                        : { background: cat('surface1'), color: onRaised('text') }
+                  }>
+                  {i + 1}
+                </span>
+                {i < ACADEMY_LEVELS.length - 1 && (
+                  <span aria-hidden className="-mb-3 mt-1 w-0.5 flex-1 rounded-pill"
+                    style={{ background: behind.includes(lvl.id) ? cat('green') : cat('surface1') }} />
+                )}
+              </div>
+              <div className={`min-w-0 flex-1 rounded-card bg-ink-2 p-3 ring-1 transition-[transform,box-shadow] hover:-translate-y-px ${here === lvl.id ? 'ring-mauve' : 'ring-transparent hover:ring-line-strong'}`}>
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <span className="text-body font-medium" style={{ color: onRaised(lvl.color) }}>{lvl.name}</span>
                 <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
+                {here === lvl.id && <span className="rounded-pill bg-mauve/15 px-2 py-0.5 text-micro text-fg-1">You are here · {rating}</span>}
               </div>
+              {/* The symptoms before the syllabus. A DUPR band is a number;
+                  this is what the number feels like from inside a game, and
+                  it is how anybody actually places themselves. */}
+              <ul className="mb-1.5 space-y-0.5 text-body text-fg-1">
+                {lvl.youAreHere.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden className="text-fg-2">·</span><span className="min-w-0">{t}</span></li>)}
+              </ul>
+              <p className="mb-2 rounded-card bg-ink-0 p-2 text-label text-fg-2">
+                <span className="font-medium text-fg-1">The one thing that moves you up · </span>{lvl.unlock}
+              </p>
               <ul className="grid gap-1 sm:grid-cols-2">
                 {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: onRaised(lvl.color) }}>•</span> {sk}</li>)}
               </ul>
-            </div>
-          ))}
-        </div>
-          </>)}
-          {chapter === 'rehab' && (<>
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {(['all', 'none', 'band', 'weights'] as const).map((e) => (
-            <button key={e} onClick={() => setEquip(e)} aria-pressed={equip === e} className="rounded-control border px-2.5 py-1 text-label transition-colors"
-              style={{ borderColor: equip === e ? cat('mauve') : cat('surface1'), background: equip === e ? cat('mauve') + '22' : 'transparent', color: equip === e ? cat('text') : cat('subtext0') }}>
-              {EQUIP_LABEL[e]}
-            </button>
-          ))}
-        </div>
-        {(['prehab', 'rehab'] as const).map((phase) => {
-          const list = rehab.filter((e) => e.phase === phase)
-          if (!list.length) return null
-          return (
-            <div key={phase} className="mb-3">
-              <p className="mb-1.5 text-body font-medium text-fg-1">{phase === 'prehab' ? 'Prehab — prevention' : '🩹 Rehab — recovery (clear with a physio)'}</p>
-              <ul className="grid gap-1.5 sm:grid-cols-2">
-                {list.map((e) => (
-                  <li key={e.name} className="rounded-card bg-ink-2 p-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-body font-medium text-fg-1">{e.name}</span>
-                      <Pill color="sky" size="micro">{e.target}</Pill>
-                      {e.equip !== 'none' && <span className="rounded-pill bg-ink-2 px-1.5 py-0.5 text-micro text-fg-2">{e.equip}</span>}
-                    </div>
-                    <p className="mt-0.5 text-label text-fg-2">{e.how}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        })}
-        <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-          </>)}
-          {chapter === 'playsafe' && (<>
-        <ul className="space-y-2">
-          {TIPS.map((x) => (
-            <li key={x.t} className="border-t border-line pt-2 text-body first:border-t-0 first:pt-0">
-              <p className="text-fg-1">{x.t}</p>
-              <p className="text-label text-fg-2">{x.d}</p>
+              </div>
             </li>
           ))}
-        </ul>
+        </ol>
           </>)}
+          {chapter === 'prep' && <SafetyChapter part="prep" />}
+          {chapter === 'rehab' && <SafetyChapter part="injury" />}
           {chapter === 'mental' && (<>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {MINDSET.map((m) => (
-            <li key={m.title} className="rounded-card bg-ink-2 p-2.5">
+        {/* Capped, because each principle grew a scenario and a move: sixteen
+            of them measured 4.14 phone screens, against 2.4 at eight. The
+            total is in the button — a list cut to eight with an unlabelled
+            affordance cannot be told from a list that only had eight. */}
+        <div className="mb-2 flex justify-end"><ShowMore list={mindset} /></div>
+        <ul className="scroll-settle grid gap-2 sm:grid-cols-2">
+          {mindset.shown.map((m, i) => (
+            /* `ring-1 ring-transparent` rather than a border that appears on
+               hover: a border changes the box and shifts every card beside it,
+               and a row of sixteen that twitches is worse than a flat one. */
+            <li key={m.title} className="settle-in rounded-card bg-ink-2 p-2.5 ring-1 ring-transparent transition-[transform,box-shadow] hover:-translate-y-px hover:ring-line-strong" style={{ '--i': i } as CSSProperties}>
               <p className="text-body font-medium text-fg-1">{m.title}</p>
               <p className="text-label text-fg-2">{m.why}</p>
+              {/* A principle with no scenario is a poster. The moment is what
+                  makes it recallable at 9–9, and the move is what you do with
+                  it — "stay calm" is neither. */}
+              <p className="mt-1.5 text-label text-fg-2"><span className="font-medium text-fg-1">When · </span>{m.when}</p>
+              <p className="mt-0.5 text-label text-fg-1"><span className="font-medium" style={{ color: onRaised('green') }}>Do · </span>{m.do}</p>
             </li>
           ))}
         </ul>
           </>)}
           {chapter === 'formats' && (<>
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {PICKLE_FORMATS.map((fm) => (
-            <li key={fm.id} className="rounded-card bg-ink-2 p-3">
+        <ul className="scroll-settle grid gap-3 sm:grid-cols-2">
+          {PICKLE_FORMATS.map((fm, i) => (
+            <li key={fm.id} className="settle-in rounded-card bg-ink-2 p-3 ring-1 ring-transparent transition-[transform,box-shadow] hover:-translate-y-px hover:ring-line-strong" style={{ '--i': i } as CSSProperties}>
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-body font-medium text-fg-1">{fm.label}</span>
                 <span className="text-micro text-fg-2">{fm.size}</span>
@@ -570,16 +995,6 @@ function Manual() {
           </>)}
         </div>
       </div>
-      </div>
     </section>
   )
 }
-
-/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
-const TIPS = [
-  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
-  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
-  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
-  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
-  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
-]

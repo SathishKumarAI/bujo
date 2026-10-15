@@ -1,5 +1,52 @@
 # Open questions — answer inline, then start a new session
 
+**This file carries two runs.** Everything from Q1 down is **2026-08-24**, the
+fitness-consolidation run, and `docs/NEXT-SESSION.md` is right that it is
+history rather than a queue. The 2026-10-15 section immediately below is live
+and is waiting on an answer.
+
+---
+
+## 2026-10-15 · Is Coaching pickleball, or is it a shape?
+
+Asked during the Coaching pass, and deliberately **not** answered in code —
+it changes what gets built next, not what was just built.
+
+Everything in `lib/pickleballAcademy.ts` and `lib/pickleballSafety.ts` is
+pickleball-specific *content* sitting in a structure that is not: a dated
+twelve-week program with a tick and a note per week, a weekly focus template, a
+technique guide of `what / when / how / cues / mistakes`, a drill library keyed
+by the symptom it fixes, a five-rung skill ladder, a mental-game list of
+`when / do`, and an injury guide of `where / mechanism / now / prevent /
+redFlags`. **None of those shapes mentions a paddle.** Badminton, tennis,
+squash, table tennis and padel would all fill them in without a schema change;
+so, at a stretch, would climbing or lifting.
+
+Three ways to go, and they cost very differently:
+
+- **(a) Leave it pickleball.** Zero work. The page stays sharp and the words
+  stay specific, which is most of why the new content is any good — "reaching
+  wide for a cross-court dink" is better than "reaching wide".
+- **(b) Generalise the shapes, keep one sport's content.** Rename the modules
+  to `coachingProgram` / `courtSafety`, give each dataset a `sport` key, and
+  add a second sport later by adding data rather than code. Perhaps a day, and
+  it is mostly renaming.
+- **(c) Multi-sport now.** A sport picker, a per-sport program, and the
+  settings to remember which. Real work, and it slows the page down for
+  somebody who only plays one sport — which is almost everybody.
+
+**Recommend (a) until there is a second sport you actually play.** The
+structure is already general; it costs nothing to leave it and discovering the
+second sport's shape by writing its content is cheaper than guessing it now.
+The thing to avoid in the meantime is *new* code that hard-codes "pickleball"
+where it could take a name — the data modules are already clean on that, the
+view is not (`views/Coaching.tsx` says pickleball in its copy, which is
+correct today and is the edit (b) would make).
+
+**A:**
+
+---
+
 **Written:** 2026-08-24 · **For:** the fitness-consolidation / UI-polish run
 (`docs/redesign/15-fitness-consolidation.md`)
 

@@ -84,3 +84,28 @@ export function weekPlay(rows: { gamesWon: number; gamesLost: number; durationMi
     minutes: rows.reduce((a, s) => a + (s.durationMin ?? 0), 0),
   }
 }
+
+/**
+ * Every settings key the 12-week program writes, cleared.
+ *
+ * A patch rather than three lines at the call site because the button that
+ * used to do this cleared **two** of the three shapes: `coachingStart` and
+ * `coachingWeeksDone`, never `coachingWeekNotes`. A note is keyed by week
+ * NUMBER and dated through `coachingStart` (see the header above), so a note
+ * left behind does not sit harmlessly — it re-attaches to a different seven
+ * days the moment you start again, and renders beside the sessions from those
+ * other days as if you had written it about them.
+ *
+ * `coachingWeekNotes: {}` and not `undefined` on purpose: the merge in
+ * `lib/conflict.ts` fills a map key-by-key from the other side, so an absent
+ * map and an empty one are the same thing to it either way — but an empty map
+ * is what the page's own `setWeekNote` produces when you clear the last note,
+ * and one shape is cheaper to reason about than two.
+ *
+ * `coachingWeekNotes` is NOT the whole story of a reset: the pickleball
+ * sessions joined to each week stay, because they are a record of days that
+ * happened and were never owned by the program. The dialog says so.
+ */
+export function coachingResetPatch() {
+  return { coachingStart: undefined, coachingWeeksDone: [], coachingWeekNotes: {} }
+}

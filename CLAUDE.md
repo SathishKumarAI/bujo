@@ -16,6 +16,77 @@ happens to be checked out.
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
 
+## Writing content the UI renders
+
+**Points, not paragraphs.** Anything a person reads on a card — a scenario, a
+set of symptoms, a what-to-do, a disclaimer — is a list of short lines, not
+prose. Asked for directly: *"I don't think people love to read paragraphs."*
+Nobody reads a wall of text on a phone, and a three-sentence string cannot be
+scanned, skipped or returned to.
+
+What that means in practice:
+
+| Rule | Why |
+|---|---|
+| A field people read is `string[]`, not `string`, the moment it holds more than one idea | The type is the rule. A `string` invites the next sentence to be appended |
+| One idea per line, and a line is a real line — not a fragment left behind by splitting a sentence on its full stops | `pickleballAcademy.test.ts` asserts a floor of 12 characters per point for exactly this |
+| Two points minimum, or it was never a paragraph and should stay one line | A one-item bullet list is a bullet pretending to be structure |
+| The heading above the list says what the list is; the points do not repeat it | "When to hit it" then three situations, not three sentences each starting "When…" |
+| Keep ordering meaningful — frequency, sequence, or severity — and say which in the data file's docstring | `COURT_INJURIES` is frequency EXCEPT the fall, which is last because it costs most |
+
+The one exception is a single sentence that genuinely is one idea (`unlock`,
+`mechanism` on a simple case, a chip's `hint`). Leave those as strings; the rule
+is against paragraphs, not against sentences.
+
+Assert it where it can be asserted. `tsc` proves a field is a string and never
+that the string says anything — `src/lib/pickleballAcademy.test.ts` is the
+pattern: point count, per-point length floor, and no point that is a copy of the
+field beside it.
+
+Trap: **a container query against a missing container never matches, and
+nothing says so.** `PageLayout` declares no `@container/page`, so a
+`@3xl/page:grid-cols-[minmax(0,1fr)_19rem]` inside zone 2 simply did not apply
+— the aside rendered **1110px wide, i.e. full width**, with no error, no
+warning and a perfectly valid class list. It looks exactly like a breakpoint
+you chose wrong. Declare the container on a WRAPPER (an element cannot query
+itself) and **verify by measuring the box**, not by reading the classes. Same
+family as the stale-utility-class trap above: Tailwind v4 does not fail a build
+over a rule that can never match.
+
+Trap: **`hidden` on a grid child leaves its track behind.** Hiding a 19rem
+aside that way keeps the column and the list stays narrow beside a gap —
+"shutting it" gives back the height and not the width. Change `grid-cols`
+instead. Measured on Coaching's week panel: roadmap **790px → 1110px** only
+once the column itself went.
+
+Trap: **`fillMap` is lossy for anything whose value is a list.** It is a
+shallow merge, so on a key collision the winner's array replaces the loser's
+outright. That is correct for `coachingWeekNotes` (one sentence, last edit
+wins) and silent data loss for `practiceLog` (the days you ticked a drill on
+the other device). `unionListMap` is the one to copy, and remember the
+delete-if-both-sides-lacked-it loop or a merge invents an empty map.
+
+Trap: **a raw `<details>` is invisible to `npm run a11y`.** `openFolds()` finds
+content by `[aria-expanded="false"]` and a `<summary>` carries no such
+attribute, so Coaching's session template had never been opened by the gate at
+any theme or viewport. Grep for `<details` before trusting a fold count — and
+note this is the THIRD disclosure implementation the repo has had to learn
+about, after `CollapsibleSection` and `Card collapsible`.
+
+Trap: **a facet merge can expire.** Play safe was folded into the knee chapter
+on a real measurement — five one-line tips, 0.36 desktop screens, a facet
+rather than a peer. Then the chapter gained content and measured **3.32 desktop
+and 7.53 phone screens**, the worst on the page by a factor of two. The rule did
+not stop being true; the thing it was applied to stopped being small.
+**Re-measure a merge after you add to either half**, and split on WHEN SOMEBODY
+READS IT rather than on what the original rows happened to be called.
+
+Trap: **a CSS class named for one call site is how the third one writes its
+own.** `.week-in` was the roadmap's stagger; the manual chapters wanted exactly
+the same 7px rise and the honest options were to reuse a class whose name lies
+or to duplicate the keyframes. Renamed to `.settle-in` the moment the second
+caller appeared — which is the cheapest possible moment, and the only one where
+the rename is a two-line diff.
 ## Two documents to read before changing a page
 
 - **`docs/USER-CONTROL.md`** — what a person must always be able to do with

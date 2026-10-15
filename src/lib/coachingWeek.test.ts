@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { coachingWeekOf, coachingWeekRange, rowsInCoachingWeek, weekPlay } from './coachingWeek'
+import TYPES_SRC from './types.ts?raw'
+import { coachingResetPatch, coachingWeekOf, coachingWeekRange, rowsInCoachingWeek, weekPlay } from './coachingWeek'
 
 const START = '2026-03-02' // a Monday
 
@@ -70,5 +71,43 @@ describe('weekPlay', () => {
 
   it('an_empty_week_is_all_zeros_which_the_caller_must_not_render_as_a_score', () => {
     expect(weekPlay([])).toEqual({ sessions: 0, games: 0, won: 0, minutes: 0 })
+  })
+})
+
+describe('coachingResetPatch', () => {
+  /**
+   * A SOURCE-LEVEL CONTRACT, because the failure this catches is a key that
+   * does not exist yet.
+   *
+   * The shipped Reset button cleared `coachingStart` and `coachingWeeksDone`
+   * and silently left `coachingWeekNotes` behind — not because anyone decided
+   * that, but because the notes were added to `Settings` a year after the
+   * button was written and nothing connected the two. Asserting against a
+   * hand-typed list of three keys would reproduce exactly that: it passes
+   * forever and says nothing about the fourth key somebody adds next.
+   *
+   * So the list comes from `types.ts` itself. The canary below is load-bearing
+   * — a regex that stops matching contributes nothing and the suite stays
+   * green, which is the failure mode CLAUDE.md records for
+   * `egress.contract.test.ts`.
+   */
+  const SETTINGS_SRC = TYPES_SRC
+  const DECLARED = [...SETTINGS_SRC.matchAll(/^ {2}(coaching\w+)\?:/gm)].map((m) => m[1])
+
+  it('the_source_scan_found_the_coaching_settings_keys_at_all', () => {
+    // The canary. If this drops to zero the test below passes vacuously.
+    expect(DECLARED.length).toBeGreaterThanOrEqual(3)
+    expect(DECLARED).toContain('coachingWeekNotes')
+  })
+
+  it('clears_every_coaching_key_Settings_declares_not_the_two_it_was_written_with', () => {
+    expect(Object.keys(coachingResetPatch()).sort()).toEqual([...DECLARED].sort())
+  })
+
+  it('leaves_the_notes_as_an_empty_map_so_a_restarted_week_cannot_inherit_one', () => {
+    // The actual bug: a week-3 note surviving a reset re-dates onto whatever
+    // seven days week 3 covers next time.
+    expect(coachingResetPatch().coachingWeekNotes).toEqual({})
+    expect(coachingResetPatch().coachingStart).toBeUndefined()
   })
 })

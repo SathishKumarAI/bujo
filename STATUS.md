@@ -1,5 +1,94 @@
 # STATUS
 
+**Stopped:** 2026-10-15, on `feat/coaching-pass`, **four commits, no PR yet**,
+branched off `main` at `f016bc0`. `refactor/homeworkout-panels` (**PR #405**)
+is still open and is NOT a parent of this — the two do not touch the same
+files.
+
+## The Coaching pass
+
+| commit | what |
+|---|---|
+| `933d389` | Reset asks first, names what it takes, and takes all of it |
+| `ce3c0b7` | One bar at the top; the program is a row on it |
+| `1cc9782` | Every section says when it happens, and what it is not |
+| `ec42dbd` | Hover reveals, colour means one thing, practice ticks |
+
+**`npm run a11y` ran twice, the second time after the last commit.** 187 of
+187 scans, 12 of 12 shards. **Coaching is 0 serious / 0 critical on all seven
+rows it is scanned at** — five desktop themes and two phone — with 89 folds
+each.
+
+The repo-wide **7 serious** are all `color-contrast` and all on two views this
+branch does not touch:
+
+| rows | rule |
+|---|---|
+| `Cycle` at mocha, latte, neon, vscode, dawn (desktop) | `color-contrast` — `text-fg-3` day numbers, e.g. `#9d9d9d on #403840 = 4.16` |
+| `Mind · Mindset` at latte, dawn (desktop) and latte (phone) | `color-contrast` |
+
+That is COD-314's family. The earlier note in this file called the count
+"unexplained" only because that run's output had been piped through `tail -45`
+and the rows were never seen — **count the rows before quoting a total.**
+
+**Plane:** COD-288 moved to In Progress (it is the item this pass closes),
+COD-323 and COD-324 filed In Progress for the fix and the feature, COD-325
+(the multi-sport question) and COD-326 (follow-ups) in Backlog.
+
+**PR #407** is open against `main`.
+
+Then the pass kept going, on the same branch and in the same PR:
+
+| commit | what |
+|---|---|
+| `4bb6b26` | the twelve weeks become a spine; one warning per section |
+| `66a6b9e` | the manual chapters get a pulse; the act gets a side card |
+| *(this)* | the disclaimer becomes a badge; the docs |
+
+**Next action:** re-run `npm run a11y` (the last full run predates the spine,
+the side card and the badge), then merge #407. The badge is the only one of
+those that touches a colour pairing — `bg-peach/15` with `text-fg-2` — and it
+is the one to look for in the table.
+
+### What the page is now
+
+One `SectionRail` at the top of the page with eight rows — Program, Shots,
+Drills, Skill ladder, Warm-up, Injuries, Mental game, Formats — and no zone 3.
+Program is the default, so landing still lands on the act.
+
+Numbers, at `?demo=1`, both viewports, measured against the preview server:
+
+| | before the pass | after |
+|---|---|---|
+| desktop, landing | 2429px · 2.70 screens | 1979px · 2.20 |
+| desktop, worst section | 1220px | 1943px, none over 3 screens |
+| phone, chapters reachable without a sideways scroll | 3 of 7 | 8 of 8 |
+| phone, worst section | — | 4.73 screens (Injuries) |
+| `<details>` in `#main` | 1 (invisible to the gate) | 0 |
+| "Educational only" | 1 of 8 sections | 8 of 8 |
+
+### Traps found in it, worth not re-learning
+
+- **A raw `<details>` is invisible to `npm run a11y`.** `openFolds()` finds
+  content by `[aria-expanded="false"]` and a `<summary>` carries no such
+  attribute, so the session template had never been scanned at any theme or
+  viewport. Grep for `<details` before trusting a fold count.
+- **A facet merge can expire.** Play safe was folded into the knee chapter on
+  a measurement (0.36 screens); the content then arrived and the merged
+  chapter hit **7.53 phone screens**. The rule did not stop being true — the
+  thing it was applied to stopped being small. Re-measure a merge after you
+  add to either half.
+- **`fillMap` is lossy for a dated log.** It is a shallow merge, so on a key
+  collision the winner's array replaces the loser's. Correct for a note,
+  silent data loss for `practiceLog`. `unionListMap` is the one to copy.
+- **Scroll-driven motion must not touch opacity.** `animation-timeline:
+  view()` parks elements mid-ramp, which is the mid-fade blend that cost three
+  investigations. Animate transform only; axe then has nothing to misread.
+
+---
+
+## Previous session — the home-workout pass
+
 **Stopped:** 2026-10-15, on `refactor/homeworkout-one-bar` with **PR #404**
 open and awaiting CI. `main` at `9e5678d`. Four PRs merged this session:
 
