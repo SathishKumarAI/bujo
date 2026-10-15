@@ -1,5 +1,6 @@
 import { RailToggle } from './RailToggle'
 import { DateNav } from './topbar/DateNav'
+import { SyncPill } from './SyncPill'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 /**
@@ -117,6 +118,22 @@ export function PageHeader({
           <DateNav view={view} mode={chrome.dateNav} />
         </div>
       )}
+
+      {/* ── The 81% ──────────────────────────────────────────────────────
+          Measured at 1707 on Insights before this: the strip is 1489 x 48,
+          holds three text leaves and ZERO interactive controls, and its ink
+          ends at x=487 — **1,210px dead, 81.3% of the bar**. It cost
+          `--header-h` on every page and gave back the name of the view you
+          had just clicked in the rail beside it.
+
+          The strip has already had a height pass (60px -> 42px, after "it
+          takes more space"). That was the wrong axis: the problem was never
+          how tall it was, it was that four fifths of it said nothing.
+
+          What fills the gap is the fact that was invisible — where your
+          journal actually is. `ml-auto` lives on the pill, so it hugs the
+          right edge and the title keeps the left. */}
+      <SyncPill />
     </div>
   )
 }
