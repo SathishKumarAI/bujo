@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { isConfigured, onAuthChange, pullAccount, pushAccount } from '../lib/supabase'
 import { mayPush, onAccountChange, afterPull, isDemo, initialState, lastOwner, rememberOwner, UNUSABLE_MESSAGE, type AccountSyncState } from '../lib/accountSync'
-import { setAccountStatus, markSynced } from '../lib/accountStatus'
+import { setAccountStatus, markSynced, markDirty, clearDirty } from '../lib/accountStatus'
 import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
 import { useConfirm } from './ConfirmDialog'
 import { migrate, emptyJournal } from '../lib/storage'
@@ -124,6 +124,118 @@ export function AccountSync() {
    * ordering is not decided by whichever device is furthest ahead.
    */
   const seenAt = useRef<string | null>(null)
+  /** One writer at a time. A retry trigger during a push must not start a second. */
+  const inFlight = useRef(false)
+
+  /**
+   * The actual write, callable from more than one trigger.
+   *
+   * This used to live inside the debounce timer, which made the debounce the
+   * ONLY way a push could happen. The comment in its catch said so out loud —
+   * "the next change IS the retry queue, no queue needed" — and that is true
+   * only if there is a next change. Edit on a plane, close the laptop, land,
+   * reopen: the journal is dirty, the network is back, and nothing sends until
+   * you happen to type something. A sync you trigger by accident is not a sync.
+   *
+   * Hoisted out, it can be driven by the debounce, by reconnecting, by the tab
+   * becoming visible, and by the page being hidden. `useCallback` with an empty
+   * dep list plus refs for everything mutable, so its identity never changes
+   * and the listeners below never re-bind.
+   */
+  type PushReason = 'debounce' | 'online' | 'visible' | 'pagehide'
+  /**
+   * The implementation lives behind a ref, assigned in an effect.
+   *
+   * Not a `useCallback`: `react-hooks/immutability` refuses a ref write inside
+   * one, and this function must write four of them (`seenAt`, `lastPushed`,
+   * `inFlight`, and the merged journal). An effect is where a mutation is
+   * allowed, and it is the idiom this file already uses for `askRef` and
+   * `replaceAllRef` — so the identity the listeners below bind to is stable
+   * for the component's whole life and can never close over a stale value.
+   */
+  const pushRef = useRef<(reason: PushReason) => Promise<void>>(async () => {})
+  useEffect(() => {
+    pushRef.current = async (reason: PushReason) => {
+      if (!isConfigured()) return
+      if (inFlight.current) return
+      if (!mayPush(stateRef.current, { isDemo: isDemo(latest.current) })) return
+
+      const snapshot = JSON.stringify(latest.current)
+      // Nothing has changed since the last successful write. A retry trigger
+      // firing on an unchanged journal should do nothing, rather than rewrite the
+      // same bytes on every tab focus.
+      if (snapshot === lastPushed.current) return
+
+      inFlight.current = true
+      try {
+        setAccountStatus({ phase: 'uploading' })
+        lastPushed.current = snapshot
+        const res = await pushAccount(latest.current, seenAt.current)
+
+        if (!res.ok) {
+          // Somebody else wrote this row since we last looked. Not an error, and
+          // deliberately not reported as one: it is the guard working. Pull,
+          // union, and let the result push. `migrate` first because the other
+          // device may be on an older build.
+          const fresh = await pullAccount()
+          seenAt.current = fresh.updatedAt
+          if (fresh.journal) {
+            const merged = await resolveIncoming(latest.current, migrate(fresh.journal), askRef.current)
+            if (merged) replaceAllRef.current(merged)
+          }
+          lastPushed.current = '' // the merged result still needs sending
+          setAccountStatus({ phase: 'checking' })
+          return
+        }
+
+        seenAt.current = res.updatedAt
+        clearDirty()
+        markSynced()
+      } catch {
+        // Offline, or the token expired past its refresh. Record that there is
+        // unsent work so a reconnect can act without waiting for the user to
+        // type. `reason` is read only by the dev log below.
+        void reason
+        lastPushed.current = ''
+        markDirty()
+        setAccountStatus({ phase: 'error' })
+      } finally {
+        inFlight.current = false
+      }
+    }
+  })
+
+  /**
+   * The triggers that are NOT "the user typed".
+   *
+   * Each is a moment when a previously impossible push becomes possible, and
+   * none of them involve the journal changing:
+   *
+   *   online            the network came back
+   *   visibilitychange  the tab was focused again, which on a phone is the
+   *                     same event as the app being reopened
+   *   pagehide          last chance before the tab goes. Deliberately not
+   *                     `beforeunload`, which does not fire on a mobile tab
+   *                     discard — exactly when a journal is most at risk.
+   *
+   * Bound once: `pushNow` has a stable identity and reads everything mutable
+   * through refs, so these never re-bind and cannot hold a stale closure.
+   */
+  useEffect(() => {
+    if (!isConfigured()) return
+    const onOnline = () => { void pushRef.current('online') }
+    const onVisible = () => { if (document.visibilityState === 'visible') void pushRef.current('visible') }
+    const onHide = () => { void pushRef.current('pagehide') }
+    window.addEventListener('online', onOnline)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('pagehide', onHide)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pagehide', onHide)
+    }
+  }, [])
+
   useEffect(() => {
     if (!isConfigured()) return
     if (!mayPush(state, { isDemo: isDemo(data) })) {
@@ -138,47 +250,11 @@ export function AccountSync() {
     }
     const snapshot = JSON.stringify(data)
     if (snapshot === lastPushed.current) return // echo guard: we just applied this
-    const id = setTimeout(async () => {
-      try {
-        setAccountStatus({ phase: 'uploading' })
-        lastPushed.current = JSON.stringify(latest.current)
-        const res = await pushAccount(latest.current, seenAt.current)
-
-        if (!res.ok) {
-          // ── Somebody else wrote this row since we last looked ───────────
-          //
-          // Not an error, and deliberately not reported as one: it is the
-          // guard working. Before this, the account was the only network
-          // writer in the app that did not compare — phone pulls at 09:00,
-          // sits in a pocket while the laptop works all morning, then wakes
-          // and overwrites the lot. No error, and the laptop's next pull
-          // adopts the loss as the truth.
-          //
-          // Pull, union, and let the next change push the result. `migrate`
-          // first because the other device may be on an older build, and
-          // `resolveIncoming` because a union is exactly what two edits to one
-          // journal want — the same machinery the sign-in path uses.
-          const fresh = await pullAccount()
-          seenAt.current = fresh.updatedAt
-          if (fresh.journal) {
-            const merged = await resolveIncoming(latest.current, migrate(fresh.journal), askRef.current)
-            if (merged) replaceAllRef.current(merged)
-          }
-          // Clear the echo guard so the merged result is allowed to push.
-          lastPushed.current = ''
-          setAccountStatus({ phase: 'checking' })
-          return
-        }
-
-        seenAt.current = res.updatedAt
-        markSynced()
-      } catch {
-        // Offline, or the token expired past its refresh. The whole journal is
-        // the payload, so the next change IS the retry queue — no queue needed.
-        lastPushed.current = ''
-        setAccountStatus({ phase: 'error' })
-      }
-    }, 4000)
+    // There is unsent work from this moment until a push succeeds. Recorded
+    // before the wait, not after it, so a tab closed during those four seconds
+    // still leaves the next load knowing.
+    markDirty()
+    const id = setTimeout(() => { void pushRef.current('debounce') }, 4000)
     return () => clearTimeout(id)
   }, [data, state])
 

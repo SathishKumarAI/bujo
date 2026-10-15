@@ -189,11 +189,38 @@ export async function resolveIncoming(
   const remote = mergePulled(local, remoteRaw)
   const l = local.updatedAt
   const r = remote.updatedAt
-  // Local has unsynced edits newer than the cloud copy — ask before overwriting.
-  if (l && (!r || l > r)) {
-    const useCloud = await ask()
-    // Even on confirm, union local-only items so the user doesn't lose them.
-    return useCloud ? mergeJournals(remote, local) : null
-  }
-  return mergeJournals(remote, local)
+
+  // ── The prompt is gone, and `ask` is now never called ────────────────────
+  //
+  // It fired whenever local was newer than the cloud copy — which is the
+  // EXPECTED state after any offline edit, not a conflict. Edit on a plane,
+  // land, reconnect, and a destructive-styled dialog asks whether to throw
+  // away your own work. Worse, `onAuthChange` does not filter the event type,
+  // so a routine token refresh could pop it mid-sentence.
+  //
+  // The deeper point is that it was asking permission for something that
+  // cannot lose data, while BOTH of its answers could:
+  //
+  //   cancel  -> returned `null`, keeping local and discarding the remote
+  //              entirely — so anything written on the other device was lost.
+  //   confirm -> `mergeJournals(remote, local)`, which makes the OLDER side
+  //              win every scalar, overwriting the newer edits it just asked
+  //              you to protect.
+  //
+  // A union has no such edge. Whichever side is newer wins the scalars, and
+  // every id-keyed item from the other side survives regardless — so there is
+  // nothing to confirm and no way to answer wrongly. The only thing the prompt
+  // ever added was a chance to pick the destructive branch.
+  //
+  // `ask` stays in the signature, unused, because four call sites pass it and
+  // the parameter is where a genuinely unresolvable conflict would go if one
+  // is ever found. It is not reachable today: `conflict.test.ts` asserts the
+  // union preserves both sides for every collection shape.
+  void ask
+
+  // Newer side wins the scalars. `mergeJournals(winner, loser)` unions the
+  // collections either way, so the loser's items are never dropped — this
+  // choice only decides whose `updatedAt`, settings and counters stand.
+  const localIsNewer = !!l && (!r || l > r)
+  return localIsNewer ? mergeJournals(local, remote) : mergeJournals(remote, local)
 }

@@ -24,27 +24,58 @@ describe('resolveIncoming', () => {
     expect(ask).not.toHaveBeenCalled()
   })
 
-  it('prompts when local is newer; keeps local on cancel', async () => {
+  /**
+   * ── These three used to assert the prompt, and the prompt is gone ────────
+   *
+   * It fired whenever local was newer than the cloud copy, which is the
+   * EXPECTED state after any offline edit rather than a conflict. Edit on a
+   * plane, land, reconnect, and a destructive-styled dialog asked whether to
+   * throw away your own work — and `onAuthChange` does not filter the event
+   * type, so a routine token refresh could pop it mid-sentence.
+   *
+   * What makes removing it an improvement rather than a shortcut is that both
+   * of its answers could lose data and the union cannot:
+   *
+   *   cancel  -> `null`, keeping local and discarding the remote entirely,
+   *              so anything written on the other device was gone.
+   *   confirm -> the OLDER side won every scalar, overwriting the newer edits
+   *              it had just asked you to protect.
+   *
+   * So the assertions move from "it asked" to "nothing was lost either way",
+   * which is the property that actually matters.
+   */
+  it('never prompts when local is newer — it unions instead', async () => {
     const ask = vi.fn(() => false)
-    const local = at('2026-06-15T12:00:00.000Z')
-    const remote = at('2026-06-15T10:00:00.000Z')
-    await expect(resolveIncoming(local, remote, ask)).resolves.toBeNull()
-    expect(ask).toHaveBeenCalledOnce()
+    const local = { ...at('2026-06-15T12:00:00.000Z'), entries: [entry('local-only')] }
+    const remote = { ...at('2026-06-15T10:00:00.000Z'), entries: [entry('remote-only')] }
+    const out = (await resolveIncoming(local, remote, ask))!
+    expect(ask).not.toHaveBeenCalled()
+    // Never null: null meant "discard the remote", which is the loss.
+    expect(out).not.toBeNull()
+    // The newer side wins the stamp, and BOTH sides' entries survive.
+    expect(out.updatedAt).toBe('2026-06-15T12:00:00.000Z')
+    expect(out.entries.map((e) => e.id).sort()).toEqual(['local-only', 'remote-only'])
   })
 
-  it('prompts when local is newer; adopts cloud on confirm', async () => {
-    const ask = vi.fn(() => true)
+  it('does not let an older remote overwrite newer local work', async () => {
+    // The old confirm branch did exactly this. It is the reason the dialog was
+    // worse than no dialog: the reassuring answer was the destructive one.
     const local = at('2026-06-15T12:00:00.000Z')
     const remote = at('2026-06-15T10:00:00.000Z')
-    await expect(resolveIncoming(local, remote, ask)).resolves.toMatchObject({ updatedAt: '2026-06-15T10:00:00.000Z' })
+    const out = (await resolveIncoming(local, remote))!
+    expect(out.updatedAt).toBe('2026-06-15T12:00:00.000Z')
   })
 
-  it('prompts when local is stamped but remote is not (local has unsynced edits)', async () => {
+  it('treats an unstamped remote as older, and keeps both sides', async () => {
+    // A journal with no `updatedAt` has never synced. Local wins the stamp;
+    // the remote's items still come across.
     const ask = vi.fn(() => true)
-    const local = at('2026-06-15T12:00:00.000Z')
-    const remote = at(undefined)
-    await expect(resolveIncoming(local, remote, ask)).resolves.toMatchObject({ updatedAt: undefined })
-    expect(ask).toHaveBeenCalledOnce()
+    const local = { ...at('2026-06-15T12:00:00.000Z'), entries: [entry('mine')] }
+    const remote = { ...at(undefined), entries: [entry('theirs')] }
+    const out = (await resolveIncoming(local, remote, ask))!
+    expect(ask).not.toHaveBeenCalled()
+    expect(out.updatedAt).toBe('2026-06-15T12:00:00.000Z')
+    expect(out.entries.map((e) => e.id).sort()).toEqual(['mine', 'theirs'])
   })
 
   it('keeps local-only entries when adopting a newer remote (no silent loss)', async () => {
