@@ -8,6 +8,7 @@ import { HOME_EXERCISES, homeSetRows } from './homeExercises'
 import { FOODS } from './foods'
 import { kindsFor } from '../domain/activities'
 import { repScheme, setLines } from './pullups'
+import { practiceKey } from './practiceLog'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -126,7 +127,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 16
+export const DEMO_VERSION = 17
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -511,6 +512,31 @@ export function generateDemoData(today = todayISO()): JournalData {
     '2': 'Serve target drill: 7/10 in the back third, not 9. Return depth is the weaker half.',
     '3': 'Return-and-rush is landing — reached the line on 8 of 10. Split-step still late.',
     '4': 'Straight dink rally hit 25 twice. Paddle still drifting below the net on the backhand side.',
+  }
+
+  /**
+   * PRACTICE TICKS, because `settings.practiceLog` is a field a page renders
+   * and an unseeded field is one no gate has ever drawn.
+   *
+   * Three shapes on purpose, because the control draws each differently and
+   * two of them are the ones that must not look alike:
+   *
+   * - `drill:figure-8` — ticked TODAY, so the green "Drilled today" state is
+   *   on screen for every `npm run a11y` scan at every theme.
+   * - `drill:return-and-rush` and `shot:third-shot-drop` — done before, not
+   *   today, so the `3× · Tue, Oct 6` state renders. That is "you did this,
+   *   just not today", which must never render as "never done".
+   * - everything else absent, which is the third state.
+   *
+   * The keys are written through `practiceKey` rather than typed by hand: a
+   * literal `'drill:figure-8'` here would keep passing after the slug rules
+   * changed and the seed would quietly stop lining up with the page.
+   */
+  j.settings.practiceLog = {
+    [practiceKey('drill', 'Figure-8')]: [today],
+    [practiceKey('drill', 'Return-and-rush')]: [addDays(today, -16), addDays(today, -9), addDays(today, -2)],
+    [practiceKey('shot', 'Third-shot drop')]: [addDays(today, -11), addDays(today, -4)],
+    [practiceKey('shot', 'Dink')]: [addDays(today, -1)],
   }
 
   /**

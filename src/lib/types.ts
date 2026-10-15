@@ -873,6 +873,23 @@ export interface Settings {
    * nothing", the same distinction `DayMore` keeps for a cleared chip.
    */
   coachingWeekNotes?: Record<string, string>
+  /**
+   * DID YOU PRACTISE IT · drill or shot key → the days you ticked it.
+   *
+   * `coachingWeekNotes` above records how a week went in a sentence, which is
+   * the right shape for "how" and the wrong one for "did I". Asked twelve
+   * weeks later which of the nine footwork drills you have actually run, prose
+   * cannot answer. Keys come from `lib/practiceLog.ts` — `drill:figure-8`,
+   * `shot:third-shot-drop` — and the value is the list of ISO days, newest
+   * last.
+   *
+   * Days rather than a count, because two devices each holding a count can
+   * only disagree while two sets of days union — see `lib/conflict.ts`, which
+   * unions this per key rather than letting the winner's array replace the
+   * loser's. A key with no days left is deleted, not kept as `[]`, the same
+   * way a cleared week note deletes its key.
+   */
+  practiceLog?: Record<string, string[]>
   /** Stats mood/year pair: side-by-side ('split', default) or full-width 'stacked'. */
   statsPairLayout?: 'split' | 'stacked'
   /** Completed training-program day keys, e.g. "pullup-zero-w1d3". */

@@ -43,7 +43,14 @@ export function sourceSearchUrl(name: string, topic: string): string {
  */
 export const SAFETY_DISCLAIMER = {
   short: 'Educational only — gathered from public coaching and sports-medicine guidance, plus our own time on court. Not instruction, not medical advice.',
-  long: 'Nobody here is your coach or your clinician. This section is assembled from publicly published coaching material and the general injury-prevention guidance sports-medicine bodies agree on, plus what we have learned playing. It can be wrong for you specifically. For anything painful, swollen, or that keeps coming back, see a physio or a doctor — and for technique, an hour with a real coach beats any amount of reading.',
+  /** Points, not a paragraph — see the writing rule in CLAUDE.md. */
+  long: [
+    'Nobody here is your coach or your clinician.',
+    'Gathered from published coaching material, the injury-prevention guidance sports-medicine bodies agree on, and our own time on court.',
+    'It can be wrong for you specifically.',
+    'Anything painful, swollen, or that keeps coming back: see a physio or a doctor.',
+    'For technique, an hour with a real coach beats any amount of reading.',
+  ],
 } as const
 
 export interface InjuryScenario {
@@ -52,10 +59,10 @@ export interface InjuryScenario {
   name: string
   /** Body part, for the chip beside the name. */
   area: 'Ankle' | 'Knee' | 'Calf' | 'Elbow' | 'Shoulder' | 'Whole body'
-  /** THE MOMENT. The shot, the step, the point in the session. */
-  where: string
-  /** What the joint is doing when it goes. */
-  mechanism: string
+  /** THE MOMENT, as points. The shot, the step, the part of the session. */
+  where: string[]
+  /** What the joint is doing when it goes, as points. */
+  mechanism: string[]
   /** First minutes and hours. Short, and never a diagnosis. */
   now: string[]
   /** The training and the habits that make it less likely. */
@@ -76,8 +83,16 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'ankle-sprain',
     name: 'Lateral ankle sprain',
     area: 'Ankle',
-    where: 'Reaching wide for a cross-court dink with a crossover step instead of a shuffle. Also: stepping on a stray ball between points, and the first hard lateral push of a session you did not warm up for.',
-    mechanism: 'The foot rolls inward under a planted, loaded ankle — the outside ligaments take the whole stop. A crossover step gets you there faster and leaves the foot pointing the wrong way when you arrive.',
+    where: [
+      'Reaching wide for a cross-court dink with a crossover step instead of a shuffle.',
+      'Stepping on a stray ball between points.',
+      'The first hard lateral push of a session you did not warm up for.',
+    ],
+    mechanism: [
+      'The foot rolls inward under a planted, loaded ankle.',
+      'The outside ligaments take the whole stop.',
+      'A crossover step gets you there faster and leaves the foot pointing the wrong way when you arrive.',
+    ],
     now: [
       'Stop the session. "Walking it off" is how a two-week sprain becomes a six-week one.',
       'Ice 15–20 minutes, compress, and get the foot above the hip when you sit.',
@@ -100,8 +115,16 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'knee-ligament',
     name: 'Knee ligament strain (ACL / MCL)',
     area: 'Knee',
-    where: 'A hard stop at the kitchen line, or a plant-and-cut to chase a ball wide to the forehand. Almost never contact — it is a deceleration injury.',
-    mechanism: 'You stop on a flat, planted foot and the knee collapses inward over it while the hip stays behind. The ligament is what is left holding the rotation.',
+    where: [
+      'A hard stop at the kitchen line.',
+      'A plant-and-cut to chase a ball wide to the forehand.',
+      'Almost never contact — this is a deceleration injury.',
+    ],
+    mechanism: [
+      'You stop on a flat, planted foot.',
+      'The knee collapses inward over it while the hip stays behind.',
+      'The ligament is what is left holding the rotation.',
+    ],
     now: [
       'A pop, swelling inside the hour, or a knee that gives way under you is a stop-now list of three.',
       'Ice and elevate, and get it looked at rather than waiting to see how it feels on Saturday.',
@@ -122,8 +145,15 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'calf-achilles',
     name: 'Calf strain / Achilles rupture',
     area: 'Calf',
-    where: 'The explosive first step out of a dead stop — most often pushing off the kitchen line for a ball dropped behind you. Disproportionately the first game back after a week off, and disproportionately in the over-40s.',
-    mechanism: 'A cold, stiff calf takes a sudden lengthening load under full body weight. People describe it as being kicked in the back of the leg by somebody who was not there.',
+    where: [
+      'The explosive first step out of a dead stop.',
+      'Most often pushing off the kitchen line for a ball dropped behind you.',
+      'Disproportionately the first game back after a week off, and over 40.',
+    ],
+    mechanism: [
+      'A cold, stiff calf takes a sudden lengthening load under full body weight.',
+      'People describe it as being kicked in the back of the leg by somebody who was not there.',
+    ],
     now: [
       'Stop. Do not test it by sprinting.',
       'If you cannot push off, cannot do a single heel raise on that leg, or can feel a gap in the tendon, treat it as urgent rather than as a strain.',
@@ -143,8 +173,16 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'elbow',
     name: '"Pickleball elbow" (lateral epicondyle tendinopathy)',
     area: 'Elbow',
-    where: 'Builds over weeks, not in one point. Shows up on backhand blocks and drives late in a session, and is worst the morning after.',
-    mechanism: 'Repetitive load through the wrist extensors, almost always with a grip far tighter than the shot needs and a swing coming from the arm rather than the body.',
+    where: [
+      'Builds over weeks, not in one point.',
+      'Shows up on backhand blocks and drives late in a session.',
+      'Worst the morning after.',
+    ],
+    mechanism: [
+      'Repetitive load through the wrist extensors.',
+      'Almost always with a grip far tighter than the shot needs.',
+      'And a swing coming from the arm rather than the body.',
+    ],
     now: [
       'Back the volume off rather than stopping entirely — tendons respond to load being managed, not removed.',
       'Ice after play if it is sore; heat before, if it is stiff.',
@@ -165,8 +203,14 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'shoulder',
     name: 'Rotator-cuff irritation',
     area: 'Shoulder',
-    where: 'Overheads and hard serves — especially the first ones of the day, and the smash at the end of a long rally when the arm is tired and the technique has gone.',
-    mechanism: 'A cuff that has not been warmed or strengthened for overhead work takes the deceleration of a full swing.',
+    where: [
+      'Overheads and hard serves, especially the first ones of the day.',
+      'The smash at the end of a long rally, when the arm is tired and the technique has gone.',
+    ],
+    mechanism: [
+      'A cuff that has not been warmed or strengthened for overhead work.',
+      'It takes the deceleration of a full swing.',
+    ],
     now: [
       'Stop serving hard and stop hitting overheads. Dinking is usually still fine, which is what makes this one easy to play through and make worse.',
     ],
@@ -184,8 +228,14 @@ export const COURT_INJURIES: InjuryScenario[] = [
     id: 'fall',
     name: 'Falling backwards — wrist, hip, head',
     area: 'Whole body',
-    where: 'Backpedalling for a lob. It is the single highest-consequence mistake on a pickleball court and it is entirely avoidable.',
-    mechanism: 'Heels catch, the centre of mass is already behind them, and you land on an outstretched hand — or on the back of your head.',
+    where: [
+      'Backpedalling for a lob.',
+      'The single highest-consequence mistake on a pickleball court — and entirely avoidable.',
+    ],
+    mechanism: [
+      'Heels catch; your centre of mass is already behind them.',
+      'You land on an outstretched hand — or on the back of your head.',
+    ],
     now: [
       'Any head contact ends the session, with no exceptions and no self-assessment.',
       'A wrist you cannot move or that is visibly out of line is an imaging question, not an ice question.',

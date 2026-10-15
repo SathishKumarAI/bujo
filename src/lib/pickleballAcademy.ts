@@ -10,9 +10,9 @@ export interface AcademyLevel {
   dupr: string
   color: string
   skills: string[]
-  /** THE SYMPTOMS. A rating is a number; this is what the number feels like
-   *  from inside a game, which is how anybody actually places themselves. */
-  youAreHere: string
+  /** THE SYMPTOMS, as points. A rating is a number; this is what the number
+   *  feels like from inside a game, which is how anybody places themselves. */
+  youAreHere: string[]
   /** The ONE thing that moves you up. Not a list — a list is what the `skills`
    *  column already is, and a list is why people plateau working on six. */
   unlock: string
@@ -27,7 +27,11 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     'Kitchen (NVZ) rules & line positioning',
     'Intro to the dink — soft, low, controlled',
   ],
-    youAreHere: 'You are still thinking about whether it bounced twice, your serve misses the box under pressure, and you play most of the point from the baseline because that is where you started.',
+    youAreHere: [
+      'Still thinking about whether it bounced twice.',
+      'The serve misses the box under pressure.',
+      'You play most of the point from the baseline, because that is where you started.',
+    ],
     unlock: 'Get every serve in and every return deep — then walk to the kitchen line and stay there. Placement and position beat every shot you do not have yet.',
   },
   { id: 'novice', name: 'Adv. Beginner', dupr: '3.0', color: 'teal', skills: [
@@ -38,7 +42,11 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     'Controlled directional volleys',
     'Basic third-shot drive (keep them guessing)',
   ],
-    youAreHere: 'You can rally. But your third shot is a drive every single time, and when it comes back you are stranded in the middle of the court.',
+    youAreHere: [
+      'You can rally.',
+      'Your third shot is a drive every single time.',
+      'When it comes back you are stranded in the middle of the court.',
+    ],
     unlock: 'The third-shot drop. It is the one gate between 3.0 and 3.5, and if it keeps hitting the net the answer is a higher, wider swing — not a harder one.',
   },
   { id: 'intermediate', name: 'Intermediate', dupr: '3.5', color: 'sky', skills: [
@@ -49,7 +57,11 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     'Speed-ups + intro to hand battles',
     'Intro to stacking (half-stack)',
   ],
-    youAreHere: 'Your drops and dinks are real, and you still lose the fast exchanges at the net and panic crossing the transition zone.',
+    youAreHere: [
+      'Your drops and dinks are real.',
+      'You lose the fast exchanges at the net.',
+      'You panic crossing the transition zone.',
+    ],
     unlock: 'The reset: absorb the drive with an open paddle and no backswing, and only move forward on a ball above the net. Advancing on a low ball is what keeps feeding them the attack.',
   },
   { id: 'advanced', name: 'Advanced', dupr: '4.0', color: 'mauve', skills: [
@@ -60,7 +72,11 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     'Stacking and poaching',
     'Shot selection + specialty shots (Erne, ATP, lob)',
   ],
-    youAreHere: 'Your shots are reliable. You lose to people whose shots are worse than yours, and you cannot say why.',
+    youAreHere: [
+      'Your shots are reliable.',
+      'You lose to people whose shots are worse than yours.',
+      'You cannot say why.',
+    ],
     unlock: 'Shot selection. The 3.5→4.0 leap is mostly cognitive: drive the pop-ups, drop the rest, and know which pattern you are building before you start it.',
   },
   { id: 'pro', name: 'Pro', dupr: '4.5+', color: 'peach', skills: [
@@ -71,7 +87,11 @@ export const ACADEMY_LEVELS: AcademyLevel[] = [
     'Point construction',
     'Poaching, switching & adaptive game plans',
   ],
-    youAreHere: 'You win at your club and lose to anyone who plays tournaments — they seem to know what you are doing before you do it.',
+    youAreHere: [
+      'You win at your club.',
+      'You lose to anyone who plays tournaments.',
+      'They seem to know what you are doing before you do.',
+    ],
     unlock: 'Deception and point construction: identical mechanics for the dink and the speed-up, and every point aimed at your strength against their weakness.',
   },
 ]
@@ -280,10 +300,10 @@ export interface Technique {
   name: string
   group: string
   what: string
-  /** THE SITUATION this shot is the answer to. `what` says what the shot is
-   *  and `how` says how to hit it; neither said when to choose it, which is
-   *  the decision people actually get wrong at 3.0–3.5. */
-  when: string
+  /** THE SITUATION this shot is the answer to, as points. `what` says what
+   *  the shot is and `how` says how to hit it; neither said when to choose it,
+   *  which is the decision people actually get wrong at 3.0–3.5. */
+  when: string[]
   how: string[]
   cues: string[]
   mistakes: string[]
@@ -293,7 +313,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Continental grip', group: 'Foundations',
     what: 'The one grip for almost everything — like holding a hammer to chop.',
-    when: 'Always — it is the grip you hold for the whole point. The moment you catch yourself changing grip mid-rally you have already lost the half-second the exchange needed.',
+    when: [
+      'Always — it is the grip you hold for the whole point.',
+      'The tell: you catch yourself changing grip mid-rally, and the half-second is already gone.',
+    ],
     how: ['Shake hands with the paddle; the V of thumb+index sits on the top edge.', 'Same grip for forehand, backhand, volleys, dinks — no switching.', 'Hold firm but relaxed (4/10 pressure); tighten only at contact.'],
     cues: ['"Hammer grip"', 'Relaxed hands = soft touch'],
     mistakes: ['Death-gripping (kills touch + pops dinks up)', 'Switching grips mid-rally (too slow at the net)'],
@@ -301,7 +324,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Ready position', group: 'Foundations',
     what: 'The athletic stance you return to between every shot.',
-    when: 'Between every single shot. The tell that you have lost it: you are reaching DOWN for dinks instead of already being low.',
+    when: [
+      'Between every single shot.',
+      'The tell: you are reaching DOWN for dinks instead of already being low.',
+    ],
     how: ['Feet wider than shoulders, knees bent, weight on the balls of your feet.', 'Paddle up at chest height, out in front, tip pointing up.', 'Slight forward lean; stay light, ready to split-step.'],
     cues: ['"Paddle up, knees bent"', 'Nose over toes'],
     mistakes: ['Paddle hanging low (no time to react up high)', 'Standing tall/flat-footed'],
@@ -309,7 +335,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Split-step', group: 'Footwork',
     what: 'A small hop that loads your legs just as the opponent strikes, so you can move any direction.',
-    when: 'As your opponent strikes the ball, every time — not when you see where it is going. A split-step after the ball is just a hop.',
+    when: [
+      'As your opponent strikes the ball. Every time.',
+      'Not when you see where it is going — a split-step after the ball is just a hop.',
+    ],
     how: ['As they’re about to contact the ball, do a tiny hop and land on the balls of both feet.', 'Land balanced and slightly wide; then push off toward the ball.', 'Do it before EVERY shot — serve return, at the kitchen, in transition.'],
     cues: ['"Hop as they hit"', 'Land light, then explode'],
     mistakes: ['Moving while they strike (caught flat)', 'A big jump (too slow to land)'],
@@ -317,7 +346,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Serve (underhand)', group: 'Serve & return',
     what: 'Start the point: a deep, legal underhand serve.',
-    when: 'The start of every point you serve. Deep and in beats clever: a serve that lands past the mid-line pins them back and buys you the third shot.',
+    when: [
+      'The start of every point you serve.',
+      'Deep and in beats clever.',
+      'A serve past the mid-line pins them back and buys you the third shot.',
+    ],
     how: ['Stand behind the baseline; ball in non-paddle hand.', 'Contact below the waist with an upward, low-to-high swing.', 'Hit deep and cross-court into the service box; aim 1–2 ft inside the baseline.', 'Once deep is reliable, add pace/spin and target the backhand.'],
     cues: ['"Low to high"', 'Deep first, fancy later'],
     mistakes: ['Contacting above the waist (illegal)', 'Aiming for lines (errors > the tiny edge gained)'],
@@ -325,7 +358,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Return of serve', group: 'Serve & return',
     what: 'Return deep, then sprint to the kitchen — the returning team’s biggest advantage.',
-    when: 'Every point you receive. Hit it high and DEEP — the height is what buys you the walk to the kitchen behind it.',
+    when: [
+      'Every point you receive.',
+      'Hit it high and DEEP.',
+      'The height is what buys you the walk to the kitchen behind it.',
+    ],
     how: ['Take it after the bounce (two-bounce rule) with a compact stroke.', 'Hit it high and DEEP to pin the server back.', 'Immediately move forward to the kitchen line as the ball travels.', 'Split-step as your partner-side opponent contacts the third shot.'],
     cues: ['"Deep, then run"', 'Height buys you time to get up'],
     mistakes: ['Short returns (lets them attack)', 'Admiring the return instead of moving up'],
@@ -333,7 +370,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Dink', group: 'Soft game',
     what: 'A soft shot that arcs just over the net into the kitchen, too low to attack.',
-    when: 'Once both teams are at the kitchen and nobody has a ball above net height. It is the default; the attack is the exception.',
+    when: [
+      'Both teams at the kitchen, nobody with a ball above net height.',
+      'It is the default. The attack is the exception.',
+    ],
     how: ['Continental grip, paddle out in front, knees bent.', 'Push/lift the ball with the shoulder — no wrist flick, almost no backswing.', 'Contact out in front and below the net; let the legs do the lifting.', 'Aim low over the net; vary cross-court vs down-the-line.'],
     cues: ['"Lift with the legs"', 'Contact in front, soft hands'],
     mistakes: ['Wristy swings (pop-ups)', 'Standing tall (you’ll hit down into the net)', 'Too high (gets attacked)'],
@@ -341,7 +381,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Third-shot drop', group: 'Soft game',
     what: 'From the baseline, a soft arc that lands unattackable in the kitchen so you can advance. The skill that unlocks 3.5.',
-    when: 'You served, they returned deep, you are at the baseline and they own the net. This is the shot that gets you forward — and it is the 3.0→3.5 gate.',
+    when: [
+      'You served, they returned deep, they own the net.',
+      'This is the shot that gets you forward.',
+      'It is the 3.0 → 3.5 gate.',
+    ],
     how: ['Drop or let the ball come to you; low-to-high lift, minimal backswing.', 'Aim for the peak of the arc to be on YOUR side, falling into the kitchen.', 'If you net it, swing HIGHER and softer — not harder.', 'After the drop, take two steps in and split-step.'],
     cues: ['"Arc it, don’t hit it"', 'Net it? aim higher'],
     mistakes: ['Driving it flat (sits up to be smashed)', 'Not moving up after a good drop'],
@@ -349,7 +393,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Reset', group: 'Transition',
     what: 'Absorbing a hard ball softly into the kitchen when you’re caught in the transition zone.',
-    when: 'You are caught in the transition zone and they are driving at your feet. Soften it into the kitchen and advance only once the next ball is above the net.',
+    when: [
+      'You are caught in the transition zone and they are driving at your feet.',
+      'Soften it into the kitchen.',
+      'Advance only once the next ball is above the net.',
+    ],
     how: ['Get low, paddle out front, loose grip — like catching an egg.', 'No swing: let the ball hit a soft, slightly-open paddle and die short.', 'Stay balanced; reset 3–5 in a row before advancing again.'],
     cues: ['"Catch it, don’t hit it"', 'Soft hands, low base'],
     mistakes: ['Swinging at it (pops up)', 'Backing up instead of resetting'],
@@ -357,7 +405,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Volley / punch volley', group: 'Net play',
     what: 'Hitting out of the air at the kitchen line — controlled, not wild.',
-    when: 'At the net on anything above net height. Punch it at their feet or at the gap — not a swing, a jab.',
+    when: [
+      'At the net, on anything above net height.',
+      'At their feet or into the gap.',
+      'A jab, not a swing.',
+    ],
     how: ['Paddle up, contact in front, short punch — no big swing.', 'Punch deep at the opponent’s feet or hip (the "chicken wing").', 'Only attack balls contacted ABOVE net height; below = dink/reset.'],
     cues: ['"Punch, don’t swing"', 'Above the net = go, below = soft'],
     mistakes: ['Swinging hard (errors)', 'Attacking low balls'],
@@ -365,7 +417,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Speed-up & counter', group: 'Net play',
     what: 'Accelerating an attackable ball to start a hands battle — then countering theirs.',
-    when: 'A ball at or above shoulder height when YOU are balanced and they are not. Speeding up off a low ball is the most common unforced error at 3.5.',
+    when: [
+      'A ball at or above shoulder height.',
+      'You are balanced and they are not.',
+      'Speeding up off a LOW ball is the commonest unforced error at 3.5.',
+    ],
     how: ['Pick a ball at/above net height when you’re balanced.', 'Compact flick from the shoulder/elbow; aim at the body or the dominant shoulder.', 'Expect the counter: reset your paddle to the middle immediately.', 'Counter blocks: short paddle, tip up, redirect — don’t wind up.'],
     cues: ['"Attack high, balanced"', 'Reset paddle after every speed-up'],
     mistakes: ['Speeding up low/off-balance', 'Winding up in a hands battle (too slow)'],
@@ -373,7 +429,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Stacking', group: 'Strategy',
     what: 'Lining up so your stronger (usually forehand) side stays in the middle.',
-    when: 'When a left-and-right-handed pairing (or one much stronger forehand) means the normal sides keep putting your backhands in the middle.',
+    when: [
+      'A left-and-right-handed pairing, or one much stronger forehand.',
+      'The normal sides keep putting your backhands in the middle.',
+    ],
     how: ['Both partners start on the same side; after the serve/return, switch to your preferred sides.', 'Use a hand signal behind the back to confirm who covers where.', 'Communicate every point; switch back when the situation resets.'],
     cues: ['"Forehands in the middle"', 'Signal + call it'],
     mistakes: ['Stacking without communicating (open court)', 'Forgetting to switch back'],
@@ -381,7 +440,10 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Erne', group: 'Specialty',
     what: 'Jumping around the kitchen (outside the sideline) to volley a cross-court dink early — an advanced poach.',
-    when: 'They are dinking predictably cross-court into your sideline. Move after they commit, not before — early is just giving up the court.',
+    when: [
+      'They are dinking predictably cross-court into your sideline.',
+      'Move after they commit — early is just giving up the court.',
+    ],
     how: ['Read a predictable cross-court dink heading to your sideline.', 'Either jump over the corner of the kitchen or step around it, landing outside the line.', 'Volley the ball before it crosses — into the open court or at feet.'],
     cues: ['"Bait the cross-court, then pounce"', 'Land outside the kitchen line'],
     mistakes: ['Going too early (telegraphed)', 'Touching the kitchen (fault)'],
@@ -389,7 +451,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'ATP (around the post)', group: 'Specialty',
     what: 'Returning a wide ball around the outside of the net post — it can land below net height.',
-    when: 'A cross-court dink pulls you wide and the ball is OUTSIDE the post — then there is no net in the way and no height limit. Rare, legal, and worth recognising.',
+    when: [
+      'A cross-court dink pulls you wide and the ball is OUTSIDE the post.',
+      'No net in the way, no height limit.',
+      'Rare, legal, and worth recognising.',
+    ],
     how: ['On a sharply angled ball pulling you wide, let it travel past the sideline.', 'Track it low and hit around (not over) the post into the open court.', 'No height requirement — the net isn’t in the way.'],
     cues: ['"Let it pull you wide, then go around"', 'Low and flat is fine'],
     mistakes: ['Trying to go over the net instead of around', 'Rushing — let the angle develop'],
@@ -397,7 +463,11 @@ export const TECHNIQUES: Technique[] = [
   {
     name: 'Defensive lob', group: 'Specialty',
     what: 'A high, deep ball over the net players to buy time or flip pressure.',
-    when: 'You are both pushed back and losing the exchange. It is the one shot that buys seconds — and it is a reset, not a winner.',
+    when: [
+      'You are both pushed back and losing the exchange.',
+      'The one shot that buys seconds.',
+      'It is a reset, not a winner.',
+    ],
     how: ['From a dink or under pressure, lift the ball high and DEEP toward the baseline.', 'Aim over the backhand shoulder; depth matters more than height.', 'Use sparingly and with the wind/sun in your favour.'],
     cues: ['"High and deep, over the backhand"', 'Surprise, not staple'],
     mistakes: ['Short lobs (free smash)', 'Overusing it (becomes predictable)'],

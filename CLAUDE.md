@@ -16,6 +16,33 @@ happens to be checked out.
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
 
+## Writing content the UI renders
+
+**Points, not paragraphs.** Anything a person reads on a card — a scenario, a
+set of symptoms, a what-to-do, a disclaimer — is a list of short lines, not
+prose. Asked for directly: *"I don't think people love to read paragraphs."*
+Nobody reads a wall of text on a phone, and a three-sentence string cannot be
+scanned, skipped or returned to.
+
+What that means in practice:
+
+| Rule | Why |
+|---|---|
+| A field people read is `string[]`, not `string`, the moment it holds more than one idea | The type is the rule. A `string` invites the next sentence to be appended |
+| One idea per line, and a line is a real line — not a fragment left behind by splitting a sentence on its full stops | `pickleballAcademy.test.ts` asserts a floor of 12 characters per point for exactly this |
+| Two points minimum, or it was never a paragraph and should stay one line | A one-item bullet list is a bullet pretending to be structure |
+| The heading above the list says what the list is; the points do not repeat it | "When to hit it" then three situations, not three sentences each starting "When…" |
+| Keep ordering meaningful — frequency, sequence, or severity — and say which in the data file's docstring | `COURT_INJURIES` is frequency EXCEPT the fall, which is last because it costs most |
+
+The one exception is a single sentence that genuinely is one idea (`unlock`,
+`mechanism` on a simple case, a chip's `hint`). Leave those as strings; the rule
+is against paragraphs, not against sentences.
+
+Assert it where it can be asserted. `tsc` proves a field is a string and never
+that the string says anything — `src/lib/pickleballAcademy.test.ts` is the
+pattern: point count, per-point length floor, and no point that is a copy of the
+field beside it.
+
 ## Running the browser gates
 
 `npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a

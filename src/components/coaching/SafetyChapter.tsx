@@ -52,15 +52,17 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
     <>
       {/* The long disclaimer, in the one chapter that makes claims about
           bodies. Every chapter carries the short line above the panel. */}
-      <p className="mb-3 flex items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
+      <div className="mb-3 flex items-start gap-2 rounded-card bg-red/10 p-2.5 text-label text-fg-2">
         <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
-        {SAFETY_DISCLAIMER.long}
-      </p>
+        <ul className="min-w-0 space-y-0.5">
+          {SAFETY_DISCLAIMER.long.map((t) => <li key={t}>{t}</li>)}
+        </ul>
+      </div>
 
       {part === 'prep' && <>
-      <Section icon={Timer} color="green" title="Warm up — eight minutes, in this order"
+      <Section icon={Timer} title="Warm up — eight minutes, in this order"
         blurb="Temperature, then range, then load, then the movements of the game, then the shot at 60%.">
-        <ol className="space-y-1.5">
+        <ol className="scroll-settle space-y-1.5">
           {WARMUP.map((w) => (
             <li key={w.name} className="grid grid-cols-[3.2rem_minmax(0,1fr)] gap-x-2 rounded-card bg-ink-2 p-2.5">
               <span className="num text-label text-fg-2">{w.mins}</span>
@@ -76,21 +78,21 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
         </ol>
       </Section>
 
-      <Section icon={Timer} color="green" title="After the last point"
+      <Section icon={Timer} title="After the last point"
         blurb="The half people skip twice. Static stretching belongs here, not before you play.">
         <ul className="grid gap-1.5 sm:grid-cols-2">
           {AFTER_PLAY.map((t) => <li key={t} className="rounded-card bg-ink-2 p-2.5 text-label text-fg-2">{t}</li>)}
         </ul>
       </Section>
 
-      <Section icon={ShieldPlus} color="sky" title="Gear, and what it will not do"
+      <Section icon={ShieldPlus} title="Gear, and what it will not do"
         blurb="Every row carries its limit, because the useful half is the one the box does not print.">
         <ul className="grid gap-1.5 sm:grid-cols-2">
           {PROTECTIVE_GEAR.map((g) => (
             <li key={g.item} className="rounded-card bg-ink-2 p-2.5">
               <p className="text-body font-medium text-fg-1">{g.item}</p>
               <p className="text-label text-fg-2">{g.helps}</p>
-              <p className="mt-0.5 text-label" style={{ color: onRaised('peach') }}>Will not: {g.limit}</p>
+              <p className="mt-0.5 text-label text-fg-2"><span className="font-medium text-fg-1">Will not:</span> {g.limit}</p>
             </li>
           ))}
         </ul>
@@ -98,10 +100,10 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
       </>}
 
       {part === 'injury' && <>
-      <Section icon={Warning} color="peach" title="Where it actually goes wrong"
+      <Section icon={Warning} title="Where it actually goes wrong"
         blurb="Six scenarios, the moment each one happens, and what to do."
         right={<ShowMore list={injuries} />}>
-        <ul className="space-y-2.5">
+        <ul className="scroll-settle space-y-2.5">
           {injuries.shown.map((x) => (
             <li key={x.id} className="rounded-card border border-line bg-ink-1 p-3">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
@@ -110,11 +112,15 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
               </div>
               {/* THE MOMENT, first and in the body size. "Protect the ankles"
                   is true and unusable; the shot you were playing when it
-                  happened is the part you can train. */}
-              <p className="text-body text-fg-1">{x.where}</p>
-              <p className="mt-1 text-label text-fg-2">{x.mechanism}</p>
+                  happened is the part you can train. Points, not prose. */}
+              <ul className="space-y-0.5 text-body text-fg-1">
+                {x.where.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden className="text-fg-2">·</span><span className="min-w-0">{t}</span></li>)}
+              </ul>
+              <ul className="mt-1 space-y-0.5 text-label text-fg-2">
+                {x.mechanism.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{t}</span></li>)}
+              </ul>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <Lines title="If it just happened" color="peach" items={x.now} />
+                <Lines title="If it just happened" items={x.now} />
                 <Lines title="What makes it less likely" color="green" items={x.prevent} />
               </div>
               <div className="mt-2 rounded-card bg-red/10 p-2">
@@ -128,7 +134,7 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
         </ul>
       </Section>
 
-      <Section icon={Heartbeat} color="red" title="Prehab & rehab exercises"
+      <Section icon={Heartbeat} title="Prehab & rehab exercises"
         blurb="Build the knee that does not do the above. After an injury, follow a physio's plan instead of this list."
         right={<ShowMore list={exercises} />}>
         {/* `ChipPick`, not four hand-styled buttons. The page shipped those
@@ -190,9 +196,10 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
 }
 
 /** A titled block inside the chapter. Five of them were five shapes once. */
-function Section({ icon, color, title, blurb, right, children }: {
+/* `color` is gone from the signature rather than ignored: a prop every call
+   site passes and nothing reads is the dead field CLAUDE.md warns about. */
+function Section({ icon, title, blurb, right, children }: {
   icon: ComponentProps<typeof Icon>['as']
-  color: string
   title: string
   blurb: string
   right?: ReactNode
@@ -202,7 +209,7 @@ function Section({ icon, color, title, blurb, right, children }: {
     <section className="mb-5">
       <div className="mb-2 flex flex-wrap items-baseline gap-x-2.5">
         <h4 className="flex items-center gap-1.5 text-body font-medium text-fg-1">
-          <Icon as={icon} size="sm" style={{ color: onRaised(color) }} /> {title}
+          <Icon as={icon} size="sm" className="text-fg-2" /> {title}
         </h4>
         <p className="min-w-0 flex-1 text-label text-fg-2">{blurb}</p>
         {right}
@@ -212,10 +219,12 @@ function Section({ icon, color, title, blurb, right, children }: {
   )
 }
 
-function Lines({ title, color, items }: { title: string; color: string; items: string[] }) {
+function Lines({ title, color, items }: { title: string; color?: string; items: string[] }) {
   return (
     <div>
-      <p className="mb-0.5 text-label font-medium" style={{ color: onRaised(color) }}>{title}</p>
+      {/* Colour only when it carries meaning — green for the half that
+          prevents harm. The other half is a heading. */}
+      <p className="mb-0.5 text-label font-medium text-fg-1" style={color ? { color: onRaised(color) } : undefined}>{title}</p>
       <ul className="space-y-0.5">
         {items.map((t) => <li key={t} className="text-label text-fg-2">{t}</li>)}
       </ul>

@@ -71,6 +71,28 @@ function unionScalars(winner: unknown, loser: unknown): unknown[] {
   return [...w, ...l.filter((x) => !seen.has(x))]
 }
 
+/**
+ * Union a map whose VALUES are lists of scalars, key by key.
+ *
+ * `fillMap` below is a shallow merge: on a key collision the winner's value
+ * replaces the loser's outright, which is correct for a note (one sentence,
+ * last edit wins) and lossy for a dated log. `practiceLog` holds the days you
+ * ticked a drill, so a collision is two devices that each recorded real days —
+ * taking one side drops the other's practice silently, which is the same
+ * failure the five union cases below this were written to stop.
+ */
+function unionListMap(winner: unknown, loser: unknown): Dict {
+  const w = (winner && typeof winner === 'object' ? winner : {}) as Dict
+  const l = (loser && typeof loser === 'object' ? loser : {}) as Dict
+  const out: Dict = {}
+  for (const k of new Set([...Object.keys(l), ...Object.keys(w)])) {
+    const a = Array.isArray(w[k]) ? (w[k] as unknown[]) : []
+    const b = Array.isArray(l[k]) ? (l[k] as unknown[]) : []
+    out[k] = [...new Set([...b, ...a])].sort()
+  }
+  return out
+}
+
 function fillMap(winner: unknown, loser: unknown): Dict {
   const w = (winner && typeof winner === 'object' ? winner : {}) as Dict
   const l = (loser && typeof loser === 'object' ? loser : {}) as Dict
@@ -111,6 +133,7 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
     coachingWeeksDone: unionScalars(ws.coachingWeeksDone, ls.coachingWeeksDone),
     programActuals: fillMap(ws.programActuals, ls.programActuals),
     coachingWeekNotes: fillMap(ws.coachingWeekNotes, ls.coachingWeekNotes),
+    practiceLog: unionListMap(ws.practiceLog, ls.practiceLog),
   }
   // Drop the keys we just synthesised if BOTH sides lacked them, so a merge
   // can't invent `duprLog: []` on a journal that never had one.
@@ -120,7 +143,7 @@ export function mergeJournals(winner: JournalData, loser: JournalData): JournalD
       delete (out.settings as Dict)[k]
     }
   }
-  for (const k of ['programActuals', 'coachingWeekNotes'] as const) {
+  for (const k of ['programActuals', 'coachingWeekNotes', 'practiceLog'] as const) {
     if (ws[k] == null && ls[k] == null) delete (out.settings as Dict)[k]
   }
 

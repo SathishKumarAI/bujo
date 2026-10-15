@@ -25,6 +25,12 @@ import { COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUr
 const MIN = 40
 
 describe('the scenario fields are filled, not merely typed', () => {
+  /**
+   * NO PARAGRAPHS IN THE UI. Asked for directly — "I don't think people love
+   * to read paragraphs" — and it is now a rule in CLAUDE.md. A field people
+   * read on a card is a list of points; this asserts the points exist and are
+   * not fragments, which is the half a type cannot check.
+   */
   it('every mindset principle says when it happens and what to do', () => {
     expect(MINDSET).toHaveLength(16)
     for (const m of MINDSET) {
@@ -39,7 +45,10 @@ describe('the scenario fields are filled, not merely typed', () => {
   it('every level says how you know you are here and the one thing that moves you', () => {
     expect(ACADEMY_LEVELS).toHaveLength(5)
     for (const l of ACADEMY_LEVELS) {
-      expect(l.youAreHere.length, `${l.name} · youAreHere`).toBeGreaterThan(MIN)
+      // Points, not a paragraph (CLAUDE.md's writing rule). Two or more, and
+      // each one a real line rather than a fragment left over from a split.
+      expect(l.youAreHere.length, `${l.name} · youAreHere points`).toBeGreaterThanOrEqual(2)
+      for (const t of l.youAreHere) expect(t.length, `${l.name} · "${t}"`).toBeGreaterThan(12)
       expect(l.unlock.length, `${l.name} · unlock`).toBeGreaterThan(MIN)
       expect(l.skills.length, `${l.name} · skills`).toBeGreaterThanOrEqual(5)
     }
@@ -48,8 +57,9 @@ describe('the scenario fields are filled, not merely typed', () => {
   it('every shot says when to choose it, and that is not what the shot is', () => {
     expect(TECHNIQUES).toHaveLength(14)
     for (const t of TECHNIQUES) {
-      expect(t.when.length, `${t.name} · when`).toBeGreaterThan(MIN)
-      expect(t.when, `${t.name} · when duplicates what`).not.toBe(t.what)
+      expect(t.when.length, `${t.name} · when points`).toBeGreaterThanOrEqual(2)
+      for (const line of t.when) expect(line.length, `${t.name} · "${line}"`).toBeGreaterThan(12)
+      expect(t.when, `${t.name} · when duplicates what`).not.toContain(t.what)
       expect(t.how.length, `${t.name} · how`).toBeGreaterThanOrEqual(2)
     }
   })
@@ -78,8 +88,9 @@ describe('the safety content', () => {
     for (const x of COURT_INJURIES) {
       // `where` is the whole point of the rewrite — "protect the ankles" is
       // true and unusable; the shot you were playing is the trainable part.
-      expect(x.where.length, `${x.id} · where`).toBeGreaterThan(MIN)
-      expect(x.mechanism.length, `${x.id} · mechanism`).toBeGreaterThan(MIN)
+      expect(x.where.length, `${x.id} · where points`).toBeGreaterThanOrEqual(2)
+      expect(x.mechanism.length, `${x.id} · mechanism points`).toBeGreaterThanOrEqual(2)
+      for (const t of [...x.where, ...x.mechanism]) expect(t.length, `${x.id} · "${t}"`).toBeGreaterThan(12)
       expect(x.now.length, `${x.id} · now`).toBeGreaterThanOrEqual(1)
       expect(x.prevent.length, `${x.id} · prevent`).toBeGreaterThanOrEqual(2)
       // The only near-instruction in the file, and the one that must never be
