@@ -373,6 +373,74 @@ what it failed to wait for. Note the corollary: that arithmetic also fits a real
 faded token, so do not assume the fade — adding the settle and seeing the number
 *survive* is what distinguishes them.
 
+Trap: **`cat()` returns mauve for any name it does not know**, so a typo paints
+a plausible colour instead of failing. `colors.ts:90` falls back to `CAT.mauve`,
+and the palette spells its neutrals `text` / `subtext0` / `overlay0` — `fg-1`
+and `fg-2` are **CSS custom properties, not palette keys**. `cat('fg-1')` on the
+calendar's day numbers therefore tinted every *unfilled* date mauve, on a page
+where mauve means "you trained": the empty days were coloured like the full
+ones. Nothing failed, nothing logged, and both gates were right to be quiet —
+`check-contrast` reads token values and this *was* a real token, just the wrong
+one. Caught only on a screenshot. **A fallback that returns a plausible value
+hides its own misuse**; prefer one that throws in development, and when writing
+an inline colour check the name against the palette rather than against the
+Tailwind class you were thinking of.
+
+Trap: **a floor of two is not a floor.** `momentumIndicator` guarded on
+`recentVals.length < 2` and then compared that 2-day sample against a 7-day one,
+so deleting five days of entries moved Insights' headline mood **5.0 → 6.5 with
+an up arrow** and reported three green improvements, every one of them "you
+stopped logging the bad days". Measured in the browser: the lapse read
+**`8/10 ↑`** where the truth with those days restored is **`4.5/10 ↓`** — not
+overstated, *inverted*. It is the `count ? sum / count : 0` trap above, one
+level up: not a fabricated zero but a **fabricated improvement**, which is worse
+because a zero looks wrong and progress does not. Any figure that compares two
+windows needs a coverage floor on **both** sides (half the window, here 4 of 7)
+and must return its sample size rather than discard it — `metricMean` threw its
+count away, which is precisely how the digest could compare one day against
+seven. And state the coverage **as text**: it was in a `title` tooltip the whole
+time and lost, because an arrow beats a tooltip and on a phone the tooltip does
+not exist at all.
+
+Trap: **silence is not a measurement, and a day that has not happened is not a
+rest day.** The month heatmap ran to the end of the month and labelled the
+sixteen days still to come as rest days — a claim about days that have not
+occurred. They also have to be kept out of any quartile or mean: sixteen future
+zeroes drag the thresholds down and repaint a quiet month as a strong one, so
+the ramp ends up measuring the calendar rather than the training. Same family as
+the lapse bug above. Draw them, date them, and exclude them from the arithmetic.
+
+Trap: **an `sr-only` element carrying a measured class still measures.**
+`useHeaderHeight` sums every `.app-header`, and an `sr-only` box is clipped to
+roughly a pixel rather than to nothing — so keeping an `sr-only` h1 with that
+class on the bar-less views published `--header-h: 10px` where it should have
+been `0px`, and the eight sticky offsets that read it all sat 10px low. Keep the
+h1 (a page with no h1 cannot be announced); drop the class.
+
+Trap: **`maxWidth: 'max-content'` collapses a grid with no intrinsic content.**
+The heatmap table's cells are empty divs, so `max-content` resolved to roughly
+nothing and every cell rendered at **8px**. Cap the width arithmetically —
+`calc(cols * clamp(...))` — whenever the children have no text to size from.
+
+Trap: **a geometry fix that does not change the layout is not a fix.** The
+heatmap was reported as "a lot of empty space, why are you not scaling it to the
+sides" and three passes failed in a row: shortening the year strip, capping the
+cell size, then removing the cap (which filled the width with 190px tiles).
+**All three were still drawing a year's layout with fewer columns.** `DayGrid`
+is column-major because a 53-column strip is read left-to-right; a week is a
+*row* and a month is a *calendar*, and nothing short of making the layout follow
+the range fixes it. When a third tweak to the same number fails, the parameter
+is not the problem.
+
+Trap: **ask the deployment what it is before asking the code.** A diagnosis in
+`docs/auth/` reasoned from the deployed bundle alone — zero `supabase.co` across
+eleven chunks, no sign-in button on the page — and concluded the Vercel env vars
+were unset, Vite inlined `undefined`, and Rollup dropped the feature. Both
+variables had been set for **124 days**; the alias was simply pinned to a build
+that predated the feature. The reasoning fit every observation and was false.
+`vercel env ls` and `vercel ls` settle it in two commands, and they are the
+first two to run, not the last.
+
 Trap: **setting `data-theme` on the root does not re-theme an inline style.**
 The CSS variables repaint immediately, so the *background* under an element
 changes; but `cat()` and `onRaised()` resolve from `src/lib/colors.ts` at render

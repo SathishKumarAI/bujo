@@ -26,6 +26,215 @@ Rules the three share:
 
 ---
 
+## 2026-10-15 — Sixteen PRs driven from the running app, and an app that was lying about progress
+
+Sixteen PRs, **#383–#398**. `main` at `43daacf`, zero open PRs, **141 test
+files / 1923 tests** (was 138 / 1854 at `534aa81`). `design` 441 files,
+`contrast` 5 themes / 14 accents, `eslint` 0 errors.
+
+**No browser gate ran** — `a11y`, `clipped`, `smoke`, `space` are all stale
+against this code, which is mostly UI and includes a new layout primitive. That
+is the first line of `STATUS.md` after the two blockers below.
+
+The session was driven almost entirely from the running application rather than
+from the source, and that is the thread tying the findings together: **four of
+the most expensive bugs this session were invisible to every gate, the type
+checker and the test suite, and visible immediately to anyone looking at the
+screen.**
+
+### The headline: Insights was congratulating you for giving up
+
+An ADHD-perspective review of the running app found it. Delete five days of
+entries from a seeded journal and the headline mood moves **5.0 → 6.5 with an
+up arrow**, while Momentum reports `Mood +1.5 vs last week`, `Stress −2.1`,
+`Sleep +1.2` — three green improvements, every one of which is *"you stopped
+logging the bad days"*.
+
+Measured in the browser with the lapse planted by hand:
+
+| | mood | direction |
+|---|---|---|
+| with five days deleted | **8.0/10** | **↑** |
+| the same days restored | **4.5/10** | **↓** |
+
+Not overstated — **inverted**. The card said the opposite of the truth, and it
+said it at the exact moment someone is deciding whether this thing is worth
+coming back to.
+
+`momentumIndicator` guarded on `recentVals.length < 2`, so **two logged days
+were enough to publish a confident trend against a seven-day sample**.
+`weeklyDigest` had no floor at all: one reading in each week was enough to draw
+an arrow between them.
+
+It is the `count ? sum / count : 0` trap already in CLAUDE.md, one level up.
+Not a fabricated zero but a **fabricated improvement** — and that is strictly
+worse, because a zero looks wrong and an improvement looks like progress. The
+honest number was on the same screen the whole time, in a `title` tooltip, and
+lost: **an arrow beats a tooltip, and on a phone the tooltip does not exist at
+all.**
+
+The fix is a coverage floor of half the window on *both* sides (4 of 7), the
+sample size returned rather than discarded (`metricMean` used to throw it away,
+which is how the digest could compare one day against seven), and the coverage
+rendered as text on the card. Momentum also stopped returning `null` when
+empty: raising the floor made vanishing the normal state after a quiet week,
+and an absent card is indistinguishable from "nothing happened" — which is the
+rule the four panels three lines below it already followed.
+
+**Both new tests fail on the previous commit.** A third, asserting the quartile
+exclusion, passed on the old code too — it was evidence of nothing and was
+removed rather than kept as reassurance, with a note on what a real one would
+need. That is the "arm every tripwire on a canary" rule applied to the tripwire
+itself.
+
+### What else shipped
+
+**The chrome came down.** The desktop top bar measured **1489 × 48 holding
+three text leaves and zero interactive controls**, ink ending at x=487 —
+**1,210px dead, 81.3% of the bar** — and what it gave back was the name of the
+view you had just clicked in the rail immediately to its left. The height was
+never the problem, which is why an earlier pass taking it 60px → 42px did not
+fix it: *shrinking a bar that says nothing makes a smaller bar that says
+nothing.* It was first filled with the one fact that was invisible (where your
+journal actually is: **24px dead, 1.6%**), then taught to slide away on scroll,
+then taken down on the 21 views that carried nothing but a name. `--header-h`
+collapses to 0 on its own because `useHeaderHeight` sums a class and an absent
+element contributes nothing.
+
+**Sync became a thing you get by signing in.** Asked for directly: *"I don't
+want a passphrase. I just want to sign in."* That is a coherent product and the
+honest answer is that you cannot have both — **a server that can hand your
+journal to a brand-new device is a server that can read your journal.** The
+trade is now stated on screen rather than implied. The cycle log still never
+leaves the device by any route, which makes `egress.contract.test.ts` more
+load-bearing, not less: under the old scheme anything slipping past it was at
+least ciphertext on the wire.
+
+**Numbers learned to show their range.** Measured across 14 views: **1,414
+numbers printed as plain text against 98 visual encodings — 14.43 to 1**, with
+five views encoding nothing at all. Fitness printed 249 numbers and drew zero
+shapes; Insights, the analytics destination, answered 91 printed numbers with
+one chart. That ratio is the whole of "it doesn't tell me anything". The rule
+is enforced by the API rather than by review: **a number gets a shape when it
+has a range, and not otherwise** — decoration on an unbounded figure is worse
+than plain text, because it implies a scale the reader then tries to read off.
+
+**The focus timer stopped dying when you left the page.** It held its countdown
+in a component's `useState` and decremented with `setInterval`, so it unmounted
+on navigation and was throttled to once a minute in a background tab. It could
+therefore only be used by someone sitting on the Focus screen watching it,
+which is the one thing a focus timer exists to stop you doing. Now a module
+store keyed on a wall-clock `endsAt`: a backgrounded tab, a slept laptop and a
+reload all produce the right answer, because none of them can change what time
+it is.
+
+**Heatmaps learned what a week and a month are.** Three corrections, each after
+getting it wrong:
+
+1. All three ranges were a trailing Sunday-aligned window — so "Week" stretched
+   to eleven days and "Month" was five weeks starting in the wrong month.
+2. The layout was a shortened *year strip*. A month became six columns of seven
+   cells: a small square adrift in a 980px column, reported as *"why are you
+   not scaling it to the sides? there is a lot of empty space."* Capping the
+   cell size kept the squares sane and left the emptiness; removing the cap
+   filled the width with 190px tiles. **Neither is a fix, because both were
+   still drawing a year's layout with fewer columns.** The answer was to make
+   the layout follow the range: a week is a row, a month is a calendar.
+3. Then the month stopped at *today* — Oct 1–15 on the 15th — because every
+   range still shared one `if (date > today) break`. Reported as *"why are you
+   considering month has only 15 days? It has so many days, like 28, 30, 31."*
+
+The days still to come are now drawn and dated but never filled, and are
+explicitly **not** rest days: naming a day that has not occurred a rest day is
+a claim about nothing, the same family as the lapse bug above. They are also
+kept out of the intensity quartiles, or sixteen future zeroes would drag the
+thresholds down and repaint a quiet month as a strong one — the ramp would be
+measuring the calendar rather than the training.
+
+And the cells were `aspect-[4/3]`, so height tracked width: 105px per cell in a
+980px column, a six-row month **630px tall for thirty data points**, growing
+with the window. A fixed 40px band cannot do that — **216px** after, at the
+same full width. Both complaints are satisfied at once only because the width
+is fluid and the height is not.
+
+### What was got wrong, which is the useful part
+
+**The Vercel diagnosis was wrong, and confidently.** `docs/auth/sync-state-and-diagnosis.md`
+claimed the production build had neither `VITE_SUPABASE_*`, so Vite inlined
+`undefined` and Rollup dropped the account feature. **Both variables had been
+set for 124 days.** The real cause: `bujo-journal.vercel.app` was a manually
+pinned alias on a 17-day-old build that predated the feature. Nothing was
+misconfigured.
+
+The wrong answer is kept in the file rather than quietly replaced, because the
+method that produced it is the lesson: **it was reasoned from the deployed
+bundle alone** — zero `supabase.co` across eleven chunks, no sign-in button —
+and it fit every observation while being false. Two commands settle it:
+`vercel env ls` and `vercel ls`. **Ask the deployment what it is before asking
+the code.**
+
+**The account row was misread twice** — claimed as never-synced, then as an
+encrypted journal. It is 45 bytes, its keys are `v, note`, `data`/`salt`/`iv`
+are all null, and it is owned by an account that is not the one signed in. The
+migration guard that blocked a live migration on it was asking *"is something
+there"* when the question was *"is this a journal somebody could still
+recover"*.
+
+**"One screen" was misread.** #387 put all four Settings sections side by side;
+the request was one *section* per screen. Four 328px columns at 1440 made every
+card narrower than the same card gets on a phone. #388 deleted it and rebuilt
+with a tab row plus `column-fill: auto` — `data @1440` went **2.03 → 1.35**
+screens. The misreading is now a memory note, because the cost was a whole PR.
+
+**A self-written probe reported `OK` for 12 rows it never measured.**
+`scripts/probe-settings.mjs` was missing a storage seed, so it passed on an
+empty set. Fixed with a seed plus an explicit fail-on-empty — the same shape as
+every "a scan that matches nothing passes" entry in CLAUDE.md, written by the
+script that existed to stop people quoting unmeasured numbers.
+
+### Four bugs no gate could see
+
+Worth listing together, because they are the argument for driving the real app:
+
+- **`cat('fg-1')` silently returned mauve.** `cat()` falls back to `CAT.mauve`
+  for any name it does not know (`colors.ts:90`), and `fg-1` is a CSS custom
+  property, not a palette key — the palette spells its neutrals `text` /
+  `subtext0` / `overlay0`. So the typo did not fail; it painted every *unfilled*
+  calendar date mauve, on a page where mauve means "you trained". Caught on a
+  screenshot. **A fallback that returns a plausible colour hides its own
+  misuse.**
+- **Tailwind v4 dropped `cursor: pointer` on `button`.** **37 of 37 buttons on
+  Today computed `cursor: default`** against 28 of 28 anchors at `pointer`, so
+  no control in the app read as a control. Reported as "why is not clickable",
+  which is literally what it was.
+- **An over-scroll guard that was permanently true.** A list with nothing to
+  scroll satisfies `scrollTop + clientHeight >= scrollHeight` — it is at its end
+  because it is also at its start — and on Body at 1503×849 the rail measures
+  **699 against 699**. One wheel flick anywhere over the sidebar hid the
+  sidebar.
+- **An `sr-only` h1 carrying `app-header` still measured**, so `--header-h`
+  published `10px` on a page with no bar.
+
+### Blocked on the owner, both measured today
+
+**The migration has never run.** Through PostgREST, where `42703` means the
+column does not exist and `42501` means it exists behind RLS:
+`data` → **42703**, `blob` → **42501**, `blob_legacy_20261014` → **42703**,
+control `nonsense_col` → **42703**. `pushAccount` writes `data` and
+`pullAccount` selects it, so **the entire plain-sync pipeline shipped in #386,
+#392 and #394 is dead against the live database** and works locally only
+because nothing local talks to that table.
+
+**Localhost is no longer in the redirect allow-list.** Probed by sending a
+`redirect_to` and reading where the callback actually sends the browser —
+Supabase substitutes the Site URL for anything not allow-listed and still
+answers 302, so the status code tells you nothing. Production comes back
+verbatim; `localhost:5173`, `:5180` and `:4173` all come back substituted,
+**identically to the `evil.example.com` control**. Production was fixed and the
+local entries were removed in the same edit.
+
+---
+
 ## 2026-10-09 — Six causes behind one sign-in, then everything it touched
 
 Fifteen PRs, **#363–#377**. `main` at `fa54b56`, zero open PRs, **137 test
