@@ -1,0 +1,115 @@
+import { describe, expect, it } from 'vitest'
+import {
+  ACADEMY_DRILLS, ACADEMY_LEVELS, DRILL_FIXES, MINDSET, TECHNIQUES, TWELVE_WEEK,
+  ACADEMY_TOTAL_WEEKS,
+} from './pickleballAcademy'
+import { COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUrl } from './pickleballSafety'
+
+/**
+ * THE CONTENT GATE.
+ *
+ * Nothing else can catch what this catches. `tsc` proves a field exists and is
+ * a string; it cannot prove the string says anything, and an empty string
+ * renders as a silent gap in the middle of a card. The precedent is
+ * `lib/pullups.test.ts`, written after a pass rewrote a view's lists inline
+ * and `PULLUP_WORKOUTS` quietly went from fourteen formats to three with every
+ * check green — an export nobody imports is not an error, and a field nobody
+ * fills is not either.
+ *
+ * So: every record carries every scenario field, and no scenario field is a
+ * stub. The counts are asserted too, for the same reason that file gives — a
+ * list that shrinks is invisible on screen.
+ */
+
+/** Long enough to be a sentence about a situation, not a placeholder. */
+const MIN = 40
+
+describe('the scenario fields are filled, not merely typed', () => {
+  it('every mindset principle says when it happens and what to do', () => {
+    expect(MINDSET).toHaveLength(16)
+    for (const m of MINDSET) {
+      expect(m.when.length, `${m.title} · when`).toBeGreaterThan(MIN)
+      expect(m.do.length, `${m.title} · do`).toBeGreaterThan(MIN)
+      // "Stay calm" is not a move. A `do` that never names an action is the
+      // failure this content was written to replace.
+      expect(m.do, `${m.title} · do is the same text as why`).not.toBe(m.why)
+    }
+  })
+
+  it('every level says how you know you are here and the one thing that moves you', () => {
+    expect(ACADEMY_LEVELS).toHaveLength(5)
+    for (const l of ACADEMY_LEVELS) {
+      expect(l.youAreHere.length, `${l.name} · youAreHere`).toBeGreaterThan(MIN)
+      expect(l.unlock.length, `${l.name} · unlock`).toBeGreaterThan(MIN)
+      expect(l.skills.length, `${l.name} · skills`).toBeGreaterThanOrEqual(5)
+    }
+  })
+
+  it('every shot says when to choose it, and that is not what the shot is', () => {
+    expect(TECHNIQUES).toHaveLength(14)
+    for (const t of TECHNIQUES) {
+      expect(t.when.length, `${t.name} · when`).toBeGreaterThan(MIN)
+      expect(t.when, `${t.name} · when duplicates what`).not.toBe(t.what)
+      expect(t.how.length, `${t.name} · how`).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('every drill group the data uses has a symptom, and none is orphaned', () => {
+    const used = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
+    expect(used.length).toBeGreaterThanOrEqual(8)
+    // Both directions. A missing key renders nothing (the dead-field trap);
+    // an extra key is a group that was renamed in one place and not the other.
+    expect(used.filter((g) => !DRILL_FIXES[g]), 'drill groups with no symptom line').toEqual([])
+    expect(Object.keys(DRILL_FIXES).filter((k) => !used.includes(k)), 'symptom lines for groups that no longer exist').toEqual([])
+  })
+
+  it('the twelve-week roadmap is still twelve weeks with drills and a goal', () => {
+    expect(TWELVE_WEEK).toHaveLength(ACADEMY_TOTAL_WEEKS)
+    for (const w of TWELVE_WEEK) {
+      expect(w.drills.length, `week ${w.week}`).toBeGreaterThanOrEqual(2)
+      expect(w.goal.length, `week ${w.week} · goal`).toBeGreaterThan(10)
+    }
+  })
+})
+
+describe('the safety content', () => {
+  it('every injury names the moment, the mechanism, and when to stop', () => {
+    expect(COURT_INJURIES).toHaveLength(6)
+    for (const x of COURT_INJURIES) {
+      // `where` is the whole point of the rewrite — "protect the ankles" is
+      // true and unusable; the shot you were playing is the trainable part.
+      expect(x.where.length, `${x.id} · where`).toBeGreaterThan(MIN)
+      expect(x.mechanism.length, `${x.id} · mechanism`).toBeGreaterThan(MIN)
+      expect(x.now.length, `${x.id} · now`).toBeGreaterThanOrEqual(1)
+      expect(x.prevent.length, `${x.id} · prevent`).toBeGreaterThanOrEqual(2)
+      // The only near-instruction in the file, and the one that must never be
+      // empty: a scenario with no red flags reads as "this is always fine".
+      expect(x.redFlags.length, `${x.id} · redFlags`).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('the warm-up is a sequence, and every block says which injury it is for', () => {
+    expect(WARMUP.length).toBeGreaterThanOrEqual(6)
+    for (const w of WARMUP) {
+      expect(w.how.length, `${w.name} · how`).toBeGreaterThan(20)
+      expect(w.why.length, `${w.name} · why`).toBeGreaterThan(20)
+    }
+  })
+
+  it('every piece of gear states its limit', () => {
+    // A claim with no limit is marketing. The knee sleeve is the reason this
+    // assertion exists: it helps, and it does not stabilise a ligament.
+    for (const g of PROTECTIVE_GEAR) expect(g.limit.length, `${g.item} · limit`).toBeGreaterThan(20)
+  })
+
+  it('every source is credited and its link is built from its own name', () => {
+    expect(SAFETY_SOURCES.length).toBeGreaterThanOrEqual(4)
+    for (const s of SAFETY_SOURCES) {
+      const url = sourceSearchUrl(s.name, s.topic)
+      expect(url.startsWith('https://'), s.name).toBe(true)
+      // Built, never pinned — the whole point. If the name is not in the URL,
+      // somebody has pinned a page, and a pinned page rots.
+      expect(decodeURIComponent(url), s.name).toContain(s.name)
+    }
+  })
+})

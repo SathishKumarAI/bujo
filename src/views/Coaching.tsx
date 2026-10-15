@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Input, Pill } from '../components/ui'
 import { CommitField } from '../components/CommitField'
+import { ShowMore } from '../components/ShowMore'
+import { useCappedList } from '../lib/useCappedList'
 import { useConfirm } from '../components/ConfirmDialog'
 import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
@@ -15,8 +17,10 @@ import type { PickleballSession } from '../lib/types'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
   ACADEMY_LEVELS, WEEKLY_TEMPLATE, SESSION_TEMPLATE, ACADEMY_DRILLS, MINDSET,
-  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, type RehabEquip, TECHNIQUES,
+  TWELVE_WEEK, ACADEMY_TOTAL_WEEKS, KNEE_REHAB, TECHNIQUES, DRILL_FIXES,
 } from '../lib/pickleballAcademy'
+import { COURT_INJURIES, SAFETY_DISCLAIMER, WARMUP } from '../lib/pickleballSafety'
+import { SafetyChapter } from '../components/coaching/SafetyChapter'
 
 /**
  * COACHING · the 12-week pickleball program, and the manual that teaches it.
@@ -180,6 +184,24 @@ export function Coaching() {
             onChange={(id) => setSection(id ?? 'program')}
             railAt="never"
           />
+          {/*
+            EVERY SECTION SAYS WHAT IT IS, not just the one about knees.
+
+            It sat at the bottom of the rehab chapter and nowhere else, which
+            put it after twenty-three exercises and under the fold — and the
+            program, the shot guide and the ladder make confident claims too.
+            They are gathered from published coaching material and from
+            playing; none of it is instruction from anybody qualified to give
+            it, and the page should say so before it says anything else.
+
+            One line, above the panel rather than inside it, so switching
+            sections cannot land you somewhere it is missing. The long version
+            is in `SafetyChapter`, where the claims are about bodies.
+          */}
+          <p className="mt-2 mb-3 flex items-start gap-1.5 text-label text-fg-2">
+            <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-peach" />
+            {SAFETY_DISCLAIMER.short}
+          </p>
           {section !== 'program' ? <Manual chapter={section} /> : <>
           <TodaySession slot={todaySlot} dow={todayDow} />
           <Card
@@ -399,6 +421,7 @@ function WeekRecord({ week, start, played, note, onNote }: {
 
 /** Zone 2 · what to do in the next hour, and where it sits in the week. */
 function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow: number }) {
+  const [open, setOpen] = useState(false)
   return (
     <Card
       band
@@ -407,14 +430,33 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
       help="A repeatable weekly split. Today's focus + a 45–60 min session template. Adapt freely; keep at least one rest day."
     >
       <p className="text-body text-fg-1">{slot.detail}</p>
-      <details className="mt-3 rounded-card bg-ink-2 p-3">
-        <summary className="cursor-pointer text-body font-medium text-fg-1">A 45–60 min session</summary>
-        <ul className="mt-2 space-y-1">
-          {SESSION_TEMPLATE.map((b) => (
-            <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
-          ))}
-        </ul>
-      </details>
+      {/*
+        A BUTTON, NOT `<details>`.
+
+        This was the page's only raw `<details>`, and `openFolds()` in
+        `scripts/a11y-axe.mjs` finds content by `[aria-expanded="false"]` — a
+        `<summary>` carries no such attribute, so the session template had
+        never been opened by the gate at any theme or viewport. Same family as
+        the rail having no `aria-expanded` (COD-237): when a gate walks the
+        DOM, ask what is not in it.
+      */}
+      <div className="mt-3 rounded-card bg-ink-2 p-3">
+        <button
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-2 text-left text-body font-medium text-fg-1"
+        >
+          A 45–60 min session
+          <span aria-hidden className="shrink-0 text-fg-2">{open ? '▴' : '▾'}</span>
+        </button>
+        {open && (
+          <ul className="mt-2 space-y-1">
+            {SESSION_TEMPLATE.map((b) => (
+              <li key={b.mins} className="flex gap-2 text-label"><span className="w-12 shrink-0 tabular-nums text-fg-2">{b.mins}</span><span className="text-fg-2">{b.activity}</span></li>
+            ))}
+          </ul>
+        )}
+      </div>
       {/* 4-up on a phone — see `pickleball/SignalCards.tsx`. At seven columns
           each cell held 26px and the focus words ("Dinking", "Transition")
           lost half their letters. */}
@@ -447,15 +489,6 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
  * Same `SectionRail` as Insights. No "All" row: the chapters do not overlap
  * and nobody wants all seven at once — that is the page this replaces.
  */
-/** Physio / trainer / doctor guidance for pickleball · injury-prevention basics. */
-const TIPS = [
-  { t: 'Warm up first', d: '5–10 min: brisk walk, leg swings, arm circles, a few easy dinks. Cold muscles = pulls.' },
-  { t: 'Protect the ankles', d: 'Lateral ankle sprains are the #1 court injury. Court shoes (not runners), split-step, don’t backpedal · turn and run.' },
-  { t: 'Mind the shoulder & elbow', d: 'Rotator-cuff and “pickleball elbow” come from over-gripping and all-arm swings. Loosen the grip, drive from the legs/core.' },
-  { t: 'Achilles & calves', d: 'Sudden push-offs strain the Achilles. Calf raises 3×/week; ease in after rest days.' },
-  { t: 'Hydrate & cool down', d: 'Water before you’re thirsty; finish with calf, hip-flexor and shoulder stretches. Sharp joint pain → stop and rest.' },
-]
-
 /**
  * THE PAGE'S ONE NAVIGATION · the program first, then the manual it teaches.
  *
@@ -487,7 +520,8 @@ const CHAPTERS = [
   { id: 'shots', color: 'mauve', label: 'Shots', title: 'How to play every shot', count: TECHNIQUES.length, blurb: `${TECHNIQUES.length} shots · how-to, cues & common mistakes`, icon: BookOpen },
   { id: 'drills', color: 'green', label: 'Drills', title: 'Drill library', count: ACADEMY_DRILLS.length, blurb: `${ACADEMY_DRILLS.length} drills by skill · pick 1–2 a session`, icon: Barbell },
   { id: 'ladder', color: 'sky', label: 'Skill ladder', count: ACADEMY_LEVELS.length, blurb: "2.0 → 4.5+ · what to master at each level, in order", icon: ListChecks },
-  { id: 'rehab', color: 'red', label: 'Knee & safety', title: 'Knee rehab, prehab & playing safe', count: KNEE_REHAB.length + TIPS.length, blurb: "ACL / MCL, and the physio notes for staying on court", icon: Heartbeat },
+  { id: 'prep', color: 'green', label: 'Warm-up', title: 'Warm up, cool down, and what gear does', count: WARMUP.length, blurb: "Eight minutes before, three things after, and the honest half of every piece of kit", icon: ShieldPlus },
+  { id: 'rehab', color: 'red', label: 'Injuries', title: 'Where it goes wrong, and the knee that does not', count: COURT_INJURIES.length, blurb: `${COURT_INJURIES.length} court scenarios · the moment each happens, and ${KNEE_REHAB.length} exercises against them`, icon: Heartbeat },
   { id: 'mental', color: 'peach', label: 'Mental game', count: MINDSET.length, blurb: "The mindset that wins close games", icon: Brain },
   { id: 'formats', color: 'blue', label: 'Formats', title: 'Format playbook', count: PICKLE_FORMATS.length, blurb: "How each league & tournament format works", icon: Medal },
 ] as const
@@ -497,9 +531,7 @@ function Manual({ chapter }: { chapter: string }) {
   const drillSkills = [...new Set(ACADEMY_DRILLS.map((d) => d.skill))]
   const [openSkill, setOpenSkill] = useState<string | null>(drillSkills[0])
   const [openTech, setOpenTech] = useState<string | null>(null)
-  const [equip, setEquip] = useState<RehabEquip | 'all'>('all')
-  const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
-  const EQUIP_LABEL: Record<RehabEquip | 'all', string> = { all: 'All', none: 'No equipment', band: 'Band', weights: 'Weights' }
+  const mindset = useCappedList(MINDSET, 8)
   const current = CHAPTERS.find((c) => c.id === chapter) ?? CHAPTERS[0]
 
   return (
@@ -543,6 +575,12 @@ function Manual({ chapter }: { chapter: string }) {
                     </button>
                     {open && (
                       <div className="space-y-2.5 border-t border-line px-3 py-2.5">
+                        {/* WHEN, before HOW. `what` on the closed row says what
+                            the shot is; the decision people at 3.0–3.5 get
+                            wrong is which shot to pick, not how to swing. */}
+                        <p className="rounded-card bg-ink-0 p-2 text-label text-fg-2">
+                          <span className="font-medium" style={{ color: onRaised('mauve') }}>When · </span>{t.when}
+                        </p>
                         <div>
                           <p className="mb-1 text-label font-medium text-fg-1">How to do it</p>
                           <ol className="space-y-1">
@@ -579,8 +617,15 @@ function Manual({ chapter }: { chapter: string }) {
                     so these were the only disclosures a screen reader could not
                     tell the state of — and the reason the page census counted 32
                     folds rather than 38. */}
-                <button onClick={() => setOpenSkill(open ? null : skill)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${skill} drills`} className="flex w-full items-center justify-between p-2.5 text-left text-body font-medium text-fg-1">
-                  {skill} <span className="text-label text-fg-2">{list.length}<span aria-hidden>{open ? ' ▴' : ' ▾'}</span></span>
+                <button onClick={() => setOpenSkill(open ? null : skill)} aria-expanded={open} aria-label={`${open ? 'Collapse' : 'Expand'} ${skill} drills`} className="flex w-full items-start justify-between gap-2 p-2.5 text-left">
+                  <span className="min-w-0">
+                    <span className="block text-body font-medium text-fg-1">{skill}</span>
+                    {/* The symptom, on the CLOSED row. A list of drill names
+                        cannot tell you which group your problem is in, which
+                        is the only question somebody arrives with. */}
+                    {DRILL_FIXES[skill] && <span className="block text-label text-fg-2">{DRILL_FIXES[skill]}</span>}
+                  </span>
+                  <span className="shrink-0 text-label text-fg-2">{list.length}<span aria-hidden>{open ? ' ▴' : ' ▾'}</span></span>
                 </button>
                 {open && (
                   <ul className="space-y-1 px-3 pb-3">
@@ -600,6 +645,13 @@ function Manual({ chapter }: { chapter: string }) {
                 <span className="text-body font-medium" style={{ color: onRaised(lvl.color) }}>{lvl.name}</span>
                 <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
               </div>
+              {/* The symptoms before the syllabus. A DUPR band is a number;
+                  this is what the number feels like from inside a game, and
+                  it is how anybody actually places themselves. */}
+              <p className="mb-1.5 text-body text-fg-1">{lvl.youAreHere}</p>
+              <p className="mb-2 rounded-card bg-ink-0 p-2 text-label text-fg-2">
+                <span className="font-medium" style={{ color: onRaised(lvl.color) }}>The one thing that moves you up · </span>{lvl.unlock}
+              </p>
               <ul className="grid gap-1 sm:grid-cols-2">
                 {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: onRaised(lvl.color) }}>•</span> {sk}</li>)}
               </ul>
@@ -607,59 +659,24 @@ function Manual({ chapter }: { chapter: string }) {
           ))}
         </div>
           </>)}
-          {chapter === 'rehab' && (<>
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {(['all', 'none', 'band', 'weights'] as const).map((e) => (
-            <button key={e} onClick={() => setEquip(e)} aria-pressed={equip === e} className="rounded-control border px-2.5 py-1 text-label transition-colors"
-              style={{ borderColor: equip === e ? cat('mauve') : cat('surface1'), background: equip === e ? cat('mauve') + '22' : 'transparent', color: equip === e ? cat('text') : cat('subtext0') }}>
-              {EQUIP_LABEL[e]}
-            </button>
-          ))}
-        </div>
-        {(['prehab', 'rehab'] as const).map((phase) => {
-          const list = rehab.filter((e) => e.phase === phase)
-          if (!list.length) return null
-          return (
-            <div key={phase} className="mb-3">
-              <p className="mb-1.5 text-body font-medium text-fg-1">{phase === 'prehab' ? 'Prehab — prevention' : '🩹 Rehab — recovery (clear with a physio)'}</p>
-              <ul className="grid gap-1.5 sm:grid-cols-2">
-                {list.map((e) => (
-                  <li key={e.name} className="rounded-card bg-ink-2 p-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-body font-medium text-fg-1">{e.name}</span>
-                      <Pill color="sky" size="micro">{e.target}</Pill>
-                      {e.equip !== 'none' && <span className="rounded-pill bg-ink-2 px-1.5 py-0.5 text-micro text-fg-2">{e.equip}</span>}
-                    </div>
-                    <p className="mt-0.5 text-label text-fg-2">{e.how}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        })}
-        {/* The five physio tips that were their own rail row. Same subject as
-            the twenty-three exercises above them and 0.36 screens of it, so
-            they are a facet of this chapter rather than a peer of it — the
-            row budget is what a single bar lives under. */}
-        <div className="mb-3">
-          <p className="mb-1.5 flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={ShieldPlus} size="sm" className="text-green" /> Playing safe — physio &amp; trainer notes</p>
-          <ul className="grid gap-1.5 sm:grid-cols-2">
-            {TIPS.map((x) => (
-              <li key={x.t} className="rounded-card bg-ink-2 p-2.5">
-                <p className="text-body font-medium text-fg-1">{x.t}</p>
-                <p className="text-label text-fg-2">{x.d}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2"><Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> Educational only — not medical advice. Stop on sharp pain; after an injury follow a qualified physio's plan.</p>
-          </>)}
+          {chapter === 'prep' && <SafetyChapter part="prep" />}
+          {chapter === 'rehab' && <SafetyChapter part="injury" />}
           {chapter === 'mental' && (<>
+        {/* Capped, because each principle grew a scenario and a move: sixteen
+            of them measured 4.14 phone screens, against 2.4 at eight. The
+            total is in the button — a list cut to eight with an unlabelled
+            affordance cannot be told from a list that only had eight. */}
+        <div className="mb-2 flex justify-end"><ShowMore list={mindset} /></div>
         <ul className="grid gap-2 sm:grid-cols-2">
-          {MINDSET.map((m) => (
+          {mindset.shown.map((m) => (
             <li key={m.title} className="rounded-card bg-ink-2 p-2.5">
               <p className="text-body font-medium text-fg-1">{m.title}</p>
               <p className="text-label text-fg-2">{m.why}</p>
+              {/* A principle with no scenario is a poster. The moment is what
+                  makes it recallable at 9–9, and the move is what you do with
+                  it — "stay calm" is neither. */}
+              <p className="mt-1.5 text-label text-fg-2"><span className="font-medium" style={{ color: onRaised('peach') }}>When · </span>{m.when}</p>
+              <p className="mt-0.5 text-label text-fg-1"><span className="font-medium" style={{ color: onRaised('green') }}>Do · </span>{m.do}</p>
             </li>
           ))}
         </ul>
