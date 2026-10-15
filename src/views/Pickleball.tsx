@@ -266,8 +266,14 @@ export function Pickleball() {
 
   return (
     <PageLayout
+      /* Still 1180. The 1440 tier was tried here and bought **nothing
+         measurable**: with the rail open the shell is bounded by the window,
+         not by the tier — 1110px at a 1440 viewport and 1590 at 1920 on either
+         setting. A tier that changes no number is a claim the layout does not
+         make. */
       tier={1180}
       zone1={atAGlance}
+      actTop
       actShut={act === 'shut'}
       zone2={act === 'shut' ? (
         <ActStrip

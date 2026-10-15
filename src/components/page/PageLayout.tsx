@@ -62,6 +62,7 @@ export function PageLayout({
   zone1,
   zone2,
   actShut = false,
+  actTop = false,
   zone3,
   className = '',
 }: {
@@ -87,6 +88,24 @@ export function PageLayout({
   zone2?: ReactNode
   /** Zone 2 is collapsed to its rail: the review takes the width back. */
   actShut?: boolean
+  /**
+   * The act column starts at the TOP, beside zone 1, instead of under it.
+   *
+   * The default is zone 1 spanning both columns, because an orientation bar is
+   * a header and a fact that moves into a column stops being one. That holds
+   * while zone 1 is four numbers. It stops holding when zone 1 is a BLOCK —
+   * Pickleball's carries the next-step sentence, the totals and today's drill,
+   * and at full width it is a wide shallow band with the thing you came to do
+   * pushed below it.
+   *
+   * Asked for as *"move the log session to the right side of this one, like a
+   * well built-in mannerism you can see in other places"* — and it is the
+   * shape Coaching already uses for its aside: read on the left, act on the
+   * right, both from the top.
+   *
+   * Opt-in, because it is only right for a page whose zone 1 is a block.
+   */
+  actTop?: boolean
   /** Review. Summary, signature visual, list. */
   zone3?: ReactNode
   className?: string
@@ -169,7 +188,7 @@ export function PageLayout({
     // and again onto the review column, whose children are the cards. That is
     // where the ladder was always aimed.
     <div className={cn('page-shell mx-auto w-full', TIER_WIDTH[tier], className)}>
-      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut')}>
+      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut', actTop && 'page-zones-act-top')}>
         {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
           // When the act column FITS the viewport it is sticky, as before.

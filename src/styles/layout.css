@@ -116,6 +116,33 @@
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
+  /* THE ACT FROM THE TOP, beside zone 1 rather than under it.
+
+     Three explicit placements, because auto-placement only ever moves forward:
+     zone 1 takes column 1 row 1, the act takes column 2 and SPANS both rows,
+     and the review falls to column 1 row 2. Without the span the act would sit
+     in row 1 only and the review would start below the taller of the two,
+     which is a gap the width of the page.
+
+     `align-self: start` on the act so a short form does not stretch to the
+     height of a long review — the sticky rule below then has something to
+     stick within. Measured on Pickleball at 1440: orient 1110 → 830px with the
+     log beside it, and the page's first screen holds the sentence, the totals,
+     the drill AND the form instead of three of the four. */
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-orient {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-act {
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+
+  .page-zones.page-zones-act-top:not(.page-zones-single) .zone-review {
+    grid-row: 2;
+  }
+
   /* Review LEFT and act RIGHT, against the DOM order, because the two rules
      disagree on purpose: status reads before the input form on a wide screen,
      while a phone still gets the form first. Both are explicitly placed —
