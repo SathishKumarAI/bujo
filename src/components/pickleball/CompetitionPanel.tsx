@@ -5,7 +5,7 @@ import { LineChart, Line, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { useJournal } from '../../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile } from '../ui'
 import { Button } from '../ui/button'
-import { CardGrid } from '../shell/CardGrid'
+import { PanelGrid } from './PanelGrid'
 import { DisclosureRow } from '../page'
 import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 import { todayISO, prettyDay } from '../../lib/date'
@@ -79,7 +79,7 @@ export function CompetitionPanel() {
 
   return (
     <>
-        <CardGrid>
+        <PanelGrid>
         {/* ── Tournament prep countdown (#345) · conditional top status,
               surfaces only when events exist; collapsed. ── */}
         {upcoming.length > 0 && (
@@ -228,7 +228,7 @@ export function CompetitionPanel() {
             </ul>
           )}
         </Card>
-        </CardGrid>
+        </PanelGrid>
     </>
   )
 }

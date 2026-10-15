@@ -4,12 +4,12 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { Card, Empty, Input, Pill, Segmented, Textarea } from '../ui'
 import { Button } from '../ui/button'
-import { CardGrid } from '../shell/CardGrid'
+import { PanelGrid } from './PanelGrid'
 import { LazyMount } from '../LazyMount'
 import { useNav } from '../shell/nav'
 import { SectionRail } from '../page'
 import { cat, onRaised } from '../../lib/colors'
-import { todayISO, prettyDay, fromISODay } from '../../lib/date'
+import { todayISO, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
 import {
   partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential,
   levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
@@ -126,9 +126,35 @@ export function PickleballReview({ panel, onPanel }: {
   onPanel: (id: string) => void
 }) {
   const nav = useNav()
-  const { data, updatePickleball, removePickleball } = useJournal()
+  const { data, updatePickleball, removePickleball, setSettings } = useJournal()
   const today = todayISO()
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
+  /**
+   * A WAY BACK TO YOUR OWN ENTRIES, from the figure that made you look.
+   *
+   * Every card in this review is read-only — a win rate by weekday, a partner's
+   * record, a court — and the sessions underneath them were a rail row away in
+   * a list of everything. Asked for as *"I need to be able to edit them as
+   * well, my entries, not the visualizations"*. Clicking a weekday, a partner
+   * or a venue opens Sessions filtered to exactly those rows, where Edit and ×
+   * already are.
+   *
+   * Not sticky and not in the URL, for the same reason as the sub-section
+   * chips: it is a narrowing you do while reading. It clears when you pick a
+   * different panel from the bar, because a filter you cannot see is a list
+   * that looks wrong.
+   */
+  const [focus, setFocus] = useState<{ kind: 'weekday' | 'partner' | 'venue'; value: string } | null>(null)
+  const pick = (kind: 'weekday' | 'partner' | 'venue') => (value: string) => { setFocus({ kind, value }); onPanel('sessions') }
+  const same = (a: string | undefined, b: string) => (a ?? '').trim().toLowerCase() === b.trim().toLowerCase()
+  const shown = focus
+    ? sessions.filter((p) => (
+        focus.kind === 'weekday' ? WEEKDAYS[fromISODay(p.date).getDay()] === focus.value
+          : focus.kind === 'partner' ? same(p.partner, focus.value)
+            : same(p.location, focus.value)
+      ))
+    : sessions
+  const focusLabel = focus && (focus.kind === 'weekday' ? `${focus.value} sessions` : focus.value)
 
   // Not sticky, and not in the URL: a sub-section is a narrowing you do while
   // reading, not a place you return to. Sticky it would be, on a page you open
@@ -321,7 +347,7 @@ export function PickleballReview({ panel, onPanel }: {
             label="Pickleball record"
             groups={PB_PANELS.map((g) => ({ id: g.id, label: g.label }))}
             value={panel}
-            onChange={(id: string | null) => { onPanel(id ?? 'sessions'); setFacet(null) }}
+            onChange={(id: string | null) => { onPanel(id ?? 'sessions'); setFacet(null); setFocus(null) }}
             railAt="never"
           />
           <div className="min-w-0">
@@ -366,7 +392,25 @@ export function PickleballReview({ panel, onPanel }: {
               </div>
             )}
             {panel === 'sessions' && (<>
-      <Card band title="History" subtitle="Tap Edit to fix a score, × to remove" collapsible>
+      <Card
+        band
+        title="History"
+        subtitle="Tap Edit to fix a score, × to remove"
+        collapsible
+        right={focus ? (
+          /* The filter states itself and can be taken off in one tap. A list
+             that is quietly short is a list that looks broken. */
+          <button
+            type="button"
+            onClick={() => setFocus(null)}
+            className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-ink-2 px-2.5 py-0.5 text-label text-fg-1 transition-colors hover:border-line-strong"
+          >
+            {focusLabel} · {shown.length} of {sessions.length}
+            <span aria-hidden>×</span>
+            <span className="sr-only">Clear this filter</span>
+          </button>
+        ) : undefined}
+      >
         {/* FIVE ROWS, AND THE REST SCROLLS.
 
             It was eight rows and a "Show all 23" button, so the card was
@@ -386,25 +430,41 @@ export function PickleballReview({ panel, onPanel }: {
             that cannot be focused is unreachable by keyboard, and
             `npm run a11y` fails it as a serious `scrollable-region-focusable`
             (it caught exactly this on the Cycle symptom table). */}
-        {sessions.length === 0 ? (
-          <Empty>Log a session above to start your record.</Empty>
+        {shown.length === 0 ? (
+          <Empty>{focus ? `No sessions match ${focusLabel}.` : 'Log a session above to start your record.'}</Empty>
         ) : (
           <div
-            className={sessions.length > 5 ? 'max-h-[15rem] overflow-y-auto pr-1' : undefined}
-            tabIndex={sessions.length > 5 ? 0 : undefined}
-            role={sessions.length > 5 ? 'group' : undefined}
-            aria-label={sessions.length > 5 ? `All ${sessions.length} sessions, scrollable` : undefined}
+            className={shown.length > 5 ? 'max-h-[15rem] overflow-y-auto pr-1' : undefined}
+            tabIndex={shown.length > 5 ? 0 : undefined}
+            role={shown.length > 5 ? 'group' : undefined}
+            aria-label={shown.length > 5 ? `All ${shown.length} sessions, scrollable` : undefined}
           >
             <ul className="divide-y divide-surface0">
-              {sessions.map((p) => (
+              {shown.map((p) => (
                 <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
               ))}
             </ul>
           </div>
         )}
-        {sessions.length > 5 && (
-          <p className="mt-2 text-label text-fg-2">Showing 5 of {sessions.length} · scroll for the rest</p>
+        {shown.length > 5 && (
+          <p className="mt-2 text-label text-fg-2">Showing 5 of {shown.length} · scroll for the rest</p>
         )}
+        {/* THE WEEKLY GOAL, where you decide whether it was the right number.
+            It used to hold a row of its own in zone 1, above the fold, for a
+            control touched about once a month — while the thing that actually
+            belongs up there, how this week is going against it, is a fact in
+            the bar. Here it sits under the sessions it is counting. */}
+        <label className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-label text-fg-2">
+          Weekly goal
+          <Input
+            type="number"
+            value={data.settings.pickleballGoalGames || ''}
+            onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })}
+            placeholder="—"
+            className="w-16 py-0.5 text-right"
+          />
+          games a week
+        </label>
       </Card>
         <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3 text-label text-fg-2">
           Rules and reading:
@@ -421,29 +481,29 @@ export function PickleballReview({ panel, onPanel }: {
             question — how am I playing. Nine cards in one masonry balance into
             even columns; four and five in separate groups could not, and each
             group cost a heading to say something the cards already said. */}
-        <CardGrid>
+        <PanelGrid>
         <Facet of="form" active={activeFacet}>{has.recentForm && <RecentFormCard form={form} streaks={streaks} />}</Facet>
         <Facet of="form" active={activeFacet}>{has.forecast && <WinRateForecastCard forecast={forecast} />}</Facet>
         <Facet of="badges" active={activeFacet}><MilestonesCard milestones={milestones} /></Facet>
         <Facet of="effort" active={activeFacet}>{has.intensity && <SessionIntensityCard load={load} />}</Facet>
-        <Facet of="cadence" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} />}</Facet>
+        <Facet of="cadence" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} onPick={pick('weekday')} />}</Facet>
         <Facet of="form" active={activeFacet}>{has.points && <PointDifferentialCard points={points} />}</Facet>
         <Facet of="effort" active={activeFacet}>{has.hours && <TimeOnCourtCard hours={hours} />}</Facet>
         <Facet of="form" active={activeFacet}>{has.scoring && <ScoringPerformanceCard scoring={scoring} />}</Facet>
         <Facet of="cadence" active={activeFacet}>{has.consistency && <PlayConsistencyCard consistency={consistency} />}</Facet>
         
-        </CardGrid>
+        </PanelGrid>
             </>)}
             {panel === 'trends' && (<>
         <LazyMount minHeight={500}><TrendCharts activeFacet={activeFacet} /></LazyMount>
             </>)}
             {panel === 'matchups' && (<>
-        <CardGrid>
-        {partners.length > 0 && <PartnerChemistryCard partners={partners} />}
-        {venues.length > 0 && <VenuesCard venues={venues} />}
+        <PanelGrid>
+        {partners.length > 0 && <PartnerChemistryCard partners={partners} onPick={pick('partner')} />}
+        {venues.length > 0 && <VenuesCard venues={venues} onPick={pick('venue')} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-        </CardGrid>
+        </PanelGrid>
             </>)}
           </div>
         </div>

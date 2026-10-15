@@ -1,7 +1,7 @@
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
 import { Card, Empty } from '../ui'
-import { CardGrid } from '../shell/CardGrid'
+import { PanelGrid } from './PanelGrid'
 import { CalendarHeatmap } from '../page'
 import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 import { todayISO } from '../../lib/date'
@@ -38,7 +38,7 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
   const heat = [...gamesByDay(data)].map(([date, value]) => ({ date, value }))
 
   return (
-    <CardGrid>
+    <PanelGrid>
       <Facet of="winning" active={activeFacet}>
       <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
@@ -162,6 +162,6 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
         />
       </Card>
       </Facet>
-    </CardGrid>
+    </PanelGrid>
   )
 }

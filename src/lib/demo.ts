@@ -127,7 +127,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 19
+export const DEMO_VERSION = 20
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -453,6 +453,38 @@ export function generateDemoData(today = todayISO()): JournalData {
         id: uid('pk'), date: addDays(today, -i), format: rand() > 0.3 ? 'doubles' : 'singles',
         gamesWon: won, gamesLost: lost, durationMin: 45 + Math.floor(rand() * 45),
         partner: rand() > 0.5 ? 'Sam' : 'Mara', rpe: 5 + Math.floor(rand() * 4),
+        /*
+         * WHERE, AGAINST WHOM, AT WHAT LEVEL, AND FOR HOW MANY POINTS.
+         *
+         * The seed wrote a score, a duration, a partner and an RPE, and
+         * nothing else — so `venueStats`, `opponentRecords`, `levelMatchup`,
+         * `pointDifferential` and `scoringStats` all returned empty and the
+         * five cards that render only when they are non-empty had never been
+         * drawn by anything: **Opponents showed 1 card of 4 and Performance 7
+         * of 9**, at five themes and two viewports, on every gate run. Same
+         * trap as the events that were all in the past — a branch the seed
+         * never takes cannot fail.
+         *
+         * NOT on every row. A location on all of them makes "where do you
+         * play" a single bar; a level on all of them makes the matchup table
+         * one line. The gaps are the point: `recentThenFrequent` is supposed
+         * to be asked for the court you went to last, and the log form's chips
+         * are supposed to have something to leave out.
+         */
+        location: rand() > 0.25 ? (rand() > 0.5 ? 'Riverside Courts' : 'Eastside Rec') : undefined,
+        opponent: rand() > 0.45 ? (rand() > 0.5 ? 'Dan & Priya' : 'The Thursday pair') : undefined,
+        level: rand() > 0.6 ? (rand() > 0.5 ? '3.5' : '4.0') : undefined,
+        /* Points only where a score was kept, and arithmetically consistent
+           with the games: a won game is 11-ish points for, a lost one 11-ish
+           against. A seed that drifts from its own score teaches the page to
+           show a margin nobody played. */
+        ...(rand() > 0.4
+          ? {
+            scoring: '11' as const,
+            pointsFor: won * 11 + Math.floor(rand() * 6) - 3,
+            pointsAgainst: lost * 11 + Math.floor(rand() * 6) - 3,
+          }
+          : {}),
         /*
          * Some carry a note, some do not. The Coaching week record renders the
          * note only when there is one, so a seed where every row has one never

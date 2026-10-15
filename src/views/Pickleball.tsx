@@ -9,7 +9,7 @@ import { Button } from '../components/ui/button'
 import { PageLayout, DisclosureRow, StatBar } from '../components/page'
 import { cat, onRaised } from '../lib/colors'
 import { todayISO, addDays } from '../lib/date'
-import { pickleTotals, playStreak, recentThenFrequent, nextStep } from '../lib/pickleball'
+import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
 import { PB_PANELS } from '../components/pickleball/panels'
 import { useStickyState } from '../lib/useStickyState'
@@ -54,14 +54,13 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefin
 const blankOf = () => ({ date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' })
 
 export function Pickleball() {
-  const { data, addPickleball, setSettings } = useJournal()
+  const { data, addPickleball } = useJournal()
   const today = todayISO()
   const [f, setF] = useState(blankOf)
   const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
 
   const all = pickleTotals(data)
   const week = pickleTotals(data, 7, today)
-  const streak = playStreak(data, today)
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
   const goal = data.settings.pickleballGoalGames ?? 0
   // The one sentence at the top of the page. See `nextStep`'s docstring for the
@@ -97,11 +96,16 @@ export function Pickleball() {
      time anyway while costing a dependency to keep honest. */
   const allPartners = recentThenFrequent(sessions.map((x) => x.partner))
   const allVenues = recentThenFrequent(sessions.map((x) => x.location))
-  /* Chips are the fast path and stay capped — a chip row that grows without
-     limit stops being a row. Everything else is reachable from the field's
-     own dropdown below, which is why the cap is safe now and was not before. */
-  const recentPartners = allPartners.slice(0, 4)
-  const recentVenues = allVenues.slice(0, 4)
+  /* ONE CHIP, THEN THE FIELD — asked for as "show only one partner name and
+     add a name, or else you can choose from the name".
+     
+     Four chips plus a field is five controls for one answer, and in a 416px
+     act column they wrapped to two lines each for Partner and Location. The
+     one chip is who you played with last, which is the answer most of the
+     time; everything else is in the field's own dropdown (`list=`), which is
+     a real list of every name you have logged and still takes a new one. */
+  const recentPartners = allPartners.slice(0, 1)
+  const recentVenues = allVenues.slice(0, 1)
   const yesterday = addDays(todayISO(), -1)
 
   function log() {
@@ -200,41 +204,43 @@ export function Pickleball() {
           The four facts are the four that were here. The weekly goal stays,
           because it is the one line that changes what you do today, but as a
           single row under the bar rather than a card section of its own. */}
+      {/* THE GOAL FIELD MOVED OUT OF ZONE 1, to the Sessions panel.
+
+          The orient zone was three rows for two facts: the sentence, the bar,
+          and then a near-empty line holding one progress pip and a number
+          field. A control you touch about once a month does not earn a row
+          above the fold — the STATE of it does, and that is the fourth fact
+          below ("3 of 12 games · 67% won"). The field itself now sits under
+          the history list, which is where you are standing when you decide
+          whether twelve was the right number. Measured: orient 175px → 126. */}
+      {/* FOUR FACTS, AND THE FOURTH IS THIS WEEK.
+
+          It was Sessions / Games / Win % / Day streak, with a row under it
+          repeating "This week 0 games of 12 - 0% won" and carrying the goal
+          field: two rows and 173px of orient zone, where the fourth fact was a
+          day streak that reads 0 for anybody who plays twice a week - which is
+          most people, and is not a problem.
+
+          `StatBar` gives every fact an equal share of the row, so a one-digit
+          value leaves ~230px of nothing beside it. The fix is not to squeeze
+          the bar, it is to SPEND the cell: the week against the goal is the one
+          line here that changes what you do today, so it takes the fourth slot
+          as prose and the row under it shrinks to the control that sets it.
+          Nothing is lost - the streak has its own card in Performance. */}
       <StatBar
         facts={[
           { label: 'Sessions', value: all.sessions },
           { label: 'Games', value: all.games },
           { label: 'Win %', value: `${all.winPct}%` },
-          { label: 'Day streak', value: streak },
+          {
+            label: 'This week',
+            value: goal > 0
+              ? `${week.games} of ${goal} games · ${week.winPct}% won${week.games >= goal ? ' ✓' : ''}`
+              : `${week.games} games · ${week.winPct}% won`,
+            prose: true,
+          },
         ]}
       />
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line pb-3 text-label text-fg-2">
-        <span>
-          This week <span className="num text-fg-1">{week.games}</span> games
-          {goal > 0 && <> of <span className="num text-fg-1">{goal}</span></>}
-          {' · '}
-          <span className="num" style={{ color: onRaised('green') }}>{week.winPct}%</span> won
-          {goal > 0 && week.games >= goal && ' ✓'}
-        </span>
-        {goal > 0 && (
-          <span aria-hidden className="h-1.5 w-24 overflow-hidden rounded-pill bg-ink-2">
-            <span
-              className="block h-full rounded-pill"
-              style={{ width: `${Math.min(100, (week.games / goal) * 100)}%`, background: cat(week.games >= goal ? 'green' : 'teal') }}
-            />
-          </span>
-        )}
-        <label className="ml-auto inline-flex items-center gap-1.5 text-fg-1">
-          Weekly goal
-          <Input
-            type="number"
-            value={goal || ''}
-            onChange={(e) => setSettings({ pickleballGoalGames: e.target.value ? Number(e.target.value) : undefined })}
-            placeholder="—"
-            className="w-14 py-0.5 text-right"
-          />
-        </label>
-      </div>
     </>
   )
 
@@ -334,7 +340,7 @@ export function Pickleball() {
                     <Input
                       value={f.partner}
                       onChange={(e) => set({ partner: e.target.value })}
-                      placeholder="Add a name"
+                      placeholder="Pick or type"
                       aria-label="Partner"
                       list="pb-partners"
                       className="w-36 min-w-0 max-w-full py-1"
@@ -358,7 +364,7 @@ export function Pickleball() {
                   <Input
                     value={f.location}
                     onChange={(e) => set({ location: e.target.value })}
-                    placeholder="Add a court"
+                    placeholder="Pick or type"
                     aria-label="Location"
                     list="pb-venues"
                     className="w-36 min-w-0 max-w-full py-1"
