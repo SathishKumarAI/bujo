@@ -1,4 +1,4 @@
-import { cat } from '../../lib/colors'
+import { cat, onAccent } from '../../lib/colors'
 import { prettyDay, fromISODay } from '../../lib/date'
 import type { DayCell } from '../ui/day-grid'
 
@@ -102,13 +102,42 @@ export function CalendarSpan({
               className={`relative flex flex-col items-center justify-center rounded-control ${week ? 'h-16' : 'aspect-[4/3]'}`}
               style={{ background: bg, opacity }}
             >
-              {week && !d.blank && (
+              {!d.blank && (
                 <>
-                  {/* From the DATE, not from the index. Week mode no longer
-                      starts on a Sunday — it is the last seven days — so an
+                  {/* The weekday letter is week-mode only: a month has a header
+                      row of them, and repeating it in all 31 cells is noise.
+                      Read from the DATE, not the index — week mode starts on
+                      the last seven days rather than on a Sunday, so an
                       index-based letter would mislabel every cell. */}
-                  <span className="text-micro text-fg-2">{WEEKDAY[fromISODay(d.date).getDay()]}</span>
-                  <span className="text-label font-medium tabular-nums text-fg-1">
+                  {week && (
+                    <span className="text-micro" style={{ color: cat('subtext0') }}>
+                      {WEEKDAY[fromISODay(d.date).getDay()]}
+                    </span>
+                  )}
+                  {/* ── The date, in BOTH modes ──────────────────────────────
+                      This was gated behind `week &&`, so the month rendered as
+                      forty unlabelled squares — a calendar with no dates on it,
+                      which is not a calendar. Reported as "the month field is
+                      not working the way we're expecting", and it was not.
+
+                      `mix-blend` is not used: on a filled cell the number sits
+                      on an accent at up to full opacity, so it takes the
+                      on-accent neutral the palette already solves for, the same
+                      way every other filled control in this app does. */}
+                  <span
+                    className="text-label font-medium tabular-nums"
+                    /* `cat('text')`, NOT `cat('fg-1')`.
+                       `cat()` falls back to `CAT.mauve` for any name it does
+                       not know (`colors.ts:90`), and `fg-1` is a CSS custom
+                       property, not a palette key — the palette spells its
+                       neutrals `text` / `subtext0` / `overlay0`. So the typo
+                       did not fail, it painted every unfilled date mauve, on
+                       a page where mauve means "you trained". Caught on a
+                       screenshot: the empty days were tinted like the full
+                       ones. A fallback that returns a plausible colour is a
+                       fallback that hides its own misuse. */
+                    style={{ color: d.level > 0 ? onAccent(color) : cat('text') }}
+                  >
                     {Number(d.date.slice(8, 10))}
                   </span>
                 </>
