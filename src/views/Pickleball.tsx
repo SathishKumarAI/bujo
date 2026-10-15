@@ -16,6 +16,9 @@ import { cat, onRaised, rechartsTooltip } from '../lib/colors'
 import { todayISO, prettyDay, fromISODay, addDays } from '../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, playStreak, formatStats, cumulativeGames, gamesByDay, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent } from '../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../lib/pickleballPlan'
+import { ACADEMY_DRILLS, DRILL_FIXES } from '../lib/pickleballAcademy'
+import { PracticeTick } from '../components/coaching/PracticeTick'
+import { useNav } from '../components/shell/nav'
 import type { PickleballFormat } from '../lib/types'
 import { RecentFormCard, WinRateForecastCard, MilestonesCard, SessionIntensityCard } from '../components/pickleball/FormCards'
 import { PartnerChemistryCard, VenuesCard, RivalryRecordCard, LevelMatchupCard } from '../components/pickleball/MatchupCards'
@@ -46,25 +49,22 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefin
 const blankOf = () => ({ date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' })
 const evtBlankOf = () => ({ date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' })
 
-/** Quick pre-match warm-up · done before logging a session keeps injuries down. */
-const WARMUP = [
-  '5 min brisk walk or light jog to raise the heart rate',
-  'Leg swings ×10/side · ankle circles ×10 · hip openers',
-  'Arm circles, shoulder rolls, wrist mobility',
-  'Side shuffles + split-steps to prime lateral movement',
-  '2–3 min of easy dinks and soft volleys at the kitchen line',
-]
-
-/** Rotating practice focus · one surfaces per day so you always have a goal. */
-const DRILLS = [
-  { name: 'Dink consistency', focus: 'Soft game', how: 'Cross-court dinks for 5 min with no pop-ups. Land in the kitchen, paddle out front, relaxed grip.' },
-  { name: 'Third-shot drops', focus: 'Transition', how: 'Drop from the baseline into the kitchen. Track success · hit 7/10 before you speed anything up.' },
-  { name: 'Reset volleys', focus: 'Defense', how: 'Partner feeds hard at your feet; soft-block into the kitchen. Absorb pace, don’t swing.' },
-  { name: 'Serve depth & spin', focus: 'Serve', how: '20 serves to the back third for depth; add topspin only once depth is reliable.' },
-  { name: 'Footwork & split-step', focus: 'Movement', how: 'Split-step on every shot, shuffle (never cross feet) at the line. 3×30s ladder.' },
-  { name: 'Stacking & poaching', focus: 'Doubles strategy', how: 'Signals + switches with your partner; cover the middle, call “mine / yours”.' },
-  { name: 'Lob & overhead', focus: 'Court coverage', how: 'Alternate defensive lobs and putaway overheads. Agree who takes the lob.' },
-]
+/**
+ * THE DRILLS AND THE WARM-UP ARE COACHING'S, NOT THIS PAGE'S.
+ *
+ * This file used to carry its own `DRILLS` (seven) and `WARMUP` (five lines)
+ * beside `lib/pickleballAcademy.ts`'s twenty-one drills and
+ * `lib/pickleballSafety.ts`'s warm-up blocks — retyped rather than imported,
+ * which is the dead-data-module trap in CLAUDE.md running the other way. The
+ * copies were not merely redundant: "Stacking & poaching" and "Lob & overhead"
+ * existed in no other file, so the page taught two things the coaching page
+ * had never heard of, and a drill you tick here could not be the drill you
+ * tick there. COD-144 moved the reference reading to Coaching and was closed;
+ * these two constants are what it left behind.
+ *
+ * What stays here is the SESSION — the thing you log. One drill surfaces as
+ * today's focus, and everything about how to do it lives one tab away.
+ */
 
 /** Tournament-day prep checklist · shown alongside the countdown to an event. */
 const PREP_CHECKLIST = [
@@ -102,6 +102,7 @@ const PB_GROUPS = [
 ] as const
 
 export function Pickleball() {
+  const nav = useNav()
   const { data, addPickleball, updatePickleball, removePickleball, addPickleEvent, removePickleEvent, setSettings, logDupr, removeDupr } = useJournal()
   const [dupr, setDupr] = useState({ date: todayISO(), rating: '' })
   // The page had three always-open log forms — session, DUPR, event — each
@@ -129,8 +130,9 @@ export function Pickleball() {
   const [ev, setEv] = useState(evtBlankOf)
   const setE = (p: Partial<ReturnType<typeof evtBlankOf>>) => setEv((c) => ({ ...c, ...p }))
   const today = todayISO()
-  // Deterministic daily rotation so the practice focus is stable for the day.
-  const drill = DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % DRILLS.length]
+  // Deterministic daily rotation so the practice focus is stable for the day,
+  // over the academy's twenty-one rather than a local seven.
+  const drill = ACADEMY_DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % ACADEMY_DRILLS.length]
 
   const all = pickleTotals(data)
   const week = pickleTotals(data, 7, today)
@@ -682,32 +684,53 @@ export function Pickleball() {
         )}
       </Card>
 
-      {/* ── Improve · rotating practice focus + warm-up; reference content folded
-            below logging, collapsed. ── */}
-      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Practice today & improve</span>} subtitle="A focus for today, plus a warm-up to start right" collapsible>
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Today's rotating practice focus */}
-          <div className="rounded-card bg-ink-2 p-3">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="text-body font-medium text-fg-1">{drill.name}</span>
-              <Pill color="mauve" size="micro" className="px-2">{drill.focus}</Pill>
-            </div>
-            <p className="text-label text-fg-2">{drill.how}</p>
-            <p className="mt-2 text-label text-fg-2">New focus each day, log a session below after you drill it.</p>
+      {/* ── ONE DRILL, THE SYMPTOM IT CURES, AND A TICK. ──
+
+            This was "Practice today & improve": a drill, a five-line warm-up
+            and two links, 2×2 inside a card — a second page about how to play
+            on the page where you record that you played.
+
+            Three things changed and each is a rule from
+            `docs/REUSABLE-PATTERNS.md`:
+
+            §12, the drill says WHAT IT FIXES. `DRILL_FIXES` is keyed on the
+            group and written as the complaint you arrive with ("your dinks sit
+            up and get attacked"), which is the only sentence that can tell you
+            whether today's drill is your problem. A name and a how never could.
+
+            §13, it is a TICK and not an instruction. `PracticeTick` writes the
+            day into `settings.practiceLog` under the same key Coaching uses, so
+            drilling it here and drilling it there are one record — which they
+            could not have been while this page's drill names existed nowhere
+            else.
+
+            And the warm-up is gone rather than shortened: it is Coaching's
+            `prep` chapter, eight minutes of it, and two copies of a safety
+            instruction is the worse failure mode of the two. The row below
+            says where it went. ── */}
+      <Card band title={<span className="inline-flex items-center gap-2"><Icon as={Target} size="md" className="text-mauve" /> Today&apos;s focus</span>} subtitle="One drill, picked for today · tick it when you have done it" collapsible>
+        <div className="rounded-card bg-ink-2 p-3">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="text-body font-medium text-fg-1">{drill.name}</span>
+            <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
+            <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
           </div>
-          {/* Warm-up checklist */}
-          <div className="rounded-card bg-ink-2 p-3">
-            <p className="mb-1.5 inline-flex items-center gap-1.5 text-body font-medium text-fg-1"><Icon as={Barbell} size="sm" className="text-green" /> Warm up first</p>
-            <ul className="space-y-1">
-              {WARMUP.map((w) => (
-                <li key={w} className="flex gap-1.5 text-label text-fg-2"><span className="text-green">•</span> {w}</li>
-              ))}
-            </ul>
-          </div>
+          <p className="text-label text-fg-2">{drill.how}</p>
+          {/* The complaint, not the category. Rendered only when the group has
+              one — a lookup that silently returns undefined is the trap
+              `pickleballAcademy.test.ts` guards, and an empty line here would
+              read as a missing sentence rather than as an absent key. */}
+          {DRILL_FIXES[drill.skill] && (
+            <p className="mt-2 text-label text-fg-1">
+              <span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}
+            </p>
+          )}
         </div>
-        {/* External resources */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line pt-3">
-          <span className="text-label text-fg-2">Learn more:</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line pt-3">
+          <Button variant="ghost" onClick={() => nav('coaching')} className="h-auto gap-1.5 p-0 text-label text-fg-1 hover:no-underline">
+            <Icon as={Barbell} size="sm" className="text-green" />
+            Warm-up, {ACADEMY_DRILLS.length} drills &amp; the 12-week program
+          </Button>
           {RESOURCES.map((r) => (
             <a key={r.url} href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-label text-blue hover:underline">
               {r.name} <Icon as={ArrowSquareOut} size="sm" />
