@@ -248,7 +248,27 @@ export function Card({
           )}
         >
           <div className="min-w-0 grow basis-48">
-            <div className="flex items-center gap-1.5">
+            {/*
+              THE SUBTITLE SITS ON THE TITLE'S LINE when there is room for it.
+
+              It was a `<p>` under the title, so every titled card spent two
+              lines on its header whether or not the two together filled one —
+              `Starting From Zero — Pull-up Program` over
+              `Novice pull-up program · 6 weeks · 5 days/week`, which is 46px
+              for 70 characters in a 678px column. Measured across eight views
+              at 1440: **23 headers carrying a subtitle, 1075px between them.**
+
+              `flex-wrap` + `items-baseline`, so this is not a cap on the
+              subtitle's length — a long one still takes its own line, which is
+              the behaviour every card has today. What changes is the short
+              ones, which is most of them. The baseline is what makes it read
+              as one line rather than two things that happen to be adjacent:
+              the title is `text-title` and the subtitle `text-body`, and
+              aligning their boxes instead would sit the smaller text high and
+              leave it floating above the title's baseline.
+            */}
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               {/* Wraps, never truncates. A title clipped to "Workout mi…" costs
                   more than a second line does — and these are 2–4 words. */}
               {/* A band keeps the heading at `heading` on every width. Cards grow
@@ -274,7 +294,8 @@ export function Card({
                 on every card in the app whose subtitle runs past one line. The
                 body token's own 1.55 is the readable figure; tightening leading
                 is for titles, which do not wrap into paragraphs. */}
-            {subtitle && <p className="mt-1 hidden text-body text-fg-2 sm:block">{subtitle}</p>}
+              {subtitle && <p className="hidden text-body text-fg-2 sm:block">{subtitle}</p>}
+            </div>
           </div>
           {/* `max-w-full` + `flex-wrap`, because `shrink-0` alone lets this
               cluster size to its content past the width of the page. Trackers
