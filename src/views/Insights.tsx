@@ -184,7 +184,21 @@ export function Insights() {
   </ul>
 </Card>) : null,
     matrix: <CorrelationMatrixCard />,
-    momentum: momentum.length > 0 ? (<Card band title="Momentum" subtitle="Where each metric is trending vs. the week before">
+    /* Always rendered, never `null`.
+       Momentum used to vanish whenever no metric qualified, and raising the
+       coverage floor made that the normal state after a quiet week — which
+       is the worst possible moment to silently remove the card, because the
+       absence is indistinguishable from "nothing happened" and teaches
+       nobody that a floor exists. It is also the rule the four panels below
+       this one already follow, three lines down. */
+    momentum: (<Card band title="Momentum" subtitle="Where each metric is trending vs. the week before">
+  {momentum.length === 0 ? (
+    <Empty>
+      Not enough of this week logged to compare it with last week — a metric needs
+      four days on both sides before a direction means anything. Rate a few more
+      days and the trend appears here.
+    </Empty>
+  ) : (
   <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
     {momentum.map((m) => {
       // Stress is inverted: a drop is good. Everything else: up is good.
@@ -204,14 +218,28 @@ export function Insights() {
             <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
           </div>
           <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
-          <p className="text-label" style={{ color: onRaised(color) }} title={`based on ${m.recentDays} day${m.recentDays === 1 ? '' : 's'}`}>
+          <p className="text-label" style={{ color: onRaised(color) }}>
             {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
           </p>
+          {/* ── The coverage, as text ────────────────────────────────────────
+              This was a `title` tooltip, which on a phone does not exist at
+              all and on a desktop requires hovering a figure you have already
+              believed. An arrow beats a tooltip every time.
+
+              It is only drawn when the week is incomplete, so a fully logged
+              metric stays clean and a partial one is visibly partial. The
+              floor in `momentumIndicator` is what stops this from ever
+              reading "2 of 7 days" beside a confident arrow — by the time a
+              row renders, it rests on at least four. */}
+          {m.recentDays < m.window && (
+            <p className="text-micro text-fg-3 tabular-nums">{m.recentDays} of {m.window} days</p>
+          )}
         </li>
       )
     })}
   </ul>
-</Card>) : null,
+  )}
+</Card>),
     /* The four mood/recovery panels. Each one renders its own empty state
        rather than yielding `null`, because "not enough logged yet" is the
        answer a reader needs on this subject — a card that vanishes below its

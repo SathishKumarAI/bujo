@@ -205,15 +205,40 @@ export function moodImpactRanking(data: JournalData, minDays = 3): MoodImpact[] 
 }
 
 /** Mean of a metric over the [from, to] inclusive ISO-day window, or null. */
-function metricMean(data: JournalData, key: 'mood' | 'sleep' | 'stress', from: string, to: string): number | null {
+/**
+ * The mean of a metric over a window, WITH the number of days it rests on.
+ *
+ * It used to return the bare mean, and a mean alone cannot be compared: one
+ * logged day and seven logged days produce the same kind of number, and the
+ * digest put an arrow between them. See `momentumIndicator` for the full
+ * account of what that shipped. The caller needs `days` to decide whether a
+ * comparison is honest, so it is returned rather than discarded.
+ */
+function metricMean(
+  data: JournalData,
+  key: 'mood' | 'sleep' | 'stress',
+  from: string,
+  to: string,
+): { mean: number; days: number } | null {
   const vals: number[] = []
   for (const m of data.metrics) {
     if (m.date < from || m.date > to) continue
     const v = m[key]
     if (v != null) vals.push(v)
   }
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null
+  if (!vals.length) return null
+  return { mean: vals.reduce((a, b) => a + b, 0) / vals.length, days: vals.length }
 }
+
+/**
+ * Logged days a week needs before its mood is compared against another week.
+ *
+ * Four of seven — a majority. Same floor as `momentumIndicator`'s default, and
+ * for the same reason: below it the figure is still true (it IS the mean of
+ * what you logged) but the *comparison* is not, because the thing that changed
+ * between the two weeks is how much you logged, not how you felt.
+ */
+const DIGEST_MIN_DAYS = 4
 
 /** Habit completions across all habits within [from, to] inclusive. */
 function habitDoneCount(data: JournalData, from: string, to: string): number {
@@ -268,19 +293,32 @@ export function weeklyDigest(data: JournalData, today = todayISO()): WeeklyDiges
   const tasks = taskCompletion(data)
   lines.push({ label: 'Tasks done', value: `${tasks.pct}% (${tasks.done}/${tasks.total})` })
 
-  // Mood trend vs. prior week.
+  // ── Mood trend vs. prior week, and only when there IS a trend ─────────
+  //
+  // The arrow is the claim here, not the number. It used to be drawn whenever
+  // both weeks held at least one reading, which is how a five-day lapse read
+  // as `6.5/10 ↑ from 5.0` — you logged the two good days and skipped the bad
+  // ones, and the app congratulated you for it. Below the floor the mean is
+  // still shown, with the coverage next to it, and no direction.
   const moodNow = metricMean(data, 'mood', from, to)
   const moodPrev = metricMean(data, 'mood', prevFrom, prevTo)
   let moodTrend: WeeklyDigest['moodTrend'] = null
   if (moodNow != null) {
-    if (moodPrev == null) {
-      lines.push({ label: 'Avg mood', value: `${Math.round(moodNow * 10) / 10}/10` })
-      moodTrend = 'flat'
+    const now = Math.round(moodNow.mean * 10) / 10
+    const comparable = moodPrev != null
+      && moodNow.days >= DIGEST_MIN_DAYS
+      && moodPrev.days >= DIGEST_MIN_DAYS
+    if (!comparable) {
+      // Say what it rests on. "4.0/10 · 2 of 7 days" is a smaller claim than
+      // "4.0/10", and the smaller claim is the true one.
+      const cover = moodNow.days < 7 ? ` · ${moodNow.days} of 7 days` : ''
+      lines.push({ label: 'Avg mood', value: `${now}/10${cover}` })
+      moodTrend = moodNow.days >= DIGEST_MIN_DAYS ? 'flat' : null
     } else {
-      const delta = moodNow - moodPrev
+      const delta = moodNow.mean - moodPrev.mean
       moodTrend = Math.abs(delta) < 0.25 ? 'flat' : delta > 0 ? 'up' : 'down'
       const arrow = moodTrend === 'up' ? '↑' : moodTrend === 'down' ? '↓' : '→'
-      lines.push({ label: 'Avg mood', value: `${Math.round(moodNow * 10) / 10}/10 ${arrow} from ${Math.round(moodPrev * 10) / 10}` })
+      lines.push({ label: 'Avg mood', value: `${now}/10 ${arrow} from ${Math.round(moodPrev.mean * 10) / 10}` })
     }
   }
 
@@ -740,6 +778,10 @@ export interface Momentum {
   recent: number
   /** Sample days behind the recent figure (confidence). */
   recentDays: number
+  /** Sample days behind the PRIOR figure — the other half of the comparison. */
+  priorDays: number
+  /** Days in each window, so a view can render "4 of 7 days". */
+  window: number
 }
 
 const METRIC_LABELS: Record<MetricKey, string> = {
@@ -757,13 +799,37 @@ const METRIC_LABELS: Record<MetricKey, string> = {
  * with enough data on BOTH windows are returned, strongest move first (by
  * |delta|). Note `stress` is left as-is — the view decides whether up is good.
  * Pure + deterministic.
+ *
+ * ── "Enough data" used to mean two days, and that was the bug ─────────────
+ *
+ * The floor was `length < 2` on each side. An ADHD review of the running app
+ * found what that permits: delete five days from a seeded journal and the
+ * headline mood went **5.0 to 6.5 with an up arrow**, with Momentum reporting
+ * "Mood +1.5", "Stress -2.1", "Sleep +1.2" — three green improvements, every
+ * one of them "you stopped logging the bad days". A 2-day sample was being
+ * compared against a 7-day one and the difference called progress.
+ *
+ * It is the `count ? sum / count : 0` trap from CLAUDE.md one level up: not a
+ * fabricated zero, a **fabricated improvement** — and delivered at the exact
+ * moment someone is deciding whether this thing is worth coming back to. The
+ * honest number (26% covered) was on the same screen and lost, because an
+ * arrow beats a percentage.
+ *
+ * `minCoverage` is now a fraction of the window on BOTH sides, defaulting to
+ * half. Two points is enough to compute a mean and nowhere near enough to
+ * claim a direction. `recentDays`, `priorDays` and `window` come back with
+ * every row so a view can say "4 of 7 days" rather than an unqualified arrow.
  */
 export function momentumIndicator(
   data: JournalData,
   window = 7,
   today = todayISO(),
   flatBand = 0.25,
+  minCoverage = 0.5,
 ): Momentum[] {
+  // At least this many logged days in EACH window. `max(2, …)` keeps the old
+  // absolute floor for very short windows, where half of 3 is 1.5.
+  const need = Math.max(2, Math.ceil(window * minCoverage))
   const recentTo = today
   const recentFrom = addDays(today, -(window - 1))
   const priorTo = addDays(recentFrom, -1)
@@ -780,7 +846,7 @@ export function momentumIndicator(
       if (m.date >= recentFrom && m.date <= recentTo) recentVals.push(v)
       else if (m.date >= priorFrom && m.date <= priorTo) priorVals.push(v)
     }
-    if (recentVals.length < 2 || priorVals.length < 2) continue
+    if (recentVals.length < need || priorVals.length < need) continue
     const recent = recentVals.reduce((a, b) => a + b, 0) / recentVals.length
     const prior = priorVals.reduce((a, b) => a + b, 0) / priorVals.length
     const delta = Math.round((recent - prior) * 10) / 10
@@ -792,6 +858,8 @@ export function momentumIndicator(
       dir,
       recent: Math.round(recent * 10) / 10,
       recentDays: recentVals.length,
+      priorDays: priorVals.length,
+      window,
     })
   }
   return out.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
