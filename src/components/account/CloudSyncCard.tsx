@@ -114,7 +114,7 @@ export function CloudSyncCard() {
   }
 
   return (
-    <Card band title="Cloud sync" subtitle="One passphrase, end-to-end encrypted, sync across devices">
+    <Card band title="Encrypted sync" subtitle="A second, separate copy that no server can read">
       <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
@@ -131,7 +131,13 @@ export function CloudSyncCard() {
         </p>
       )}
       {msg && <p className="mt-2 text-label text-fg-1">{msg}</p>}
-      <p className="mt-2 text-label text-fg-2">Your journal is encrypted in this browser before it is uploaded, so the server only ever stores ciphertext. Enter the same passphrase on another device to get your data back. There are no accounts, and a lost passphrase cannot be recovered.</p>
+      {/* "There are no accounts" was true when this was the only sync target.
+          It is now one column from the Account pane, where there plainly is
+          one — a contradiction that was survivable while a tab shell showed
+          these two a click apart, and is not now they share a screen. The
+          rename is the same point: both cards said "sync", so the honest
+          difference between them had to be read rather than seen. */}
+      <p className="mt-2 text-label text-fg-2">Separate from your account, and the encrypted option. Your journal is encrypted in this browser before it is uploaded, so this server only ever stores ciphertext — nobody holding it can read your journal, which is the trade your account does not make. Enter the same passphrase on another device to get your data back. A lost passphrase cannot be recovered.</p>
     </Card>
   )
 }

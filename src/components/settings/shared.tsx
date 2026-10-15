@@ -35,10 +35,28 @@ import { Switch } from '../ui/switch'
  */
 const PAIR = 'max-w-[26rem]'
 
+/**
+ * A label and its control, on one line until there is not room for one line.
+ *
+ * `flex-wrap` and `min-w-0` are both load-bearing and were both added from a
+ * measurement. Settings is four columns of ~328px now, and a `Row` holding the
+ * "Weight kg/lb" pair overflowed its column by **19px** — a `w-fit`
+ * ToggleGroup cannot shrink, so the row simply got wider than its parent and
+ * the controls left the pane by the right edge.
+ *
+ * That is the exact failure `scripts/clipped-text.mjs` was extended to catch:
+ * nothing is clipped, every element shows all of what it holds, the
+ * accessibility tree is sound, and a control is off the viewport anyway. And
+ * it is the trap CLAUDE.md records from the other end — `Card` can cap its
+ * `right` slot at `max-w-full` but cannot wrap a cluster whose markup it does
+ * not own. This is that cluster's own markup, so the fix belongs here rather
+ * than in a rule scoped to the pane: every narrow container gets it, not just
+ * this one.
+ */
 export function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className={`flex ${PAIR} items-center justify-between gap-3`}>
-      <span className="text-body text-fg-1">{label}</span>
+    <div className={`flex ${PAIR} flex-wrap items-center justify-between gap-x-3 gap-y-1.5`}>
+      <span className="min-w-0 text-body text-fg-1">{label}</span>
       {children}
     </div>
   )

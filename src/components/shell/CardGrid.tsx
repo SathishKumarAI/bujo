@@ -62,7 +62,14 @@ import { cn } from '../../lib/cn'
  */
 export function CardGrid({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
+    // `data-card-grid` is a hook for one override and nothing else: this grid
+    // breaks on the VIEWPORT (`md:`, `2xl:`), which is right when the page is
+    // the full width and wrong inside a column that is narrow while the window
+    // is not. `styles/panes.css` collapses it to one column inside a pane.
+    // Same family as the `MasonryGrid`-in-a-722px-zone trap in CLAUDE.md, from
+    // the other side: there a container query was too small to fire, here a
+    // media query fires when it should not.
+    <div data-card-grid className={cn('page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 md:grid-cols-2 2xl:grid-cols-3', className)}>
       {children}
     </div>
   )
