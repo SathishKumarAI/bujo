@@ -1,77 +1,119 @@
 # STATUS
 
-**Stopped:** 2026-10-15, mid-session, on `feat/pullups-review-rail` with a PR
-open. `main` at `591c096`. The branch is seven commits and one work item,
-**COD-312**.
+**Stopped:** 2026-10-15, on `feat/homeworkout-progression-nudge` with **PR #402**
+open. `main` at `96c42d4`. Two PRs merged this session, in this order:
 
-`npm run verify`: **141 files, 1928 tests**, exit 0. `eslint` 0 errors — the
-one pre-existing `App.tsx` exhaustive-deps warning. `design` 441 files,
-`contrast` 5 themes / 14 accents.
+| merged | what | item |
+|---|---|---|
+| `4f3b63c` (#400) | Pull-ups: one act, one bar | COD-312 |
+| `96c42d4` (#401) | Home workout: a session carries structured rows | COD-315 |
 
-Browser gates **were** run this time, on the built bundle against
-`vite preview` on 4173:
+Both were merged with CI `a11y` red, and that was checked rather than waved
+through: the failing rows are **byte-identical to `main`'s** three
+(`desktop · mocha · Cycle`, `desktop · latte · Mind · Mindset`,
+`desktop · latte · Cycle` — all `color-contrast`, all **COD-314**). Neither PR
+put a row on that list.
+
+## The home-workout pass, and the number that moved
+
+The page had 83 movements, a session builder, a 26-week calendar and a
+twelve-chapter manual, and **nothing downstream could see any of it.**
+`logSession` wrote `sets: ['Push-ups 3×12']` and no `setRows`, and
+`fitness.parseSet` needs an `@ <weight>` a home line has never had — so it
+returned `null` for every one of them and every muscle, volume and frequency
+analytic counted a home session as **zero sets and zero exercises**. Nothing
+failed, because zero is a plausible number for someone who does not train at
+home.
+
+Measured on the demo journal at `2026-10-15` — 19 home sessions, **270
+structured rows where there were none**:
+
+| sets per muscle, 7-day | before | after |
+|---|---|---|
+| Glutes | 14 | 23 |
+| Quads, Hamstrings | 14 | 20 |
+| Shoulders, Triceps | 13 | 19 |
+| Chest | 8 | 14 |
+| Abs | absent | 3 |
+
+Neglected muscles 3 → 2. Four of the top six exercises by 28-day frequency are
+home movements that were invisible before. **No count fell** — the rows are
+additive, and a figure moving down would have been the bug.
+
+On top of that, **PR #402** (open): the page now reads its own history back
+through the `easier`/`harder` chain that 30 of the 83 movements have always
+carried, and says what to progress to, with the evidence as text
+(`3×12 met in 6 of 6 sessions · best set 12`). Floor of three met sessions, and
+a session only counts when **every** set hit the target.
+
+Gates on #402, against the built bundle (`index-Bob97hX7.js`, hash checked
+against `dist/index.html` first):
 
 | gate | result |
 |---|---|
+| `verify` | exit 0 — **142 files, 1945 tests**, eslint 0 errors |
+| `design` / `contrast` | 443 files · 5 themes / 14 accents — neither is in `verify` |
 | `clipped` | **0** across 23 views at 1440 / 1024 / 390 |
-| `space -- pullups program` | 1.1 / 1.0 desktop, 2.6 / 1.9 phone — inside budget |
-| `a11y` | 187 scans, **7 serious**, exit 1 — **all seven are on `main` too** |
-| `subtitle-reach` | 25 unreachable, budget 24, exit 1 — **also red on `main`** |
-| per-panel axe probe (throwaway) | **56 scans, 0 serious**, armed with a planted violation |
+| `a11y`, 2 desktop themes + 1 phone | 3 serious, **all three are `main`'s**; Home workout **0 / 0** |
 
-## Two gates are red on `main`, and that was measured, not assumed
+## What was withdrawn, and why that matters more than what shipped
 
-Both were confirmed by building `main` in a throwaway worktree, serving it on
-port 4199, and checking the served bundle hash (`index-C4E_uadf.js`) against
-this branch's (`index-CECylirg.js`) before believing either number — the
-preview-port trap in CLAUDE.md, which has cost this repo three PRs once
-already.
+I planned a `SectionRail` pass on the home-workout review zone, on the strength
+of `npm run space` reporting **9.6 desktop screens open**, and wrote that into
+#401's body as the next increment. **It was wrong, and the correction is posted
+on the PR.** Decomposed per section:
 
-- **`a11y`: 7 serious, identical shards on both.** Four are Cycle's
-  `<span class="num w-10 text-fg-3" title="Cycle day 20">` at **4.01–4.16**;
-  three are Mindset's `style="color: rgb(0,0,0)"` on a brand fill at **3.19
-  latte / 3.92 dawn**. Filed as **COD-314**.
-- **`subtitle-reach`: 25 against a budget of 24**, the same 25 rows on both.
-  Pull-ups contributes **0**.
-
-Neither is in `npm run verify`, which is why both could go red unnoticed —
-the same shape as the `design`/`contrast` note further down this file.
-
-## Where the Pull-ups work got to
-
-The page is one act and one bar: zone 2 is the log form alone in the right-hand
-act column, and the whole review zone is a single eight-panel `SectionRail`
-rendered as a horizontal bar (`railAt="never"`). Measured at `?demo=1`, built
-bundle:
-
-| | before | after |
+| section, as shipped | desktop | phone |
 |---|---|---|
-| desktop | 1885px · **2.09 screens** | 995–1720px · **1.11–1.91** per panel |
-| phone | 3490px · **4.14 screens** | 1761–4158px per panel |
-| card headers, 8 views | 23 subtitled, **1075px** | 23 subtitled, **687px** |
-| program map, Pull-ups desktop | 377px, 125px cells | **298px**, 104px cells |
+| Today's session (zone 2) | 334px | 421px |
+| Analytics | 375px | 388px |
+| History | 162px | 162px |
+| Exercise library (collapsed) | 80px | 68px |
+| Manual (**one chapter of twelve**) | 1272px | 1526px |
 
-Panels, in the order they now appear: Today · Formats · Training set · Form ·
-History · Progressions · Principles · Equipment. Ordered for someone about to
-train — the leftmost row is the default, so that order decides whether arriving
-means doing something or reading about it.
+The page ships at **2.34 desktop / 3.45 phone**. The ~10 screens is the
+83-movement catalogue unfolding from 80px — a catalogue behaving correctly
+behind a collapsed card. And this page **already has the rail**: `Manual.tsx`
+carries a twelve-row `SectionRail`. The Pull-ups comparison was not
+like-for-like, because 2.09 there was a *shipped* number.
+
+The lesson worth keeping: `open` and `shipped` are different questions, and
+quoting the first against the second's budget manufactures a fault.
+
+## Filed on the way, all `repo:bujo`
+
+| item | state | what |
+|---|---|---|
+| **COD-316** | Backlog | `fitness.musclesForExercise` returns **nothing for 32 of 83** home movements (Dead bug, Bird dog, Hollow hold, Burpees, Jump rope, Wall sit…). Four counting sites route through it. `exerciseMuscles.allMusclesForExercise` covers all 83 and already falls back to it — blocked by an import cycle, so the fix is a leaf module. This is what decides whether COD-315's rows land on the right muscle. |
+| **COD-317** | Backlog | Two manual rail rows over budget: *How to train* **3.47** desktop / 5.27 phone, *Sources* **3.61** / 4.89, against 1.83–2.28 for the other ten. Also most of the phone fix — the Manual is 1526px of the page's 2911. |
+| **COD-237** | open | Commented: Home workout is a **seventh** page where a rail hides its other panels from the a11y gate — 1 of 12 chapters scanned, every run, every theme. |
 
 ## The next thing
 
-Open the PR's own checklist. Nothing is half-migrated; every commit stands on
-its own. If you want one more pass on this page, the honest weak spot is the
-**phone**: the bar wraps to four rows (101px) because eight labels do not fit
-324px, and the two-column cards cost height on a single-column phone — Formats
-went 3.68 → 4.93 screens there while desktop went 1.91 → 1.84. That trade was
-taken deliberately (a bar that scrolls hides three of the eight rows), but it
-is the thing a phone user would notice first.
+Merge #402 when CI lands (expect `a11y` red with `main`'s three rows and
+nothing else). Then, in order: **COD-316** (it makes COD-315's rows land
+correctly), then COD-317. The two unbuilt product pieces are a **set-by-set
+execution mode** with a rest timer, and **persisting which kit you own** —
+`exercisesForKit` exists and still has no call site, which is why the
+progression card has to *explain* that a Goblet squat needs a kettlebell
+instead of simply not suggesting it.
 
 ---
 
-## START HERE · two things, both yours, both measured today
+## START HERE · two things, both yours
 
-Both block the feature this session spent the most effort on. Neither is a
-code change and neither can be done from here.
+Neither is a code change and neither can be done from here. **Re-measured
+2026-10-15** rather than carried forward — server and dashboard state has no
+commit, and the previous handover carried two blockers that had both already
+moved.
+
+- **1 is unchanged**, confirmed today against the live project with the same
+  four-column probe below, control row and all.
+- **2 could not be re-measured from this session.** The recorded method sends a
+  `redirect_to` and reads the `Location` back; against the OAuth `authorize`
+  endpoint that header only ever carries Supabase's own callback, and the probe
+  that would settle it was declined by the sandbox. Treat it as **unverified
+  today** — check it in the dashboard before spending time on either answer.
 
 ### 1 · The migration has not run, and sync cannot work until it does
 
