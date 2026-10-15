@@ -437,3 +437,75 @@ describe('focusSleepCorrelation', () => {
     expect(link.days).toBe(1)
   })
 })
+
+describe('a lapse is not an improvement', () => {
+  /**
+   * THE BUG, as an ADHD review found it in the running app.
+   *
+   * Delete five days of entries from a seeded journal and Insights moved the
+   * headline mood from **5.0 to 6.5 with an up arrow**, and Momentum reported
+   * "Mood +1.5 vs last week", "Stress −2.1", "Sleep +1.2" — three green
+   * improvements, every one of which was "you stopped logging the bad days".
+   *
+   * It compared a 2-day sample against a 7-day sample and called the
+   * difference progress. The honest number (26% covered) was on the same
+   * screen and lost, because an arrow beats a percentage.
+   *
+   * Same family as the `count ? sum / count : 0` trap in CLAUDE.md, one level
+   * up: not a fabricated zero but a **fabricated improvement**, delivered at
+   * the exact moment someone is deciding whether to come back.
+   *
+   * The floor is a majority of the window on BOTH sides. Two points is enough
+   * to compute a mean and nowhere near enough to claim a direction.
+   */
+  const day = (d: string, mood: number) => ({ date: d, mood })
+
+  const journal = (metrics: { date: string; mood: number }[]) =>
+    ({ ...emptyJournal(), metrics }) as unknown as Parameters<typeof momentumIndicator>[0]
+
+  it('refuses a direction when the recent window is barely logged', () => {
+    // Prior week fully logged and low; this week logged twice and high —
+    // exactly the shape a lapse produces.
+    const m = [
+      day('2026-10-02', 3), day('2026-10-03', 3), day('2026-10-04', 4),
+      day('2026-10-05', 3), day('2026-10-06', 4), day('2026-10-07', 3),
+      day('2026-10-08', 4),
+      day('2026-10-09', 8), day('2026-10-10', 8),
+    ]
+    const out = momentumIndicator(journal(m), 7, '2026-10-15')
+    expect(out.find((x) => x.key === 'mood'), 'two days must not produce a trend').toBeUndefined()
+  })
+
+  it('still reports a direction when both windows are properly logged', () => {
+    // The other half: the guard must not silence a real trend.
+    const m = [
+      day('2026-10-02', 3), day('2026-10-03', 3), day('2026-10-04', 4),
+      day('2026-10-05', 3), day('2026-10-06', 4), day('2026-10-07', 3),
+      day('2026-10-08', 4),
+      day('2026-10-09', 7), day('2026-10-10', 7), day('2026-10-11', 8),
+      day('2026-10-12', 7), day('2026-10-13', 8), day('2026-10-14', 7),
+      day('2026-10-15', 8),
+    ]
+    const out = momentumIndicator(journal(m), 7, '2026-10-15')
+    const mood = out.find((x) => x.key === 'mood')
+    expect(mood, 'a fully logged week must still report').toBeDefined()
+    expect(mood!.dir).toBe('up')
+  })
+
+  it('reports how much of the window each figure rests on', () => {
+    // So the view can say "4 of 7 days" instead of an unqualified arrow.
+    const m = [
+      day('2026-10-02', 3), day('2026-10-03', 3), day('2026-10-04', 4),
+      day('2026-10-05', 3), day('2026-10-06', 4), day('2026-10-07', 3),
+      day('2026-10-08', 4),
+      day('2026-10-09', 7), day('2026-10-10', 7), day('2026-10-11', 8),
+      day('2026-10-12', 7),
+    ]
+    const out = momentumIndicator(journal(m), 7, '2026-10-15')
+    const mood = out.find((x) => x.key === 'mood')
+    // 4 of 7 recent (the floor exactly — ceil(7 * 0.5)), 7 of 7 prior.
+    expect(mood!.recentDays).toBe(4)
+    expect(mood!.priorDays).toBe(7)
+    expect(mood!.window).toBe(7)
+  })
+})
