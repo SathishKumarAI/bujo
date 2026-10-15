@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button'
 import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quickpick'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
+import { buyingGuideUrl } from '../lib/video'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
   PanelGrid, PanelCard, DefList, Tag,
@@ -315,6 +316,24 @@ const EFFORT: { value: number; label: string; name: string; hint: string; tone: 
  * card. It is the only element that tells you a ladder to 4 and a straight 4×4
  * are different sessions, so it is now the loudest.
  */
+/**
+ * A labelled rule between groups of a form.
+ *
+ * Grouping by HEADING rather than by box, deliberately: the act column's two
+ * chip rows come to **378px inside a 384px card**, measured, so a
+ * `rounded-card … p-3` wrapper around them would spend 26px it does not have
+ * and wrap both rows — the shape that reads as a broken control. A rule costs
+ * no width at all.
+ */
+function FormRule({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="text-label text-fg-2">{children}</span>
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  )
+}
+
 function LogSessionCard({
   defaultTop, onSave, last,
 }: {
@@ -408,6 +427,8 @@ function LogSessionCard({
           </div>
         )}
 
+        <FormRule>What you did</FormRule>
+
         <DayPick value={date} onChange={setDate} today={today} yesterday={addDays(today, -1)} />
 
         <div>
@@ -433,12 +454,21 @@ function LogSessionCard({
             hint={top === undefined ? `Using your training set, ${defaultTop}` : undefined}
           />
           <ChipPick
+            dense
             label={method === 'emom' ? 'Minutes' : 'Rounds'}
             value={rounds ?? null}
             onChange={setRounds}
-            // Five chips plus the escape hatch is exactly one row in the
-            // act column; six wrapped the input onto a line of its own, which
-            // reads as a broken control rather than an overflow.
+            // The comment here used to say "five chips plus the escape hatch is
+            // exactly one row". Measured on the built bundle at 1440 it is
+            // **218px of controls in a 184px half** — four chips at the default
+            // `px-3`, a `w-14` input and four 6px gaps — so it had been wrapping
+            // the input onto its own line, which is the shape this file calls
+            // "a broken control rather than an overflow" two comments down.
+            //
+            // `dense` plus the `w-10` escape input that Duration already uses:
+            // **176px in 184px**, one row, 8px of margin. A comment and the code
+            // disagreeing is worth more than either on its own — this one was
+            // measured when the card was wider.
             options={[2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
             after={
               <input
@@ -450,7 +480,7 @@ function LogSessionCard({
                 value={rounds !== undefined && rounds > 5 ? rounds : ''}
                 placeholder="…"
                 onChange={(e) => setRounds(e.target.value === '' ? undefined : Number(e.target.value))}
-                className="w-14 rounded-pill border border-line-strong bg-ink-2 px-2 py-1.5 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
+                className="w-10 rounded-pill border border-line-strong bg-ink-2 px-2 py-1 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
               />
             }
           />
@@ -506,6 +536,8 @@ function LogSessionCard({
           `auto` track because it is the fixed one — three chips and an escape
           input — and Effort takes what is left.
         */}
+        <FormRule>How it went · optional</FormRule>
+
         <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
           <ChipPick
             dense
@@ -550,7 +582,16 @@ function LogSessionCard({
           <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Grip, how the last set felt…" className="mt-1" />
         </label>
 
-        <Button onClick={save} disabled={reps.length === 0} className="w-full">Log session</Button>
+        <Button onClick={save} disabled={reps.length === 0} className="press-3d w-full">Log session</Button>
+        {/* What pressing it writes, before it is pressed. The card already had
+            a confirmation AFTER the fact (`justLogged`) and nothing before —
+            and the home logger's equivalent line is the thing that makes a
+            form feel answered rather than submitted. */}
+        {reps.length > 0 && (
+          <p className="-mt-2 text-center text-label" style={{ color: onRaised('green') }}>
+            {total} reps in {reps.length} set{reps.length === 1 ? '' : 's'} will be written to your journal
+          </p>
+        )}
 
         {/* Says what was written, where the button is — the receipt bar lives at
             the other end of the screen, and a form that empties itself with no
@@ -784,13 +825,19 @@ function Review({
           )}
           {chapter === 'equipment' && (
             <PanelGrid>
+              {/* Every row, not the one that happened to carry a pinned URL.
+                  Measured: of these seven, exactly ONE had a `url`, so six
+                  rendered no link at all — the same count as Home Workout's
+                  seven of eight, and the same report ("the URLs in equipment
+                  are somewhat not working") was about both pages. The fault was
+                  never a dead link: both pinned URLs answer 200. */}
               {PULLUP_EQUIPMENT.map((e) => (
                 <PanelCard key={e.item} title={e.item}>
                   <p className="text-label text-fg-2">{e.spec}</p>
-                  {e.url && (
-                    <a href={e.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-label text-blue underline">
-                      Suppliers for {e.item}
-                    </a>
+                  {!e.noBuy && (
+                    <p className="mt-1.5 text-label">
+                      <a href={buyingGuideUrl(e.item, e.url)} target="_blank" rel="noreferrer">How to choose one</a>
+                    </p>
                   )}
                 </PanelCard>
               ))}

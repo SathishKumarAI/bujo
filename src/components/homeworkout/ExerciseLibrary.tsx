@@ -6,7 +6,7 @@ import { onRaised } from '../../lib/colors'
 import { Button } from '../ui/button'
 import { ChipPick } from '../ui/quickpick'
 import { VideoLink } from '../VideoLink'
-import { EmptyFrame } from '../page'
+import { EmptyFrame, PanelGrid, PanelCard } from '../page'
 import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
 import { muscleNames } from '../../lib/muscles'
@@ -101,14 +101,16 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
       {rows.length === 0 ? (
         <div className="mt-3"><EmptyFrame>Nothing matches every filter. Clear one.</EmptyFrame></div>
       ) : (
-        /* `sm:grid-cols-2` with the phone column spelled out — a grid with no
-           base `grid-template-columns` gets one implicit `auto` track sized to
-           its widest item's min-content, which is how a card's neighbours get
-           dragged off the right edge of a 390px viewport. */
-        <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
-          {shown.shown.map((ex) => (
-            <Tile key={ex.id} ex={ex} open={openId === ex.id} onToggle={() => setOpenId(openId === ex.id ? null : ex.id)} onAdd={onAdd} />
-          ))}
+        /* `PanelGrid`, which is the same two-column grid with the phone column
+           spelled out — and it breaks on the CONTAINER rather than the
+           viewport, which is the correct question inside a review column. The
+           tiles were the last thing on this page still drawing their own box. */
+        <div className="mt-4">
+          <PanelGrid>
+            {shown.shown.map((ex) => (
+              <Tile key={ex.id} ex={ex} open={openId === ex.id} onToggle={() => setOpenId(openId === ex.id ? null : ex.id)} onAdd={onAdd} />
+            ))}
+          </PanelGrid>
         </div>
       )}
     </>
@@ -120,12 +122,18 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
   const chain = progressionChain(ex.id)
 
   return (
-    <div className="min-w-0 rounded-card bg-ink-2 p-3">
-      <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-body font-medium text-fg-1">{ex.name}</span>
-        <Pill tone="muted" size="micro" className="ml-auto px-2">{EQUIPMENT_LABEL[ex.equipment]}</Pill>
-        <Pill tone="muted" size="micro" className="px-2 capitalize">{ex.difficulty}</Pill>
-      </div>
+    /* The shared card, like every other named item on this page. It was the one
+       `bg-ink-2` box with no border left on the view, which is what made the
+       Movements panel read as a different design from the four beside it. */
+    <PanelCard
+      title={ex.name}
+      right={
+        <span className="flex flex-wrap items-center gap-1">
+          <Pill tone="muted" size="micro" className="px-2">{EQUIPMENT_LABEL[ex.equipment]}</Pill>
+          <Pill tone="muted" size="micro" className="px-2 capitalize">{ex.difficulty}</Pill>
+        </span>
+      }
+    >
       <p className="text-label text-fg-2">{ex.how}</p>
 
       {/* `flex-wrap` on the cluster itself. `Card` can cap its own slots but
@@ -171,7 +179,7 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
               ))}
             </p>
           )}
-          <p className="text-fg-2">{FAMILY_LABEL[ex.family]} · read the family manual below for the set-up and how to progress.</p>
+          <p className="text-fg-2">{FAMILY_LABEL[ex.family]} · pick that family above for its chapter.</p>
           {/* `onRaised('blue')`, not the inherited anchor colour. `@layer base`
               gives every `a` `var(--color-blue)` — the RAW palette value — and
               this one sits on `bg-ink-2`, the raised rung. On vscode that
@@ -185,6 +193,6 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
           </a>
         </div>
       )}
-    </div>
+    </PanelCard>
   )
 }
