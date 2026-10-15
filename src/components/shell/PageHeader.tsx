@@ -1,6 +1,5 @@
 import { RailToggle } from './RailToggle'
 import { DateNav } from './topbar/DateNav'
-import { SyncPill } from './SyncPill'
 import { useHideOnScroll } from './useHideOnScroll'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
@@ -74,6 +73,49 @@ export function PageHeader({
    */
   const hidden = useHideOnScroll()
 
+  /**
+   * ── The band is gone on most views, and this is the rule ────────────────
+   *
+   * Asked for: "let's take down the top bar." Measured first, because three
+   * things lived in it and only one was dead weight:
+   *
+   *   title + subtitle   on all 25 views, and REDUNDANT — the rail beside it
+   *                      already highlights the view you are on, and the page
+   *                      under it opens with its own orientation zone. This
+   *                      is the part that made the strip read as 48px of
+   *                      chrome restating what you just clicked.
+   *   date cursor        on 4 views (today, monthly, trackers, cycle). A real
+   *                      control. "Fitness, this week" is one statement.
+   *   rail toggle        only while the rail is hidden — and it is then the
+   *                      ONLY way to bring the rail back. Deleting it strands
+   *                      anyone who collapsed the nav.
+   *
+   * So the rule is: **chrome appears when there is chrome to show.** On the
+   * 21 views that had nothing but a name, nothing renders at all and
+   * `--header-h` collapses to 0 — `useHeaderHeight` sums every `.app-header`
+   * and an absent one contributes nothing, so every sticky offset that reads
+   * it follows automatically.
+   *
+   * The title is not merely hidden, it is kept for the document: an `sr-only`
+   * `h1` stays, because a page with no h1 is a page a screen reader cannot
+   * announce, and "it looks empty" is not a reason to make it structurally
+   * emptier.
+   */
+  const carriesAControl = railHidden || !!chrome.dateNav
+  if (!carriesAControl) {
+    return (
+      // NOT `app-header`. `useHeaderHeight` sums every element with that
+      // class to publish `--header-h`, and an `sr-only` box is not zero-height
+      // — with the class on it the variable read 10px on a page with no bar at
+      // all, so every sticky element below sat 10px lower than the top edge.
+      // Measured, not reasoned: the probe said `headerH: "10px"`.
+      <h1 className="sr-only">
+        {chrome.title}
+        {chrome.subtitle ? ` — ${chrome.subtitle}` : ''}
+      </h1>
+    )
+  }
+
   return (
     <div
       className="app-header sticky top-0 z-20 hidden items-center gap-3 border-b border-line bg-card/75 px-4 py-2.5 backdrop-blur-lg transition-transform duration-[--dur-base] ease-[--ease-out] motion-reduce:transition-none md:flex"
@@ -109,7 +151,15 @@ export function PageHeader({
           readable. Below `lg` the subtitle drops entirely rather than fighting
           for a narrow content column; the height does not change when it
           does, because the title sets it. */}
-      <div className="flex min-w-0 flex-1 items-baseline gap-2">
+      {/* Kept for the document outline and for a screen reader, not drawn.
+          The visible name of the page is the highlighted row in the rail
+          immediately to the left of this, which is where you clicked to get
+          here — printing it again at 22px was the whole of the complaint. */}
+      <h1 className="sr-only">
+        {chrome.title}
+        {chrome.subtitle ? ` — ${chrome.subtitle}` : ''}
+      </h1>
+      <div className="hidden min-w-0 flex-1 items-baseline gap-2">
         {/* THE ONE FRAUNCES MOMENT ON A DESKTOP — COD-283.
 
             Measured across 20 views: the display serif was on **0% of
@@ -168,7 +218,6 @@ export function PageHeader({
           What fills the gap is the fact that was invisible — where your
           journal actually is. `ml-auto` lives on the pill, so it hugs the
           right edge and the title keeps the left. */}
-      <SyncPill />
     </div>
   )
 }

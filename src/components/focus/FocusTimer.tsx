@@ -1,17 +1,12 @@
 import { ArrowCounterClockwise, ArrowLineRight, Pause, Play } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
-import { useJournal } from '../../store'
-import { todayISO } from '../../lib/date'
 import { cat } from '../../lib/colors'
 import { Button } from '../ui/button'
-
-// ADHD-friendly defaults: start gentle, scale up. Work / break in minutes.
-const PRESETS = [
-  { w: 15, b: 3, label: '15 / 3' },
-  { w: 25, b: 5, label: '25 / 5' },
-  { w: 50, b: 10, label: '50 / 10' },
-]
+import {
+  PRESETS, useFocusTimer, secondsLeft, isRunning, phaseSeconds,
+  start, pause, resume, reset as resetTimer, setPreset, advance, setTone, TIMER_TONES,
+} from '../../lib/focusTimer'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -38,38 +33,49 @@ const pad = (n: number) => String(n).padStart(2, '0')
  * its box and its scale have moved.
  */
 export function FocusTimer() {
-  const { addDevSession } = useJournal()
-  const [preset, setPreset] = useState(PRESETS[1])
-  const [mode, setMode] = useState<'work' | 'break'>('work')
-  const [left, setLeft] = useState(PRESETS[1].w * 60)
-  const [running, setRunning] = useState(false)
-  const [blocks, setBlocks] = useState(0)
+  /**
+   * ── The state moved out of this component, and that was the point ────────
+   *
+   * It used to hold `mode`, `left`, `running` and `blocks` in `useState` and
+   * decrement `left` on a `setInterval`. Two things were wrong with that, and
+   * both of them defeated the feature rather than merely being untidy:
+   *
+   * **The timer died when you left the page.** Navigating to Today unmounted
+   * this component and took the countdown with it — so a focus timer could
+   * only be used by someone sitting on the focus screen watching it, which is
+   * the one thing a focus timer exists to stop you doing.
+   *
+   * **A counter is not a clock.** Background tabs throttle `setInterval` to
+   * once a minute and a discarded one does not run it at all, so a 25-minute
+   * block finished late by however long you looked away — which is the whole
+   * session.
+   *
+   * `lib/focusTimer.ts` holds a wall-clock `endsAt` instead, and the side
+   * rail renders the same store. This component is now a view of it: the big
+   * ring, which is what the Focus page is for.
+   *
+   * Completion is handled in ONE place — `useFocusTimerRunner`, mounted in the
+   * shell. If this component also handled it, a block would be logged twice
+   * whenever the rail and this page were both on screen, which is now always.
+   */
+  const t = useFocusTimer()
+  const running = isRunning(t)
+  const preset = PRESETS[t.presetIndex]
+  const mode = t.mode
+  const blocks = t.blocks
+  const total = phaseSeconds(t)
+  const [, repaint] = useState(0)
 
-  const total = (mode === 'work' ? preset.w : preset.b) * 60
-  const minsFor = (m: 'work' | 'break', p = preset) => (m === 'work' ? p.w : p.b) * 60
-
+  // Repaint only. The displayed number is derived from `Date.now()`, so a
+  // throttled or missed tick makes it stale, never wrong — it corrects itself
+  // the moment the tab is looked at again.
   useEffect(() => {
     if (!running) return
-    const t = setInterval(() => setLeft((s) => s - 1), 1000)
-    return () => clearInterval(t)
+    const id = setInterval(() => repaint((n) => n + 1), 1000)
+    return () => clearInterval(id)
   }, [running])
 
-  // At zero, switch work ↔ break and reload. Deferred out of the effect body to
-  // avoid a synchronous cascading render.
-  useEffect(() => {
-    if (left > 0 || !running) return
-    queueMicrotask(() => {
-      const nextMode = mode === 'work' ? 'break' : 'work'
-      if (mode === 'work') {
-        setBlocks((b) => b + 1)
-        addDevSession({ date: todayISO(), durationMin: preset.w, project: 'Focus timer', focus: 8, stress: 2, tags: ['focus'] })
-      }
-      setMode(nextMode)
-      setLeft(minsFor(nextMode))
-    })
-  }, [left, running, mode]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const shown = Math.max(0, left)
+  const shown = secondsLeft(t)
   const pct = total ? ((total - shown) / total) * 100 : 0
   /* A 240px box at native size. The ring is drawn in viewBox units and scaled by
      CSS, so the stroke and the radius stay in proportion at every column width
@@ -77,24 +83,17 @@ export function FocusTimer() {
   const BOX = 240
   const R = 104
   const C = 2 * Math.PI * R
-  const accent = mode === 'work' ? cat('mauve') : cat('green')
+  const accent = mode === 'work' ? cat(t.tone) : cat('green')
 
   function reset() {
-    setRunning(false)
-    setMode('work')
-    setLeft(preset.w * 60)
+    resetTimer()
   }
+  /** Skip the rest of this phase. Does NOT log it — you did not do the work. */
   function skip() {
-    setRunning(false)
-    const nm = mode === 'work' ? 'break' : 'work'
-    setMode(nm)
-    setLeft(minsFor(nm))
+    advance()
   }
   function choose(p: (typeof PRESETS)[number]) {
-    setRunning(false)
-    setMode('work')
-    setPreset(p)
-    setLeft(p.w * 60)
+    setPreset(PRESETS.indexOf(p))
   }
 
   return (
@@ -142,7 +141,7 @@ export function FocusTimer() {
         {/* `lg`, and the only `lg` control in zone 2 besides the log form's
             submit. Start is the button this page exists for and the one a phone
             user aims at with a thumb. */}
-        <Button variant="secondary" size="lg" onClick={() => setRunning((r) => !r)}>
+        <Button variant="secondary" size="lg" onClick={() => (running ? pause() : (shown < total ? resume() : start('work')))}>
           {running ? (
             <>
               <Icon as={Pause} size="sm" /> Pause
@@ -179,6 +178,47 @@ export function FocusTimer() {
             </button>
           )
         })}
+      </div>
+
+      {/* ── Pick the colour the clock wears ──────────────────────────────
+          Red is the default because a focus block is a deadline you set for
+          yourself, and the colour's one job is to make the time feel like it
+          is running out — which mauve, this app's calm brand accent,
+          deliberately does not.
+
+          It is choosable because urgency is not universal: red is pressure for
+          some people and anxiety for others, and a timer you avoid opening is
+          worse than no timer. Every swatch is a palette token, so all five
+          themes move together and `npm run contrast` keeps guarding them.
+
+          The break stays green in every case — it is the one phase whose job
+          is to say stop, and letting it be red would invert the only meaning
+          the colour carries. */}
+      <div className="mt-3 flex items-center gap-2" role="group" aria-label="Timer colour">
+        <span className="text-micro text-fg-3">Colour</span>
+        {TIMER_TONES.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setTone(c)}
+            aria-pressed={t.tone === c}
+            aria-label={`Timer colour: ${c}`}
+            title={c}
+            /* The 44px floor is the BUTTON, not the swatch: a 14px dot is
+               under every pointer-size rule there is, and this is a control
+               the whole feature's feel depends on. */
+            className="grid size-11 place-items-center rounded-control transition-colors hover:bg-ink-2"
+          >
+            <span
+              className="block size-3.5 rounded-pill"
+              style={{
+                background: cat(c),
+                outline: t.tone === c ? `2px solid ${cat(c)}` : 'none',
+                outlineOffset: 2,
+              }}
+            />
+          </button>
+        ))}
       </div>
 
       <p className="mt-3 text-label text-fg-2">

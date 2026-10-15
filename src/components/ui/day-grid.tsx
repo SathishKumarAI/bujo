@@ -108,6 +108,27 @@ export function DayGrid({
   onDayClick?: (date: string) => void
 }) {
   // Square either way: fixed px, or a full-width cell whose height follows.
+  // `maxWidth` on a fluid cell, and it is not cosmetic.
+  //
+  // `fluid` divides the container between however many columns there are, which
+  // is right at 26 or 53 weeks and absurd below about 10: a 5-week month in a
+  // 980px column gave **~190px cells**, so a calendar turned into six enormous
+  // tiles and the page lost its own shape. Found on the first screenshot after
+  // the range switch shipped, not reasoned about in advance.
+  //
+  // A `clamp`, not a fixed ceiling, so the cell still SCALES with the window
+  // — which is the whole point of `fluid`. `2.2vw` is the slope; the bounds
+  // stop it at either extreme:
+  //
+  //   390px phone   14px   the floor, so a month stays legible and tappable
+  //   1440 desktop  ~32px  scaling freely in between
+  //   2560 wide     36px   the ceiling, so a 5-column month does not sprawl
+  //
+  // At long ranges the clamp never binds: 53 columns in a 980px container get
+  // ~18px each, under the maximum, so a year renders exactly as dense as it
+  // always did. It only engages when the column count is small, which is
+  // precisely the case that broke. `margin: auto` centres a grid that did not
+  // need all the room it was given.
   const box = fluid ? { width: '100%', aspectRatio: '1' } : { height: size, width: size }
   // The sr-only header column is `position: absolute`, so it contributes no
   // width of its own — but under `table-fixed` it would still be handed an
@@ -172,7 +193,23 @@ export function DayGrid({
   return (
     // A <caption> rather than an aria-label: it survives table-navigation mode
     // in every screen reader, where a label on <table> sometimes does not.
-    <table className={`border-separate${fluid ? ' w-full table-fixed' : ''}`} style={{ borderSpacing: gap }}>
+    <table
+      className={`border-separate${fluid ? ' w-full table-fixed' : ''}`}
+      style={{
+        borderSpacing: gap,
+        // The cap belongs to the TABLE, keyed on how many columns there are —
+        // not to the cell. Capping each cell leaves it centred inside a td that
+        // still took its full share, so the squares drift apart; and capping
+        // the table with `max-content` collapses it, because these cells have
+        // no intrinsic content at all (measured: 8px squares).
+        //
+        // `cols * clamp(...)` scales with the window between bounds and stops a
+        // short range sprawling. At 53 columns the container is narrower than
+        // this cap, so a year is unaffected and renders exactly as dense as it
+        // always did.
+        ...(fluid ? { maxWidth: `calc(${cols} * clamp(0.875rem, 2.2vw, 2.25rem))`, marginInline: 'auto' } : null),
+      }}
+    >
       <caption className="sr-only">{label ?? `Activity grid, ${days.length} days`}</caption>
       <thead>
         {months && (

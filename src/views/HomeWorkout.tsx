@@ -111,7 +111,7 @@ export function HomeWorkout() {
               { label: 'Movements available', value: HOME_EXERCISES.length },
             ]} />
             <div className="mt-3">
-              <CalendarHeatmap weeks={26} fluid data={heat} unit="exercises" label="Home-workout exercises per day over the last twenty-six weeks" />
+              <CalendarHeatmap ranges storageKey="homeworkout" fluid data={heat} unit="exercises" label="Home-workout exercises per day" />
             </div>
           </section>
 

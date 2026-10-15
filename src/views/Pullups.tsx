@@ -157,7 +157,7 @@ export function Pullups() {
             {/* Same stranded grid as Fitness — measured at 188px in a 708px
                 column — and the same fix. See `DayGrid`'s `fluid`. */}
             <div className="mt-3">
-              <CalendarHeatmap weeks={26} fluid data={heat} unit="reps" label="Pull-up reps per day over the last twenty-six weeks" />
+              <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
             </div>
           </section>
 

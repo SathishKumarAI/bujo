@@ -153,24 +153,49 @@ export function ActivityForm({
         />
       )}
 
-      <label className="block text-body text-fg-1">
-        Date
-        <Input type="date" value={draft.date} onChange={(e) => onChange({ date: e.target.value })} className="mt-1" />
-      </label>
+      {/* ── The three short facts, on one line ───────────────────────────
+          "October 15th, 45 minutes, 5 miles" is a single statement about the
+          session, and each half of it was getting a full row with a 380px box
+          around a value you can read at a glance. That 380px cap exists so a
+          TEXT input stops advertising more room than you need; applied to a
+          date or to `5` it is the same mistake an order of magnitude worse.
 
-      {asks(activity, 'durationMin') && (
-        <NumField
-          label="Duration" suffix="min" step="1" placeholder="45"
-          value={draft.duration} onChange={(duration) => onChange({ duration })}
-        />
-      )}
+          `flex-wrap` on the row rather than widths on the children, so a phone
+          drops them back to a stack with no breakpoint deciding it — and
+          because `Card` cannot wrap a cluster whose markup it does not own
+          (CLAUDE.md's clipped-control trap). Each field keeps `min-w-0` so the
+          row shrinks rather than overflowing.
 
-      {asks(activity, 'distanceKm') && (
-        <NumField
-          label="Distance" suffix={unit} step="0.1" placeholder="5"
-          value={draft.distance} onChange={(distance) => onChange({ distance })}
-        />
-      )}
+          Date is always asked; duration and distance are per-activity, so the
+          row is never empty and Pickleball simply contributes fewer fields. */}
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+        <label className="block min-w-0 text-body text-fg-1">
+          Date
+          {/* A date is a fixed-width value — `dd/mm/yyyy` plus the picker glyph
+              and nothing else will ever be typed here. 11rem fits it with the
+              native control's own padding at every browser we render in. */}
+          <Input
+            type="date"
+            value={draft.date}
+            onChange={(e) => onChange({ date: e.target.value })}
+            className="mt-1 max-w-[11rem]"
+          />
+        </label>
+
+        {asks(activity, 'durationMin') && (
+          <NumField
+            label="Duration" suffix="min" step="1" placeholder="45"
+            value={draft.duration} onChange={(duration) => onChange({ duration })}
+          />
+        )}
+
+        {asks(activity, 'distanceKm') && (
+          <NumField
+            label="Distance" suffix={unit} step="0.1" placeholder="5"
+            value={draft.distance} onChange={(distance) => onChange({ distance })}
+          />
+        )}
+      </div>
 
       {asks(activity, 'sets') && (
         <label className="block text-body text-fg-1">
