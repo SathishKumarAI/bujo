@@ -2,14 +2,15 @@ import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPl
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Pill } from '../components/ui'
+import { Card, Input, Pill } from '../components/ui'
 import { CommitField } from '../components/CommitField'
+import { useConfirm } from '../components/ConfirmDialog'
 import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
-import { coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
+import { coachingResetPatch, coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
 import type { PickleballSession } from '../lib/types'
 import { PICKLE_FORMATS } from '../lib/pickleballPlan'
 import {
@@ -74,6 +75,34 @@ export function Coaching() {
   }
   const todayDow = new Date(today + 'T00:00:00').getDay()
   const todaySlot = WEEKLY_TEMPLATE[(todayDow + 6) % 7] // Mon-first index
+
+  const confirm = useConfirm()
+  /**
+   * Reset named what it destroys, and destroying ALL of it.
+   *
+   * It was a bare ghost button that wiped the start date and twelve week ticks
+   * on the first click with no confirmation — the same shape as the Home
+   * Workout history's `×` that `docs/USER-CONTROL.md` was written for. And it
+   * cleared two of the three things the program stores; `coachingResetPatch`
+   * owns the third, with the reason.
+   */
+  async function resetProgram() {
+    const notes = Object.keys(weekNotes).length
+    const ok = await confirm({
+      title: 'Reset the 12-week program?',
+      description: (
+        <>
+          Removes the start date ({prettyDay(start!)}), {done.length} week tick{done.length === 1 ? '' : 's'}
+          {notes > 0 && ` and ${notes} week note${notes === 1 ? '' : 's'}`}. The{' '}
+          {sessions.length} pickleball session{sessions.length === 1 ? '' : 's'} you logged stay — they belong to the
+          days they happened on, not to the program. This cannot be undone.
+        </>
+      ),
+      confirmLabel: 'Reset the program',
+      destructive: true,
+    })
+    if (ok) setSettings(coachingResetPatch())
+  }
 
   function toggleWeek(w: number) {
     setSettings({ coachingWeeksDone: done.includes(w) ? done.filter((x) => x !== w) : [...done, w] })
@@ -204,7 +233,33 @@ export function Coaching() {
               })}
             </ol>
             {start && (
-              <Button variant="ghost" onClick={() => setSettings({ coachingStart: undefined, coachingWeeksDone: [] })} className="mt-2 h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+              /*
+                THE FOOT OF THE PROGRAM · the date you can fix, then the button
+                that throws it all away — in that order, because the reversible
+                control goes first (docs/USER-CONTROL.md rule 2) and because
+                for the whole life of this page the only way to correct a start
+                date was Reset, which also cost you twelve ticks.
+              */
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-2.5">
+                <label className="flex items-center gap-2 text-label text-fg-2">
+                  Started
+                  {/* A native date input, which is also the control
+                      `CommitmentCard` uses for a quit date. `max` is today:
+                      the component above already ignores a future start (an
+                      imported journal can carry one), and a picker that cannot
+                      offer the broken state is better than a guard that
+                      silently corrects it. */}
+                  <Input
+                    type="date"
+                    value={start}
+                    max={today}
+                    onChange={(e) => { if (e.target.value) setSettings({ coachingStart: e.target.value }) }}
+                    aria-label="Program start date"
+                    className="h-8 w-auto py-1 text-label"
+                  />
+                </label>
+                <Button variant="ghost" onClick={resetProgram} className="h-auto p-0 text-label text-fg-2 hover:text-red hover:no-underline">Reset program</Button>
+              </div>
             )}
           </Card>
         </>
