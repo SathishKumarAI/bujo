@@ -34,10 +34,14 @@ patterns — to the last sport page still on the legacy shell.
 - **zone 1** — the `nextStep` sentence (a button into the panel that answers
   it), four totals on a `StatBar`, the week against the weekly goal.
 - **zone 2** — Log a session, in the sticky 38% column. One primary button.
-- **zone 3** — `components/pickleball/Review.tsx`: the pinned Today's-focus
-  strip, then one bar of five rows — **Sessions · Competition & rating ·
-  Performance · Trends & volume · Opponents, partners & venues** — with
-  sub-section chips inside the two rows big enough to need them.
+- **zone 1** — one bordered block: the `nextStep` sentence, four totals, and
+  **Today's drill** (merged in, asked for as "one single space"). It is not
+  part of the record, so it does not sit in it.
+- **zone 3** — `components/pickleball/Review.tsx`: one bar of five rows in
+  reading order — **Results · Sessions · Activity · Matchups · Competition** —
+  with sub-section chips inside the rows big enough to need them. The page
+  OPENS on Sessions, which is the thirty seconds after you press Log session;
+  the order is for finding things.
 
 Measured at `?demo=1` against the preview server, both viewports:
 
@@ -58,6 +62,20 @@ copied (theme asserted on the root, folds to four passes, lazy content
 revealed, a `settle()` immediately before axe). It was **armed on a planted
 violation first**: with `BUJO_CANARY=1` the same run reports 8 criticals, so
 its green means something.
+
+### The second and third rounds, after the first look
+
+Reported and fixed, each measured: the demo banner's 24px overflow (every page
+scrolled sideways on a phone), placeholders wider than their inputs, chips that
+were sentences, a bar that wrapped to three lines, the weekday card as seven
+44px tiles with colour that said nothing, zone 1 as three rows for two facts,
+`CardGrid` giving 353px cards whatever the panel width, and — only above a
+1680px viewport — `layout.css`'s second column rule re-asserting `1fr 32rem`
+with the log hidden, so the review sat beside a 512px empty track.
+
+Also: five cards had never been rendered by any gate because the seed wrote no
+location, opponent, level or points; `nextStep`'s lapse rule now opens Activity;
+every weekday, partner and venue opens Sessions filtered to it.
 
 ### Next action
 

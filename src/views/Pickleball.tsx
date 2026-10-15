@@ -11,6 +11,7 @@ import { cat, onRaised } from '../lib/colors'
 import { todayISO, addDays } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
+import { TodayDrill } from '../components/pickleball/TodayDrill'
 import { PB_PANELS } from '../components/pickleball/panels'
 import { useStickyState } from '../lib/useStickyState'
 import { notify } from '../lib/notify'
@@ -138,7 +139,19 @@ export function Pickleball() {
   }
 
   const atAGlance = (
-    <>
+    /* ONE BLOCK, NOT THREE THINGS THAT HAPPEN TO BE ADJACENT.
+
+       Asked for directly: *"combine this drill and the stats on the top bar so
+       they have only one single space"*. The sentence, the totals and today's
+       drill are the same question — what about today — and they were a row, a
+       bar and then a strip at the top of the record, where the strip read as
+       the first panel and ran into the Sessions heading below it.
+
+       `@container/orient` so the drill can ask how wide THIS block is rather
+       than how wide the window is: the block is the full shell with the log
+       hidden and the same width with it open, because zone 1 spans both
+       columns. */
+    <div className="@container/orient rounded-card border border-line bg-ink-0 p-3">
       {/* THE SENTENCE, ABOVE THE NUMBERS.
 
           Four totals are four true things that change nothing about today. The
@@ -241,7 +254,8 @@ export function Pickleball() {
           },
         ]}
       />
-    </>
+      <TodayDrill />
+    </div>
   )
 
   return (

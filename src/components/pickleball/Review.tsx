@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { ArrowSquareOut, Target } from '@/components/icons'
+import { ArrowSquareOut } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
-import { Card, Empty, Input, Pill, Segmented, Textarea } from '../ui'
+import { Card, Empty, Input, Segmented, Textarea } from '../ui'
 import { Button } from '../ui/button'
 import { PanelGrid } from './PanelGrid'
 import { LazyMount } from '../LazyMount'
-import { useNav } from '../shell/nav'
 import { SectionRail } from '../page'
 import { cat, onRaised } from '../../lib/colors'
 import { todayISO, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
@@ -15,8 +14,6 @@ import {
   levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
   pickleHours, scoringStats, playConsistency,
 } from '../../lib/pickleball'
-import { ACADEMY_DRILLS, DRILL_FIXES } from '../../lib/pickleballAcademy'
-import { PracticeTick } from '../coaching/PracticeTick'
 import { PB_PANELS } from './panels'
 import { Facet } from './Facet'
 import { TrendCharts } from './TrendCharts'
@@ -125,7 +122,6 @@ export function PickleballReview({ panel, onPanel }: {
   panel: string
   onPanel: (id: string) => void
 }) {
-  const nav = useNav()
   const { data, updatePickleball, removePickleball, setSettings } = useJournal()
   const today = todayISO()
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -184,8 +180,6 @@ export function PickleballReview({ panel, onPanel }: {
   const hours = pickleHours(data, 30, today)
   const scoring = scoringStats(data)
   const consistency = playConsistency(data, 8, today)
-  // Deterministic daily rotation, over the academy's twenty-one drills.
-  const drill = ACADEMY_DRILLS[(fromISODay(today).getDate() + fromISODay(today).getMonth() * 3) % ACADEMY_DRILLS.length]
 
   const current = PB_PANELS.find((p) => p.id === panel) ?? PB_PANELS[0]
 
@@ -326,53 +320,6 @@ export function PickleballReview({ panel, onPanel }: {
             phone's only navigation slid out of frame and a gate declared the
             page retired having scanned nothing. */}
         <div className="@container/page">
-        {/* INSIDE `@container/page`, and that is the whole reason it works.
-            It sat above this wrapper, so its `@min-[58rem]/page:grid-cols-…`
-            matched nothing and the two columns never appeared at any width —
-            a container query against a missing container is silent, which is
-            the trap this repo already has written down twice. Measured: the
-            strip stayed 155px tall and left-stacked at a 1110px review. */}
-      <section aria-label="Today's drill" className="rounded-card border border-line bg-ink-1 p-3">
-        {/* TWO COLUMNS ONCE THERE IS WIDTH FOR THEM.
-
-            Stacked, this was four short lines — label, name, fix, how — which
-            at 678px is a strip and at 1110px (log hidden) or 1926px (a wide
-            screen) is a strip with half a page of nothing to its right.
-            Reported as *"a dead space without any content or intent"*. The
-            split puts what you are doing on the left and why on the right, so
-            the width is spent on the two halves of one idea rather than on
-            margin. One column under 58rem of container, which is the phone and
-            the log-open desktop. */}
-        <div className="grid gap-x-6 gap-y-2 @min-[58rem]/page:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-          <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h3 className="inline-flex items-center gap-1.5 text-label font-medium text-fg-1">
-                <Icon as={Target} size="sm" className="text-mauve" /> Today&apos;s drill
-              </h3>
-              <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
-            </div>
-            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-body font-medium text-fg-1">{drill.name}</span>
-              <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
-            </p>
-            <Button variant="ghost" onClick={() => nav('coaching')} className="mt-1 h-auto p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
-              from Coaching · {ACADEMY_DRILLS.length} more, plus the warm-up →
-            </Button>
-          </div>
-          <div className="min-w-0">
-            {/* The complaint, not the category — and FIRST, because it is the
-                line that tells you whether today's drill is your problem.
-                Rendered only when the group has one: a lookup that silently
-                returns undefined is the trap `pickleballAcademy.test.ts`
-                guards, and an empty line would read as a missing sentence
-                rather than an absent key. */}
-            {DRILL_FIXES[drill.skill] && (
-              <p className="text-label text-fg-1"><span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}</p>
-            )}
-            <p className="mt-1 text-label text-fg-2">{drill.how}</p>
-          </div>
-        </div>
-      </section>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
           <SectionRail
             label="Pickleball record"

@@ -7,6 +7,24 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  */
 
 /*
+ * THE ORDER IS A READING ORDER, AND IT IS NOT THE ORDER THINGS WERE BUILT IN.
+ *
+ * Asked for as "sessions as the second category". The row that answers the
+ * question people arrive with goes first, and the rest descend by how often
+ * you reach for them:
+ *
+ * | # | row | the question |
+ * |---|---|---|
+ * | 1 | Results | am I winning — the one thing a scoreline page is for |
+ * | 2 | Sessions | what did I log, and can I fix that score |
+ * | 3 | Activity | am I playing enough, and how hard |
+ * | 4 | Matchups | who with, who against, where |
+ * | 5 | Competition | entries and a rating, a few times a year |
+ *
+ * The page still OPENS on Sessions, which is not a contradiction: the order is
+ * for finding things, the default is for the thirty seconds after you press
+ * Log session, when the only thing you want is to see the row you just added.
+ *
  * RESULTS AND ACTIVITY, NOT PERFORMANCE AND TRENDS.
  *
  * Asked, and there was no answer that survived it: both rows meant "how am I
@@ -40,9 +58,9 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  * The moment comes first, then what answers it. Keep it one line.
  */
 export const PB_PANELS = [
-  { id: 'sessions', label: 'Sessions', blurb: 'Straight after you log \u00b7 every session, newest first, and a score you can still fix', icon: Clock, color: 'green' },
-  { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
   { id: 'results', label: 'Results', blurb: 'Am I winning · form, margins, the win-rate trend and which days go well', icon: PersonSimpleRun, color: 'sky' },
+  { id: 'sessions', label: 'Sessions', blurb: 'What you logged · every session, newest first, and a score you can still fix', icon: Clock, color: 'green' },
   { id: 'activity', label: 'Activity', blurb: 'Am I playing · volume, cadence, effort and the badges that follow from them', icon: ChartBar, color: 'teal' },
-  { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' }
+  { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' },
+  { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
 ] as const
