@@ -246,11 +246,11 @@ export function Pickleball() {
   // days. The grid this replaced scaled linearly against the busiest day, so a
   // single tournament Saturday flattened every ordinary session to the lightest
   // step — the shape of the habit was the one thing the visual could not show.
-  // 6mo, not 3mo. With a fluid grid the window sets the cell size as well as
-  // the span, and thirteen columns across a 580px card come out at **35.5px** —
-  // that is a month calendar, not a heatmap. Twenty-six lands at 18.4px, which
-  // is the density the grid is drawn for. 3mo is still one click away.
-  const [heatWeeks, setHeatWeeks] = useState(26)
+  // (The 3mo/6mo/1yr window that used to live here is now the shared Week /
+  // Month / Year control inside `CalendarHeatmap`, which remembers its own
+  // choice under `storageKey`. The sizing note it carried still holds and now
+  // lives with the primitive: with a fluid grid the window sets the cell size
+  // as well as the span.)
   /* Sticky, because the four folds each were — losing that would be a
      regression dressed as a redesign. Defaults to Performance: it is the
      read you want straight after logging a session, which is what the act
@@ -364,29 +364,21 @@ export function Pickleball() {
           </div>
         )}
       </Card>
-      <Card band title={<>Heatmap <span className="inline-flex items-center gap-2 text-label text-fg-2"><Icon as={ChartBar} size="sm" /> {heatWeeks === 13 ? '3mo' : heatWeeks === 26 ? '6mo' : '1yr'}</span></>} subtitle={`Last ${heatWeeks} weeks, darker = more games`} enlargeable>
-        <div className="mb-2 flex items-center gap-3">
-          <Segmented
-            value={heatWeeks}
-            onChange={setHeatWeeks}
-            options={[
-              { value: 13, label: '3mo' },
-              { value: 26, label: '6mo' },
-              { value: 52, label: '1yr' },
-            ]}
-          />
-        </div>
-        {/* `fluid`, because the window above is a user control: at 13 weeks a
-            fixed 11px cell measured **202px inside 580px** — the worst ratio in
-            the app — and at 52 it overflows into a scrollbar. Dividing the card
-            means the 3mo/6mo/1yr toggle changes the density of one grid rather
-            than the length of a stub. */}
+      {/* `ranges`, like every other heatmap in the app.
+          This card had its own 3mo/6mo/1yr toggle, which is three ways of
+          looking at a year and no way of looking at this week — the thing
+          asked for across every heatmap: *"I want to focus more on this month
+          and this week, why should I focus on yearly."* Swapping the bespoke
+          control for the shared one also deletes the `heatWeeks` state, the
+          title badge that restated it and the fixed-span subtitle. */}
+      <Card band title="Heatmap" subtitle="Darker = more games" enlargeable>
         <CalendarHeatmap
-          weeks={heatWeeks}
+          ranges
+          storageKey="pickleball"
           fluid
           data={heat}
           unit="games"
-          label={`Pickleball games per day over the last ${heatWeeks} weeks`}
+          label="Pickleball games per day"
         />
       </Card>
     </CardGrid>

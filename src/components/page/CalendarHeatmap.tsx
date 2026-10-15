@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { DayGrid, type DayCell } from '../ui/day-grid'
-import { addDays, fromISODay, prettyDay, todayISO } from '../../lib/date'
+import { addDays, fromISODay, monthDays, prettyDay, todayISO } from '../../lib/date'
 import { quartileLevels } from '../../lib/viz'
 import { useStickyState } from '../../lib/useStickyState'
 import { Segmented } from '../ui'
@@ -141,16 +141,36 @@ export function CalendarHeatmap({
           ? trailStart
           : addDays(trailStart, -fromISODay(trailStart).getDay())
 
-    const dates: string[] = []
-    for (let i = 0; ; i++) {
-      const date = addDays(gridStart, i)
-      if (date > today) break
-      dates.push(date)
-    }
+    // ── A month runs to the END of the month ────────────────────────────
+    //
+    // Every range used to stop at `today`, which is right for a trailing
+    // window and wrong for a calendar: on the 15th, "Month" drew Oct 1-15 and
+    // stopped — fifteen cells and a half-empty grid, reported as *"why are you
+    // considering month has only 15 days? It has so many days, like 28, 30,
+    // 31."* It does. `monthDays` gives all of them.
+    const dates: string[] = monthMode
+      ? monthDays(today.slice(0, 7))
+      : (() => {
+          const out: string[] = []
+          for (let i = 0; ; i++) {
+            const date = addDays(gridStart, i)
+            if (date > today) break
+            out.push(date)
+          }
+          return out
+        })()
 
-    const level = quartileLevels(dates.map((d) => byDate.get(d) ?? 0))
+    // Quartiles over the days that have HAPPENED. Sixteen future zeroes would
+    // drag the thresholds down and repaint a quiet month as a strong one —
+    // the ramp would be measuring the calendar rather than the training.
+    const level = quartileLevels(dates.filter((d) => d <= today).map((d) => byDate.get(d) ?? 0))
     return dates.map((date) => {
       const value = byDate.get(date) ?? 0
+      // A day that has not arrived is not a rest day. Same family as the
+      // Insights lapse bug: silence is not a measurement.
+      if (date > today) {
+        return { date, level: 0 as const, future: true, title: prettyDay(date), srLabel: `${prettyDay(date)}: still to come` }
+      }
       return {
         date,
         level: level(value),

@@ -30,6 +30,16 @@ import type { DayCell } from '../ui/day-grid'
  *           a month looks like everywhere else, and it fills the width
  *           because the columns divide it.
  *
+ *           Its cells are a fixed 40px BAND, not a ratio. `aspect-[4/3]` made
+ *           each cell as tall as a seventh of the container is wide — 105px in
+ *           a 980px column, so a six-row month was **630px tall** for thirty
+ *           data points, and it grew with the window. Reported as *"why are
+ *           you taking more space for them in months? Reduce the size to fit
+ *           the screen."* A height that does not depend on the width is the
+ *           only kind that cannot do that: the grid still divides the full
+ *           width (which is what fixed the empty-sides complaint) while the
+ *           month now costs ~270px instead of 630.
+ *
  *   year    unchanged — `DayGrid`, columns as weeks. The strip is right there
  *           and nothing else fits 365 cells on a line.
  *
@@ -79,8 +89,12 @@ export function CalendarSpan({
 
       <div className={`grid gap-1 ${week ? 'grid-cols-7' : 'grid-cols-7'}`}>
         {days.map((d, i) => {
+          // A future day is drawn and dated but never filled, and sits at
+          // half opacity so the month reads as "this much has happened" at a
+          // glance. It is not `blank` (which draws nothing) and not a level-0
+          // rest day (which is a day that happened and was empty).
           const bg = d.blank ? 'transparent' : d.level === 0 ? cat(emptyColor) : cat(color)
-          const opacity = d.blank ? 1 : RAMP[d.level]
+          const opacity = d.blank ? 1 : d.future ? 0.4 : RAMP[d.level]
           return (
             <div
               key={d.date || `blank-${i}`}
@@ -99,7 +113,7 @@ export function CalendarSpan({
               // grid 585px tall — taller than the form beside it, for thirty
               // data points. 4:3 keeps the calendar shape, fills the same
               // width, and costs ~145px less height.
-              className={`relative flex flex-col items-center justify-center rounded-control ${week ? 'h-16' : 'aspect-[4/3]'}`}
+              className={`relative flex flex-col items-center justify-center rounded-control ${week ? 'h-16' : 'h-10'}`}
               style={{ background: bg, opacity }}
             >
               {!d.blank && (

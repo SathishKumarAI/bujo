@@ -45,6 +45,16 @@ export interface DayCell {
   blank?: boolean
   /** Not clickable, but still drawn (e.g. a rating habit you log elsewhere). */
   disabled?: boolean
+  /**
+   * A day that has not happened yet.
+   *
+   * Distinct from `blank` (nothing drawn) and from `level: 0` (a day that
+   * happened and was empty). A calendar month has to show all 31 days or it
+   * is not a month, but the 16 still to come are NOT rest days — calling them
+   * that is a claim about days that have not occurred. They are drawn as
+   * dated, unfilled cells and excluded from the intensity quartiles.
+   */
+  future?: boolean
   title?: string
   srLabel?: string
 }
