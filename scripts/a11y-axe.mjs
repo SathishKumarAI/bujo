@@ -186,31 +186,32 @@ const COMPANIONS = [
   // entry above now covers the whole view — sign-in button, local-account form,
   // units controls and all.
   //
-  // **Three entries were deleted here, and the reason is a layout change rather
-  // than a decision to scan less.** COD-232: both rendering gates walk the
-  // rendered DOM, a tab shell holds ONE panel, and so for this gate's whole
-  // life "Settings: 0 serious" meant the first tab only — the passcode form,
-  // the cloud passphrase, every export button and the erase-everything dialog
-  // had never been seen by axe at any theme or viewport. The workaround was to
-  // reach each tab by URL (`?view=settings&tab=…`): three more navigations and
-  // three more axe runs, at twelve shards each, to scan one page.
+  // These three are the hole COD-232 describes, held open on purpose.
   //
-  // COD-310 made Settings four panes on one screen, so all four are in the DOM
-  // in a single load and one scan covers the view. **36 fewer scans in a run of
-  // 166**, with strictly more coverage than the clicking version ever had.
+  // Both rendering gates walk the rendered DOM and a tab shell holds ONE
+  // panel, so for this gate's whole life "Settings: 0 serious" meant the first
+  // tab only: the passcode form, the cloud passphrase, every export button and
+  // the erase-everything dialog had never been seen by axe at any theme or
+  // viewport. Reaching them by URL is the fix — a tab click is one more thing
+  // to wait for and this gate already has a table of waits it got wrong.
   //
-  // The risk is exactly the shape of COD-232 itself: if a pane ever became
-  // lazily mounted, coverage would silently collapse back to one panel and this
-  // gate would go on printing a reassuring zero. `src/views/Settings.test.tsx`
-  // is the tripwire — it asserts content from every pane renders in one pass,
-  // and it is what makes deleting these three entries safe rather than
-  // optimistic. If you make a pane lazy, put these back.
+  // **They were briefly deleted and are back.** A layout experiment put all
+  // four panels on screen at once, which mounted them all and made one scan
+  // enough; it was reverted because four quarter-width columns is not a
+  // readable settings page. One panel mounts again, so the coverage these
+  // entries buy is needed again. The lesson is worth keeping: the cheap way to
+  // close COD-232 for good is to mount every panel, and whenever that is true
+  // these three can go — with a test asserting it, or the gate silently drops
+  // back to one panel and keeps printing a reassuring zero.
   //
-  // Kept for whoever adds a third element to an entry: it is extra query, and
-  // it stays OUT of the id on purpose — the landed-URL check reads the `view`
-  // PARAM, so folding `&tab=` into the id makes "settings&tab=feel" a value
-  // `view` can never equal. The first run of that failed four shards exactly
-  // that way, the assertion doing its job on the author rather than on the app.
+  // Third element is extra query, kept OUT of the id on purpose: the
+  // landed-URL check reads the `view` PARAM, so folding `&tab=` into the id
+  // makes "settings&tab=feel" a value `view` can never equal. The first run of
+  // this failed four shards exactly that way — the assertion doing its job on
+  // the author rather than on the app, which is the best kind of red.
+  ['Settings · appearance', 'settings', 'tab=feel'],
+  ['Settings · sync', 'settings', 'tab=sync'],
+  ['Settings · data', 'settings', 'tab=data'],
   // The guide. Behind the top bar's "?", so no tab clicks to it and it had
   // never been scanned — the page a user opens *because they are already
   // stuck* was the one page with no accessibility evidence behind it. It is

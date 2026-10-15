@@ -1,4 +1,3 @@
-import { MasonryGrid } from '../shell/CardGrid'
 import { TagManager } from '../TagManager'
 import { YourDataCard } from './YourDataCard'
 import { BackupCard } from './BackupCard'
@@ -22,22 +21,20 @@ export function DataTab() {
   return (
     <>
       <YourDataCard />
-      <MasonryGrid>
-        <BackupCard />
+      <BackupCard />
         {/* Tags moved here from Insights (BUJO-281). It is a maintenance tool —
             it rewrites every entry that carries a tag — not an analysis, so it
             was the one thing on that page you could *change* something with, and
             it sat behind a fold at the bottom of six. Between export and the
             danger zone is where data you edit in bulk belongs. */}
-        <AppleHealthCard />
-        <TagManager />
-        <DemoResetCard />
+      <AppleHealthCard />
+      <TagManager />
+      <DemoResetCard />
         {/* From the retired Account page. There is no support inbox — the issue
             tracker is the whole channel — so it belongs on the tab people reach
             for when something about their data looks wrong, which is this one
             rather than a page about who you are signed in as. */}
-        <ProjectLinks />
-      </MasonryGrid>
+      <ProjectLinks />
     </>
   )
 }

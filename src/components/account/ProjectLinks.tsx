@@ -34,7 +34,7 @@ const LINKS = [
 
 export function ProjectLinks() {
   return (
-    <Card band title="Help build it" subtitle="No support inbox — the issue tracker is the whole channel">
+    <Card band collapsible defaultCollapsed title="Help build it" subtitle="No support inbox — the issue tracker is the whole channel">
       <ul className="flex flex-col">
         {LINKS.map((l) => (
           <li key={l.href} className="border-t border-line first:border-t-0">

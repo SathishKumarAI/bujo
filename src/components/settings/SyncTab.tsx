@@ -1,6 +1,5 @@
 import { CloudStorage } from '../CloudStorage'
 import { DriveSync } from '../DriveSync'
-import { CardGrid } from '../shell/CardGrid'
 import { CloudSyncCard } from '../account/CloudSyncCard'
 import { Disclosure } from './shared'
 import { PasscodeCard } from './PasscodeCard'
@@ -33,23 +32,21 @@ export function SyncTab() {
               Four facts, each of which changes what you do in the next thirty
               seconds — see `SyncStatusBar` for why "what is withheld" is
               deliberately not one of them. */}
-          <div className="mb-5">
-            <SyncStatusBar />
-          </div>
-          {/* In a grid, not a stack: full-bleed these gave a 1,160px-wide
-              passphrase field and ~150-character paragraph lines, the widest
-              measure anywhere in the app on the page that asks for a secret.
+          <SyncStatusBar />
+          {/* No grid of its own any more. `SectionScreen` packs this whole
+              section into height-filling columns, so a grid here would be a
+              second layout competing with it — and the thing a grid was for
+              (stopping a full-bleed 1,160px passphrase field and
+              150-character lines) is handled better by a 21rem column.
 
-              `CardGrid` rather than `MasonryGrid`, deliberately: the reading
-              order here is not arbitrary — sync and the lock come before the two
-              optional outbound connections — and masonry is column-major. The
-              cost is one aligned row, measured at ~70px of gap. */}
-          <CardGrid>
-            <CloudSyncCard />
-            <PasscodeCard />
-            <ConnectionsCard />
-            <VoiceModelCard />
-          </CardGrid>
+              The reading order this used to protect is preserved by source
+              order: sync and the lock come before the two optional outbound
+              connections. `column-fill: auto` is column-major, so that order
+              now reads down-then-right rather than across. */}
+          <CloudSyncCard />
+          <PasscodeCard />
+          <ConnectionsCard />
+          <VoiceModelCard />
           {/* Advanced · BYO-storage / self-host, collapsed to cut option
               overload. `Disclosure` defaults to OPEN, so this comment and the
               three below it described an intent the page never had: every fold
@@ -61,18 +58,12 @@ export function SyncTab() {
               all on this tab, and the cards explaining them were one page away
               with no link between them. The second card is not optional — a
               page that lists only the protections is marketing. */}
-          <div className="mt-5">
-            <SecurityCard />
-          </div>
-          <div className="mt-5">
-            <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage" defaultOpen={false}>
-              <CardGrid>
-                <SelfHostCard />
-                <CloudStorage />
-                <DriveSync />
-              </CardGrid>
-            </Disclosure>
-          </div>
+          <SecurityCard />
+          <Disclosure title="Advanced sync" subtitle="self-host & bring-your-own storage" defaultOpen={false}>
+            <SelfHostCard />
+            <CloudStorage />
+            <DriveSync />
+          </Disclosure>
     </>
   )
 }

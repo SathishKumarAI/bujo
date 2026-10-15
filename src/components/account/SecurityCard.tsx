@@ -105,10 +105,41 @@ export function SecurityCard() {
   if (!isConfigured()) return null
   return (
     <>
-      <Card band title="How your journal is protected" subtitle="Each line is a mechanism, not a promise">
+      {/* ── Folded by default, which is a change and needs its reason ───────
+          These two cards are **reference**: eleven rows of prose that answer
+          "how is this protected" once and then never again. On the Sync
+          section they were the single biggest thing on the page — folding
+          them is what takes that section from 2.37 screens of sideways scroll
+          to roughly one.
+
+          Folded, not moved, and not shortened. The second card especially has
+          to stay on this page and stay complete: a page listing only the
+          protections is marketing, and the limits are the half a reader cannot
+          verify for themselves. A fold costs one click; a link costs a
+          navigation and gets followed by nobody.
+
+          `Card collapsible` renders a real `aria-expanded` toggle, so
+          `openFolds()` in `scripts/a11y-axe.mjs` opens both before scanning —
+          which is the thing that makes this safe. Folding content is how the
+          Gym contract pass hid a 1.41:1 contrast bug from the gate (COD-93);
+          the gate was armed against exactly that afterwards, and this relies
+          on it. */}
+      <Card
+        band
+        collapsible
+        defaultCollapsed
+        title="How your journal is protected"
+        subtitle="Seven mechanisms, each one a thing the code does"
+      >
         <Rows rows={PROTECTED} />
       </Card>
-      <Card band title="What this does not protect" subtitle="The half worth reading twice">
+      <Card
+        band
+        collapsible
+        defaultCollapsed
+        title="What this does not protect"
+        subtitle="The half worth reading twice"
+      >
         <Rows rows={LIMITS} />
       </Card>
     </>
