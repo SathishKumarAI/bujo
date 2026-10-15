@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
 import { Card, Empty } from '../ui'
@@ -11,7 +12,29 @@ import { Facet } from './Facet'
 const tip = rechartsTooltip
 
 /**
- * The `trends` panel - seven charts under two sub-sections, Winning and Volume.
+ * A chart renders when its PANEL is the one being shown and its sub-section
+ * chip is not filtering it out. Two conditions, one wrapper, because the pair
+ * is what every one of the seven needs and a call site that re-decides either
+ * of them is how a chart ends up in both panels or in neither.
+ */
+function Chart({ on, group, facet, active, children }: {
+  on: 'results' | 'activity'
+  group: 'results' | 'activity'
+  facet: string
+  active: string | null
+  children: ReactNode
+}) {
+  if (on !== group) return null
+  return <Facet of={facet} active={active}>{children}</Facet>
+}
+
+/**
+ * The seven charts, split across the two panels that own their subject:
+ * **Results** takes the win-rate trend, the win/loss split and the format
+ * comparison; **Activity** takes games per week, games per month, the
+ * cumulative line and the heatmap. One file because a chart is edited as a
+ * chart - axes, colours, an empty state - and `group` decides which half
+ * renders, so neither panel imports four of seven exports.
  *
  * Its own file because `Review.tsx` was 790 lines and this is 130 of them with
  * one subject: a chart is edited for its axes and its colours, never at the
@@ -19,7 +42,7 @@ const tip = rechartsTooltip
  * filter; `active` is passed in rather than read from a context so the chip row
  * and the cards cannot drift apart.
  */
-export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
+export function TrendCharts({ activeFacet, group }: { activeFacet: string | null; group: 'results' | 'activity' }) {
   const { data } = useJournal()
   const today = todayISO()
   const all = pickleTotals(data)
@@ -39,7 +62,7 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
 
   return (
     <PanelGrid>
-      <Facet of="winning" active={activeFacet}>
+      <Chart on="results" group={group} facet="form" active={activeFacet}>
       <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
           <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
@@ -55,8 +78,8 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           </div>
         )}
       </Card>
-      </Facet>
-      <Facet of="winning" active={activeFacet}>
+      </Chart>
+      <Chart on="results" group={group} facet="form" active={activeFacet}>
       <Card band title="Win / loss" subtitle="All games played" enlargeable>
         {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
           <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
@@ -74,8 +97,8 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           </div>
         )}
       </Card>
-      </Facet>
-      <Facet of="volume" active={activeFacet}>
+      </Chart>
+      <Chart on="activity" group={group} facet="volume" active={activeFacet}>
       <Card band title="Games per week" subtitle="Last 8 weeks" enlargeable>
         <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
           <ResponsiveContainer width="100%" height="100%">
@@ -89,9 +112,9 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           </ResponsiveContainer>
         </div>
       </Card>
-      </Facet>
+      </Chart>
       {monthsPlayed && (
-        <Facet of="volume" active={activeFacet}>
+        <Chart on="activity" group={group} facet="volume" active={activeFacet}>
         <Card band title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
           <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
             <ResponsiveContainer width="100%" height="100%">
@@ -105,9 +128,9 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
             </ResponsiveContainer>
           </div>
         </Card>
-        </Facet>
+        </Chart>
       )}
-      <Facet of="winning" active={activeFacet}>
+      <Chart on="results" group={group} facet="form" active={activeFacet}>
       <Card band title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
         {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
           <ul className="space-y-3">
@@ -125,8 +148,8 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           </ul>
         )}
       </Card>
-      </Facet>
-      <Facet of="volume" active={activeFacet}>
+      </Chart>
+      <Chart on="activity" group={group} facet="volume" active={activeFacet}>
       <Card band title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
         {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
           <div className="h-40" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
@@ -142,7 +165,7 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           </div>
         )}
       </Card>
-      </Facet>
+      </Chart>
       {/* `ranges`, like every other heatmap in the app.
           This card had its own 3mo/6mo/1yr toggle, which is three ways of
           looking at a year and no way of looking at this week — the thing
@@ -150,7 +173,7 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           and this week, why should I focus on yearly."* Swapping the bespoke
           control for the shared one also deletes the `heatWeeks` state, the
           title badge that restated it and the fixed-span subtitle. */}
-      <Facet of="volume" active={activeFacet}>
+      <Chart on="activity" group={group} facet="volume" active={activeFacet}>
       <Card band title="Heatmap" subtitle="Darker = more games" enlargeable>
         <CalendarHeatmap
           ranges
@@ -161,7 +184,7 @@ export function TrendCharts({ activeFacet }: { activeFacet: string | null }) {
           label="Pickleball games per day"
         />
       </Card>
-      </Facet>
+      </Chart>
     </PanelGrid>
   )
 }

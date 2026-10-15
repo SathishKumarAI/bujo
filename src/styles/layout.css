@@ -164,8 +164,17 @@
      reachable at a 1440 viewport is the dashboard tier's 1344px, 21px short.
      Measured after: act 450 → 450 at 1440 (untouched), 450 → 512 at 2560 while
      the review goes 722 → 1472. */
+  /* `:not(.page-zones-actless)` is load-bearing, and its absence was a bug
+     you could only see past 1920. The 900px rule above was excluded and this
+     one was not, so with the act hidden the grid still resolved to
+     `1fr 32rem` and the review sat beside a 512px track holding nothing.
+     Measured, review width with the log hidden: 1280 → 950 of a 950 shell,
+     1440 → 1110 of 1110, 1680 → 1350 of 1350 (all correct, because the
+     container is under 1365), then **1920 → 1062 of a 1590 shell** and
+     **2560 → 1398 of 1926**. Reported as "when I hide the log the content is
+     not scaling", which is exactly what it was. */
   @container (min-width: 1365px) {
-    .page-zones:not(.page-zones-single) {
+    .page-zones:not(.page-zones-single):not(.page-zones-actless) {
       grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
     }
   }

@@ -471,18 +471,25 @@ export function generateDemoData(today = todayISO()): JournalData {
          * to be asked for the court you went to last, and the log form's chips
          * are supposed to have something to leave out.
          */
-        location: rand() > 0.25 ? (rand() > 0.5 ? 'Riverside Courts' : 'Eastside Rec') : undefined,
-        opponent: rand() > 0.45 ? (rand() > 0.5 ? 'Dan & Priya' : 'The Thursday pair') : undefined,
-        level: rand() > 0.6 ? (rand() > 0.5 ? '3.5' : '4.0') : undefined,
-        /* Points only where a score was kept, and arithmetically consistent
-           with the games: a won game is 11-ish points for, a lost one 11-ish
-           against. A seed that drifts from its own score teaches the page to
-           show a margin nobody played. */
-        ...(rand() > 0.4
+        /* DERIVED FROM `i`, NOT FROM `rand()`, and that is not a style
+           choice. The whole seed draws from ONE deterministic stream, so four
+           extra `rand()` calls inside this loop shift every number drawn after
+           it — the cycle fixture's coverline moved 97.41 → 97.42 and
+           `cycleSnapshot.test.ts` went red on a change that never touched
+           temperatures. A seeded generator is a shared resource: take from it
+           in a new place and you have rewritten everything downstream. */
+        location: i % 4 === 0 ? undefined : i % 8 < 4 ? 'Riverside Courts' : 'Eastside Rec',
+        opponent: i % 3 === 0 ? 'Dan & Priya' : i % 3 === 1 ? 'The Thursday pair' : undefined,
+        level: i % 5 === 0 ? '4.0' : i % 5 === 2 ? '3.5' : undefined,
+        /* Points only where a score was kept, and consistent with the games:
+           a won game is 11-ish points for, a lost one 11-ish against. A seed
+           that drifts from its own score teaches the page to show a margin
+           nobody played. */
+        ...(i % 3 !== 2
           ? {
             scoring: '11' as const,
-            pointsFor: won * 11 + Math.floor(rand() * 6) - 3,
-            pointsAgainst: lost * 11 + Math.floor(rand() * 6) - 3,
+            pointsFor: won * 11 + (i % 5) - 2,
+            pointsAgainst: lost * 11 + (i % 4) - 1,
           }
           : {}),
         /*

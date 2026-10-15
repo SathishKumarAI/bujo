@@ -28,8 +28,8 @@ const BASE = process.env.BUJO_URL ?? 'http://localhost:4173'
 const GROUPS = {
   sessions: 'Sessions',
   competition: 'Competition',
-  performance: 'Performance',
-  trends: 'Trends',
+  results: 'Results',
+  activity: 'Activity',
   matchups: 'Matchups',
 }
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')

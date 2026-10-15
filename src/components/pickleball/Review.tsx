@@ -226,11 +226,14 @@ export function PickleballReview({ panel, onPanel }: {
   }
   /** card → sub-section, for every card that lives under a chip row. */
   const FACET_OF: Record<keyof typeof has, string> = {
-    recentForm: 'form', forecast: 'form', points: 'form', scoring: 'form',
+    // Results
+    recentForm: 'form', forecast: 'form', winTrend: 'form',
+    points: 'margins', scoring: 'margins', winLoss: 'margins', byFormat: 'margins',
+    weekday: 'days',
+    // Activity
+    consistency: 'consistency',
     intensity: 'effort', hours: 'effort',
-    weekday: 'cadence', consistency: 'cadence',
     milestones: 'badges',
-    winTrend: 'winning', winLoss: 'winning', byFormat: 'winning',
     perWeek: 'volume', perMonth: 'volume', cumulative: 'volume', heatmap: 'volume',
   }
   /* Plain nouns, because the first set were sentences pretending to be chips:
@@ -238,12 +241,12 @@ export function PickleballReview({ panel, onPanel }: {
      192px row and wrapped to three lines on a phone. A chip is a label, not a
      question — the heading above it already asked the question. */
   const FACET_LABELS: Record<string, string> = {
-    form: 'Form', effort: 'Effort', cadence: 'Consistency', badges: 'Badges',
-    winning: 'Win rate', volume: 'Volume',
+    form: 'Form', margins: 'Margins', days: 'Days',
+    volume: 'Volume', effort: 'Effort', consistency: 'Cadence', badges: 'Badges',
   }
   const FACETS_BY_GROUP: Record<string, string[]> = {
-    performance: ['form', 'effort', 'cadence', 'badges'],
-    trends: ['winning', 'volume'],
+    results: ['form', 'margins', 'days'],
+    activity: ['volume', 'effort', 'consistency', 'badges'],
   }
   // Counted from `has`, so a sub-section with nothing in it is not offered.
   const facetRows = (FACETS_BY_GROUP[panel] ?? [])
@@ -261,7 +264,12 @@ export function PickleballReview({ panel, onPanel }: {
 
   return (
       <section className="mt-2">
-        <h2 className="mb-3 text-label text-fg-2">The record</h2>
+        {/* `sr-only`, not deleted. The bar under it names every row — a
+            separate grey "The record" above it was a line of furniture, and
+            with the log hidden it was a line of furniture 1110px wide. The
+            heading still exists for the document outline and for anyone
+            navigating by headings, which is the half that was load-bearing. */}
+        <h2 className="sr-only">The record</h2>
       {/* ── ONE DRILL, THE SYMPTOM IT CURES, AND A TICK. ──
 
             This was "Practice today & improve": a drill, a five-line warm-up
@@ -298,30 +306,6 @@ export function PickleballReview({ panel, onPanel }: {
 
           Pinned above the bar because it is not one of the five subjects: it
           is today, and it stays on screen whichever row you are reading. */}
-      <section aria-label="Today's drill" className="rounded-card border border-line bg-ink-1 p-3">
-        <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <h3 className="inline-flex items-center gap-1.5 text-label font-medium text-fg-1">
-            <Icon as={Target} size="sm" className="text-mauve" /> Today&apos;s drill
-          </h3>
-          <Button variant="ghost" onClick={() => nav('coaching')} className="h-auto p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
-            from Coaching · {ACADEMY_DRILLS.length} more, plus the warm-up →
-          </Button>
-          <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
-        </div>
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-body font-medium text-fg-1">{drill.name}</span>
-          <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
-        </p>
-        {/* The complaint, not the category — and FIRST, because it is the line
-            that tells you whether today's drill is your problem. Rendered only
-            when the group has one: a lookup that silently returns undefined is
-            the trap `pickleballAcademy.test.ts` guards, and an empty line here
-            would read as a missing sentence rather than an absent key. */}
-        {DRILL_FIXES[drill.skill] && (
-          <p className="mt-1 text-label text-fg-1"><span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}</p>
-        )}
-        <p className="mt-1 text-label text-fg-2">{drill.how}</p>
-      </section>
 
         {/* A BAR ACROSS THE TOP, NOT A COLUMN DOWN THE SIDE.
 
@@ -342,6 +326,53 @@ export function PickleballReview({ panel, onPanel }: {
             phone's only navigation slid out of frame and a gate declared the
             page retired having scanned nothing. */}
         <div className="@container/page">
+        {/* INSIDE `@container/page`, and that is the whole reason it works.
+            It sat above this wrapper, so its `@min-[58rem]/page:grid-cols-…`
+            matched nothing and the two columns never appeared at any width —
+            a container query against a missing container is silent, which is
+            the trap this repo already has written down twice. Measured: the
+            strip stayed 155px tall and left-stacked at a 1110px review. */}
+      <section aria-label="Today's drill" className="rounded-card border border-line bg-ink-1 p-3">
+        {/* TWO COLUMNS ONCE THERE IS WIDTH FOR THEM.
+
+            Stacked, this was four short lines — label, name, fix, how — which
+            at 678px is a strip and at 1110px (log hidden) or 1926px (a wide
+            screen) is a strip with half a page of nothing to its right.
+            Reported as *"a dead space without any content or intent"*. The
+            split puts what you are doing on the left and why on the right, so
+            the width is spent on the two halves of one idea rather than on
+            margin. One column under 58rem of container, which is the phone and
+            the log-open desktop. */}
+        <div className="grid gap-x-6 gap-y-2 @min-[58rem]/page:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+          <div className="min-w-0">
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="inline-flex items-center gap-1.5 text-label font-medium text-fg-1">
+                <Icon as={Target} size="sm" className="text-mauve" /> Today&apos;s drill
+              </h3>
+              <PracticeTick kind="drill" name={drill.name} className="ml-auto" />
+            </div>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-body font-medium text-fg-1">{drill.name}</span>
+              <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
+            </p>
+            <Button variant="ghost" onClick={() => nav('coaching')} className="mt-1 h-auto p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
+              from Coaching · {ACADEMY_DRILLS.length} more, plus the warm-up →
+            </Button>
+          </div>
+          <div className="min-w-0">
+            {/* The complaint, not the category — and FIRST, because it is the
+                line that tells you whether today's drill is your problem.
+                Rendered only when the group has one: a lookup that silently
+                returns undefined is the trap `pickleballAcademy.test.ts`
+                guards, and an empty line would read as a missing sentence
+                rather than an absent key. */}
+            {DRILL_FIXES[drill.skill] && (
+              <p className="text-label text-fg-1"><span className="text-fg-2">Fixes · </span>{DRILL_FIXES[drill.skill]}</p>
+            )}
+            <p className="mt-1 text-label text-fg-2">{drill.how}</p>
+          </div>
+        </div>
+      </section>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
           <SectionRail
             label="Pickleball record"
@@ -476,26 +507,35 @@ export function PickleballReview({ panel, onPanel }: {
         </p>
             </>)}
             {panel === 'competition' && <CompetitionPanel />}
-            {panel === 'performance' && (<>
-        {/* "Form & momentum" and "Deeper signals" were two headings over one
-            question — how am I playing. Nine cards in one masonry balance into
-            even columns; four and five in separate groups could not, and each
-            group cost a heading to say something the cards already said. */}
+            {panel === 'results' && (<>
+        {/* AM I WINNING. Form and the margins behind it, the win-rate trend
+            that put the form in context, and the days that go well — each
+            chart beside the figures it explains rather than in a gallery of
+            charts one rail row away. */}
         <PanelGrid>
         <Facet of="form" active={activeFacet}>{has.recentForm && <RecentFormCard form={form} streaks={streaks} />}</Facet>
         <Facet of="form" active={activeFacet}>{has.forecast && <WinRateForecastCard forecast={forecast} />}</Facet>
-        <Facet of="badges" active={activeFacet}><MilestonesCard milestones={milestones} /></Facet>
-        <Facet of="effort" active={activeFacet}>{has.intensity && <SessionIntensityCard load={load} />}</Facet>
-        <Facet of="cadence" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} onPick={pick('weekday')} />}</Facet>
-        <Facet of="form" active={activeFacet}>{has.points && <PointDifferentialCard points={points} />}</Facet>
-        <Facet of="effort" active={activeFacet}>{has.hours && <TimeOnCourtCard hours={hours} />}</Facet>
-        <Facet of="form" active={activeFacet}>{has.scoring && <ScoringPerformanceCard scoring={scoring} />}</Facet>
-        <Facet of="cadence" active={activeFacet}>{has.consistency && <PlayConsistencyCard consistency={consistency} />}</Facet>
-        
+        <Facet of="margins" active={activeFacet}>{has.points && <PointDifferentialCard points={points} />}</Facet>
+        <Facet of="margins" active={activeFacet}>{has.scoring && <ScoringPerformanceCard scoring={scoring} />}</Facet>
+        <Facet of="days" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} onPick={pick('weekday')} />}</Facet>
         </PanelGrid>
+        {/* The charts are a grid of their own, BELOW the stat cards, not a
+            child of theirs. Nested, the whole `LazyMount` was one cell of the
+            outer grid, so three charts stacked in a single column beside a
+            column of stat cards — a nested grid is a grid inside one cell, not
+            a continuation of the outer one. */}
+        <LazyMount minHeight={320}><TrendCharts activeFacet={activeFacet} group="results" /></LazyMount>
             </>)}
-            {panel === 'trends' && (<>
-        <LazyMount minHeight={500}><TrendCharts activeFacet={activeFacet} /></LazyMount>
+            {panel === 'activity' && (<>
+        {/* AM I PLAYING. Volume, cadence, effort — and the badges, which are
+            counts of exactly those and belong with what produces them. */}
+        <PanelGrid>
+        <Facet of="consistency" active={activeFacet}>{has.consistency && <PlayConsistencyCard consistency={consistency} />}</Facet>
+        <Facet of="effort" active={activeFacet}>{has.intensity && <SessionIntensityCard load={load} />}</Facet>
+        <Facet of="effort" active={activeFacet}>{has.hours && <TimeOnCourtCard hours={hours} />}</Facet>
+        <Facet of="badges" active={activeFacet}><MilestonesCard milestones={milestones} /></Facet>
+        </PanelGrid>
+        <LazyMount minHeight={320}><TrendCharts activeFacet={activeFacet} group="activity" /></LazyMount>
             </>)}
             {panel === 'matchups' && (<>
         <PanelGrid>

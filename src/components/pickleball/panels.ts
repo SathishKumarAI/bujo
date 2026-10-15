@@ -7,6 +7,17 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  */
 
 /*
+ * RESULTS AND ACTIVITY, NOT PERFORMANCE AND TRENDS.
+ *
+ * Asked, and there was no answer that survived it: both rows meant "how am I
+ * doing over time". One held the stat cards and the other the charts, which is
+ * a split by WIDGET - the reader does not care which library drew a number.
+ *
+ * The question people actually arrive with splits in two: **am I winning**
+ * (form, margins, the win-rate trend, which days go well) and **am I playing**
+ * (volume, cadence, effort, and the badges that follow from them). Each chart
+ * now sits beside the figures it explains rather than in a gallery of charts.
+ *
  * ONE OR TWO WORDS PER ROW, AND THE SENTENCE UNDER THE HEADING.
  *
  * They were "Competition & rating", "Trends & volume" and "Opponents, partners
@@ -31,7 +42,7 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
 export const PB_PANELS = [
   { id: 'sessions', label: 'Sessions', blurb: 'Straight after you log \u00b7 every session, newest first, and a score you can still fix', icon: Clock, color: 'green' },
   { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
-  { id: 'performance', label: 'Performance', blurb: 'Straight after a session · form, effort, and whether you are getting on court at all', icon: PersonSimpleRun, color: 'sky' },
-  { id: 'trends', label: 'Trends', blurb: 'Once a month · win rate over time, games per week, where the habit is going', icon: ChartBar, color: 'teal' },
+  { id: 'results', label: 'Results', blurb: 'Am I winning · form, margins, the win-rate trend and which days go well', icon: PersonSimpleRun, color: 'sky' },
+  { id: 'activity', label: 'Activity', blurb: 'Am I playing · volume, cadence, effort and the badges that follow from them', icon: ChartBar, color: 'teal' },
   { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' }
 ] as const

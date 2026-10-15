@@ -802,8 +802,8 @@ export interface PickleNextStep {
   id: 'first' | 'event' | 'goal' | 'lapse' | 'milestone'
   /** One sentence, one idea. */
   text: string
-  /** The rail group that holds the detail behind it, where one does. */
-  group?: 'competition' | 'performance'
+  /** The rail panel that holds the detail behind it, where one does. */
+  group?: 'competition' | 'activity'
 }
 
 export function nextStep(data: JournalData, today = todayISO()): PickleNextStep {
@@ -826,7 +826,9 @@ export function nextStep(data: JournalData, today = todayISO()): PickleNextStep 
       return {
         id: 'lapse',
         text: `${pace.daysSinceLast} days since you last played — across ${pace.daysPlayed} play days your cadence is about every ${pace.avgGap} day${pace.avgGap === 1 ? '' : 's'}.`,
-        group: 'performance',
+        // Activity, not Results: a lapse is a question about whether you are
+        // playing, and the cadence card that proves it lives there.
+        group: 'activity',
       }
     }
   }
@@ -843,7 +845,7 @@ export function nextStep(data: JournalData, today = todayISO()): PickleNextStep 
   const open = pickleMilestones(data).filter((m) => !m.done)
   if (open.length > 0) {
     const next = open.reduce((a, b) => (b.target - b.current < a.target - a.current ? b : a))
-    return { id: 'milestone', text: `${next.label} — ${next.target - next.current} to go.`, group: 'performance' }
+    return { id: 'milestone', text: `${next.label} — ${next.target - next.current} to go.`, group: 'activity' }
   }
-  return { id: 'milestone', text: `Every badge is done — ${all.games} games at ${all.winPct}%.`, group: 'performance' }
+  return { id: 'milestone', text: `Every badge is done — ${all.games} games at ${all.winPct}%.`, group: 'activity' }
 }
