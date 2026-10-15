@@ -114,17 +114,32 @@ export function CalendarHeatmap({
     const byDate = new Map<string, number>()
     for (const d of data) byDate.set(d.date, (byDate.get(d.date) ?? 0) + d.value)
 
-    // Wind back to the Sunday on or before the window, so every column is a
-    // whole week and the weekday rows line up.
+    // ── What each range actually means ──────────────────────────────────
     //
-    // EXCEPT in week mode, which wants exactly the last seven days and no
-    // alignment: aligning a one-week window to a Sunday stretches it to
-    // eleven or twelve days, which is how "Week" first rendered as two rows.
-    // A week view should be a week.
-    const start = addDays(today, -(shownWeeks * 7 - 1))
-    const gridStart = (ranges && range === 'week')
-      ? start
-      : addDays(start, -fromISODay(start).getDay())
+    // The first version made all three a TRAILING window of N weeks, aligned
+    // back to a Sunday. That is right for the year strip and wrong for the
+    // other two, in ways that were reported as "not working the way we're
+    // expecting":
+    //
+    //   week   aligning a 1-week window to a Sunday stretches it to eleven
+    //          days, so "Week" rendered as two rows. A week is the last seven
+    //          days. No alignment.
+    //
+    //   month  a trailing five weeks ran Sep 6 - Oct 15: forty cells, starting
+    //          in the wrong month, with no 1st and no month boundary. Nobody
+    //          means that by "month". It is THIS CALENDAR MONTH — the 1st to
+    //          today — which is also why it needs leading blanks, so the 1st
+    //          sits under its own weekday.
+    //
+    //   year   unchanged: a trailing 53 weeks, Sunday-aligned, which is what
+    //          makes the columns whole weeks.
+    const monthMode = ranges && range === 'month'
+    const trailStart = addDays(today, -(shownWeeks * 7 - 1))
+    const gridStart = monthMode
+      ? `${today.slice(0, 7)}-01`
+      : (ranges && range === 'week')
+          ? trailStart
+          : addDays(trailStart, -fromISODay(trailStart).getDay())
 
     const dates: string[] = []
     for (let i = 0; ; i++) {
@@ -156,9 +171,9 @@ export function CalendarHeatmap({
   // adrift in a wide column. `CalendarSpan` lays a week out as a ROW and a
   // month as a calendar, both of which divide the full width.
   if (ranges && range !== 'year') {
-    // Lead the month grid with blanks so the first day lands under its own
-    // weekday. A week needs none — it already starts on a Sunday because the
-    // window was wound back to one.
+    // Lead the month grid with blanks so the 1st lands under its own weekday.
+    // A week needs none: it is the last seven days and starts wherever it
+    // starts, with each cell carrying its own weekday letter.
     const lead = range === 'month' && days.length > 0 ? fromISODay(days[0].date).getDay() : 0
     const padded: DayCell[] = [
       ...Array.from({ length: lead }, () => ({ date: '', level: 0 as const, blank: true })),
