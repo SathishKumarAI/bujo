@@ -11,7 +11,7 @@ import { VideoLink } from '../components/VideoLink'
 import { buyingGuideUrl } from '../lib/video'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
-  PanelGrid, PanelCard, DefList, Tag,
+  PanelGrid, PanelCard, DefList, Tag, ActStrip,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
@@ -70,6 +70,11 @@ export function Pullups() {
   // would quietly outrank the real one.
   const logged = useMemo(() => bestSet(sessions), [sessions])
   const [maxInput, setMaxInput] = useState('')
+  /* The act column's fold. Here rather than in the card, because shut it stops
+     being a column at all: the grid becomes `1fr auto` and the review takes the
+     width. Default open — a panel that ships collapsed is one `npm run a11y`
+     never walks into (COD-93). */
+  const [act, setAct] = useStickyState<'open' | 'shut'>('pullups.act', 'open', ['open', 'shut'])
   const max = maxInput === '' ? logged : Number(maxInput) || 0
   const ability = pullupAbility(max)
 
@@ -124,7 +129,16 @@ export function Pullups() {
     <PageLayout
       tier={1180}
       zone1={<StatBar facts={facts} />}
-      zone2={<LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} />}
+      actShut={act === 'shut'}
+      zone2={act === 'shut' ? (
+        <ActStrip
+          label="Log a session"
+          summary={last ? `last: ${repsOf(last.sets)} reps` : 'nothing logged yet'}
+          onOpen={() => setAct('open')}
+        />
+      ) : (
+        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setAct('shut')} />
+      )}
       zone3={
         <Review
           sessions={sessions}
@@ -335,9 +349,13 @@ function FormRule({ children }: { children: React.ReactNode }) {
 }
 
 function LogSessionCard({
-  defaultTop, onSave, last,
+  defaultTop, onSave, last, onShut,
 }: {
   defaultTop: number
+  /** Fold the act column to its rail. The VIEW owns it — shut, the page grid
+   *  gives the act's width to the review, and a card cannot collapse a column
+   *  it does not own. */
+  onShut: () => void
   onSave: (w: Parameters<ReturnType<typeof useJournal>['addWorkout']>[0]) => void
   /** The previous session, for Repeat last. Absent on a fresh journal. */
   last?: Workout
@@ -351,9 +369,7 @@ function LogSessionCard({
   const [rpe, setRpe] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
   const [justLogged, setJustLogged] = useState<string | null>(null)
-  /* Shut it and it stays shut. Default open, because a collapsed card is one
-     `npm run a11y` never walks into — see the COD-93 trap. */
-  const [fold, setFold] = useStickyState<'open' | 'shut'>('pullups.act', 'open', ['open', 'shut'])
+
 
   const topN = top ?? defaultTop
   const flash = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -412,12 +428,10 @@ function LogSessionCard({
     <Card
       band
       collapsible
-      open={fold === 'open'}
-      onOpenChange={(o) => setFold(o ? 'open' : 'shut')}
+      open
+      onOpenChange={(o) => { if (!o) onShut() }}
       title="Log a pull-up session"
-      /* While it is shut the subtitle has to carry the answer, not the method's
-         hint — the scheme is the thing you would reopen the card to see. */
-      subtitle={fold === 'shut' && reps.length > 0 ? `${reps.join(' · ')} · ${total} reps` : hint}
+      subtitle={hint}
     >
       <div className="space-y-4">
         {/* The previous session, as a card rather than a button with a grey

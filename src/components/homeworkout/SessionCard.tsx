@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useStickyState } from '../../lib/useStickyState'
 import { Barbell } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Input, Textarea } from '../ui'
@@ -33,7 +32,7 @@ export interface SessionItem { id: string; name: string; reps: string }
 export function SessionCard({
   items, onReps, onDrop, onLoadRoutine,
   date, onDate, today,
-  dur, onDur, notes, onNotes, onLog,
+  dur, onDur, notes, onNotes, onLog, onShut,
 }: {
   items: SessionItem[]
   onReps: (id: string, reps: string) => void
@@ -47,16 +46,11 @@ export function SessionCard({
   notes: string
   onNotes: (v: string) => void
   onLog: () => void
+  /** Fold the whole act column away. The VIEW owns the state, because the page
+   *  grid has to know: shut, the act column becomes a 40px rail and the review
+   *  takes the width. A card cannot collapse a column it does not own. */
+  onShut: () => void
 }) {
-  /* Open or shut, and it REMEMBERS. Default open, deliberately: `npm run a11y`
-     walks the rendered page, so a card that ships collapsed is a card the gate
-     never scans — the trap CLAUDE.md records under COD-93. A person who shuts
-     it has made a choice and it survives the reload; a fresh visitor still sees
-     the thing the page is for.
-
-     `useStickyState` is string/number only, hence 'open'/'shut' rather than a
-     boolean. */
-  const [fold, setFold] = useStickyState<'open' | 'shut'>('homeworkout.act', 'open', ['open', 'shut'])
   const [routine, setRoutine] = useState<string | null>(null)
   const loaded = HOME_ROUTINES.find((x) => x.id === routine)
 
@@ -74,8 +68,8 @@ export function SessionCard({
     <Card
       band
       collapsible
-      open={fold === 'open'}
-      onOpenChange={(o) => setFold(o ? 'open' : 'shut')}
+      open
+      onOpenChange={(o) => { if (!o) onShut() }}
       title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>}
       /* The subtitle has to say what is inside while it is shut, or the fold
          hides the one number you would reopen it for. */
@@ -132,7 +126,7 @@ export function SessionCard({
                 {/* The index, because a session is an ORDER and the list was
                     four identical rows with nothing saying which came first. */}
                 <span className="num w-4 shrink-0 text-label text-fg-3">{n + 1}</span>
-                <span className="min-w-0 truncate text-body text-fg-1">{i.name}</span>
+                <span className="min-w-0 flex-1 truncate text-body text-fg-1" title={i.name}>{i.name}</span>
                 {/* The movement family, in the gap that was doing nothing.
                     Measured on the built bundle: the name column took **218px
                     of a 384px row** to hold a word like "Plank", so ~180px sat
@@ -142,11 +136,25 @@ export function SessionCard({
                     now the builder gave you no way to see the balance you were
                     building. */}
                 {ex && (
-                  <span className="ml-auto shrink-0 rounded-pill bg-ink-1 px-2 py-0.5 text-micro text-fg-2" title={`${i.name} · ${FAMILY_SHORT[ex.family]}`}>
+                  <span className="hidden shrink-0 rounded-pill bg-ink-1 px-2 py-0.5 text-micro text-fg-2 sm:inline-block" title={`${i.name} · ${FAMILY_SHORT[ex.family]}`}>
                     {FAMILY_SHORT[ex.family]}
                   </span>
                 )}
-                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="num w-20 shrink-0 py-1 text-right text-label" />
+                {/* The field TAKES the slack instead of sitting in a fixed
+                    80px box beside it. `3×10 per side` is wider than 80px, so
+                    it scrolled inside its own input — the value you came to
+                    edit, unreadable, with ~180px of empty row next to it.
+                    Measured across the library's twenty-one specs, the widest
+                    (`3×30s per side`) needs **155px**, so the field is a fixed
+                    **160px** and the NAME is what truncates — with a `title`,
+                    and it is also in the field's own accessible name. The first
+                    attempt let both flex and they competed: a long name left
+                    the field at 88px for 122px of value, which is the same bug
+                    one row over. Left-aligned, because a right-aligned overflow
+                    hides the START of the value — the part that says how many
+                    sets. The family tag drops below `sm`, where 324px cannot
+                    hold name, tag, field and delete at once. */}
+                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets and reps`} className="num w-40 shrink-0 py-1 text-left text-label" />
                 <Button variant="ghost" size="icon-sm" onClick={() => onDrop(i.id)} aria-label={`Remove ${i.name}`} className="shrink-0 text-fg-2 hover:text-red">×</Button>
               </div>
               )

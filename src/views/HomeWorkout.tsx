@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
-import { PageLayout, StatBar } from '../components/page'
+import { PageLayout, StatBar, ActStrip } from '../components/page'
 import { ProgressionNudge, Review, SessionCard, type SessionItem } from '../components/homeworkout'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import { homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
 import { useCappedList } from '../lib/useCappedList'
+import { useStickyState } from '../lib/useStickyState'
 
 /**
  * HOME WORKOUT · an 83-movement training library, and the place a home session
@@ -48,6 +49,11 @@ export function HomeWorkout() {
   const [dur, setDur] = useState('')
   const [notes, setNotes] = useState('')
   const [date, setDate] = useState(today)
+  /* The act column's fold lives HERE, not in the card: shut, the page grid
+     turns the act into a 40px rail and hands its width to the review. Default
+     open — `npm run a11y` walks the rendered page, so a panel that ships
+     collapsed is one the gate never scans (COD-93). */
+  const [act, setAct] = useStickyState<'open' | 'shut'>('homeworkout.act', 'open', ['open', 'shut'])
 
   const sessions = useMemo(
     () => (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1)),
@@ -107,7 +113,14 @@ export function HomeWorkout() {
         { label: 'In this session', value: items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Empty', prose: true },
         { label: 'Last session', value: last ? `${last.sets.length} exercises · ${prettyDay(last.date)}` : 'None yet', prose: true },
       ]} />}
-      zone2={
+      actShut={act === 'shut'}
+      zone2={act === 'shut' ? (
+        <ActStrip
+          label="Today’s session"
+          summary={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'} ready to log` : 'Empty'}
+          onOpen={() => setAct('open')}
+        />
+      ) : (
         <>
         {/* Above the builder: "what should I do today" is the question you
             arrive with, and this is the only thing on the page that answers it
@@ -123,9 +136,10 @@ export function HomeWorkout() {
           dur={dur} onDur={setDur}
           notes={notes} onNotes={setNotes}
           onLog={logSession}
+          onShut={() => setAct('shut')}
         />
         </>
-      }
+      )}
       zone3={
         <Review
           sessions={sessions}

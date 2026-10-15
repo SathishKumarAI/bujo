@@ -130,10 +130,13 @@ export function searchUrl(ex: HomeExercise): string {
 }
 
 /**
- * Sets and reps on a rep spec — `'3×12'`, `'3×10/side'`, `'5×60s'`.
+ * Sets and reps on a rep spec — `'3×12'`, `'3×10 per side'`, `'5×60s'`.
  *
- * `/side` is **not** doubled: three sets of ten per side is three sets, and the
- * per-side detail stays in the stored line where a human reads it. A time hold
+ * "Per side" is **not** doubled: three sets of ten per side is three sets, and
+ * the per-side detail stays in the stored line where a human reads it. It is
+ * spelled out rather than written `/side`, because a slash against a number
+ * reads as a unit ("ten per side" vs "ten over side") and was reported as
+ * unreadable on the chip and in the history line. Twenty specs carried it. A time hold
  * (`'3×30s'`) returns no `reps` rather than `reps: 30` — thirty seconds is not
  * thirty repetitions, and `WorkoutSet` has nowhere to put a duration. It still
  * counts as a set, which is what the muscle analytics ask of it.

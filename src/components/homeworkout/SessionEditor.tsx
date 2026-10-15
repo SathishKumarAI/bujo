@@ -59,12 +59,15 @@ export function SessionEditor({ workout, onSave, onCancel }: {
           {lines.map((l, i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="num w-4 shrink-0 text-label text-fg-3">{i + 1}</span>
-              <span className="min-w-0 flex-1 truncate text-body text-fg-1">{l.name}</span>
+              <span className="min-w-0 flex-1 truncate text-body text-fg-1" title={l.name}>{l.name}</span>
+              {/* Same shape as the builder's row, and for the same measured
+                  reason: `3×10 per side` does not fit an 80px box, so the value
+                  being edited scrolled out of sight. */}
               <Input
                 value={l.reps}
                 onChange={(e) => setLines((cur) => cur.map((x, n) => (n === i ? { ...x, reps: e.target.value } : x)))}
                 aria-label={`${l.name} sets and reps`}
-                className="num w-20 py-1 text-right text-label"
+                className="num w-40 shrink-0 py-1 text-left text-label"
               />
               <Button
                 variant="ghost"
