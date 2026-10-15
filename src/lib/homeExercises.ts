@@ -58,6 +58,43 @@ export const FAMILY_LABEL: Record<Family, string> = {
   conditioning: 'Conditioning',
 }
 
+/**
+ * The same nine, short enough for a chip row.
+ *
+ * Only the four push/pull families are abbreviated, and only the direction is:
+ * `Horizontal push` is 15 characters of which 10 are the word everybody can see
+ * from the group's own legend. The other five are already short, and a `Cond.`
+ * saves four characters at the cost of a word nobody says out loud.
+ *
+ * **The full name is never lost.** `ChipPick` takes a visible `label`, a `name`
+ * for the accessible name and a `hint` for the hover title — all three are
+ * passed, so the chip reads `H push`, announces "Horizontal push", and says the
+ * same on hover. A shortened label that is only shortened is a shortened *name*.
+ */
+export const FAMILY_SHORT: Record<Family, string> = {
+  push: 'H push',
+  overhead: 'V push',
+  pull: 'V pull',
+  row: 'H pull',
+  squat: 'Squat',
+  lunge: 'Single leg',
+  hinge: 'Hip hinge',
+  core: 'Core',
+  conditioning: 'Conditioning',
+}
+
+/**
+ * Chip order: the two pushes, then the two pulls, then legs, then the rest.
+ *
+ * `Object.keys(FAMILY_LABEL)` gave `H push · V push · V pull · H pull`, which
+ * alternates direction in the middle of the row and reads as a mistake once the
+ * labels are abbreviated. Pairing by movement instead means the row scans as
+ * three groups — push, pull, legs — with no heading needed to say so.
+ */
+export const FAMILY_ORDER: Family[] = [
+  'push', 'overhead', 'row', 'pull', 'squat', 'lunge', 'hinge', 'core', 'conditioning',
+]
+
 export interface HomeExercise {
   id: string
   name: string
@@ -93,10 +130,13 @@ export function searchUrl(ex: HomeExercise): string {
 }
 
 /**
- * Sets and reps on a rep spec — `'3×12'`, `'3×10/side'`, `'5×60s'`.
+ * Sets and reps on a rep spec — `'3×12'`, `'3×10 per side'`, `'5×60s'`.
  *
- * `/side` is **not** doubled: three sets of ten per side is three sets, and the
- * per-side detail stays in the stored line where a human reads it. A time hold
+ * "Per side" is **not** doubled: three sets of ten per side is three sets, and
+ * the per-side detail stays in the stored line where a human reads it. It is
+ * spelled out rather than written `/side`, because a slash against a number
+ * reads as a unit ("ten per side" vs "ten over side") and was reported as
+ * unreadable on the chip and in the history line. Twenty specs carried it. A time hold
  * (`'3×30s'`) returns no `reps` rather than `reps: 30` — thirty seconds is not
  * thirty repetitions, and `WorkoutSet` has nowhere to put a duration. It still
  * counts as a set, which is what the muscle analytics ask of it.
@@ -132,6 +172,25 @@ export function parseRepSpec(spec: string): { sets: number; reps?: number } {
  * in `lib/demo.ts`. Two writers each holding their own opinion of the stored
  * shape is a bug this repo has already shipped twice.
  */
+/**
+ * A stored line back into its parts — `'Push-ups 3×12'` → name and reps.
+ *
+ * The inverse of what `logSession` writes, and it exists because a session you
+ * logged wrong was previously only *deletable*: correcting one rep meant
+ * deleting the session and retyping it, losing its date and notes with it.
+ * Editing needs the line split back into the two fields the form owns.
+ *
+ * Split at the rep spec rather than at the last space, because a movement name
+ * has spaces in it (`Single-leg glute bridge 3×15`) and a spec does not start
+ * with one. A line that matches nothing is all name and no reps, which is the
+ * honest reading of a hand-typed note and keeps it editable rather than
+ * silently dropping it.
+ */
+export function splitSessionLine(line: string): { name: string; reps: string } {
+  const m = line.match(/^(.*?)\s+(\d+\s*[x×].*)$/i)
+  return m ? { name: m[1].trim(), reps: m[2].trim() } : { name: line.trim(), reps: '' }
+}
+
 export function homeSetRows(items: { name: string; reps: string }[]): WorkoutSet[] {
   return items.flatMap(({ name, reps }) => {
     const spec = parseRepSpec(reps)

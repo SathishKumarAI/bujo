@@ -102,23 +102,18 @@
    between a tablet and a laptop where it was always meant to. At 1280 the
    columns come out ~554 and ~340; 340 is wider than the 358 a phone gives the
    same form, which it handles. */
-/* SHUTTING THE ACT GIVES THE WIDTH BACK.
-
-   `display: none` on the act alone would leave its 38% track behind and the
-   review would sit narrow beside a gap — measured on Coaching's aside before
-   this rule existed: the roadmap went 790px to 1110px only once the COLUMN
-   went, not the panel. So the collapsed state changes `grid-template-columns`
-   and the hidden column stops existing.
-
-   The toggle itself lives outside `.zone-act` (see `PageLayout`), because a
-   control inside the panel it hides cannot bring the panel back. */
-.page-zones-actless .zone-act {
-  display: none;
-}
-
 @container (min-width: 900px) {
-  .page-zones:not(.page-zones-single):not(.page-zones-actless) {
+  .page-zones:not(.page-zones-single):not(.page-zones-act-shut) {
     grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+  }
+
+  /* The act column, shut. `auto` rather than a fraction: the strip is 40px of
+     content and the review takes everything else, which is the whole point —
+     a `Card collapsible` folds its body and frees HEIGHT, leaving a ~400px
+     empty lane beside the text you are reading. Measured at a 1440 viewport on
+     both adopters: review 678px → 1054px, act 416px → 40px. */
+  .page-zones.page-zones-act-shut:not(.page-zones-single) {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   /* Review LEFT and act RIGHT, against the DOM order, because the two rules
@@ -164,17 +159,18 @@
      reachable at a 1440 viewport is the dashboard tier's 1344px, 21px short.
      Measured after: act 450 → 450 at 1440 (untouched), 450 → 512 at 2560 while
      the review goes 722 → 1472. */
-  /* `:not(.page-zones-actless)` is load-bearing, and its absence was a bug
-     you could only see past 1920. The 900px rule above was excluded and this
-     one was not, so with the act hidden the grid still resolved to
-     `1fr 32rem` and the review sat beside a 512px track holding nothing.
-     Measured, review width with the log hidden: 1280 → 950 of a 950 shell,
-     1440 → 1110 of 1110, 1680 → 1350 of 1350 (all correct, because the
-     container is under 1365), then **1920 → 1062 of a 1590 shell** and
-     **2560 → 1398 of 1926**. Reported as "when I hide the log the content is
-     not scaling", which is exactly what it was. */
+  /* `:not(.page-zones-act-shut)` is load-bearing, and its absence is a bug you
+     can only see past a 1680px viewport. The 900px rule above excludes the
+     shut state and this one did not, so with the act shut the grid still
+     resolved to `1fr 32rem` — the review sat beside a 512px track holding a
+     40px strip. Measured on Pickleball, review width with the log shut:
+     1280 → 950 of a 950 shell, 1440 → 1110 of 1110, 1680 → 1350 of 1350 (all
+     correct, because the container is under 1365), then **1920 → 1062 of a
+     1590 shell** and **2560 → 1398 of 1926**. Reported as "when I hide the log
+     the content is not scaling", which is exactly what it was — and it applies
+     to Home Workout and Pull-ups on a wide screen too. */
   @container (min-width: 1365px) {
-    .page-zones:not(.page-zones-single):not(.page-zones-actless) {
+    .page-zones:not(.page-zones-single):not(.page-zones-act-shut) {
       grid-template-columns: minmax(0, 1fr) minmax(0, 32rem);
     }
   }

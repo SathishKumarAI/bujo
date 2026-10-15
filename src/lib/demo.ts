@@ -127,6 +127,10 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
+/* 20, not 17: `?demo=1` re-seeds only when this number moves, and the
+   pickleball seed gained a future event, a location, an opponent, a level and
+   points. Taking main's 17 here would leave every existing demo journal on the
+   old shape with no way to notice. */
 export const DEMO_VERSION = 20
 
 /** Notes on a pull-up session, for the third of rows that carry one. */

@@ -1,5 +1,5 @@
 import { useStickyState } from '../lib/useStickyState'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
@@ -8,8 +8,10 @@ import { Button } from '../components/ui/button'
 import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quickpick'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
+import { buyingGuideUrl } from '../lib/video'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
+  PanelGrid, PanelCard, DefList, Tag, ActStrip,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
@@ -68,6 +70,11 @@ export function Pullups() {
   // would quietly outrank the real one.
   const logged = useMemo(() => bestSet(sessions), [sessions])
   const [maxInput, setMaxInput] = useState('')
+  /* The act column's fold. Here rather than in the card, because shut it stops
+     being a column at all: the grid becomes `1fr auto` and the review takes the
+     width. Default open — a panel that ships collapsed is one `npm run a11y`
+     never walks into (COD-93). */
+  const [act, setAct] = useStickyState<'open' | 'shut'>('pullups.act', 'open', ['open', 'shut'])
   const max = maxInput === '' ? logged : Number(maxInput) || 0
   const ability = pullupAbility(max)
 
@@ -122,7 +129,16 @@ export function Pullups() {
     <PageLayout
       tier={1180}
       zone1={<StatBar facts={facts} />}
-      zone2={<LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} />}
+      actShut={act === 'shut'}
+      zone2={act === 'shut' ? (
+        <ActStrip
+          label="Log a session"
+          summary={last ? `last: ${repsOf(last.sets)} reps` : 'nothing logged yet'}
+          onOpen={() => setAct('open')}
+        />
+      ) : (
+        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setAct('shut')} />
+      )}
       zone3={
         <Review
           sessions={sessions}
@@ -202,72 +218,6 @@ function Formats() {
       ))}
     </PanelGrid>
   )
-}
-
-/**
- * ── The five reference panels share three pieces ──────────────────────────
- *
- * Form, Principles, Formats, Progressions and Equipment were five different
- * answers to the same question — two used `border-t` separated `<li>`s, one
- * used `space-y-3` bare `<div>`s, one put its two facts in a run-on sentence
- * with two colons in it, and one wrote its name and body as
- * `<strong>Name:</strong> body`. They hold the same shape of thing: a named
- * item, an optional figure beside the name, and a short body. One card, used
- * five times, is also what makes the two-column grid safe to apply once.
- */
-function PanelGrid({ children }: { children: React.ReactNode }) {
-  /*
-    `@lg` = 512px of CONTAINER. The review column is 678px while the window is
-    1440, so `CardGrid`'s viewport `md:`/`2xl:` steps would put three 210px
-    columns in it, and `MasonryGrid` breaks at `@3xl` (768px) and would do
-    nothing at all here. Both failures are in CLAUDE.md, from opposite sides.
-    The container is `@container/page`, declared by `Review` above.
-  */
-  return <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 @lg/page:grid-cols-2">{children}</ul>
-}
-
-function PanelCard({
-  title, right, titleColor, children,
-}: {
-  title: string
-  /** A figure that belongs beside the name — a duration, a video link, an index. */
-  right?: React.ReactNode
-  /** An inline accent for the title only; `PULLUP_PRINCIPLES` carries one each. */
-  titleColor?: string
-  children: React.ReactNode
-}) {
-  return (
-    <li className="flex flex-col rounded-card border border-line bg-ink-1 p-3">
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <h3 className="text-body font-medium text-fg-1" style={titleColor ? { color: titleColor } : undefined}>{title}</h3>
-        {right && <span className="shrink-0">{right}</span>}
-      </div>
-      {children}
-    </li>
-  )
-}
-
-/** Term and detail, aligned down the card. A `<dl>` because that is what two
- *  labelled facts are, and a grid because the default flow puts the detail on
- *  its own line and loses the column. */
-function DefList({ rows }: { rows: [string, React.ReactNode][] }) {
-  return (
-    <dl className="mt-2 grid grid-cols-[2.9rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 border-t border-line pt-2 text-label">
-      {rows.map(([term, detail]) => (
-        <Fragment key={term}>
-          <dt className="text-fg-2">{term}</dt>
-          <dd className="text-fg-1">{detail}</dd>
-        </Fragment>
-      ))}
-    </dl>
-  )
-}
-
-/** A rating, as a quiet pill. No accent: fourteen cards of coloured tags is the
- *  six-colour stats row DESIGN.md argues against, and neither rating is a
- *  warning — they are both just facts about the session. */
-function Tag({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-2">{children}</span>
 }
 
 /**
@@ -380,10 +330,32 @@ const EFFORT: { value: number; label: string; name: string; hint: string; tone: 
  * card. It is the only element that tells you a ladder to 4 and a straight 4×4
  * are different sessions, so it is now the loudest.
  */
+/**
+ * A labelled rule between groups of a form.
+ *
+ * Grouping by HEADING rather than by box, deliberately: the act column's two
+ * chip rows come to **378px inside a 384px card**, measured, so a
+ * `rounded-card … p-3` wrapper around them would spend 26px it does not have
+ * and wrap both rows — the shape that reads as a broken control. A rule costs
+ * no width at all.
+ */
+function FormRule({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="text-label text-fg-2">{children}</span>
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  )
+}
+
 function LogSessionCard({
-  defaultTop, onSave, last,
+  defaultTop, onSave, last, onShut,
 }: {
   defaultTop: number
+  /** Fold the act column to its rail. The VIEW owns it — shut, the page grid
+   *  gives the act's width to the review, and a card cannot collapse a column
+   *  it does not own. */
+  onShut: () => void
   onSave: (w: Parameters<ReturnType<typeof useJournal>['addWorkout']>[0]) => void
   /** The previous session, for Repeat last. Absent on a fresh journal. */
   last?: Workout
@@ -397,6 +369,7 @@ function LogSessionCard({
   const [rpe, setRpe] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
   const [justLogged, setJustLogged] = useState<string | null>(null)
+
 
   const topN = top ?? defaultTop
   const flash = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -452,19 +425,35 @@ function LogSessionCard({
   }
 
   return (
-    <Card band title="Log a pull-up session" subtitle={hint}>
+    <Card
+      band
+      collapsible
+      open
+      onOpenChange={(o) => { if (!o) onShut() }}
+      title="Log a pull-up session"
+      subtitle={hint}
+    >
       <div className="space-y-4">
+        {/* The previous session, as a card rather than a button with a grey
+            sentence trailing off it. Same treatment the review panels use, so
+            the one-tap repeat reads as a thing you have rather than a stray
+            control. Nothing below this line changes width: the act column's
+            geometry is measured in the comments further down and a wrapper
+            around those rows would spend the 6px of margin they have. */}
         {last && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" onClick={repeatLast} className="group/rep inline-flex items-center gap-1.5">
-              <Icon as={ArrowCounterClockwise} size="sm" className="transition-transform duration-300 group-hover/rep:-rotate-180" />
-              Repeat last
-            </Button>
-            <span className="min-w-0 truncate text-label text-fg-2">
-              {repsOf(last.sets)} reps · {prettyDay(last.date)}
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-line bg-ink-1 p-3">
+            <span className="min-w-0">
+              <span className="block text-body font-medium text-fg-1">{repsOf(last.sets)} reps</span>
+              <span className="block text-label text-fg-2">{prettyDay(last.date)} · your last session</span>
             </span>
+            <Button variant="secondary" onClick={repeatLast} className="group/rep inline-flex shrink-0 items-center gap-1.5">
+              <Icon as={ArrowCounterClockwise} size="sm" className="transition-transform duration-300 group-hover/rep:-rotate-180" />
+              Repeat
+            </Button>
           </div>
         )}
+
+        <FormRule>What you did</FormRule>
 
         <DayPick value={date} onChange={setDate} today={today} yesterday={addDays(today, -1)} />
 
@@ -491,12 +480,21 @@ function LogSessionCard({
             hint={top === undefined ? `Using your training set, ${defaultTop}` : undefined}
           />
           <ChipPick
+            dense
             label={method === 'emom' ? 'Minutes' : 'Rounds'}
             value={rounds ?? null}
             onChange={setRounds}
-            // Five chips plus the escape hatch is exactly one row in the
-            // act column; six wrapped the input onto a line of its own, which
-            // reads as a broken control rather than an overflow.
+            // The comment here used to say "five chips plus the escape hatch is
+            // exactly one row". Measured on the built bundle at 1440 it is
+            // **218px of controls in a 184px half** — four chips at the default
+            // `px-3`, a `w-14` input and four 6px gaps — so it had been wrapping
+            // the input onto its own line, which is the shape this file calls
+            // "a broken control rather than an overflow" two comments down.
+            //
+            // `dense` plus the `w-10` escape input that Duration already uses:
+            // **176px in 184px**, one row, 8px of margin. A comment and the code
+            // disagreeing is worth more than either on its own — this one was
+            // measured when the card was wider.
             options={[2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
             after={
               <input
@@ -508,7 +506,7 @@ function LogSessionCard({
                 value={rounds !== undefined && rounds > 5 ? rounds : ''}
                 placeholder="…"
                 onChange={(e) => setRounds(e.target.value === '' ? undefined : Number(e.target.value))}
-                className="w-14 rounded-pill border border-line-strong bg-ink-2 px-2 py-1.5 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
+                className="w-10 rounded-pill border border-line-strong bg-ink-2 px-2 py-1 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
               />
             }
           />
@@ -528,7 +526,14 @@ function LogSessionCard({
           ) : (
             <>
               <span className="num block text-heading font-medium text-fg-1">{reps.join(' · ')}</span>
-              <span className="text-label text-fg-2">{total} reps in {reps.length} set{reps.length === 1 ? '' : 's'}</span>
+              {/* The method, named on the thing it produced. A ladder to 4 and
+                  a straight 4×4 are different sessions that both read as "4"
+                  in the form, and the scheme alone does not say which rule
+                  drew it. */}
+              <span className="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-label text-fg-2">
+                <span className="rounded-pill bg-ink-2 px-2 py-0.5 capitalize">{method}</span>
+                <span>{total} reps in {reps.length} set{reps.length === 1 ? '' : 's'}</span>
+              </span>
             </>
           )}
         </output>
@@ -557,6 +562,8 @@ function LogSessionCard({
           `auto` track because it is the fixed one — three chips and an escape
           input — and Effort takes what is left.
         */}
+        <FormRule>How it went · optional</FormRule>
+
         <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
           <ChipPick
             dense
@@ -601,7 +608,16 @@ function LogSessionCard({
           <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Grip, how the last set felt…" className="mt-1" />
         </label>
 
-        <Button onClick={save} disabled={reps.length === 0} className="w-full">Log session</Button>
+        <Button onClick={save} disabled={reps.length === 0} className="press-3d w-full">Log session</Button>
+        {/* What pressing it writes, before it is pressed. The card already had
+            a confirmation AFTER the fact (`justLogged`) and nothing before —
+            and the home logger's equivalent line is the thing that makes a
+            form feel answered rather than submitted. */}
+        {reps.length > 0 && (
+          <p className="-mt-2 text-center text-label" style={{ color: onRaised('green') }}>
+            {total} reps in {reps.length} set{reps.length === 1 ? '' : 's'} will be written to your journal
+          </p>
+        )}
 
         {/* Says what was written, where the button is — the receipt bar lives at
             the other end of the screen, and a form that empties itself with no
@@ -682,7 +698,10 @@ function LogSessionCard({
  * — a question you ask once and then work from for weeks.
  */
 const PU_PANELS = [
-  { id: 'program', label: 'Today', blurb: 'Starting From Zero · your current day' },
+  // The blurb used to read 'Starting From Zero · your current day', and the
+  // card directly underneath is titled 'Starting From Zero — Pull-up Program'.
+  // The row names the row; the card names which programme it is showing.
+  { id: 'program', label: 'Today', blurb: 'The day you are on, ticked off' },
   { id: 'formats', label: 'Formats', blurb: `${PULLUP_WORKOUTS.length} session structures, solo first` },
   { id: 'ability', label: 'Training set', blurb: 'Your max → set, schemes, volume' },
   { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
@@ -835,13 +854,19 @@ function Review({
           )}
           {chapter === 'equipment' && (
             <PanelGrid>
+              {/* Every row, not the one that happened to carry a pinned URL.
+                  Measured: of these seven, exactly ONE had a `url`, so six
+                  rendered no link at all — the same count as Home Workout's
+                  seven of eight, and the same report ("the URLs in equipment
+                  are somewhat not working") was about both pages. The fault was
+                  never a dead link: both pinned URLs answer 200. */}
               {PULLUP_EQUIPMENT.map((e) => (
                 <PanelCard key={e.item} title={e.item}>
                   <p className="text-label text-fg-2">{e.spec}</p>
-                  {e.url && (
-                    <a href={e.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-label text-blue underline">
-                      Suppliers for {e.item}
-                    </a>
+                  {!e.noBuy && (
+                    <p className="mt-1.5 text-label">
+                      <a href={buyingGuideUrl(e.item, e.url)} target="_blank" rel="noreferrer">How to choose one</a>
+                    </p>
                   )}
                 </PanelCard>
               ))}

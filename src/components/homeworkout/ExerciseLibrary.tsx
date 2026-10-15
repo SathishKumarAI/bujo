@@ -6,12 +6,13 @@ import { onRaised } from '../../lib/colors'
 import { Button } from '../ui/button'
 import { ChipPick } from '../ui/quickpick'
 import { VideoLink } from '../VideoLink'
-import { EmptyFrame } from '../page'
+import { EmptyFrame, PanelGrid, PanelCard, DisclosureRow } from '../page'
 import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
+import { useStickyState } from '../../lib/useStickyState'
 import { muscleNames } from '../../lib/muscles'
 import {
-  EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL,
+  EQUIPMENT_LABEL, EQUIPMENT_ORDER, FAMILY_LABEL, FAMILY_ORDER, FAMILY_SHORT,
   filterExercises, musclesOf, progressionChain, searchUrl,
   type Difficulty, type Equipment, type Family, type HomeExercise, type Muscle,
 } from '../../lib/homeExercises'
@@ -19,7 +20,6 @@ import { FamilyChapter } from './Manual'
 
 const MUSCLES: Muscle[] = ['chest', 'shoulders', 'arms', 'back', 'core', 'glutes', 'legs', 'cardio', 'full body']
 const DIFFICULTIES: Difficulty[] = ['beginner', 'intermediate', 'advanced']
-const FAMILIES = Object.keys(FAMILY_LABEL) as Family[]
 
 /**
  * ZONE 3 · the catalogue. Reference content, after the act and the history.
@@ -41,12 +41,21 @@ const FAMILIES = Object.keys(FAMILY_LABEL) as Family[]
  */
 export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }) {
   const [muscle, setMuscle] = useState<Muscle | null>(null)
-  const [equipment, setEquipment] = useState<Equipment | null>(null)
+  /* Your kit is a SETTING, not a search. It is the only facet about the room
+     you are standing in rather than about the movement, it halves the library
+     on its own (37 of 83 need nothing at all), and it does not change between
+     visits — so it persists, and the catalogue opens already narrowed to what
+     you can actually do. `exercisesForKit` has been in `homeExercises.ts` with
+     no call site since it was written, for exactly this. */
+  const [equipment, setEquipment] = useStickyState<Equipment | 'any'>(
+    'homeworkout.kit', 'any', ['any', ...EQUIPMENT_ORDER],
+  )
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [family, setFamily] = useState<Family | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
-  const rows = filterExercises({ muscle, equipment, difficulty, family })
+  const kit = equipment === 'any' ? null : equipment
+  const rows = filterExercises({ muscle, equipment: kit, difficulty, family })
   /* Twelve, not three: this is a catalogue you browse, not a history you
      glance at, so the cap is there to stop 83 tiles from being the panel's
      default height rather than to hide the list. Measured on the built bundle:
@@ -54,7 +63,7 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
      the worst panel on the Pull-ups bar. The affordance carries the total, so
      a filtered list of twelve cannot be mistaken for "that is all there is". */
   const shown = useCappedList(rows, 12)
-  const anyFilter = muscle != null || equipment != null || difficulty != null || family != null
+  const anyFilter = muscle != null || kit != null || difficulty != null || family != null
 
   /** A chip row where tapping the selected value clears it. */
   const toggle = <T,>(cur: T | null, set: (v: T | null) => void) => (v: T) => set(cur === v ? null : v)
@@ -67,13 +76,45 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
        catalogue that shipped collapsed was 83 tiles no gate had ever scanned. */
     <>
       <div className="space-y-3">
+        {/* `H push`, not `Horizontal push` — nine full labels is a chip row
+            that wraps to three lines in the review column and four on a phone.
+            `name` keeps the full label as the ACCESSIBLE name and `hint` puts
+            it in the hover title, so nothing is lost by shortening what is
+            drawn. Order pairs the pushes and then the pulls; see
+            `FAMILY_ORDER`. */}
         <ChipPick label="Movement" tone="brand" value={family} onChange={toggle(family, setFamily)}
-          options={FAMILIES.map((f) => ({ value: f, label: FAMILY_LABEL[f] }))}
+          options={FAMILY_ORDER.map((f) => ({ value: f, label: FAMILY_SHORT[f], name: FAMILY_LABEL[f], hint: FAMILY_LABEL[f] }))}
           hint="Picking one also opens that family's chapter of the manual" />
-        <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
-        <ChipPick label="What you have" tone="teal" value={equipment} onChange={toggle(equipment, setEquipment)} options={EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))} />
         <ChipPick label="Difficulty" tone="peach" value={difficulty} onChange={toggle(difficulty, setDifficulty)} options={DIFFICULTIES.map((d) => ({ value: d, label: d }))} className="capitalize"
-          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setEquipment(null); setDifficulty(null); setFamily(null) }}>Clear</Button> : undefined} />
+          after={anyFilter ? <Button variant="ghost" size="sm" onClick={() => { setMuscle(null); setDifficulty(null); setFamily(null); setEquipment('any') }}>Clear</Button> : undefined} />
+
+        {/* Muscle is behind the fold because it answers almost the same
+            question as Movement, and that is measured rather than felt: for
+            every one of the nine families, a single muscle covers most of it —
+            `pull→back 7/7`, `squat→legs 7/7`, `core→core 12/12`, `push→chest
+            11/13`, `overhead→shoulders 9/10`, `hinge→glutes 8/9` — and three
+            families map onto one muscle exactly. Four rows of 29 chips were
+            two questions asked twice. Movement stays up front because it does
+            strictly more: it also opens that family's chapter.
+
+            `DisclosureRow`, not a `<details>`: it renders `aria-expanded`,
+            which is what `npm run a11y` clicks before it scans. */}
+        <DisclosureRow label="Filter by muscle">
+          <ChipPick label="Muscle" value={muscle} onChange={toggle(muscle, setMuscle)} options={MUSCLES.map((m) => ({ value: m, label: m }))} className="capitalize" />
+        </DisclosureRow>
+      </div>
+
+      {/* Your kit, once. */}
+      <div className="mt-3 border-t border-line pt-3">
+        <ChipPick
+          label="Your kit"
+          tone="teal"
+          value={equipment}
+          onChange={setEquipment}
+          options={[{ value: 'any' as const, label: 'Show everything', name: 'Show every movement, whatever kit it needs' },
+            ...EQUIPMENT_ORDER.map((e) => ({ value: e, label: EQUIPMENT_LABEL[e] }))]}
+          hint="Remembered. The catalogue opens narrowed to what you own."
+        />
       </div>
 
       {/* The family chapter, where you are standing when you want it. It used to
@@ -82,7 +123,7 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
           had no call site at all. */}
       {family && (
         <div className="mt-4 rounded-card bg-ink-2 p-3">
-          <FamilyChapter family={family} />
+          <FamilyChapter family={family} onAdd={onAdd} />
         </div>
       )}
 
@@ -96,14 +137,16 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
       {rows.length === 0 ? (
         <div className="mt-3"><EmptyFrame>Nothing matches every filter. Clear one.</EmptyFrame></div>
       ) : (
-        /* `sm:grid-cols-2` with the phone column spelled out — a grid with no
-           base `grid-template-columns` gets one implicit `auto` track sized to
-           its widest item's min-content, which is how a card's neighbours get
-           dragged off the right edge of a 390px viewport. */
-        <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
-          {shown.shown.map((ex) => (
-            <Tile key={ex.id} ex={ex} open={openId === ex.id} onToggle={() => setOpenId(openId === ex.id ? null : ex.id)} onAdd={onAdd} />
-          ))}
+        /* `PanelGrid`, which is the same two-column grid with the phone column
+           spelled out — and it breaks on the CONTAINER rather than the
+           viewport, which is the correct question inside a review column. The
+           tiles were the last thing on this page still drawing their own box. */
+        <div className="mt-4">
+          <PanelGrid>
+            {shown.shown.map((ex) => (
+              <Tile key={ex.id} ex={ex} open={openId === ex.id} onToggle={() => setOpenId(openId === ex.id ? null : ex.id)} onAdd={onAdd} />
+            ))}
+          </PanelGrid>
         </div>
       )}
     </>
@@ -115,12 +158,18 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
   const chain = progressionChain(ex.id)
 
   return (
-    <div className="min-w-0 rounded-card bg-ink-2 p-3">
-      <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-body font-medium text-fg-1">{ex.name}</span>
-        <Pill tone="muted" size="micro" className="ml-auto px-2">{EQUIPMENT_LABEL[ex.equipment]}</Pill>
-        <Pill tone="muted" size="micro" className="px-2 capitalize">{ex.difficulty}</Pill>
-      </div>
+    /* The shared card, like every other named item on this page. It was the one
+       `bg-ink-2` box with no border left on the view, which is what made the
+       Movements panel read as a different design from the four beside it. */
+    <PanelCard
+      title={ex.name}
+      right={
+        <span className="flex flex-wrap items-center gap-1">
+          <Pill tone="muted" size="micro" className="px-2">{EQUIPMENT_LABEL[ex.equipment]}</Pill>
+          <Pill tone="muted" size="micro" className="px-2 capitalize">{ex.difficulty}</Pill>
+        </span>
+      }
+    >
       <p className="text-label text-fg-2">{ex.how}</p>
 
       {/* `flex-wrap` on the cluster itself. `Card` can cap its own slots but
@@ -166,7 +215,7 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
               ))}
             </p>
           )}
-          <p className="text-fg-2">{FAMILY_LABEL[ex.family]} · read the family manual below for the set-up and how to progress.</p>
+          <p className="text-fg-2">{FAMILY_LABEL[ex.family]} · pick that family above for its chapter.</p>
           {/* `onRaised('blue')`, not the inherited anchor colour. `@layer base`
               gives every `a` `var(--color-blue)` — the RAW palette value — and
               this one sits on `bg-ink-2`, the raised rung. On vscode that
@@ -180,6 +229,6 @@ function Tile({ ex, open, onToggle, onAdd }: { ex: HomeExercise; open: boolean; 
           </a>
         </div>
       )}
-    </div>
+    </PanelCard>
   )
 }

@@ -17,6 +17,30 @@
 
 ---
 
+## 0 · Read these two before touching another page
+
+Both written 2026-10-15, out of the Home Workout and Pull-ups pass. They are
+short, and they are the part of that work that transfers.
+
+- **`docs/REUSABLE-PATTERNS.md`** — the six things that now exist and should not
+  be written a third time: the shared panel card, one bar per review zone,
+  draw-short/announce-long chips, the record editor, links built from a name,
+  and the capped list. Each entry carries the measurement that decided its
+  shape, including the two that say *don't*: 31 sources as cards measured 5.44
+  desktop screens against 1.93 as rows, and a card collapsed by default is a
+  card `npm run a11y` never walks into.
+
+- **`docs/USER-CONTROL.md`** — what the person using this must always be able to
+  do. Written because Home Workout's history offered a `×` that deleted a
+  session on the first click, with no confirmation and no way to correct
+  anything, while the store had carried `updateWorkout` the whole time. **Check
+  it against every surface that records something**: can I fix a typo without
+  deleting the record, does delete name what it removes, does an edit rewrite
+  *every* stored shape, is there an escape hatch beside every chip row, and is
+  a shortened label still announced in full.
+
+---
+
 ## 1 · The two owner-only items, in order
 
 ### 1a · Run the migration, then prove it

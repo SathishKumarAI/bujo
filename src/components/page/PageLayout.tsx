@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { CaretDown } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { cn } from '../../lib/cn'
-import { useStickyState } from '../../lib/useStickyState'
 
 /**
  * The three-zone page shell. Pages hand over content per zone and never lay
@@ -64,8 +61,8 @@ export function PageLayout({
   stacked = false,
   zone1,
   zone2,
+  actShut = false,
   zone3,
-  collapsibleAct,
   className = '',
 }: {
   tier?: 820 | 1180 | 1440
@@ -88,38 +85,13 @@ export function PageLayout({
   zone1?: ReactNode
   /** Act. The page's single primary button lives in here. */
   zone2?: ReactNode
+  /** Zone 2 is collapsed to its rail: the review takes the width back. */
+  actShut?: boolean
   /** Review. Summary, signature visual, list. */
   zone3?: ReactNode
-  /**
-   * Let the reader put the act column away, and give the width back.
-   *
-   * Reported on Pickleball as *"there is no hide option"*: the log form is a
-   * 38% column that is on screen whether or not you are logging anything, and
-   * on a phone it is the first thing under the orient bar — about a screen and
-   * a quarter of form before the record starts.
-   *
-   * `key` namespaces the remembered state per page (`bujo.ui.act.<key>`), so
-   * shutting the log on Pickleball does not shut the builder on Home Workout.
-   * `label` completes "Hide the …" / "Show the …" and is the only word a page
-   * supplies.
-   *
-   * Opt-in rather than on everywhere, because the control is page chrome and
-   * fourteen contract pages would gain it in one commit with no measurement
-   * behind any of them. Roll it out per page, with the numbers.
-   */
-  collapsibleAct?: { key: string; label: string }
   className?: string
 }) {
   const act = useRef<HTMLDivElement>(null)
-  /* `true` is open, so a page that has never been touched looks exactly as it
-     did before this prop existed. The key is validated against both literals
-     because `useStickyState` refuses anything outside its allow-list, which is
-     what stops a stale or hand-edited value leaving a page with no act and no
-     way to ask for one back. */
-  const [actState, setActState] = useStickyState<string>(
-    `act.${collapsibleAct?.key ?? 'none'}`, 'open', ['open', 'shut'],
-  )
-  const actOpen = !collapsibleAct || actState === 'open'
   const [sticky, setSticky] = useState(true)
   // Whether the container query has actually split the columns — the panel
   // affordance below is meaningless in the stacked single-column layout, and
@@ -197,35 +169,8 @@ export function PageLayout({
     // and again onto the review column, whose children are the cards. That is
     // where the ladder was always aimed.
     <div className={cn('page-shell mx-auto w-full', TIER_WIDTH[tier], className)}>
-      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', !actOpen && 'page-zones-actless')}>
-        {/* The toggle rides the ORIENT zone, which already spans both columns.
-
-            Its own grid row was the obvious place and it was wrong: `.zone-act`
-            and `.zone-review` are explicitly placed into columns 2 and 1 with
-            no explicit ROWS, so an extra auto-placed child does not land
-            between them — measured, the button rendered at y=1113, under the
-            whole page, which is the one place a control for the column at the
-            top cannot be. Inside zone 1 it is still outside the thing it
-            toggles, which is the rule that matters: a control inside the panel
-            it hides cannot bring the panel back. */}
-        {(zone1 || (collapsibleAct && zone2)) && (
-          <div className="zone-orient">
-            {zone1}
-            {collapsibleAct && zone2 && (
-              <div className="mt-1 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setActState(actOpen ? 'shut' : 'open')}
-                  aria-expanded={actOpen}
-                  className="inline-flex items-center gap-1 rounded-control px-2 py-1 text-label text-fg-2 transition-colors hover:bg-ink-2 hover:text-fg-1"
-                >
-                  <Icon as={CaretDown} size="sm" className={cn('transition-transform', !actOpen && '-rotate-90')} />
-                  {actOpen ? `Hide the ${collapsibleAct.label}` : `Show the ${collapsibleAct.label}`}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+      <div className={cn('page-zones page-enter', (tier === 820 || stacked) && 'page-zones-single', actShut && 'page-zones-act-shut')}>
+        {zone1 && <div className="zone-orient">{zone1}</div>}
         {zone2 && (
           // When the act column FITS the viewport it is sticky, as before.
           // When it outgrows it, it used to drop to static — and then the two

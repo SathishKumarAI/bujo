@@ -1,4 +1,4 @@
-import { ArrowsClockwise, CalendarDot, Gauge, Plus, Target, Trophy } from '@/components/icons'
+import { ArrowsClockwise, CalendarDot, CaretRight, Gauge, Plus, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -6,9 +6,9 @@ import { Card, Input, Textarea } from '../components/ui'
 import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
-import { PageLayout, DisclosureRow, StatBar } from '../components/page'
+import { ActStrip, PageLayout, DisclosureRow, StatBar } from '../components/page'
 import { cat, onRaised } from '../lib/colors'
-import { todayISO, addDays } from '../lib/date'
+import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
 import { TodayDrill } from '../components/pickleball/TodayDrill'
@@ -73,6 +73,12 @@ export function Pickleball() {
   const [panel, setPanel] = useStickyState<string>(
     'pickleball.group', 'sessions', PB_PANELS.map((p) => p.id),
   )
+  /* The act column's fold, the same way Home Workout and Pull-ups hold it:
+     shut, the page grid turns zone 2 into a 40px rail and hands its width to
+     the review. The shell owns the geometry, the page owns the state — which
+     is the half this branch had back to front, with a second mechanism in
+     `PageLayout` that did the same job under a different name. */
+  const [act, setAct] = useStickyState<'open' | 'shut'>('pickleball.act', 'open', ['open', 'shut'])
 
   /**
    * The log form's Partner and Location chips.
@@ -261,10 +267,28 @@ export function Pickleball() {
   return (
     <PageLayout
       tier={1180}
-      collapsibleAct={{ key: 'pickleball', label: 'log' }}
       zone1={atAGlance}
-      zone2={
-        <Card band title="Log a session" right={sessions.length ? <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button> : undefined}>
+      actShut={act === 'shut'}
+      zone2={act === 'shut' ? (
+        <ActStrip
+          label="Log a session"
+          summary={sessions.length ? `${sessions.length} logged · last ${prettyDay(sessions[0].date)}` : 'Nothing logged yet'}
+          onOpen={() => setAct('open')}
+        />
+      ) : (
+        <Card band title="Log a session" right={
+          <span className="flex items-center gap-1.5">
+            {sessions.length > 0 && (
+              <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button>
+            )}
+            {/* Shutting it lives in the card header, which is where Home
+                Workout and Pull-ups put theirs — the strip that comes back is
+                the way in, so the way out belongs on the thing itself. */}
+            <Button variant="ghost" size="icon-sm" onClick={() => setAct('shut')} aria-label="Hide the log" title="Hide the log — the review takes the width">
+              <Icon as={CaretRight} size="sm" />
+            </Button>
+          </span>
+        }>
           {/* TAP, DON'T TYPE.
 
               This was fourteen controls of which twelve were free text or a bare
@@ -435,7 +459,7 @@ export function Pickleball() {
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
           <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
         </Card>
-      }
+      )}
       zone3={<PickleballReview panel={panel} onPanel={setPanel} />}
     />
   )
