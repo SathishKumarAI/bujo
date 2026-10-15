@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
 import { hasLapseQuantity, lapseCountOn, lapseTrend, peakLapseWeekday } from './lapse'
-import { todayISO } from './date'
+import { addDays, todayISO } from './date'
+import { bestSet, repsOf } from './pullups'
 import { metricsCsv } from './csv'
 import { deepWorkHeatmap, focusByDuration, focusFindings, interruptionCost, weeklyVolume } from './focus'
 import { avgWpm, bestWpm, wpmTrend } from './typing'
@@ -305,5 +306,50 @@ describe('demo seeds a coaching program in progress', () => {
     const rows = d.pickleball ?? []
     expect(rows.filter((r) => (r.notes ?? '').length > 10).length).toBeGreaterThan(1)
     expect(rows.filter((r) => !r.notes).length).toBeGreaterThan(0)
+  })
+})
+
+/**
+ * The pull-up page reads `workouts` filtered on `activity === 'pullups'`, and
+ * the seed produced none of them until now — so its history, summary strip and
+ * heatmap had never been rendered with data by any test or any browser gate.
+ * Asserted here rather than in the view, because the failure is a *missing*
+ * domain and a view test would have to know to look for it.
+ */
+describe('demo seeds pull-up sessions', () => {
+  const d = generateDemoData()
+  const pullups = d.workouts.filter((w) => w.activity === 'pullups')
+
+  it('logs enough sessions to fill the history list past its cap', () => {
+    // The list caps at HISTORY_CAP (3) and offers "Show all (N)" above it, so
+    // a seed of three could not render the affordance at all.
+    expect(pullups.length).toBeGreaterThan(8)
+  })
+
+  it('writes sets in the shape repsOf reads back', () => {
+    // A hand-typed `'Pull-up 4x5'` would store fine, count as 0 reps, and show
+    // a history of sessions worth nothing. Every session has to have volume.
+    // `every` on an empty array is true, so this needs the floor in front of
+    // it or it passes loudest exactly when the seed is gone — the
+    // scan-that-matches-nothing trap, planted and caught here.
+    expect(pullups.length).toBeGreaterThan(0)
+    expect(pullups.every((w) => repsOf(w.sets) > 0)).toBe(true)
+  })
+
+  it('climbs, so the ability table is not pinned to its first row', () => {
+    const early = bestSet(pullups.filter((w) => w.date < addDays(todayISO(), -28)))
+    expect(bestSet(pullups)).toBeGreaterThan(early)
+  })
+
+  it('leaves gaps, so the heatmap has empty days and the week target can be missed', () => {
+    const days = new Set(pullups.map((w) => w.date))
+    // Both bounds. `0 < 40` is also "leaves gaps".
+    expect(days.size).toBeGreaterThan(10)
+    expect(days.size).toBeLessThan(40)
+  })
+
+  it('notes some sessions and leaves others blank', () => {
+    expect(pullups.filter((w) => w.notes.length > 10).length).toBeGreaterThan(0)
+    expect(pullups.filter((w) => !w.notes).length).toBeGreaterThan(0)
   })
 })
