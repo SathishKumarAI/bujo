@@ -63,14 +63,33 @@ begin
   if exists (select 1 from pg_attribute
              where attrelid = 'public.journals'::regclass
                and attname = 'blob' and not attisdropped) then
-    execute 'select count(*) from public.journals where blob is not null' into encrypted;
+    -- Count rows that are ACTUALLY encrypted journals, not merely non-null.
+    --
+    -- This said `where blob is not null`, and that was wrong in the direction
+    -- that costs a user their afternoon: it refused to run against a live
+    -- project because of a 45-byte row whose keys were `v, note` — no `data`,
+    -- no `salt`, no `iv`. Not a journal, not decryptable by anyone, not
+    -- recoverable because there was nothing in it to recover, and owned by a
+    -- different account from the one signed in.
+    --
+    -- The shape tested here is the same one `isEncryptedBlob()` tests in
+    -- `src/lib/crypto.ts`: version plus all three of data, salt and iv. A row
+    -- missing any of them cannot be decrypted even with the right passphrase,
+    -- so refusing to drop it protects nothing. Keep the two in step — if the
+    -- blob format gains a field, this predicate and that function both move.
+    execute $q$
+      select count(*) from public.journals
+      where blob ? 'data' and blob ? 'salt' and blob ? 'iv'
+    $q$ into encrypted;
 
     if encrypted > 0 then
       raise exception using message = format(
-        'public.journals still holds %s encrypted row(s). This database cannot read them — '
-        'it never had the key. Open the app on a device that still has the sync passphrase, '
-        'export the journal (Settings -> Data -> Export JSON), then delete those rows and '
-        're-run this file. Refusing to drop data that only you can recover.', encrypted);
+        'public.journals holds %s row(s) that are real encrypted journals ({v,salt,iv,data}). '
+        'This database cannot read them — it never had the key. Open the app on a device that '
+        'still has the sync passphrase, export the journal (Settings -> Data -> Export JSON), '
+        'then delete those rows and re-run this file. Refusing to drop data that only you can '
+        'recover. Rows that merely have a non-null blob of some OTHER shape are not counted '
+        'here and will be dropped with the column: they cannot be decrypted by anyone.', encrypted);
     end if;
 
     raise notice 'No encrypted rows; dropping the blob column.';
