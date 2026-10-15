@@ -96,6 +96,12 @@ export function Track({
   return (
     <div
       aria-hidden
+      // Declares itself to `scripts/check-visual-density.mjs`, which counts
+      // numbers shown as a shape against numbers printed as text. The source
+      // cannot answer that — the same `Stat` does either, depending on whether
+      // the caller had a range to give it — so the gate reads the live DOM and
+      // needs the encodings to be nameable.
+      data-encodes="track"
       className="flex w-full overflow-hidden rounded-pill"
       style={{ height, background: cat('surface0') }}
     >
@@ -131,7 +137,7 @@ export function Spark({
   const span = hi - lo || 1
   const last = values.length - 1
   return (
-    <div aria-hidden className="flex w-full items-end gap-[2px]" style={{ height }}>
+    <div aria-hidden data-encodes="spark" className="flex w-full items-end gap-[2px]" style={{ height }}>
       {values.map((v, i) => {
         // A gap in the series is a gap, not a zero-height bar at the floor.
         if (v == null) {
@@ -168,7 +174,7 @@ export function Ramp({
 }) {
   const n = days.length || 1
   return (
-    <div aria-hidden className="flex w-full gap-[2px]" style={{ height }}>
+    <div aria-hidden data-encodes="ramp" className="flex w-full gap-[2px]" style={{ height }}>
       {days.map((on, i) => (
         <span
           key={i}

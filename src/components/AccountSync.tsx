@@ -42,6 +42,15 @@ export function AccountSync() {
   const askConflict = useCallback(() => confirm({ ...CONFLICT_PROMPT, destructive: true }), [confirm])
   const askRef = useRef(askConflict)
   useEffect(() => { askRef.current = askConflict }, [askConflict])
+  /**
+   * Same reason as `askRef` directly above: the debounced push needs
+   * `replaceAll` to apply a merge after a stale write, and listing it in that
+   * effect's deps would re-run the effect — and so clear the pending
+   * timeout — on every render where the store hands back a new identity. A
+   * four-second debounce that restarts on each keystroke never fires.
+   */
+  const replaceAllRef = useRef(replaceAll)
+  useEffect(() => { replaceAllRef.current = replaceAll }, [replaceAll])
 
   // ── Sign-in / sign-out / account switch ──────────────────────────────────
   useEffect(() => {
@@ -153,7 +162,7 @@ export function AccountSync() {
           seenAt.current = fresh.updatedAt
           if (fresh.journal) {
             const merged = await resolveIncoming(latest.current, migrate(fresh.journal), askRef.current)
-            if (merged) replaceAll(merged)
+            if (merged) replaceAllRef.current(merged)
           }
           // Clear the echo guard so the merged result is allowed to push.
           lastPushed.current = ''
