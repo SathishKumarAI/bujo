@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useJournal } from '../store'
 import { isConfigured, onAuthChange, pullAccount, pushAccount } from '../lib/supabase'
-import { mayPush, onAccountChange, afterPull, isDemo, initialState, UNUSABLE_MESSAGE, type AccountSyncState } from '../lib/accountSync'
+import { mayPush, onAccountChange, afterPull, isDemo, initialState, lastOwner, rememberOwner, UNUSABLE_MESSAGE, type AccountSyncState } from '../lib/accountSync'
 import { setAccountStatus, markSynced } from '../lib/accountStatus'
 import { resolveIncoming, CONFLICT_PROMPT } from '../lib/conflict'
 import { useConfirm } from './ConfirmDialog'
@@ -47,13 +47,23 @@ export function AccountSync() {
   useEffect(() => {
     if (!isConfigured()) return
     return onAuthChange((user) => {
-      const { state: next, discardLocal } = onAccountChange(stateRef.current, user?.id ?? null)
+      // The persisted owner is what makes `alice -> sign out -> bob` and
+      // `alice -> reload -> bob` detectable. In-memory state is null in both.
+      const { state: next, discardLocal } = onAccountChange(stateRef.current, user?.id ?? null, lastOwner())
       setState(next)
+      // Sign-out deliberately does NOT forget the owner: the journal on this
+      // device still belongs to whoever was last signed in, and that is
+      // precisely the fact the next sign-in has to check against. It is
+      // cleared by the full erase, which sweeps the `bujo:` prefix.
       if (!user) { setAccountStatus({ phase: 'signed-out' }); return }
       // A DIFFERENT account on the same device. The local journal belongs to
       // whoever was signed in before, and merging it into this account is
       // COD-135 — which shipped. Drop it, then read the new account's row.
       if (discardLocal) replaceAll(emptyJournal())
+      // Claim the journal for this account before the pull. If the tab dies
+      // mid-request, the next load still knows whose data is on disk — and
+      // recording it only on success is what would leave that window open.
+      rememberOwner(user.id)
 
       setAccountStatus({ phase: 'checking' })
       void (async () => {

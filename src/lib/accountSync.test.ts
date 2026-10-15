@@ -111,3 +111,57 @@ describe('switching accounts does not hand one person another person’s journal
     expect(onAccountChange(prev, 'bob').state.unusable).toBe(false)
   })
 })
+
+describe('an account switch is still a switch after a sign-out or a reload', () => {
+  /**
+   * COD-135 shipped, was fixed, and the fix only covered one of three routes.
+   *
+   * The original compared `prev.userId` with the incoming id. That is
+   * in-memory, so it is null after a sign-out and null again on a fresh load —
+   * and both of those sequences then look exactly like a first-ever sign-in,
+   * which is the one case where the local journal SHOULD be kept and merged.
+   *
+   * The result in both: alice's journal merged into bob's account and pushed
+   * there. The sign-out route is not exotic. Signing out is the obvious thing
+   * to do before handing someone your laptop.
+   *
+   * Found by composing two tests that each pass on their own — which is why it
+   * survived. Every individual assertion about `onAccountChange` was correct.
+   */
+  const signedIn = (id: string) => afterPull({ ...initialState, userId: id }, { row: 'read' })
+
+  it('discards when the id changes directly', () => {
+    // The route that always worked. Kept so a regression here is loud.
+    expect(onAccountChange(signedIn('alice'), 'bob', 'alice').discardLocal).toBe(true)
+  })
+
+  it('discards across a sign-out', () => {
+    // alice -> null -> bob. In-memory `prev.userId` is null at the second
+    // step; only the remembered owner can tell this from a first sign-in.
+    const afterSignOut = onAccountChange(signedIn('alice'), null, 'alice').state
+    expect(onAccountChange(afterSignOut, 'bob', 'alice').discardLocal).toBe(true)
+  })
+
+  it('discards across a reload, where there is no in-memory state at all', () => {
+    // The worst of the three: a fresh tab has `initialState`, so without the
+    // persisted owner there is nothing to compare against.
+    expect(onAccountChange(initialState, 'bob', 'alice').discardLocal).toBe(true)
+  })
+
+  it('KEEPS the journal when the same person signs back in after a reload', () => {
+    // The other half, and the reason this cannot just always discard: coming
+    // back to your own account must not wipe the work you did offline.
+    expect(onAccountChange(initialState, 'alice', 'alice').discardLocal).toBe(false)
+  })
+
+  it('keeps the journal on a genuine first sign-in', () => {
+    // Nobody has ever owned this journal, so it belongs to whoever just
+    // signed in. Discarding here would delete their work.
+    expect(onAccountChange(initialState, 'alice', null).discardLocal).toBe(false)
+  })
+
+  it('never discards on sign-out itself', () => {
+    // Signing out must never look like deleting.
+    expect(onAccountChange(signedIn('alice'), null, 'alice').discardLocal).toBe(false)
+  })
+})

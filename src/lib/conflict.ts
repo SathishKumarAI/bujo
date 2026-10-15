@@ -21,10 +21,28 @@ const KEYED_ARRAYS: [string, string][] = [
   ['memories', 'date'], ['monthly', 'ym'], ['cycle', 'date'],
 ]
 
-// Plain `{ key: value }` maps — local-only keys are filled in on merge.
+/**
+ * Plain `{ key: value }` maps — local-only keys are filled in on merge.
+ *
+ * **Hand-written, and that is the hazard.** `mindsetPractice` was missing from
+ * this list for the whole life of the feature: `out = { ...winner }` kept the
+ * winning device's days and dropped every day the other device had practised a
+ * principle on. Silently, with no error, and with nothing on screen to notice —
+ * the Mind page simply had fewer marks than you remembered.
+ *
+ * The array guard in `conflict.test.ts` could not see it: that test derives its
+ * key list with `Array.isArray`, so a `Record<string, …>` collection is
+ * invisible to it by construction. Its map-shaped twin now derives from the
+ * demo seed and names any key missing from here.
+ *
+ * **When you add a `Record<string, …>` to `JournalData`, add it here.** The
+ * test will tell you if you forget, but only for keys the demo seed writes.
+ */
 const MAPS = [
   'habitLog', 'habitValues', 'habitTimes', 'habitNotes', 'habitSkips',
   'challengeLog', 'challengeNotes',
+  // Day -> principle ids. Added after the merge was found dropping it.
+  'mindsetPractice',
 ] as const
 
 type Dict = Record<string, unknown>
