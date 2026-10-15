@@ -127,7 +127,10 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-/* 20, not 17: `?demo=1` re-seeds only when this number moves, and the
+/* 20, and it only ever goes up: `?demo=1` re-seeds when this number moves, so
+   taking the lower one from either side of a merge would leave every existing
+   demo journal on an older shape with nothing to notice it. Coaching's pass
+   took it to 18; `?demo=1` re-seeds only when this number moves, and the
    pickleball seed gained a future event, a location, an opponent, a level and
    points. Taking main's 17 here would leave every existing demo journal on the
    old shape with no way to notice. */
