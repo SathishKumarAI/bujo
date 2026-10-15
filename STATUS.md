@@ -81,10 +81,19 @@ Also: five cards had never been rendered by any gate because the seed wrote no
 location, opponent, level or points; `nextStep`'s lapse rule now opens Activity;
 every weekday, partner and venue opens Sessions filtered to it.
 
+### Handing over · 2026-10-15, end of session
+
+`docs/PAGE-ROLLOUT.md` is the work list for the next six pages — Strength,
+Fitness, Nutrition, Challenges, Recovery, Cycle. It says where each one stands
+today (all six are already on `PageLayout`; none has the act controls; only
+Recovery and Cycle have a rail), the ten steps in order, and the five things
+not to build a second time.
+
 ### Next action
 
-1. **PR #408 is open and pushed.** Rebase onto `main` and retarget it BEFORE
-   #407 merges, or GitHub closes it permanently.
+1. **Both PRs merged to `main`** at the end of this session — #407 (Coaching)
+   then #408 (Pickleball), the child retargeted first so the parent's merge
+   could not close it.
 2. Gates all green at `9134156`: `npm run verify` (1986 tests / 145 files),
    `npm run design` (456 files), `npm run contrast`, and the new
    `npm run a11y:panels` (35 scans, armed on a canary).
