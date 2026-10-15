@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
 import { VideoLink } from '../VideoLink'
+import { Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
+import { Button } from '../ui/button'
 import { PanelGrid, PanelCard, DefList, Tag } from '../page'
 import { buyingGuideUrl } from '../../lib/video'
 import { onRaised } from '../../lib/colors'
-import { FAMILY_LABEL, filterExercises, type Family } from '../../lib/homeExercises'
+import { FAMILY_LABEL, filterExercises, type Family, type HomeExercise } from '../../lib/homeExercises'
 import { chapterFor, HOME_SAFETY, HOME_SOURCES, sourceById } from '../../lib/homeManual'
 import { HOME_EQUIPMENT, HOME_GOALS, HOME_LEVERS, HOME_PRINCIPLES } from '../../lib/homeProgramming'
 
@@ -53,7 +56,7 @@ export function Cited({ ids, prefix }: { ids: readonly string[]; prefix: string 
   )
 }
 
-export function FamilyChapter({ family }: { family: Family }) {
+export function FamilyChapter({ family, onAdd }: { family: Family; onAdd?: (ex: HomeExercise) => void }) {
   /* `chapterFor`, not a `.find` of our own. The helper existed in
      `lib/homeManual.ts` with no call site at all, which is the shape of a data
      module quietly going dead — this file had retyped its one line. */
@@ -87,11 +90,24 @@ export function FamilyChapter({ family }: { family: Family }) {
         {moves.length} movement{moves.length === 1 ? '' : 's'} in this family
       </h4>
       <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 @lg/page:grid-cols-2">
+        {/* An Add button on every row. The list used to offer the demo video
+            and nothing else, so adding one of these ten movements meant
+            scrolling past the chapter to find the same movement again in the
+            tiles below. The tiles stay — they carry the cues and the chain —
+            but you no longer have to reach them to act. */}
         {moves.map((m) => (
-          <li key={m.id} className="flex flex-wrap items-baseline gap-x-2 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">
+          <li key={m.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">
             <span className="text-fg-1">{m.name}</span>
             <span className="capitalize">{m.difficulty}</span>
-            <span className="ml-auto"><VideoLink name={m.name} yt={m.yt} label="" size="sm" /></span>
+            <span className="ml-auto flex items-center gap-2">
+              <VideoLink name={m.name} yt={m.yt} label="" size="sm" />
+              {onAdd && (
+                <Button variant="secondary" size="sm" onClick={() => onAdd(m)} className="text-fg-1 hover:border-mauve"
+                  aria-label={`Add ${m.name} ${m.reps} to today’s session`}>
+                  <Icon as={Plus} size="sm" /> Add {m.reps}
+                </Button>
+              )}
+            </span>
           </li>
         ))}
       </ul>
@@ -123,7 +139,19 @@ function Steps({ items }: { items: string[] }) {
   )
 }
 
-/** A labelled run of cards inside a panel. Not navigation — a heading. */
+/**
+ * A labelled run of cards inside a panel. Not navigation — a heading.
+ *
+ * These are the ONLY headings a reference panel draws. `Programming`,
+ * `Equipment` and `Sources` each used to open with a `<Head>` restating the
+ * row's own name and blurb word for word — `How to train · Sets, reps and rest
+ * …` directly under the bar's `How to train · Sets, reps and rest …`. Reported
+ * as "a lot of duplicated places, especially with the headings", and it was
+ * exactly that: the bar names the row, so the panel starts with its content.
+ *
+ * `FamilyChapter` keeps its `Head` because its title is the FAMILY, which is a
+ * different thing from the row it sits in ("Movements").
+ */
 function SubHead({ children }: { children: ReactNode }) {
   return <h4 className="mt-5 mb-2 text-label text-fg-2 first:mt-0">{children}</h4>
 }
@@ -131,8 +159,6 @@ function SubHead({ children }: { children: ReactNode }) {
 export function Programming() {
   return (
     <>
-      <Head title="How to train" blurb="Sets, reps and rest — and how to get harder without a weight rack" />
-
       {/* `HOME_GOALS` used to render TWICE on this panel: once as a four-column
           table of Goal/Sets/Reps/Rest, then again underneath as three prose
           blocks carrying aim, effort and sources. Reported as "a lot of
@@ -203,7 +229,6 @@ export function Programming() {
 export function Equipment() {
   return (
     <>
-      <Head title="Equipment" blurb="In the order it is worth buying — and the first entry is nothing" />
       {/* Every row carries a link now. Measured before this change: one of the
           eight rows had a `url`, so seven rendered no link at all — which is
           what "the URLs in equipment are not working" turned out to mean. Both
@@ -232,7 +257,6 @@ export function Equipment() {
 export function Sources() {
   return (
     <>
-      <Head title="Sources" blurb={`${HOME_SOURCES.length} references, every one fetched and reachable`} />
       <p className="mb-3 text-label text-fg-2">
         Every number and guideline in this manual traces to one of these, and each link was
         opened rather than remembered. What is <em>not</em> here is as deliberate: the much-quoted

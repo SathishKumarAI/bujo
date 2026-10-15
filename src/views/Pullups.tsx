@@ -351,6 +351,9 @@ function LogSessionCard({
   const [rpe, setRpe] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
   const [justLogged, setJustLogged] = useState<string | null>(null)
+  /* Shut it and it stays shut. Default open, because a collapsed card is one
+     `npm run a11y` never walks into — see the COD-93 trap. */
+  const [fold, setFold] = useStickyState<'open' | 'shut'>('pullups.act', 'open', ['open', 'shut'])
 
   const topN = top ?? defaultTop
   const flash = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -406,7 +409,16 @@ function LogSessionCard({
   }
 
   return (
-    <Card band title="Log a pull-up session" subtitle={hint}>
+    <Card
+      band
+      collapsible
+      open={fold === 'open'}
+      onOpenChange={(o) => setFold(o ? 'open' : 'shut')}
+      title="Log a pull-up session"
+      /* While it is shut the subtitle has to carry the answer, not the method's
+         hint — the scheme is the thing you would reopen the card to see. */
+      subtitle={fold === 'shut' && reps.length > 0 ? `${reps.join(' · ')} · ${total} reps` : hint}
+    >
       <div className="space-y-4">
         {/* The previous session, as a card rather than a button with a grey
             sentence trailing off it. Same treatment the review panels use, so
@@ -672,7 +684,10 @@ function LogSessionCard({
  * — a question you ask once and then work from for weeks.
  */
 const PU_PANELS = [
-  { id: 'program', label: 'Today', blurb: 'Starting From Zero · your current day' },
+  // The blurb used to read 'Starting From Zero · your current day', and the
+  // card directly underneath is titled 'Starting From Zero — Pull-up Program'.
+  // The row names the row; the card names which programme it is showing.
+  { id: 'program', label: 'Today', blurb: 'The day you are on, ticked off' },
   { id: 'formats', label: 'Formats', blurb: `${PULLUP_WORKOUTS.length} session structures, solo first` },
   { id: 'ability', label: 'Training set', blurb: 'Your max → set, schemes, volume' },
   { id: 'form', label: 'Form', blurb: 'Set-up & execution' },

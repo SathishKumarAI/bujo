@@ -87,7 +87,7 @@ export function ExerciseLibrary({ onAdd }: { onAdd: (ex: HomeExercise) => void }
           had no call site at all. */}
       {family && (
         <div className="mt-4 rounded-card bg-ink-2 p-3">
-          <FamilyChapter family={family} />
+          <FamilyChapter family={family} onAdd={onAdd} />
         </div>
       )}
 

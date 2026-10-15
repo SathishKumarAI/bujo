@@ -169,6 +169,25 @@ export function parseRepSpec(spec: string): { sets: number; reps?: number } {
  * in `lib/demo.ts`. Two writers each holding their own opinion of the stored
  * shape is a bug this repo has already shipped twice.
  */
+/**
+ * A stored line back into its parts — `'Push-ups 3×12'` → name and reps.
+ *
+ * The inverse of what `logSession` writes, and it exists because a session you
+ * logged wrong was previously only *deletable*: correcting one rep meant
+ * deleting the session and retyping it, losing its date and notes with it.
+ * Editing needs the line split back into the two fields the form owns.
+ *
+ * Split at the rep spec rather than at the last space, because a movement name
+ * has spaces in it (`Single-leg glute bridge 3×15`) and a spec does not start
+ * with one. A line that matches nothing is all name and no reps, which is the
+ * honest reading of a hand-typed note and keeps it editable rather than
+ * silently dropping it.
+ */
+export function splitSessionLine(line: string): { name: string; reps: string } {
+  const m = line.match(/^(.*?)\s+(\d+\s*[x×].*)$/i)
+  return m ? { name: m[1].trim(), reps: m[2].trim() } : { name: line.trim(), reps: '' }
+}
+
 export function homeSetRows(items: { name: string; reps: string }[]): WorkoutSet[] {
   return items.flatMap(({ name, reps }) => {
     const spec = parseRepSpec(reps)

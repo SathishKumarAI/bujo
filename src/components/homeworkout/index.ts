@@ -5,4 +5,5 @@
 export { SessionCard, type SessionItem } from './SessionCard'
 export { ExerciseLibrary } from './ExerciseLibrary'
 export { Review } from './Review'
+export { SessionEditor } from './SessionEditor'
 export { ProgressionNudge } from './ProgressionNudge'

@@ -41,7 +41,7 @@ import { useCappedList } from '../lib/useCappedList'
  * does not restate them**, which is the whole lesson of 531596f.
  */
 export function HomeWorkout() {
-  const { data, addWorkout, removeWorkout } = useJournal()
+  const { data, addWorkout, updateWorkout, removeWorkout } = useJournal()
   const today = todayISO()
 
   const [items, setItems] = useState<SessionItem[]>([])
@@ -134,6 +134,7 @@ export function HomeWorkout() {
           totalExercises={totalExercises}
           onAdd={add}
           onRemove={removeWorkout}
+          onEdit={updateWorkout}
         />
       }
     />

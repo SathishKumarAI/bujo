@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useStickyState } from '../../lib/useStickyState'
 import { Barbell } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Input, Textarea } from '../ui'
@@ -8,7 +9,7 @@ import { EmptyFrame } from '../page'
 import { addDays } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { HOME_ROUTINES } from '../../lib/homeProgramming'
-import { exerciseById } from '../../lib/homeExercises'
+import { exerciseById, FAMILY_SHORT } from '../../lib/homeExercises'
 
 export interface SessionItem { id: string; name: string; reps: string }
 
@@ -47,6 +48,15 @@ export function SessionCard({
   onNotes: (v: string) => void
   onLog: () => void
 }) {
+  /* Open or shut, and it REMEMBERS. Default open, deliberately: `npm run a11y`
+     walks the rendered page, so a card that ships collapsed is a card the gate
+     never scans — the trap CLAUDE.md records under COD-93. A person who shuts
+     it has made a choice and it survives the reload; a fresh visitor still sees
+     the thing the page is for.
+
+     `useStickyState` is string/number only, hence 'open'/'shut' rather than a
+     boolean. */
+  const [fold, setFold] = useStickyState<'open' | 'shut'>('homeworkout.act', 'open', ['open', 'shut'])
   const [routine, setRoutine] = useState<string | null>(null)
   const loaded = HOME_ROUTINES.find((x) => x.id === routine)
 
@@ -63,20 +73,37 @@ export function SessionCard({
   return (
     <Card
       band
+      collapsible
+      open={fold === 'open'}
+      onOpenChange={(o) => setFold(o ? 'open' : 'shut')}
       title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>}
-      subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Start from a routine, or add from the library below'}
+      /* The subtitle has to say what is inside while it is shut, or the fold
+         hides the one number you would reopen it for. */
+      subtitle={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'} ready to log` : 'Start from a routine, or add from the library below'}
     >
       <div className="space-y-4">
-        {/* `Full body`, not `Full body · no kit`. Seven full names wrapped to
-            four lines in a 424px act column; `name` keeps the full one as the
+        {/* `Full`, not `Full body · no kit`. Seven full names wrapped to four
+            lines in a 424px act column; `name` keeps the full one as the
             accessible name and `hint` as the hover title, so nothing is lost by
-            shortening what is drawn. Same rule as `FAMILY_SHORT`. */}
+            shortening what is drawn. Same rule as `FAMILY_SHORT`.
+
+            **GEOMETRY, MEASURED — all seven on one line was asked for, and the
+            margin is 3px.** On the built bundle at 1440 the row is **381px of
+            chips in a 384px card**: `Full · Upper · Legs · Core · DB · Cardio ·
+            New`, dense, with 4px gaps. Renaming any of them, or dropping
+            `dense`, wraps it. The previous labels measured 590px.
+
+            A phone is **2 lines** (381px in 324px) and that is the floor: seven
+            chips cannot fit 324px without going under a 44px touch target, and
+            this file is not the place to spend that. The comment above the
+            pull-up Rounds row is what a stale version of this note looks like —
+            re-measure it when you touch the card. */}
         <ChipPick
           label="Start from a routine"
           value={routine}
           onChange={loadRoutine}
           dense
-          options={HOME_ROUTINES.map((r) => ({ value: r.id, label: r.short, name: r.name, hint: `${r.focus} · needs ${r.needs.toLowerCase()}` }))}
+          options={HOME_ROUTINES.map((r) => ({ value: r.id, label: r.short, name: r.name, hint: `${r.name} · ${r.focus} · needs ${r.needs.toLowerCase()}` }))}
           hint="Replaces whatever is in the list. Every exercise stays editable."
         />
 
@@ -98,16 +125,32 @@ export function SessionCard({
           <EmptyFrame>Pick a routine above, or tap “Add” on an exercise in the library.</EmptyFrame>
         ) : (
           <div className="space-y-2">
-            {items.map((i, n) => (
+            {items.map((i, n) => {
+              const ex = exerciseById(i.id)
+              return (
               <div key={i.id} className="flex items-center gap-2 rounded-card bg-ink-2 py-1.5 pl-3 pr-1.5">
                 {/* The index, because a session is an ORDER and the list was
                     four identical rows with nothing saying which came first. */}
                 <span className="num w-4 shrink-0 text-label text-fg-3">{n + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-body text-fg-1">{i.name}</span>
-                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="num w-20 py-1 text-right text-label" />
+                <span className="min-w-0 truncate text-body text-fg-1">{i.name}</span>
+                {/* The movement family, in the gap that was doing nothing.
+                    Measured on the built bundle: the name column took **218px
+                    of a 384px row** to hold a word like "Plank", so ~180px sat
+                    empty between the name and its reps. What belongs there is
+                    what the session is MADE of — "push and pull in the same
+                    quantity" is one of this page's own principles, and until
+                    now the builder gave you no way to see the balance you were
+                    building. */}
+                {ex && (
+                  <span className="ml-auto shrink-0 rounded-pill bg-ink-1 px-2 py-0.5 text-micro text-fg-2" title={`${i.name} · ${FAMILY_SHORT[ex.family]}`}>
+                    {FAMILY_SHORT[ex.family]}
+                  </span>
+                )}
+                <Input value={i.reps} onChange={(e) => onReps(i.id, e.target.value)} aria-label={`${i.name} sets/reps`} className="num w-20 shrink-0 py-1 text-right text-label" />
                 <Button variant="ghost" size="icon-sm" onClick={() => onDrop(i.id)} aria-label={`Remove ${i.name}`} className="shrink-0 text-fg-2 hover:text-red">×</Button>
               </div>
-            ))}
+              )
+            })}
             {/* There was no date field at all — `logSession` hardcoded today,
                 so a session you did this morning and logged tonight was fine,
                 and one you forgot until tomorrow was unloggable. */}

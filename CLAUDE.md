@@ -16,6 +16,21 @@ happens to be checked out.
    is *not* in the PR as well as what is.
 5. **Write `STATUS.md` when you stop**, not when you start.
 
+## Two documents to read before changing a page
+
+- **`docs/USER-CONTROL.md`** — what a person must always be able to do with
+  anything they record. `add` without `edit` is a bug; delete asks first and
+  names what it removes; an edit rewrites *every* stored shape, not the one the
+  list renders; every chip row has an escape hatch; a shortened label is still
+  announced in full. Written after Home Workout shipped a history whose only
+  affordance was a `×` that deleted on the first click — while `updateWorkout`
+  had been in the store the whole time with two call sites.
+- **`docs/REUSABLE-PATTERNS.md`** — the six pieces Pull-ups and Home Workout
+  left behind, each with the measurement that decided its shape: the shared
+  panel card, one bar per review zone, draw-short/announce-long chips, the
+  record editor, links built from a name rather than pinned, and the capped
+  list. Read it before building any of them a third time.
+
 ## Running the browser gates
 
 `npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a
