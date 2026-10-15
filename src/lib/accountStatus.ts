@@ -112,3 +112,42 @@ export function __resetAccountStatus(): void {
   snapshot = { phase: 'signed-out', lastSyncedAt: null, photosSkipped: 0 }
   for (const fn of listeners) fn()
 }
+
+/** Where "there is unsent work" survives a reload. */
+const DIRTY = 'bujo:account.dirtySince'
+
+/**
+ * Remember that the journal has changes the account has not accepted yet.
+ *
+ * Written when a push is queued and when one fails, cleared only when the
+ * server confirms a write. Persisted, because the case it exists for is the
+ * tab being closed between the two: a dirty flag held in memory tells the next
+ * load nothing, and "the next change is the retry queue" is only true if there
+ * is a next change.
+ *
+ * The timestamp is not used to decide anything — ordering is the server's job
+ * via `journals_touch_updated_at`. It is here so a support question ("how long
+ * has this been stuck?") has an answer.
+ */
+export function markDirty(now = Date.now()): void {
+  try {
+    if (typeof localStorage === 'undefined') return
+    if (!localStorage.getItem(DIRTY)) localStorage.setItem(DIRTY, String(now))
+  } catch { /* storage blocked — the push still runs, it just cannot remember */ }
+}
+
+/** The server accepted a write. Nothing is outstanding. */
+export function clearDirty(): void {
+  try { localStorage?.removeItem(DIRTY) } catch { /* storage blocked */ }
+}
+
+/** When the oldest unsent change was made, or null when everything is sent. */
+export function dirtySince(): number | null {
+  try {
+    const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(DIRTY)
+    const n = raw ? Number(raw) : NaN
+    return Number.isFinite(n) ? n : null
+  } catch {
+    return null
+  }
+}
