@@ -1,6 +1,6 @@
 import { ArrowSquareOut, ArrowsClockwise, Barbell, CalendarDot, ChartBar, Gauge, Medal, PersonSimpleRun, Plus, Sword, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../store'
 import { Card, Empty, Input, Pill, Segmented, StatTile, Textarea } from '../components/ui'
@@ -94,11 +94,37 @@ const RESOURCES = [
  * what the page above this is for. Competition last: events and DUPR are a
  * monthly concern, not a post-session one.
  */
+/*
+ * THE BLURB SAYS WHEN YOU READ IT, NOT WHAT IS IN IT.
+ *
+ * They used to restate the label — "Performance · form, streaks, effort and
+ * how regularly you get on court" — which is the heading again in more words,
+ * and leaves the one question somebody standing at a rail actually has
+ * unanswered: which of these four is the one for right now. The Coaching pass
+ * landed on the same rule from the other end (every section says when it
+ * happens, and what it is not), and it is the cheapest sentence on the page:
+ * it changes no layout and it is the only thing between four plausible rows.
+ *
+ * The moment comes first, then what answers it. Keep it one line.
+ */
+/**
+ * Renders its children only when their sub-section is the selected one.
+ *
+ * Module level and `active` as a prop, not a closure: a component declared
+ * inside a render is a NEW component type every render, so React unmounts and
+ * remounts its whole subtree — every chart would re-enter, every fold inside
+ * it would snap shut, and eslint's `no-create-component-during-render` says so
+ * before any of that is visible.
+ */
+function Facet({ of, active, children }: { of: string; active: string | null; children: ReactNode }) {
+  return active == null || active === of ? <>{children}</> : null
+}
+
 const PB_GROUPS = [
-  { id: 'competition', label: 'Competition & rating', blurb: 'Events, DUPR rating and league results, separate from casual play', icon: Medal, color: 'yellow' },
-  { id: 'performance', label: 'Performance', blurb: 'Form, streaks, effort and how regularly you get on court', icon: PersonSimpleRun, color: 'sky' },
-  { id: 'trends', label: 'Trends & volume', blurb: 'Win rate over time, games per week & month, where the habit sits', icon: ChartBar, color: 'teal' },
-  { id: 'matchups', label: 'Opponents, partners & venues', blurb: 'Who you win with, who you lose to, and where', icon: Sword, color: 'red' }
+  { id: 'competition', label: 'Competition & rating', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
+  { id: 'performance', label: 'Performance', blurb: 'Straight after a session · form, effort, and whether you are getting on court at all', icon: PersonSimpleRun, color: 'sky' },
+  { id: 'trends', label: 'Trends & volume', blurb: 'Once a month · win rate over time, games per week, where the habit is going', icon: ChartBar, color: 'teal' },
+  { id: 'matchups', label: 'Opponents, partners & venues', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' }
 ] as const
 
 export function Pickleball() {
@@ -114,6 +140,10 @@ export function Pickleball() {
   // Both cards are also collapsible, so the fold is driven from here: hitting
   // "+" on a card the user had collapsed would otherwise reveal a form inside a
   // hidden body and read as a dead button.
+  // Not sticky, and not in the URL: a sub-section is a narrowing you do while
+  // reading, not a place you return to. Sticky it would be, on a page you open
+  // a week later, four cards you cannot find and no memory of hiding them.
+  const [facet, setFacet] = useState<string | null>(null)
   const [duprOpen, setDuprOpen] = useState(false)
   const [duprCardOpen, setDuprCardOpen] = useState(true)
   const [evOpen, setEvOpen] = useState(false)
@@ -261,6 +291,70 @@ export function Pickleball() {
     'pickleball.group', 'performance', PB_GROUPS.map((g) => g.id),
   )
   const currentGroup = PB_GROUPS.find((g) => g.id === group) ?? PB_GROUPS[1]
+  /*
+   * SUB-SECTIONS, FOR THE TWO GROUPS BIG ENOUGH TO NEED THEM.
+   *
+   * A rail row that opens nine cards is a wall with a nicer door. Performance
+   * holds nine and Trends seven, and inside each the cards answer two or three
+   * different questions — "how am I playing" is not "how hard was it" is not
+   * "am I turning up". Competition (3) and Opponents (4) get no chip row: a
+   * sub-navigation over four things costs more than it saves, which is the
+   * same arithmetic that keeps `count` off a rail whose groups hold prose.
+   *
+   * `has` is the single source for BOTH the chip and the card. The obvious
+   * shape — a chip list beside the render conditions — is the hand-written id
+   * list resolved against another source that this repo has been bitten by
+   * three times (`BottomNav`'s `PRIMARY`, `view-ids.mjs`, the `VIEWS` list),
+   * and it fails the same way: a chip that selects nothing, or a card that no
+   * chip can reach. One boolean, two readers.
+   */
+  const has = {
+    recentForm: form.results.length > 0,
+    forecast: forecast.ready,
+    milestones: true,
+    intensity: load.sessions > 0,
+    weekday: weekdaysPlayed.length > 0,
+    points: points.sessions > 0,
+    hours: hours.timedSessions > 0,
+    scoring: scoring.length > 0,
+    consistency: consistency.daysPlayed > 0,
+    winTrend: true,
+    winLoss: true,
+    perWeek: true,
+    perMonth: monthsPlayed,
+    byFormat: true,
+    cumulative: true,
+    heatmap: true,
+  }
+  /** card → sub-section, for every card that lives under a chip row. */
+  const FACET_OF: Record<keyof typeof has, string> = {
+    recentForm: 'form', forecast: 'form', points: 'form', scoring: 'form',
+    intensity: 'effort', hours: 'effort',
+    weekday: 'cadence', consistency: 'cadence',
+    milestones: 'badges',
+    winTrend: 'winning', winLoss: 'winning', byFormat: 'winning',
+    perWeek: 'volume', perMonth: 'volume', cumulative: 'volume', heatmap: 'volume',
+  }
+  const FACET_LABELS: Record<string, string> = {
+    form: 'How I am playing', effort: 'How hard', cadence: 'Turning up', badges: 'Badges',
+    winning: 'Winning', volume: 'Volume',
+  }
+  const FACETS_BY_GROUP: Record<string, string[]> = {
+    performance: ['form', 'effort', 'cadence', 'badges'],
+    trends: ['winning', 'volume'],
+  }
+  // Counted from `has`, so a sub-section with nothing in it is not offered.
+  const facetRows = (FACETS_BY_GROUP[group] ?? [])
+    .map((id) => ({
+      id,
+      label: FACET_LABELS[id],
+      count: (Object.keys(has) as (keyof typeof has)[]).filter((k) => FACET_OF[k] === id && has[k]).length,
+    }))
+    .filter((f) => f.count > 0)
+  const groupCount = facetRows.reduce((a, f) => a + f.count, 0)
+  // A facet from the group you just left must not hide every card in this one.
+  const activeFacet = facetRows.some((f) => f.id === facet) ? facet : null
+
   // The one sentence at the top of the page. See `nextStep`'s docstring for the
   // priority order; it is total, so there is no empty state to design here.
   const step = nextStep(data, today)
@@ -277,6 +371,7 @@ export function Pickleball() {
   // and the primary logging + coaching content stays uncluttered.
   const charts = (
     <CardGrid>
+      <Facet of="winning" active={activeFacet}>
       <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
           <div className="h-44" role="img" aria-label="Line chart of win percentage per session over time">
@@ -292,6 +387,8 @@ export function Pickleball() {
           </div>
         )}
       </Card>
+      </Facet>
+      <Facet of="winning" active={activeFacet}>
       <Card band title="Win / loss" subtitle="All games played" enlargeable>
         {all.games === 0 ? <Empty>Log a session to see your win record.</Empty> : (
           <div className="h-44" role="img" aria-label={`Donut of ${all.gamesWon} games won and ${all.gamesLost} lost`}>
@@ -309,6 +406,8 @@ export function Pickleball() {
           </div>
         )}
       </Card>
+      </Facet>
+      <Facet of="volume" active={activeFacet}>
       <Card band title="Games per week" subtitle="Last 8 weeks" enlargeable>
         <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per week over the last 8 weeks">
           <ResponsiveContainer width="100%" height="100%">
@@ -322,7 +421,9 @@ export function Pickleball() {
           </ResponsiveContainer>
         </div>
       </Card>
+      </Facet>
       {monthsPlayed && (
+        <Facet of="volume" active={activeFacet}>
         <Card band title="Games per month" subtitle="Last 6 months, win % in tooltip" enlargeable>
           <div className="h-40" role="img" aria-label="Bar chart of pickleball games played per calendar month over the last 6 months">
             <ResponsiveContainer width="100%" height="100%">
@@ -336,7 +437,9 @@ export function Pickleball() {
             </ResponsiveContainer>
           </div>
         </Card>
+        </Facet>
       )}
+      <Facet of="winning" active={activeFacet}>
       <Card band title="By format" subtitle="Singles vs doubles, games & win %" enlargeable>
         {formats.length === 0 ? <Empty>Log a session to compare singles and doubles.</Empty> : (
           <ul className="space-y-3">
@@ -354,6 +457,8 @@ export function Pickleball() {
           </ul>
         )}
       </Card>
+      </Facet>
+      <Facet of="volume" active={activeFacet}>
       <Card band title="Cumulative games" subtitle={`${all.games} played all-time`} enlargeable>
         {cum.length < 2 ? <Empty>Log a couple of sessions.</Empty> : (
           <div className="h-40" role="img" aria-label={`Line chart of cumulative pickleball games, reaching ${all.games}`}>
@@ -369,6 +474,7 @@ export function Pickleball() {
           </div>
         )}
       </Card>
+      </Facet>
       {/* `ranges`, like every other heatmap in the app.
           This card had its own 3mo/6mo/1yr toggle, which is three ways of
           looking at a year and no way of looking at this week — the thing
@@ -376,6 +482,7 @@ export function Pickleball() {
           and this week, why should I focus on yearly."* Swapping the bespoke
           control for the shared one also deletes the `heatWeeks` state, the
           title badge that restated it and the fixed-span subtitle. */}
+      <Facet of="volume" active={activeFacet}>
       <Card band title="Heatmap" subtitle="Darker = more games" enlargeable>
         <CalendarHeatmap
           ranges
@@ -386,6 +493,7 @@ export function Pickleball() {
           label="Pickleball games per day"
         />
       </Card>
+      </Facet>
     </CardGrid>
   )
 
@@ -814,17 +922,32 @@ export function Pickleball() {
           replaces. ── */}
       <section className="mt-2">
         <h2 className="mb-3 text-label text-fg-2">The record</h2>
-        {/* Container on the outer div, grid on the inner: an element cannot
-            query itself. Phone column spelled out, or the chip row's
-            min-content sizes the only implicit track and the page scrolls
-            sideways. Both in docs/PAGE-SHAPE.md. */}
+        {/* A BAR ACROSS THE TOP, NOT A COLUMN DOWN THE SIDE.
+
+            The rail was a 13rem column, which cost the panel beside it 208px
+            plus a 2rem gap — measured, **870px of an 1180px shell** — and that
+            is the number that had the review zone resolving to one column at
+            1440 (see the `CardGrid` swap one commit back). As a bar the panel
+            is the full width and the four rows read left to right, which is
+            how a table of contents over four peers is read when it fits on one
+            line. Same component, same state: `railAt="never"` keeps the chip
+            row at every width and **wraps** rather than scrolling sideways,
+            which matters here because "Opponents, partners & venues" is a long
+            row and a strip that scrolls with nothing advertising it is how
+            three of eight chapters went missing on Pull-ups.
+
+            Not sticky — `SectionRail`'s own note: a bar that sticks paints over
+            the panel it switches, and hiding it on scroll is COD-202, where the
+            phone's only navigation slid out of frame and a gate declared the
+            page retired having scanned nothing. */}
         <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[13rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
           <SectionRail
             label="Pickleball record"
             groups={PB_GROUPS.map((g) => ({ id: g.id, label: g.label }))}
             value={group}
-            onChange={(id: string | null) => setGroup(id ?? 'performance')}
+            onChange={(id: string | null) => { setGroup(id ?? 'performance'); setFacet(null) }}
+            railAt="never"
           />
           <div className="min-w-0">
             <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
@@ -834,6 +957,39 @@ export function Pickleball() {
               </h3>
               <p className="text-label text-fg-2">{currentGroup.blurb}</p>
             </div>
+            {/* THE SUB-SECTIONS · only where the group is big enough to need
+                them, and every chip counted from the same `has` the cards
+                render from, so a chip can never select an empty panel.
+
+                The selected chip takes the GROUP's colour in its border and
+                its ground, with `fg-1` text — never the accent as text on a
+                wash of itself, which measured 3.64–4.40 across latte and dawn
+                on `ChipPick` and is the calibration trap in CLAUDE.md. */}
+            {facetRows.length > 1 && (
+              <div className="mb-3 flex flex-wrap items-center gap-1.5" role="group" aria-label={`${currentGroup.label} sub-sections`}>
+                <button
+                  type="button"
+                  onClick={() => setFacet(null)}
+                  aria-pressed={activeFacet == null}
+                  className={`rounded-pill border px-2.5 py-0.5 text-label transition-colors active:scale-95 ${activeFacet == null ? 'text-fg-1' : 'border-line bg-ink-2 text-fg-2 hover:border-line-strong hover:text-fg-1'}`}
+                  style={activeFacet == null ? { borderColor: cat(currentGroup.color), background: cat(currentGroup.color) + '1f' } : undefined}
+                >
+                  All <span className="num text-fg-2">{groupCount}</span>
+                </button>
+                {facetRows.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFacet(f.id)}
+                    aria-pressed={activeFacet === f.id}
+                    className={`rounded-pill border px-2.5 py-0.5 text-label transition-colors active:scale-95 ${activeFacet === f.id ? 'text-fg-1' : 'border-line bg-ink-2 text-fg-2 hover:border-line-strong hover:text-fg-1'}`}
+                    style={activeFacet === f.id ? { borderColor: cat(currentGroup.color), background: cat(currentGroup.color) + '1f' } : undefined}
+                  >
+                    {f.label} <span className="num text-fg-2">{f.count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {group === 'competition' && (<>
         <CardGrid>
         {/* ── Tournament prep countdown (#345) · conditional top status,
@@ -984,16 +1140,15 @@ export function Pickleball() {
             even columns; four and five in separate groups could not, and each
             group cost a heading to say something the cards already said. */}
         <CardGrid>
-        {form.results.length > 0 && <RecentFormCard form={form} streaks={streaks} />}
-        {forecast.ready && <WinRateForecastCard forecast={forecast} />}
-        <MilestonesCard milestones={milestones} />
-        {load.sessions > 0 && <SessionIntensityCard load={load} />}
-        
-        {weekdaysPlayed.length > 0 && <WeekdayPerformanceCard weekdays={weekdays} />}
-        {points.sessions > 0 && <PointDifferentialCard points={points} />}
-        {hours.timedSessions > 0 && <TimeOnCourtCard hours={hours} />}
-        {scoring.length > 0 && <ScoringPerformanceCard scoring={scoring} />}
-        {consistency.daysPlayed > 0 && <PlayConsistencyCard consistency={consistency} />}
+        <Facet of="form" active={activeFacet}>{has.recentForm && <RecentFormCard form={form} streaks={streaks} />}</Facet>
+        <Facet of="form" active={activeFacet}>{has.forecast && <WinRateForecastCard forecast={forecast} />}</Facet>
+        <Facet of="badges" active={activeFacet}><MilestonesCard milestones={milestones} /></Facet>
+        <Facet of="effort" active={activeFacet}>{has.intensity && <SessionIntensityCard load={load} />}</Facet>
+        <Facet of="cadence" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} />}</Facet>
+        <Facet of="form" active={activeFacet}>{has.points && <PointDifferentialCard points={points} />}</Facet>
+        <Facet of="effort" active={activeFacet}>{has.hours && <TimeOnCourtCard hours={hours} />}</Facet>
+        <Facet of="form" active={activeFacet}>{has.scoring && <ScoringPerformanceCard scoring={scoring} />}</Facet>
+        <Facet of="cadence" active={activeFacet}>{has.consistency && <PlayConsistencyCard consistency={consistency} />}</Facet>
         
         </CardGrid>
             </>)}
