@@ -1,15 +1,21 @@
 # STATUS
 
-**Stopped:** 2026-10-15, on `feat/pickleball-pass`, **twelve commits**, branched
-off `feat/coaching-pass` (**PR #407**, still open). It stacks on that branch
-because `lib/practiceLog.ts` and `components/coaching/PracticeTick.tsx` exist
-only there. `refactor/homeworkout-panels` (**PR #405**) is also open and is not
-a parent of either.
+**Stopped:** 2026-10-15, **on `main`, everything merged, nothing in flight.**
 
-**Merge order matters:** rebase this onto `main` with
-`git rebase --onto main <old-base-sha> feat/pickleball-pass` and retarget its
-PR **before** merging #407, or squash-merging the parent permanently closes the
-child (CLAUDE.md — it already cost #145/#147 being re-created as #148/#149).
+| PR | what | on main |
+|---|---|---|
+| #405 | Home workout + Pull-ups — cards, chips, `SessionEditor`, `ActStrip` | `d875d2a` |
+| #407 | Coaching — one bar, the spine, scenarios, the practice tick | `06d3505` |
+| #408 | Pickleball — three zones, the record behind one bar, `nextStep` | `738982d` |
+| #409 | The act column starts shut where the page stacks | `1cf7b3e` |
+
+Branches deleted, no open PRs. `main` verified after the last merge:
+**1990 tests / 146 files**, `design` 460 files, `contrast` 5 themes,
+`smoke` 23/23 views, `a11y:panels` 35 scans, `clipped` clean at three widths.
+
+**Next session starts at `docs/PAGE-ROLLOUT.md`** — the work list for Strength,
+Fitness, Nutrition, Challenges, Recovery and Cycle, with where each one stands
+today and the ten steps in order.
 
 ## The Pickleball pass · COD-328
 
