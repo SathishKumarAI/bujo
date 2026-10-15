@@ -1,4 +1,4 @@
-import { musclesForExercise as flatMuscles } from './fitness'
+import { musclesForExercise as flatMuscles } from './muscleMap'
 
 /**
  * WHICH MUSCLES AN EXERCISE WORKS · offline, for any name you can type.

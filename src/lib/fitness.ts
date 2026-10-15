@@ -1,4 +1,35 @@
 import type { JournalData, Routine, Split } from './types'
+import { musclesForExercise } from './muscleMap'
+import { allMusclesForExercise } from './exerciseMuscles'
+
+/* Re-exported so the five modules importing it from here keep working. The
+   matcher moved to a leaf to break the `fitness` ↔ `exerciseMuscles` cycle; it
+   did not change. */
+export { musclesForExercise } from './muscleMap'
+
+/**
+ * Muscles worked by a name that was actually LOGGED, as opposed to a name read
+ * off the library to enumerate what is detectable at all.
+ *
+ * The keyword table answers first and its answer is never overridden, so no
+ * number this app has already printed moves. `exerciseMuscles`'s curated roles
+ * table is consulted **only when the matcher finds nothing** — which is the case
+ * for **32 of the 83 home movements** (Dead bug, Bird dog, Hollow hold, Russian
+ * twists, Mountain climbers, Burpees, Jump rope, Wall sit, Step-ups, Kettlebell
+ * swing and 22 more), every one of which fed zero muscles into every count on
+ * this page the moment COD-315 started writing their sets.
+ *
+ * Deliberately NOT a blanket swap to the roles table. Measured across the 42
+ * names in `EXERCISE_LIBRARY`, **35 differ** and the differences run both ways —
+ * `Romanian Deadlift` is `[8,9,10,11,12]` by keyword and `[6,8,11,12]` by table,
+ * dropping traps and quads. The table is probably the better answer; silently
+ * re-basing every muscle chart a user has already read is not this ticket's to
+ * decide. COD-316.
+ */
+function musclesOfLogged(name: string): number[] {
+  const byKeyword = musclesForExercise(name)
+  return byKeyword.length > 0 ? byKeyword : allMusclesForExercise(name)
+}
 
 /** PPL split metadata: label + accent color token + emoji. */
 // Icons live in `components/glyphs.ts` (SPLIT_GLYPHS); this stays pure data.
@@ -14,77 +45,6 @@ export const SPLITS: { id: Split; label: string; color: string }[] = [
 
 export function splitMeta(id?: Split) {
   return SPLITS.find((s) => s.id === id) ?? SPLITS[6]
-}
-
-// Map an exercise name to wger muscle ids by keyword. Specific keys first so
-// "leg curl" doesn't also match "curl". Works for our library + wger names.
-const MUSCLE_KEYWORDS: [string, number[]][] = [
-  ['leg press', [10, 8]],
-  ['leg curl', [11]],
-  ['leg extension', [10]],
-  ['hip thrust', [8, 11]],
-  ['romanian', [11, 8]],
-  ['deadlift', [11, 8, 9, 12, 10]],
-  ['bench', [4, 2, 5]],
-  ['incline', [4, 2, 5]],
-  ['chest', [4, 2, 5]],
-  ['push-up', [4, 2, 5]],
-  ['pushup', [4, 2, 5]],
-  ['dip', [4, 5, 2]],
-  ['overhead', [2, 5, 9]],
-  ['shoulder press', [2, 5, 9]],
-  ['military', [2, 5, 9]],
-  ['lateral raise', [2]],
-  ['front raise', [2]],
-  ['tricep', [5]],
-  ['pull-up', [12, 1, 9]],
-  ['pullup', [12, 1, 9]],
-  ['chin', [12, 1]],
-  ['pulldown', [12, 1]],
-  ['row', [12, 9, 1]],
-  ['face pull', [2, 9]],
-  ['bicep', [1, 13]],
-  ['curl', [1, 13]], // after leg curl
-  ['squat', [10, 8, 11]],
-  ['lunge', [10, 8, 11]],
-  ['calf', [7, 15]],
-  ['plank', [6, 14]],
-  ['crunch', [6]],
-  ['lat', [12]],
-  ['glute', [8]],
-  ['quad', [10]],
-  ['hamstring', [11]],
-  ['trap', [9]],
-  ['shrug', [9]],
-  ['delt', [2]],
-  ['shoulder', [2]],
-  ['pec', [4]],
-]
-
-/**
- * wger muscle ids worked by an exercise name (best-effort keyword match).
- * Keywords are ordered specific→general; a matched keyword is consumed so a
- * shorter substring (e.g. "curl" inside "leg curl") can't double-match.
- *
- * **Matched at a word boundary, not as a bare substring.** A plain `includes`
- * read "chin" out of the middle of "ma·chin·e", so every machine exercise
- * reported Lats and Biceps — "Machine chest press" highlighted the back on a
- * push day. Only the *leading* edge is anchored, so the plurals the table
- * relies on ("triceps", "lats", "delts", "pecs") still match.
- */
-const boundary = (kw: string) => new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g')
-
-export function musclesForExercise(name: string): number[] {
-  let n = name.toLowerCase()
-  const ids = new Set<number>()
-  for (const [kw, m] of MUSCLE_KEYWORDS) {
-    const consumed = n.replace(boundary(kw), ' ')
-    if (consumed !== n) {
-      m.forEach((id) => ids.add(id))
-      n = consumed
-    }
-  }
-  return [...ids]
 }
 
 /** Default Push/Pull/Legs routines, ready to load. */
@@ -380,7 +340,7 @@ export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days 
   const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
   const counts = new Map<number, number>()
   const add = (exercise: string, n = 1) => {
-    for (const id of musclesForExercise(exercise)) counts.set(id, (counts.get(id) ?? 0) + n)
+    for (const id of musclesOfLogged(exercise)) counts.set(id, (counts.get(id) ?? 0) + n)
   }
   for (const w of data.workouts) {
     if (!inWindow(w.date)) continue
@@ -573,7 +533,7 @@ export function neglectedMuscles(data: JournalData, today = todayISO(), days = 1
       ? rows.filter((r) => r.kind !== 'warmup' && r.exercise.trim()).map((r) => r.exercise)
       : w.sets.map((line) => parseSet(line)?.exercise).filter((e): e is string => !!e)
     for (const ex of exercises) {
-      for (const id of musclesForExercise(ex)) {
+      for (const id of musclesOfLogged(ex)) {
         if (inWindow(w.date)) trainedInWindow.add(id)
         const cur = lastTrained.get(id)
         if (!cur || w.date > cur) lastTrained.set(id, w.date)
@@ -733,7 +693,7 @@ export function volumeByCategory(data: JournalData, today = todayISO(), days = 7
   const totals = new Map<MovementCategory, number>(order.map((c) => [c, 0]))
   const add = (exercise: string, vol: number) => {
     if (!(vol > 0)) return
-    const muscles = musclesForExercise(exercise)
+    const muscles = musclesOfLogged(exercise)
     for (const cat of order) {
       if (CATEGORY_MUSCLES[cat].some((m) => muscles.includes(m))) {
         totals.set(cat, (totals.get(cat) ?? 0) + vol)
@@ -797,7 +757,7 @@ export function muscleRecovery(data: JournalData, today = todayISO()): MuscleRec
       ? rows.filter((r) => r.kind !== 'warmup' && r.exercise.trim()).map((r) => r.exercise)
       : w.sets.map((line) => parseSet(line)?.exercise).filter((e): e is string => !!e)
     for (const ex of exercises) {
-      for (const id of musclesForExercise(ex)) {
+      for (const id of musclesOfLogged(ex)) {
         const cur = lastTrained.get(id)
         if (!cur || w.date > cur) lastTrained.set(id, w.date)
       }
