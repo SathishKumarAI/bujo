@@ -7,6 +7,7 @@ import { CYCLE_DISCLAIMER_VERSION } from './cycleGuide'
 import { HOME_EXERCISES } from './homeExercises'
 import { FOODS } from './foods'
 import { kindsFor } from '../domain/activities'
+import { repScheme, setLines } from './pullups'
 
 // Tiny deterministic PRNG (mulberry32) so the demo looks the same each load.
 function rng(seed: number) {
@@ -125,7 +126,15 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
  * Only a journal that is ITSELF the demo (`settings.demoSeeded`) is refreshed,
  * and only when the URL asks for the demo. A real journal is never touched.
  */
-export const DEMO_VERSION = 14
+export const DEMO_VERSION = 15
+
+/** Notes on a pull-up session, for the third of rows that carry one. */
+const PULL_NOTES = [
+  'Chin clearing the bar on every rep today.',
+  'Grip went before the lats did.',
+  'Last set broke — dropped a rep.',
+  'Felt light. Could have added a round.',
+]
 
 /**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
@@ -178,6 +187,12 @@ export function generateDemoData(today = todayISO()): JournalData {
    * field, new stream, and the rule holds for whoever adds the fifth.
    */
   const randNote = rng(4040)
+  /**
+   * Fifth stream, for the pull-up sessions. Same rule as the four above: the
+   * pull-up block runs after the home-workout one, so drawing from `rand3` or
+   * `randSub` would shift every value those blocks pinned.
+   */
+  const randPull = rng(7311)
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
@@ -538,6 +553,51 @@ export function generateDemoData(today = todayISO()): JournalData {
         notes: rand3() > 0.6 ? 'Living-room session, no kit.' : '',
       })
     }
+  }
+
+  /**
+   * PULL-UP SESSIONS — a domain the seed reached zero of.
+   *
+   * `views/Pullups.tsx` filters `workouts` on `activity === 'pullups'`, and the
+   * generic workout block above draws from `['run','strength','yoga','walk',
+   * 'cycle']`, so that filter matched **nothing**. Measured on the shipped
+   * build at `?demo=1`: the history list rendered its empty frame at 47px, the
+   * summary strip read `0 · 0 · 0`, the heatmap drew 84 blank cells and the
+   * whole review zone — which the a11y gate visits at five themes and two
+   * viewports on every run — had never once been rendered with a session in
+   * it. Exactly the unseeded-`data.cycle` trap in CLAUDE.md, one domain over.
+   *
+   * Written through `setLines`, not as hand-typed strings, so the stored shape
+   * cannot drift from what the form writes and `repsOf` reads back.
+   */
+  for (let i = 56; i >= 0; i--) {
+    const dow = fromISODay(addDays(today, -i)).getDay()
+    // Mon/Wed/Fri/Sat, and not every one of them — a seed where the schedule is
+    // never missed cannot show you what a missed week looks like.
+    if (![1, 3, 5, 6].includes(dow)) continue
+    if (randPull() > 0.82) continue
+    const date = addDays(today, -i)
+    // A climbing top set: 7 eight weeks ago, 9 now.
+    //
+    // The numbers are not arbitrary. `pullupAbility` reads the BEST SINGLE SET
+    // and Novice is 1–5 with a training set of **1**, so a seed topping out at
+    // 5 opened the page on "1 rep/set · Ladder 1 · Pyramid 1" — a calculator
+    // printing 1 three times, which reads as broken rather than as beginner.
+    // Topping out at 9 lands on Intermediate+ (9–12, training set 3), where a
+    // ladder is 1,2,3 and a pyramid is 1,2,3,2,1 and the panel shows what it
+    // is for.
+    const top = 7 + Math.floor((56 - i) / 28)
+    const method = randPull() > 0.55 ? (randPull() > 0.5 ? 'ladder' : 'pyramid') : 'straight'
+    const rounds = method === 'straight' ? 4 : 2 + Math.floor(randPull() * 2)
+    j.workouts.push({
+      id: uid('w'), date, activity: 'pullups',
+      durationMin: 10 + Math.floor(randPull() * 16),
+      sets: setLines(repScheme(method, top, rounds)),
+      rpe: 7 + Math.floor(randPull() * 3),
+      // Roughly a third noted, because "nothing written" is the common case
+      // and a list where every row has prose never renders the bare one.
+      notes: randPull() > 0.68 ? PULL_NOTES[Math.floor(randPull() * PULL_NOTES.length)] : '',
+    })
   }
 
   // ── Pickleball leagues & tournaments + 75-day 3.5→4.0 plan ──

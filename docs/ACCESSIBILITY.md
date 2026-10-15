@@ -161,6 +161,46 @@ text on a **13%** wash of themselves. A `'33'` wash lifts the background toward
 the text and puts it back under — latte's Plan pill measured **4.25**. One hex
 digit, failing silently.
 
+**And a wash has no solved foreground — `brand` is the only pair.** The rule
+above says what the *ratio* needs; this says which two tokens may be paired at
+all. `index.css` defines `--color-brand-wash` and `--color-brand-text`, picked
+together per theme, **and nothing else of that shape** — so `text-teal on
+bg-teal/15` is the idiom applied without the calibration that makes it work.
+Measured on `ChipPick`'s selected chips, composited over the first opaque
+ancestor:
+
+| theme | green | yellow | peach | red |
+|---|---|---|---|---|
+| latte | 4.25 | **3.64** | 4.33 | 4.40 |
+| dawn | 4.54 | **3.81** | 4.59 | 4.70 |
+| mocha | 14.12 | 16.52 | 11.86 | 9.06 |
+
+Seven of ten light-theme readings under 4.5, and `teal` and `peach` had shipped
+that way at every call site they had. Neither gate can see it: `check-contrast`
+reads token *values*, and a token over a wash of itself is not a token; axe
+needs a resolvable background, and a translucent fill over a translucent card
+is not one. **Move the foreground, never bleach the accent** — the text becomes
+`fg-1` and the colour stays in the border and the fill. Worst of twenty
+readings afterwards: **6.42**.
+
+A colour *ramp* at rest (a row ordered by severity — easy → max) belongs in the
+**border**, which is a graphic at 3:1 rather than text at 4.5. And the honest
+comparison is not the floor, it is the border the app already ships:
+`border-line-strong` on a chip measures **1.02–1.64** across the five themes,
+against the ramp's 1.97–3.81 — so the ramp *improves* the boundary it is feared
+to weaken. Measure both before arguing either.
+
+**Resolve a computed colour through a canvas, never a regex.** Tailwind v4
+emits `oklab(0.48592 -0.108732 0.067276 / 0.5)` for `border-green/50`, and
+`colour.match(/[\d.]+/g)` reads those three numbers as if they were `rgb()` and
+the alpha slot as noise. Two complete contrast tables were wrong that way
+before anything caught it, and **the tell was four identical ratios for four
+different tones**. `ctx.fillStyle = colour; ctx.fillRect(0,0,1,1)` over a known
+ground makes the browser parse whatever syntax it is and hands back four bytes.
+Same family as measuring a mid-fade blend or an inline style after a theme
+switch: an arithmetically perfect number describing a pairing that exists
+nowhere in the app.
+
 **The palette is a gate now: `npm run contrast`** (`scripts/check-contrast.mjs`,
 in CI). It replaced `solve-contrast.mjs`, which was advisory, carried its own
 stale copy of the tokens, and had only ever covered the two light themes. The

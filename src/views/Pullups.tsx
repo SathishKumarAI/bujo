@@ -1,11 +1,11 @@
 import { useStickyState } from '../lib/useStickyState'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
+import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quickpick'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import {
@@ -20,7 +20,7 @@ import {
   PULLUP_PRINCIPLES, PULLUP_EQUIPMENT, PULLUP_METHODS, type PullupMethod,
 } from '../lib/pullups'
 import { ShowMore } from '../components/ShowMore'
-import { useCappedList } from '../lib/useCappedList'
+import { useCappedList, type CappedList } from '../lib/useCappedList'
 
 /**
  * PULL-UPS · the training manual, and the place a pull-up session is recorded.
@@ -35,17 +35,18 @@ import { useCappedList } from '../lib/useCappedList'
  *
  * On the three-zone contract:
  * - ORIENT  · what to pull today, and what is left in the week.
- * - ACT     · your training set, then the session recorder, then the program.
- *             All three are acts; the calculator is first because it is what
- *             fills the form in.
- * - REVIEW  · history, analytics, and the manual below them.
+ * - ACT     · the session recorder. One card, alone in the right-hand column.
+ * - REVIEW  · one rail, eight panels, one at a time. See `Review`.
  *
- * The manual is reference, and the contract says there is no zone 4. It sits at
- * the bottom of REVIEW, collapsed, rather than on a page of its own — this page
- * *is* the manual, and a guide split from the log it teaches you to fill in is
- * a guide nobody opens. Every fold is closed by default so the act stays the
- * top of the page; re-run `npm run a11y` with them OPEN, because axe cannot see
- * inside a closed fold.
+ * The manual is reference and the contract says there is no zone 4, so it is
+ * not a page of its own — this page *is* the manual, and a guide split from the
+ * log it teaches you to fill in is a guide nobody opens. It shares the review
+ * zone's rail with the history, the calendar and the program, because they are
+ * peers in the sense that matters: you want one of them and you know which.
+ *
+ * Both rendering gates grade the panel the rail opens on, so a number quoted
+ * for this page describes `history` and nothing else (COD-237). Drive the rail
+ * per panel when you measure it.
  *
  * A session is stored as a plain `Workout` with `activity: 'pullups'` — the
  * scheme is written out one `Pull-up 1xN @ 0kg` line per set, so the existing
@@ -75,14 +76,35 @@ export function Pullups() {
     .reduce((a, s) => a + repsOf(s.sets), 0)
   const last = sessions[0]
 
+  /**
+   * TWO facts, not four. The contract's test is whether a fact changes what you
+   * do in the next thirty seconds, and the two that were dropped failed it by
+   * being said better somewhere else on the same screen:
+   *
+   * - *Weekly target* was a bare range (`75–150 progression reps`) with nothing
+   *   to compare it against, while the `ability` panel states daily AND weekly
+   *   for every group. It is now the denominator of the fact beside it, which
+   *   is what a target is for — and that fact gets a track, so the week reads
+   *   without being parsed.
+   * - *Last session* is the first row of the log form, next to the button that
+   *   repeats it (`20 reps · Wed, Oct 14`). On an empty journal both read
+   *   `None yet` / `0 reps`, so half of zone 1 was a bar of absences.
+   */
   const facts = [
-    { label: 'Training set', value: `${ability.trainingSet} rep${ability.trainingSet === 1 ? '' : 's'}` },
-    { label: 'This week', value: `${weekReps} reps` },
-    { label: 'Weekly target', value: ability.weekly, prose: true },
+    { label: 'Training set', value: `${ability.trainingSet} rep${ability.trainingSet === 1 ? '' : 's'}/set` },
     {
-      label: 'Last session',
-      value: last ? `${repsOf(last.sets)} reps · ${prettyDay(last.date)}` : 'None yet',
-      prose: true,
+      /*
+        `320 / 120–210`, not `320 of 120–210 pull-ups`. Two facts share the bar,
+        so each gets about 138px on a 390px phone, and the long form measured
+        **200px needed against 138 shown** — caught by `npm run clipped`, which
+        is the gate for exactly this and the reason the unit is not here. The
+        unit is in the Training set panel, which states daily and weekly in
+        full for every group.
+      */
+      label: 'This week',
+      value: `${weekReps} / ${ability.weeklyLow}–${ability.weeklyHigh}`,
+      amount: weekReps,
+      of: ability.weeklyLow,
     },
   ]
 
@@ -100,76 +122,170 @@ export function Pullups() {
     <PageLayout
       tier={1180}
       zone1={<StatBar facts={facts} />}
-      zone2={
-        <>
-          <TrainingSetCard max={max} maxInput={maxInput} onMax={setMaxInput} logged={logged} />
-          <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} />
-        </>
-      }
+      zone2={<LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} />}
       zone3={
-        <>
-          {/* The programme moved out of zone 2. It is 637px of the act column's
-              1600, against a review column of 649 — 951px of empty page beside
-              a form squeezed into 442px — and it is not the act: "Starting From
-              Zero" is a twelve-week plan you check off and read your position
-              in, which is reviewing. Measured after the move: 963 against 1286,
-              and it reads better at 722px than at 442. */}
-          <ProgramTracker only="pullup-zero" />
-          <section>
-            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-              <h2 className="text-label text-fg-2">History</h2>
-              <ShowMore list={history} />
-            </div>
-            {sessions.length === 0 ? (
-              <EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame>
-            ) : (
-              <ul>
-                {history.shown.map((w) => (
-                  <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
-                    <span className="flex min-w-0 flex-1 items-baseline gap-2">
-                      <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
-                      <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
-                    </span>
-                    <span className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
-                      <span>{repsOf(w.sets)} reps</span>
-                      {w.durationMin != null && <span>{w.durationMin}m</span>}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => removeWorkout(w.id)}
-                        aria-label={`Delete pull-up session on ${prettyDay(w.date)}`}
-                        className="text-fg-2 reveal hover:text-red"
-                      >×</Button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Analytics</h2>
-            <SummaryStrip items={[
-              { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-              { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
-              { label: 'Best set', value: logged, empty: logged === 0 },
-            ]} />
-            {/* Same stranded grid as Fitness — measured at 188px in a 708px
-                column — and the same fix. See `DayGrid`'s `fluid`. */}
-            <div className="mt-3">
-              <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
-            </div>
-          </section>
-
-          <Manual />
-        </>
+        <Review
+          sessions={sessions}
+          history={history}
+          heat={heat}
+          totalReps={totalReps}
+          best={logged}
+          max={max}
+          maxInput={maxInput}
+          onMax={setMaxInput}
+          onRemove={removeWorkout}
+        />
       }
     />
   )
 }
 
-/** Zone 2 · max strict pull-ups → the set, the schemes and the volume target. */
-function TrainingSetCard({
+/**
+ * The `formats` panel · fourteen session structures, laid out rather than
+ * listed.
+ *
+ * It was fourteen `<li>`s of four grey paragraphs each — name, a
+ * `'High volume · moderate intensity · 10–20 min'` string, the execution line,
+ * and an `RX: … · Scale: …` run-on — which is the longest panel on the page at
+ * **1.91 desktop screens and 3.68 on a phone** and the hardest to use, because
+ * choosing a format means comparing three ratings across fourteen items and
+ * every one of them read as the same paragraph.
+ *
+ * Same facts, given a shape:
+ *
+ * - **The duration sits beside the name**, right-aligned, because "how long
+ *   have I got" is the first question asked of this list and it was the third
+ *   clause of a sentence.
+ * - **Volume and intensity are tags**, so the eye can run down one column and
+ *   compare them. They are `PullupWorkout` fields now, not a string this view
+ *   splits — see the interface for why.
+ * - **RX and Scale are a labelled pair**, one per line, rather than a sentence
+ *   with two colons in it. `RX` is the prescription and `Scale` is the way in;
+ *   on a card that someone reads *because* they cannot yet do the prescribed
+ *   version, those two lines are the point.
+ *
+ * Two columns, on a **container** query, and that is load-bearing. The review
+ * column is 678px while the window is 1440, so `CardGrid`'s viewport `md:` and
+ * `2xl:` steps would give three columns of 210px inside it; `MasonryGrid`
+ * breaks at `@3xl` (768px) and would silently do nothing at all. `@lg` is
+ * 512px, which this column clears and a phone does not. Both failures are
+ * written up in CLAUDE.md, from either side.
+ */
+/**
+ * Solo first, otherwise the authored order.
+ *
+ * `sort` is stable in every engine this ships to, so the eleven solo formats keep
+ * the order `lib/pullups.ts` lists them in and the three partner ones fall to
+ * the end in theirs. Sorting here rather than in the data module because the
+ * data's order is editorial — Ladders and Pyramids lead because they are what
+ * the guide teaches first — and this is one panel's view of it.
+ */
+const SOLO_FIRST = [...PULLUP_WORKOUTS].sort(
+  (a, b) => Number(a.needs === 'partner') - Number(b.needs === 'partner'))
+
+function Formats() {
+  return (
+    <PanelGrid>
+      {SOLO_FIRST.map((w) => (
+        <PanelCard key={w.name} title={w.name} right={<span className="num text-label text-fg-2">{w.minutes}</span>}>
+          <div className="mb-2 flex flex-wrap gap-1">
+            <Tag>{w.volume} volume</Tag>
+            <Tag>{w.intensity} intensity</Tag>
+            {/* Only the ones that need someone else are tagged. Tagging all
+                fourteen would put a label on every card and distinguish
+                nothing, which is the point of the sort doing half the work. */}
+            {w.needs === 'partner' && <Tag>Needs a partner</Tag>}
+          </div>
+          <p className="text-label text-fg-2">{w.how}</p>
+          <DefList rows={[['RX', w.rx], ['Scale', w.scale]]} />
+        </PanelCard>
+      ))}
+    </PanelGrid>
+  )
+}
+
+/**
+ * ── The five reference panels share three pieces ──────────────────────────
+ *
+ * Form, Principles, Formats, Progressions and Equipment were five different
+ * answers to the same question — two used `border-t` separated `<li>`s, one
+ * used `space-y-3` bare `<div>`s, one put its two facts in a run-on sentence
+ * with two colons in it, and one wrote its name and body as
+ * `<strong>Name:</strong> body`. They hold the same shape of thing: a named
+ * item, an optional figure beside the name, and a short body. One card, used
+ * five times, is also what makes the two-column grid safe to apply once.
+ */
+function PanelGrid({ children }: { children: React.ReactNode }) {
+  /*
+    `@lg` = 512px of CONTAINER. The review column is 678px while the window is
+    1440, so `CardGrid`'s viewport `md:`/`2xl:` steps would put three 210px
+    columns in it, and `MasonryGrid` breaks at `@3xl` (768px) and would do
+    nothing at all here. Both failures are in CLAUDE.md, from opposite sides.
+    The container is `@container/page`, declared by `Review` above.
+  */
+  return <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 @lg/page:grid-cols-2">{children}</ul>
+}
+
+function PanelCard({
+  title, right, titleColor, children,
+}: {
+  title: string
+  /** A figure that belongs beside the name — a duration, a video link, an index. */
+  right?: React.ReactNode
+  /** An inline accent for the title only; `PULLUP_PRINCIPLES` carries one each. */
+  titleColor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <li className="flex flex-col rounded-card border border-line bg-ink-1 p-3">
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <h3 className="text-body font-medium text-fg-1" style={titleColor ? { color: titleColor } : undefined}>{title}</h3>
+        {right && <span className="shrink-0">{right}</span>}
+      </div>
+      {children}
+    </li>
+  )
+}
+
+/** Term and detail, aligned down the card. A `<dl>` because that is what two
+ *  labelled facts are, and a grid because the default flow puts the detail on
+ *  its own line and loses the column. */
+function DefList({ rows }: { rows: [string, React.ReactNode][] }) {
+  return (
+    <dl className="mt-2 grid grid-cols-[2.9rem_minmax(0,1fr)] gap-x-2 gap-y-0.5 border-t border-line pt-2 text-label">
+      {rows.map(([term, detail]) => (
+        <Fragment key={term}>
+          <dt className="text-fg-2">{term}</dt>
+          <dd className="text-fg-1">{detail}</dd>
+        </Fragment>
+      ))}
+    </dl>
+  )
+}
+
+/** A rating, as a quiet pill. No accent: fourteen cards of coloured tags is the
+ *  six-colour stats row DESIGN.md argues against, and neither rating is a
+ *  warning — they are both just facts about the session. */
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-2">{children}</span>
+}
+
+/**
+ * The ability panel's calculator · max strict pull-ups → set, schemes, volume.
+ *
+ * It was a zone-2 card sitting above the log form, and it is not an act: you
+ * read it, and what you do with it is type a different number to see what the
+ * table would say. It also stated the same five rows the `PULLUP_ABILITY` table
+ * two inches below it states for every group, so the page said "training set 3"
+ * three times — once in zone 1, once here, once in the table.
+ *
+ * Now it is the head of the `ability` panel, directly above that table, which
+ * is the one place where "your row" and "every row" belong together. Zone 2 is
+ * the log form alone, and the act column is the narrow right-hand one
+ * (`layout.css` places `.zone-act` at `grid-column: 2`), so the 722px review
+ * column is where the table had room to begin with.
+ */
+function TrainingSetCalc({
   max, maxInput, onMax, logged,
 }: {
   max: number
@@ -180,7 +296,7 @@ function TrainingSetCard({
   const a = pullupAbility(max)
   const set = a.trainingSet
   return (
-    <Card band title="Your training set" subtitle={`${a.group} · max ${a.range}`}>
+    <div className="mb-4 rounded-card border border-line bg-ink-1 p-3">
       <label className="mb-3 flex items-center justify-between gap-3 text-body text-fg-1">
         Max strict pull-ups
         <Input
@@ -197,15 +313,17 @@ function TrainingSetCard({
         <Row label="Training set"><span style={{ color: onRaised('mauve') }}>{set} rep{set === 1 ? '' : 's'}/set</span></Row>
         <Row label="Ladder"><span className="num text-fg-1">{ladder(set).join(', ')}</span></Row>
         <Row label="Pyramid"><span className="num text-fg-1">{pyramid(set).join(', ')}</span></Row>
-        <Row label="Daily" divide><span className="text-fg-1">{a.daily}</span></Row>
-        <Row label="Weekly"><span className="text-fg-1">{a.weekly}</span></Row>
+        {/* Daily only. The weekly target is a zone-1 fact, and printing it
+            twice on one screen is how a page comes to have nothing quiet on
+            it. The ability-ladder panel carries both for every group. */}
+        <Row label="Daily volume" divide><span className="text-fg-1">{a.daily}</span></Row>
       </div>
       {logged === 0 && maxInput === '' && (
         <p className="mt-3 text-label text-fg-2">
           Nothing logged yet, so this reads as a beginner. Type your max above, or log a set and it takes the number from your history.
         </p>
       )}
-    </Card>
+    </div>
   )
 }
 
@@ -218,12 +336,22 @@ function Row({ label, children, divide = false }: { label: string; children: Rea
   )
 }
 
-/** rpe is jargon. These are the words people actually use for the same scale. */
-const EFFORT: { value: number; label: string; hint: string }[] = [
-  { value: 6, label: 'Easy', hint: 'RPE 6 — could have done many more' },
-  { value: 7.5, label: 'Moderate', hint: 'RPE 7.5 — three or four left in the tank' },
-  { value: 9, label: 'Hard', hint: 'RPE 9 — one more, maybe' },
-  { value: 10, label: 'Max', hint: 'RPE 10 — nothing left' },
+/**
+ * rpe is jargon. These are the words people actually use for the same scale,
+ * and the colour is the scale rather than decoration — green through to red,
+ * in the one row on the page whose options are ordered by severity.
+ *
+ * `Med`, not `Moderate`: the row shares the 424px act column with Duration, so
+ * each has about 204px, and `Moderate` alone is 76px of it. The full word is
+ * the chip's `aria-label` and the first word of its tooltip, so nothing is
+ * lost to a screen reader or to a hover — only to the 8px of pill padding that
+ * was costing the row a second line.
+ */
+const EFFORT: { value: number; label: string; name: string; hint: string; tone: ChipTone }[] = [
+  { value: 6, label: 'Easy', name: 'Easy', tone: 'green', hint: 'Easy · RPE 6 — could have done many more' },
+  { value: 7.5, label: 'Med', name: 'Moderate', tone: 'yellow', hint: 'Moderate · RPE 7.5 — three or four left in the tank' },
+  { value: 9, label: 'Hard', name: 'Hard', tone: 'peach', hint: 'Hard · RPE 9 — one more, maybe' },
+  { value: 10, label: 'Max', name: 'Max', tone: 'red', hint: 'Max · RPE 10 — nothing left' },
 ]
 
 /**
@@ -405,34 +533,68 @@ function LogSessionCard({
           )}
         </output>
 
-        <ChipPick
-          label="Effort"
-          value={rpe ?? null}
-          onChange={setRpe}
-          options={EFFORT.map((e) => ({ value: e.value, label: e.label, hint: e.hint }))}
-          hint="Optional. How the last set felt, not the whole session."
-        />
+        {/*
+          Effort and Duration, side by side, one line each.
 
-        <ChipPick
-          label="Duration"
-          value={duration ?? null}
-          onChange={setDuration}
-          options={[10, 15, 20, 30].map((n) => ({ value: n, label: `${n}m` }))}
-          hint="Optional."
-          after={
-            <input
-              type="number"
-              min={1}
-              max={300}
-              inputMode="numeric"
-              aria-label="Duration in minutes, another number"
-              value={duration !== undefined && ![10, 15, 20, 30].includes(duration) ? duration : ''}
-              placeholder="…"
-              onChange={(e) => setDuration(e.target.value === '' ? undefined : Number(e.target.value))}
-              className="w-14 rounded-pill border border-line-strong bg-ink-2 px-2 py-1.5 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
-            />
-          }
-        />
+          NOT the `sm:grid-cols-2` the pair above uses. The act column is the
+          narrow one — 416px at a 1440 viewport — so equal halves are 184px,
+          and measured there the effort row is 216px and the duration row
+          207px: both wrapped to two lines, which is the shape that reads as a
+          broken control rather than an overflow. `flex` lets each take its own
+          width instead. The card's inner width at a 1440 viewport is **384px**
+          — not the column's 416 — and the two rows plus the gap come to
+          **378px** of it, one line each; on a 324px phone column they stack to
+          a line apiece rather than four separate rows. The margin is 6px, so
+          a fifth duration preset or a longer effort word costs a second line.
+
+          That is also why Duration offers 10/20/30 and not 10/15/20/30 — the
+          fourth chip is the 20px that did not fit, and 15 is a keystroke away
+          in the escape input beside it.
+
+          `1fr auto`, not `flex`: under flex both fieldsets take an `auto`
+          basis and the longer hint under Effort claimed the width, leaving its
+          own chip row 209px for 211px of chips. The duration column is the
+          `auto` track because it is the fixed one — three chips and an escape
+          input — and Effort takes what is left.
+        */}
+        <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
+          <ChipPick
+            dense
+            label="Effort"
+            value={rpe ?? null}
+            onChange={setRpe}
+            options={EFFORT.map((e) => ({ value: e.value, label: e.label, name: e.name, hint: e.hint, tone: e.tone }))}
+            hint="Optional · the last set"
+          />
+
+          {/* `min` in the legend, so the chips can be bare numbers. Four `15m`
+              chips plus the escape input do not fit 204px; four `15`s do. */}
+          <ChipPick
+            dense
+            // `shrink-0`: a flex item with a wrapping row inside it will give
+            // up width before the row wraps, and the row wrapping is the thing
+            // being prevented.
+            className="shrink-0"
+            label="Duration · min"
+            value={duration ?? null}
+            onChange={setDuration}
+            options={[10, 20, 30].map((n) => ({ value: n, label: String(n), name: `${n} minutes` }))}
+            hint="Optional."
+            after={
+              <input
+                type="number"
+                min={1}
+                max={300}
+                inputMode="numeric"
+                aria-label="Duration in minutes, another number"
+                value={duration !== undefined && ![10, 20, 30].includes(duration) ? duration : ''}
+                placeholder="…"
+                onChange={(e) => setDuration(e.target.value === '' ? undefined : Number(e.target.value))}
+                className="w-10 rounded-pill border border-line-strong bg-ink-2 px-2 py-1 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
+              />
+            }
+          />
+        </div>
 
         <label className="block text-body text-fg-1">
           Notes
@@ -452,85 +614,191 @@ function LogSessionCard({
   )
 }
 /**
- * Zone 3 · the manual, as six chapters behind a rail.
+ * Zone 3 · the whole review zone as one rail, eight panels, one at a time.
  *
- * It was six `CollapsibleSection`s, every one shipping closed, so arriving
- * showed six grey titles and reading anything meant opening one and closing
- * it again. Measured: **2.1 screens shut and 5.7 with every fold open** —
- * 3.6 screens of content reachable only by hunting.
+ * ── Why the history and the calendar moved in here ─────────────────────────
  *
- * The docstring above them argued the folds were right because "this is what
- * you read once and come back to twice, and it should not push the history
- * and the calendar off the screen every day in between". That reasoning is
- * sound and the fold is the wrong instrument for it: six peers, each a
- * chapter, is a table of contents. A rail keeps exactly the property the
- * folds were protecting — one chapter of height, never six — and adds the
- * one they could not, which is seeing what the other five are without
- * opening them.
+ * The rail already held the six manual chapters, and above it sat three more
+ * peer sections stacked: the program tracker, the history list and an
+ * "Analytics" section holding the summary strip and the heatmap. Measured as
+ * shipped, at `?demo=1`: **1885px / 2.09 desktop screens and 3490px / 4.14 on
+ * a phone**, of which the review zone was `859 + 47 + 375 + 385` — four
+ * headings, and the rail's own table of contents was the last of them.
  *
- * Same `SectionRail` as Insights, Coaching and Pickleball. No "All" row: the
- * chapters do not overlap, and all six at once is the 5.7-screen page this
- * replaces. Sticky, because each fold was.
+ * That is the page the rail was introduced to fix, re-grown one section at a
+ * time outside it. A rail is a table of contents for *peers*, and a session
+ * list, a heatmap and a chapter about grip are peers in exactly the sense that
+ * matters here: you want one of them, you know which, and you do not want to
+ * scroll past the other seven to reach it. So there is now one navigation in
+ * the review zone and nothing stacked beside it.
+ *
+ * The default panel is the program's current day — see `PU_PANELS` for the
+ * whole ordering argument. The act column is always there on the right, so
+ * logging never depends on which panel is open.
+ *
+ * ── A bar, not a side rail ────────────────────────────────────────────────
+ *
+ * `railAt="never"`, so the eight panels are a chip row across the top of the
+ * panel at every width — the same control a phone already got, kept on the
+ * desktop. A side rail spends the gutter and shows every group at once, which
+ * is worth 192px plus a 32px gap when the groups are twenty-four analytics
+ * cards; for eight it reads as a second sidebar beside the app's own, and it
+ * takes the width from a column that has a calendar and a 14-row table in it.
+ *
+ * Worth knowing what was tried first, because the default is a trap here:
+ * `SectionRail` defaults to `@4xl` (896px) and **zone 3 at the 1180 tier is
+ * 722px**, so a rail placed there can never reach its own breakpoint and ships
+ * its phone strip on a desktop by accident. `2xl` makes the side rail actually
+ * appear — measured at 192px, vertical, with the panel at 678px — and that is
+ * the version this replaces.
+ *
+ * No "All" row: the panels do not overlap, and all eight at once is the page
+ * this replaces.
  */
-const PU_CHAPTERS = [
+/**
+ * Ordered for someone about to train, not for someone reading about training.
+ *
+ * The first order here was History, Program, Form, Principles, Training set,
+ * Formats, Progressions, Equipment — which is roughly the order the sections
+ * happened to be written in, and it opens the page on what you have already
+ * done. The bar is read left to right and the leftmost row is the default, so
+ * that order decides whether arriving means *doing something* or *reading
+ * about it*.
+ *
+ * Doing first, in the order the questions actually arrive:
+ *
+ * 1. **Today** — the program's current day, with its boxes to tick. The one
+ *    panel that answers "what am I doing right now" with a specific answer.
+ * 2. **Formats** — the menu, for a session off-program.
+ * 3. **Training set** — the numbers for whichever you picked.
+ * 4. **Form** — the cues, which are read *while* doing it.
+ *
+ * Then the record, then the reference:
+ *
+ * 5. **History** · 6. **Progressions** · 7. **Principles** · 8. **Equipment**
+ *
+ * Progressions sits with the reference rather than with the acts even though
+ * it is a set of exercises, because it is the answer to "I cannot do one yet"
+ * — a question you ask once and then work from for weeks.
+ */
+const PU_PANELS = [
+  { id: 'program', label: 'Today', blurb: 'Starting From Zero · your current day' },
+  { id: 'formats', label: 'Formats', blurb: `${PULLUP_WORKOUTS.length} session structures, solo first` },
+  { id: 'ability', label: 'Training set', blurb: 'Your max → set, schemes, volume' },
   { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
-  { id: 'principles', label: 'Principles', blurb: 'How the program is meant to be run' },
-  { id: 'ability', label: 'Ability ladder', blurb: 'Max → training set → volume' },
-  { id: 'formats', label: 'Workout formats', blurb: `${PULLUP_WORKOUTS.length} session structures` },
+  { id: 'history', label: 'History', blurb: 'Sessions, volume and the calendar' },
   { id: 'progressions', label: 'Progressions', blurb: 'Building toward a first strict rep' },
-  { id: 'equipment', label: 'Equipment', blurb: 'Bar heights and what is worth buying' }
+  { id: 'principles', label: 'Principles', blurb: 'How the program is meant to be run' },
+  { id: 'equipment', label: 'Equipment', blurb: 'Bar heights and what is worth buying' },
 ] as const
 
-function Manual() {
+function Review({
+  sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove,
+}: {
+  sessions: Workout[]
+  history: CappedList<Workout>
+  heat: { date: string; value: number }[]
+  totalReps: number
+  best: number
+  max: number
+  maxInput: string
+  onMax: (v: string) => void
+  onRemove: (id: string) => void
+}) {
   const [chapter, setChapter] = useStickyState<string>(
-    /* Form first: it is the chapter that changes what the next rep looks
-       like, and the one a beginner is wrong about. */
-    'pullups.chapter', 'form', PU_CHAPTERS.map((c) => c.id),
+    'pullups.chapter', 'program', PU_PANELS.map((c) => c.id),
   )
-  const current = PU_CHAPTERS.find((c) => c.id === chapter) ?? PU_CHAPTERS[0]
+  const current = PU_PANELS.find((c) => c.id === chapter) ?? PU_PANELS[0]
 
   return (
     <section>
-      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
       {/* Container on the outer div, grid on the inner: an element cannot
           query itself. Phone column spelled out, or the chip row's
           min-content sizes the only implicit track and the page scrolls
           sideways. Both in docs/PAGE-SHAPE.md. */}
       <div className="@container/page">
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[12rem_minmax(0,1fr)]">
+      {/* One column: the bar is a row of the grid, not a column of it. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
         <SectionRail
-          label="Pull-up manual chapters"
-          groups={PU_CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
+          label="Pull-up sections"
+          railAt="never"
+          groups={PU_PANELS.map((c) => ({ id: c.id, label: c.label }))}
           value={chapter}
-          onChange={(id: string | null) => setChapter(id ?? 'form')}
+          onChange={(id: string | null) => setChapter(id ?? 'program')}
         />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-            <h3 className="text-heading font-medium text-fg-1">{current.label}</h3>
+            <h2 className="text-heading font-medium text-fg-1">{current.label}</h2>
             <p className="text-label text-fg-2">{current.blurb}</p>
+            {chapter === 'history' && <span className="ml-auto"><ShowMore list={history} /></span>}
           </div>
-          {chapter === 'form' && (<>
-        <div className="space-y-3">
-          {PULLUP_FORM.map((f) => (
-            <div key={f.phase}>
-              <p className="text-body text-fg-1">{f.phase}</p>
-              <ul className="mt-1 space-y-1 text-label text-fg-2">
-                {f.cues.map((c) => <li key={c}>· {c}</li>)}
-              </ul>
-            </div>
-          ))}
+          {chapter === 'history' && (<>
+        <SummaryStrip items={[
+          { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+          { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
+          { label: 'Best set', value: best, empty: best === 0 },
+        ]} />
+        {/* Same stranded grid as Fitness — measured at 188px in a 708px
+            column — and the same fix. See `DayGrid`'s `fluid`. */}
+        <div className="mt-3">
+          <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
         </div>
+        {sessions.length === 0 ? (
+          <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
+        ) : (
+          <ul className="mt-3">
+            {history.shown.map((w) => (
+              <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
+                <span className="flex min-w-0 flex-1 items-baseline gap-2">
+                  <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
+                  <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
+                </span>
+                <span className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
+                  <span>{repsOf(w.sets)} reps</span>
+                  {w.durationMin != null && <span>{w.durationMin}m</span>}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onRemove(w.id)}
+                    aria-label={`Delete pull-up session on ${prettyDay(w.date)}`}
+                    className="text-fg-2 reveal hover:text-red"
+                  >×</Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
           </>)}
-          {chapter === 'principles' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_PRINCIPLES.map((p) => (
-            <li key={p.name}>
-              <strong style={{ color: onRaised(p.color) }}>{p.name}:</strong> {p.body}
-            </li>
-          ))}
-        </ul>
-          </>)}
+          {/* The programme was a peer section above the rail. It is 859px and 47
+              controls — the largest single thing on the page, and nothing you
+              need while logging today's set. */}
+          {chapter === 'program' && <ProgramTracker only="pullup-zero" />}
+          {chapter === 'form' && (
+            <PanelGrid>
+              {PULLUP_FORM.map((f, i) => (
+                <PanelCard key={f.phase} title={f.phase} right={<span className="num text-label text-fg-2">{i + 1}</span>}>
+                  <ul className="space-y-1 text-label text-fg-2">
+                    {f.cues.map((c) => <li key={c} className="pl-3 -indent-3">· {c}</li>)}
+                  </ul>
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
+          {chapter === 'principles' && (
+            <PanelGrid>
+              {PULLUP_PRINCIPLES.map((p) => (
+                /* The per-principle accent stays, and moves from a run-on
+                   `<strong>Name:</strong> body` to the card's title — same
+                   colour, same meaning, and the body is no longer a sentence
+                   that starts with a colon. */
+                <PanelCard key={p.name} title={p.name} titleColor={onRaised(p.color)}>
+                  <p className="text-label text-fg-2">{p.body}</p>
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
           {chapter === 'ability' && (<>
+        <TrainingSetCalc max={max} maxInput={maxInput} onMax={onMax} logged={best} />
         <table className="w-full text-left text-label">
           <caption className="sr-only">Ability group by max strict pull-ups, with the training set and daily and weekly volume targets for each.</caption>
           <thead>
@@ -555,49 +823,30 @@ function Manual() {
           </tbody>
         </table>
           </>)}
-          {chapter === 'formats' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_WORKOUTS.map((w) => (
-            <li key={w.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <p className="text-body text-fg-1">{w.name}</p>
-              <p>{w.profile}</p>
-              <p className="mt-1">{w.how}</p>
-              <p className="mt-1">
-                <span className="text-green">RX:</span> {w.rx} · <span className="text-blue">Scale:</span> {w.scale}
-              </p>
-            </li>
-          ))}
-        </ul>
-          </>)}
-          {chapter === 'progressions' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_PROGRESSIONS.map((p) => (
-            <li key={p.name} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-body text-fg-1">{p.name}</span>
-                <VideoLink name={p.name} size="sm" />
-              </div>
-              <p><strong>Why:</strong> {p.why}</p>
-              <p className="mt-1"><strong>How:</strong> {p.how}</p>
-            </li>
-          ))}
-        </ul>
-          </>)}
-          {chapter === 'equipment' && (<>
-        <ul className="space-y-2 text-label text-fg-2">
-          {PULLUP_EQUIPMENT.map((e) => (
-            <li key={e.item} className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-              <span className="text-body text-fg-1">{e.item}</span>
-              <p>{e.spec}</p>
-              {e.url && (
-                <a href={e.url} target="_blank" rel="noreferrer" className="text-blue hover:underline">
-                  {e.item} · suppliers
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-          </>)}
+          {chapter === 'formats' && <Formats />}
+          {chapter === 'progressions' && (
+            <PanelGrid>
+              {PULLUP_PROGRESSIONS.map((p) => (
+                <PanelCard key={p.name} title={p.name} right={<VideoLink name={p.name} size="sm" />}>
+                  <DefList rows={[['Why', p.why], ['How', p.how]]} />
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
+          {chapter === 'equipment' && (
+            <PanelGrid>
+              {PULLUP_EQUIPMENT.map((e) => (
+                <PanelCard key={e.item} title={e.item}>
+                  <p className="text-label text-fg-2">{e.spec}</p>
+                  {e.url && (
+                    <a href={e.url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-label text-blue underline">
+                      Suppliers for {e.item}
+                    </a>
+                  )}
+                </PanelCard>
+              ))}
+            </PanelGrid>
+          )}
         </div>
       </div>
       </div>

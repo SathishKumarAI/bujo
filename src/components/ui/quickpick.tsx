@@ -22,13 +22,82 @@ import { cn } from '../../lib/cn'
  */
 
 /** Selected-chip styling per tone. Tailwind needs whole class names, so these
- *  are spelled out rather than built from a template. */
+ *  are spelled out rather than built from a template.
+ *
+ *  `green`/`yellow`/`red` exist for a RAMP — a row whose options are ordered by
+ *  severity, where the colour is the ordering and not decoration (effort:
+ *  easy → max). Measured as rendered, selected, at `?view=pullups`: see the
+ *  table in `views/Pullups.tsx` `EFFORT`. Do not reach for one of these to make
+ *  a single chip louder; a row where every chip is a different colour for no
+ *  reason is the six-colour stats row DESIGN.md argues against. */
+/*
+  THE TEXT ON A WASH IS NEUTRAL, and `brand` is the only exception.
+
+  `brand-wash`/`brand-text` is a solved PAIR — two tokens picked together per
+  theme. No other accent has one (grep `--color-.*-\(wash\|text\)` in
+  `index.css`: brand and nothing else), so `text-teal on bg-teal/15` is the
+  accent-on-wash idiom applied without the calibration that makes it work. In
+  a light theme the accents are solved to about 4.6 against the PAGE ground,
+  and a 15% wash of the accent moves that ground toward the text, which spends
+  the whole margin. Measured on the rendered chips, selected, composited over
+  the first opaque ancestor:
+
+  | theme | easy green | med yellow | hard peach | max red |
+  |---|---|---|---|---|
+  | latte  | 4.25 | 3.64 | 4.33 | 4.40 |
+  | dawn   | 4.54 | 3.81 | 4.59 | 4.70 |
+  | mocha  | 14.12 | 16.52 | 11.86 | 9.06 |
+
+  Seven of the ten light-theme readings are under 4.5 and the worst is 3.64.
+  Neither gate can see it: `check-contrast` reads token values and a token over
+  a wash of itself is not a token, and axe needs a resolvable background, which
+  a translucent fill over a translucent card is not. This is the fourth entry
+  of this shape in CLAUDE.md — fix the GROUND or the foreground, never bleach
+  the accent — and the cheap correct answer is to stop using the accent as
+  text: the colour still carries the ramp through the border and the fill.
+
+  This also fixes `teal` and `peach`, which shipped with accent text and the
+  same arithmetic, at every call site they have.
+*/
 const ON_TONE = {
   brand: 'border-brand bg-brand-wash font-medium text-brand-text',
-  teal: 'border-teal bg-teal/15 font-medium text-teal',
-  peach: 'border-peach bg-peach/15 font-medium text-peach',
+  teal: 'border-teal bg-teal/15 font-medium text-fg-1',
+  peach: 'border-peach bg-peach/15 font-medium text-fg-1',
+  green: 'border-green bg-green/15 font-medium text-fg-1',
+  yellow: 'border-yellow bg-yellow/15 font-medium text-fg-1',
+  red: 'border-red bg-red/15 font-medium text-fg-1',
 } as const
-const HOVER_TONE = { brand: 'hover:border-brand/60', teal: 'hover:border-teal/60', peach: 'hover:border-peach/60' } as const
+/*
+  AT REST, a ramp option keeps its colour in the BORDER.
+
+  A row whose colour only appears once something is selected is a row whose
+  ordering you cannot see until you have already chosen — and effort is ordered
+  (easy → max), which is the whole reason it has tones. Border rather than text
+  or fill: a border is a non-text graphic, so it answers to the 3:1 floor
+  instead of 4.5, and that is the one place a 15% accent can be spent in a
+  light theme without the arithmetic in `ON_TONE` above. Measured against the
+  chip's own `bg-ink-2`, unselected, across the five themes: see the probe
+  table in the PR.
+*/
+const REST_TONE = {
+  brand: 'border-line-strong',
+  teal: 'border-teal/50',
+  peach: 'border-peach/50',
+  green: 'border-green/50',
+  yellow: 'border-yellow/50',
+  red: 'border-red/50',
+} as const
+
+const HOVER_TONE = {
+  brand: 'hover:border-brand/60',
+  teal: 'hover:border-teal/60',
+  peach: 'hover:border-peach/60',
+  green: 'hover:border-green/60',
+  yellow: 'hover:border-yellow/60',
+  red: 'hover:border-red/60',
+} as const
+
+export type ChipTone = keyof typeof ON_TONE
 
 /**
  * A row of preset values, plus whatever else the caller wants on the end.
@@ -45,6 +114,7 @@ export function ChipPick<T extends string | number>({
   after,
   className,
   tone = 'brand',
+  dense = false,
   multi = false,
   action = false,
 }: {
@@ -65,8 +135,24 @@ export function ChipPick<T extends string | number>({
    */
   action?: boolean
   /** A non-brand accent, for groups that are not the page's primary choice. */
-  tone?: 'brand' | 'teal' | 'peach'
-  options: { value: T; label: ReactNode; hint?: string }[]
+  tone?: ChipTone
+  /**
+   * Tighter padding, for a row that has to fit a narrow column on one line.
+   *
+   * Exists because the alternative is a call site passing `className` and
+   * re-deciding the chip's geometry, which is how two rows of the same control
+   * come to disagree. Measured on the pull-up log form, whose Effort and
+   * Duration rows share a 424px act column split in two: at the default
+   * `px-3` the four effort chips are 227px against a 204px half and wrap;
+   * dense they are 193px and do not.
+   */
+  dense?: boolean
+  /**
+   * `tone` per option overrides the group's, for a row whose colour IS the
+   * ordering — effort easy → max. Unset everywhere else, which is the common
+   * case and stays one accent.
+   */
+  options: { value: T; label: ReactNode; hint?: string; tone?: ChipTone; name?: string }[]
   /** One line under the row — what the choice means, not what to do. */
   hint?: ReactNode
   /** A typed escape hatch, or anything else, on the end of the row. */
@@ -76,9 +162,10 @@ export function ChipPick<T extends string | number>({
   return (
     <fieldset className={cn('min-w-0', className)}>
       <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className={cn('flex flex-wrap items-center', dense ? 'gap-1' : 'gap-1.5')}>
         {options.map((o) => {
           const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
+          const t = o.tone ?? tone
           return (
             <button
               // `type="button"` is load-bearing: a bare <button> inside a form
@@ -94,13 +181,22 @@ export function ChipPick<T extends string | number>({
               // reporting a state the row does not have.
               aria-pressed={action ? undefined : on}
               title={o.hint}
+              /* A shortened label is a shortened *name* unless it is said
+                 somewhere. `Med` and a bare `20` are legible on screen beside
+                 their legend and meaningless read aloud on their own. */
+              aria-label={o.name}
               className={cn(
-                'rounded-pill border px-3 py-1.5 text-label transition-all duration-150',
+                'rounded-pill border text-label transition-all duration-150',
+                dense ? 'px-2 py-1' : 'px-3 py-1.5',
                 // The press is the feedback. `active:scale-95` reads as the
                 // control accepting the tap on a touch screen, where there is
                 // no hover to tell you anything.
                 'active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100',
-                on ? ON_TONE[tone] : `border-line-strong bg-ink-2 text-fg-2 hover:text-fg-1 ${HOVER_TONE[tone]}`,
+                on
+                  ? ON_TONE[t]
+                  // The rest border is the OPTION's tone only — a group tone
+                  // colours the selection, not every chip in the row.
+                  : `${o.tone ? REST_TONE[o.tone] : 'border-line-strong'} bg-ink-2 text-fg-2 hover:text-fg-1 ${HOVER_TONE[t]}`,
               )}
             >
               {o.label}

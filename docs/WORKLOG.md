@@ -26,6 +26,138 @@ Rules the three share:
 
 ---
 
+## 2026-10-15 — Pull-ups driven from the running app, and a seed that had never seeded it (COD-312, PR #400)
+
+One page, one session, nine commits, every change measured on the built bundle
+at `?demo=1` before and after. The brief arrived in pieces while the work was
+running — "make it simple and clean", then the history into the rail, then the
+log form on the right, then the bar instead of a column, then an order someone
+can train from — so each measurement below is the one that justified the next
+instruction rather than a summary written afterwards.
+
+**The page.** Its review zone had grown back into the shape its `SectionRail`
+was added to fix: four stacked peer sections, with the rail's own table of
+contents **last**. It is now one bar of eight panels, one at a time, with the
+log form alone in the act column.
+
+| | before | after |
+|---|---|---|
+| desktop | 1885px · **2.09 screens** | 995–1720px · **1.11–1.91 per panel** |
+| phone | 3490px · **4.14 screens** | 1761–4158px per panel |
+| card headers, 8 views | 23 subtitled, **1075px** | 23 subtitled, **687px** |
+| program map, desktop | 377px, 125px cells | **298px**, 104px cells |
+| the bar, desktop | — | 1 row, 635px of chips in 686px |
+
+Panels ordered for doing rather than reading — **Today · Formats · Training set
+· Form · History · Progressions · Principles · Equipment** — because the
+leftmost row is the default, so that order decides whether arriving means doing
+something or reading about it. Within Formats, solo first: three of fourteen
+need a second person on the bar, and `needs` is a field rather than a grep for
+"Partner" in `scale`, which gets three of fourteen wrong (Ladders *scales* with
+a spotter and is a solo session; Cliffhangers *is* two people).
+
+### Six defects, and what each one teaches
+
+1. **The seed had never seeded this page's domain.** `views/Pullups.tsx`
+   filters `workouts` on `activity === 'pullups'`; `lib/demo.ts` drew from
+   `['run','strength','yoga','walk','cycle']`. So the history list rendered its
+   empty frame at 47px, the summary strip read `0 · 0 · 0` and the heatmap drew
+   84 blank cells — at five themes and two viewports, on every `a11y` run, for
+   the life of the page. Sibling of the unseeded `data.cycle`.
+   **And the tests for the fix passed vacuously:** armed against a planted empty
+   seed, three of five failed and **two passed** — `every([])` is true and
+   `0 < 40` is true. Both now carry a floor. A scan that matches nothing passes.
+2. **`SectionRail`'s default breakpoint can never fire in a review column.**
+   `@4xl` is 896px, zone 3 at the 1180 tier is 722px — so a rail placed there
+   ships its *phone* chip strip on a 1440 desktop, which is the exact case the
+   `railAt` prop was added for and the call site that needed it missed. Six
+   chips fitted the box and hid it; eight did not.
+3. **An accent has no solved foreground.** `brand-wash`/`brand-text` is the only
+   pair in `index.css`, so `text-teal on bg-teal/15` is the accent-on-wash idiom
+   without the calibration that makes it work. Measured selected, composited
+   over the first opaque ancestor: latte **4.25 / 3.64 / 4.33 / 4.40**, dawn
+   **4.54 / 3.81 / 4.59 / 4.70** — seven of ten under 4.5, and `teal` and
+   `peach` had shipped that way at every call site. Text moved to `fg-1`, colour
+   kept in border and fill: worst of twenty readings **6.42**. For a ramp at
+   rest the colour belongs in the border, and the honest comparison is not the
+   3:1 floor but the border the app already ships — `border-line-strong` on a
+   chip is **1.02–1.64**, against the ramp's 1.97–3.81.
+4. **A probe that regex-parses a computed colour is reading garbage.** Tailwind
+   v4 emits `oklab(0.48592 -0.108732 0.067276 / 0.5)`, and `match(/[\d.]+/g)`
+   turns that into a colour that exists nowhere. **Two full contrast tables in
+   this session were wrong before a canvas resolved them**, and the tell was
+   four *identical* ratios for four different tones. Same family as the mid-fade
+   blend and the inline-style theme trap.
+5. **A shorter item centred in a flex row is not a second line.** A probe
+   counting distinct child `top`s reported the duration chip row wrapped at 1440
+   and not at 390 — the wrong way round, which is what should have given it
+   away. The escape input sits 2.2px lower because `items-center` centres a
+   shorter box. Count rows from the row box over its tallest child. The real
+   wrap, when it came, was arithmetic: a 211px row in a 209px fieldset.
+6. **Two viewport queries that should have been container queries.**
+   `ProgramMap` keyed its focus label on `sm:` and always drew the week's label;
+   `?view=program` renders the same map in a ~300px card on a 1440 screen, so
+   the viewport said "plenty of room" to a 39px cell, and on a 324px phone
+   column `Phase 1 · Weeks 5–8` wrapped to two lines and left the six day cells
+   30px each — the header squeezing the thing it labels.
+
+### What the gates said, and what they did not
+
+`verify` 141 files / **1928 tests** / eslint 0 errors / build clean. `clipped`
+**0 across 23 views** at three widths — and it earned its place by catching a
+regression written an hour earlier: `320 of 120–210 pull-ups` needs **200px
+against the 138** a phone gives a zone-1 fact when two share the bar. `space --
+pullups program` inside budget. `a11y`: **Pull-ups 0 serious on all 7 shards**.
+
+Both rendering gates grade only the panel the bar opens on (COD-237), so a
+throwaway probe drove all eight panels at five desktop themes and two phone
+themes: **56 scans, 0 serious** — and it was armed first, with a planted
+contrast violation that fired **on Equipment alone**, which is what proves the
+panel switching was real rather than eight scans of the same DOM.
+
+**Two gates are red, and both are red on `main`.** Measured rather than
+inferred: `main` built in a throwaway worktree, served on 4199, with the served
+bundle hash (`index-C4E_uadf.js`) checked against this branch's
+(`index-CECylirg.js`) before either number was believed.
+
+- `a11y` — **7 serious, identical shards on both**. Four are Cycle's
+  `text-fg-3` day label at 4.01–4.16; three are Mindset's inline `rgb(0,0,0)` on
+  a brand fill at 3.19–3.92. **COD-314.**
+- `subtitle-reach` — **25 against a budget of 24**, same rows on both; Pull-ups
+  contributes 0.
+
+Neither is in `npm run verify`, which is how both went red unnoticed — the same
+shape as the `design`/`contrast` note this file already carries. Also filed:
+**COD-313**, the demo banner overflowing a 390px phone by 24px on every view,
+which `clipped` is quiet about despite its rule naming exactly that case.
+
+### Got wrong on the way
+
+- **Reported `a11y` as exiting 0 twice.** The first run was piped through
+  `tail`, so the exit code read was `tail`'s; the second echoed `$?` after a
+  redirect in a `;` chain. The gate exits **1**. Read the exit status of the
+  thing you ran, not of the thing you piped it into.
+- **Committed three throwaway probe scripts** with a `git add -A`. Removed in
+  the next commit.
+- **Claimed a wrap that was not there** for two passes (see defect 5), and wrote
+  the wrong reasoning into a source comment before the geometry dump disproved
+  it. The comment was corrected in the same session; a measurement that
+  contradicts the shape of the failure ("wrapped on desktop, fine on a phone")
+  is a measurement to distrust first.
+
+### Shape worth copying
+
+**A review zone has one navigation in it.** A rail fixes a page once, and the
+sections re-grow beside it — a new section next to a rail is a new rail row, or
+it belongs on another page. And a bar is not a rail: a side rail sticks because
+it is a column beside content that scrolls past it, while a bar sits above its
+panel, so sticking means painting over the thing it switches. The alternative
+offered was hiding it on scroll, which is `useHideOnScroll` — the mechanism
+behind COD-202, where the phone's only navigation slid out of frame and a gate
+declared the destination retired having scanned zero views.
+
+---
+
 ## 2026-10-15 — Sixteen PRs driven from the running app, and an app that was lying about progress
 
 Sixteen PRs, **#383–#398**. `main` at `43daacf`, zero open PRs, **141 test

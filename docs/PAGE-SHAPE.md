@@ -199,6 +199,60 @@ which the first draft hit anyway:
   scrolled sideways. The rail's own `overflow-x-auto` cannot save it — the
   track overflows, not the item.
 
+### The rail's default breakpoint can never fire in a review column
+
+`SectionRail`'s `railAt` defaults to `@4xl` — **896px of container** — and zone
+3 at the 1180 tier measures **722px**. A rail placed there therefore never
+reaches its own breakpoint and renders the *phone* chip strip on a 1440
+desktop, silently, which is the exact case `railAt` exists for.
+
+Pass `railAt="2xl"` **and move the caller's grid breakpoint to match**
+(`@2xl/page:grid-cols-[12rem_minmax(0,1fr)]`). The two disagreeing is worse
+than either alone: the grid hands the rail a 192px column and the rail fills it
+with a horizontal strip. Six chips fit a 722px box and hid this on Pull-ups for
+as long as the rail had six chapters; eight did not.
+
+### A rail is a column; a bar is a row. They are not the same control
+
+`railAt="never"` keeps the chip row at every width — a bar across the top of
+the panel it switches. Reach for it when the groups are few and the panel needs
+the width more than the navigation does: a side rail costs 192px plus a 32px
+gap, which is cheap beside twenty-four analytics cards in a full-width pane and
+expensive beside eight panels in a 678px review column.
+
+Three differences, each measured on Pull-ups:
+
+- **It wraps rather than scrolls.** Eight labels are 635px, which fits a 686px
+  desktop bar on one row and does not fit a 324px phone — where it becomes four
+  rows, 101px. That is the price of all eight being reachable: a strip that
+  scrolls sideways with nothing advertising it hides three of them, which is
+  the same failure the twelve-chapter rail hit from the other direction.
+- **It does not stick.** A side rail sticks because it is a column beside
+  content that scrolls past it — staying put is the whole reason it is a
+  column. A bar sits *above* its panel, so sticking means painting over the
+  thing it switches. Do not reach for `useHideOnScroll` instead: that is the
+  mechanism behind COD-202, where the phone's only navigation slid out of frame
+  and a browser gate declared the destination retired having scanned **zero**
+  views. A navigation that moves is a navigation that has to be found.
+- **The leftmost row is the default, so the order is a decision about
+  behaviour.** Pull-ups opened on History — what you have already done — in an
+  order that was really the order the sections had been written in. Reordered
+  to put the program's current day first, with its checkboxes, the same page
+  answers "what am I doing now" instead of "what did I do".
+
+### Both gates grade the panel the rail opens on
+
+`a11y` reaches a page by URL and scans whatever mounted; `space` measures the
+same single panel. A rail holds **one** panel in the DOM and has no
+`aria-expanded`, so `openFolds` cannot reach the others (COD-237). Whatever the
+instrument, **drive it per group with a throwaway probe and say what you
+measured** — Pull-ups' eight panels at five desktop themes and two phone themes
+is 56 scans, and that is the number to quote, not the one the gate printed.
+
+Arm the probe before trusting it. A planted contrast violation in one panel
+must fail in that panel **and in no other** — that is what separates "eight
+panels scanned" from "one panel scanned eight times".
+
 ## Every chart can be enlarged
 
 `Card` has had a complete enlarge for a long time — ⛶ button, focus trap,
