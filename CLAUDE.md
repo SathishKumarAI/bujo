@@ -670,6 +670,84 @@ is a `<span>` that names nothing, and with the toggles forced on that was one
 2.02:1 behind a branch the seed never took: when a gate walks the DOM, ask what
 is not in it.
 
+Trap: **a rail fixes a page once, and the sections re-grow beside it.**
+Pull-ups' review zone was a `SectionRail` of six manual chapters with three
+peer sections stacked *above* it — the program tracker, the history list and an
+"Analytics" heading — so the table of contents was the last thing on the page
+and the thing it was meant to replace was back. Measured as shipped at
+`?demo=1`: **1885px / 2.09 desktop screens and 3490px / 4.14 on a phone**, of
+which the review zone was `859 + 47 + 375 + 385`. Folding the history, the
+summary strip, the heatmap and the program into the same rail (eight panels,
+one at a time) took it to **1041px / 1.16 screens**, worst panel 1.89. The rule
+that keeps it: **a review zone has one navigation in it.** A new section next
+to a rail is a new rail row, or it belongs on another page. And the same
+measurement is the argument for moving a card OUT of zone 2 — the act column is
+the narrow right-hand one (`layout.css` puts `.zone-act` at `grid-column: 2`),
+so anything that is read rather than filled in has more room in the review.
+
+Trap: **`SectionRail` defaults to a breakpoint a review column can never
+reach.** `railAt` is `'4xl'` (896px) and zone 3 at the 1180 tier is **722px**,
+so a rail placed there renders its *phone* chip strip on a 1440 desktop — the
+case the `railAt` prop was added for, missed by the call site that needed it.
+Pass `railAt="2xl"` **and** match the caller's grid breakpoint
+(`@2xl/page:grid-cols-[12rem_minmax(0,1fr)]`); the two disagreeing is worse
+than either, because the grid hands the rail a 192px column and the rail fills
+it with a horizontal strip. Six chips fit 722px and hid this; eight did not.
+
+Trap: **an accent has no solved foreground — `brand` is the only pair.**
+`index.css` defines `--color-brand-wash` and `--color-brand-text` and *nothing
+else* of that shape, so `text-teal on bg-teal/15` is the accent-on-wash idiom
+applied without the calibration that makes it work: in a light theme the
+accents are solved to about 4.6 against the page ground, and a 15% wash of the
+accent moves that ground toward the text and spends the whole margin. Measured
+on `ChipPick`'s selected chips, composited over the first opaque ancestor:
+**latte 4.25 / 3.64 / 4.33 / 4.40** and **dawn 4.54 / 3.81 / 4.59 / 4.70** for
+green/yellow/peach/red — seven of ten under 4.5, worst 3.64, and the two tones
+that already shipped (`teal`, `peach`) carried it at every call site. Neither
+gate can see it: `check-contrast` reads token values and a token over a wash of
+itself is not a token, and axe needs a resolvable background. The fix is the
+one this file keeps arriving at — **do not bleach the accent, move the
+foreground**: the text is `fg-1` and the colour stays in the border and the
+fill. After: **6.42 worst of twenty readings.** A colour *ramp* at rest belongs
+in the border, which is a graphic at 3:1 rather than text at 4.5 — and measure
+it against the border the app already ships rather than against the floor:
+`border-line-strong` on a chip is **1.02–1.64** across the five themes, so the
+ramp's 1.97–3.81 improves the boundary it was feared to weaken.
+
+Trap: **a browser probe that regex-parses a computed colour is reading
+garbage.** Tailwind v4 emits `oklab(0.48592 -0.108732 0.067276 / 0.5)` for
+`border-green/50`, and `colour.match(/[\d.]+/g)` on that yields `0.48592` as
+"red" and `-0.108732` as "green" — so two full passes of a contrast table were
+wrong, once producing four *identical* ratios for four different tones, which
+is the tell. Resolve through a 1x1 canvas instead (`fillStyle = colour`,
+`getImageData`): the browser parses whatever syntax it is and composites the
+alpha over a ground you chose. Same family as the mid-fade blend and the
+inline-style theme trap — an arithmetically perfect number describing a pairing
+that exists nowhere in the app.
+
+Trap: **a shorter item centred in a flex row is not a second line.** A probe
+counting distinct child `top` values reported the duration chip row as wrapped
+at 1440 and not wrapped at 390 — the wrong way round, which is what should have
+given it away. The escape input is `py-1` against the chips' taller box, so
+`items-center` puts it 2.2px lower and it sits on the same line. Count rows
+from the row box's own height over its tallest child. The real wrap, when it
+came, was visible as arithmetic: a 211px chip row in a 209px fieldset.
+
+Trap: **the seed can miss a whole activity, and the page filtering for it
+cannot fail.** `views/Pullups.tsx` filters `workouts` on
+`activity === 'pullups'`; `lib/demo.ts` drew from
+`['run','strength','yoga','walk','cycle']`, so that filter matched **nothing**
+and the history list rendered its empty frame at 47px, the summary strip read
+`0 · 0 · 0` and the heatmap drew 84 blank cells — at five themes and two
+viewports, on every `npm run a11y` run, for the life of the page. Sibling of
+the unseeded `data.cycle`. Two corollaries worth copying: write the seeded rows
+through the **same helper the form writes** (`setLines`), or a hand-typed
+`'Pull-up 4x5'` stores fine, counts as zero reps and gives you a history of
+sessions worth nothing; and **check what group the seeded numbers land in** —
+topping out at a best set of 5 put the demo in Novice, whose training set is
+`1`, so the calculator opened on "1 rep/set · Ladder 1 · Pyramid 1", which
+reads as broken rather than as beginner.
+
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.
