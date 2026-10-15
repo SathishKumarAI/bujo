@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
 import { Button } from '../components/ui/button'
 import { PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame } from '../components/page'
-import { ExerciseLibrary, Manual, SessionCard, type SessionItem } from '../components/homeworkout'
+import { ExerciseLibrary, Manual, ProgressionNudge, SessionCard, type SessionItem } from '../components/homeworkout'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import { HOME_EXERCISES, homeSetRows, type HomeExercise } from '../lib/homeExercises'
+import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
 import { ShowMore } from '../components/ShowMore'
 import { useCappedList } from '../lib/useCappedList'
@@ -69,6 +70,12 @@ export function HomeWorkout() {
 
   const heat = useMemo(() => sessions.map((s) => ({ date: s.date, value: s.sets.length })), [sessions])
 
+  /* Read from the whole journal rather than from `sessions`, because the window
+     and the activity filter both belong to the function that makes the claim —
+     a caller pre-filtering by its own rule is how two places come to disagree
+     about what counts. */
+  const progress = useMemo(() => readyToProgress(data, today), [data, today])
+
   function add(ex: HomeExercise) {
     setItems((cur) => (cur.some((i) => i.id === ex.id) ? cur : [...cur, { id: ex.id, name: ex.name, reps: ex.reps }]))
   }
@@ -102,6 +109,12 @@ export function HomeWorkout() {
         { label: 'Last session', value: last ? `${last.sets.length} exercises · ${prettyDay(last.date)}` : 'None yet', prose: true },
       ]} />}
       zone2={
+        <>
+        {/* Above the builder: "what should I do today" is the question you
+            arrive with, and this is the only thing on the page that answers it
+            from your own history. The builder below is where you act on it, and
+            it keeps the one primary button — these are secondary. */}
+        <ProgressionNudge rows={progress} onAdd={add} />
         <SessionCard
           items={items}
           onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
@@ -112,6 +125,7 @@ export function HomeWorkout() {
           notes={notes} onNotes={setNotes}
           onLog={logSession}
         />
+        </>
       }
       zone3={
         <>
