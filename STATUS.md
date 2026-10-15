@@ -1,18 +1,70 @@
 # STATUS
 
-**Stopped:** 2026-10-15, after a long session driven from the running app.
-`main` at `43daacf`, clean tree, **zero open PRs**. **Sixteen PRs merged:
-#383–#398.**
+**Stopped:** 2026-10-15, mid-session, on `feat/pullups-review-rail` with a PR
+open. `main` at `591c096`. The branch is seven commits and one work item,
+**COD-312**.
 
-`npm run verify`: **141 files, 1923 tests**, exit 0 (was 138 / 1861 at
-`534aa81`). `eslint` 0 errors — the one pre-existing `App.tsx`
-exhaustive-deps warning. `design` 441 files, `contrast` 5 themes / 14 accents.
+`npm run verify`: **141 files, 1928 tests**, exit 0. `eslint` 0 errors — the
+one pre-existing `App.tsx` exhaustive-deps warning. `design` 441 files,
+`contrast` 5 themes / 14 accents.
 
-**Browser gates were NOT run this session** — `a11y`, `clipped`, `smoke`,
-`space`. Almost everything here is UI, including a new layout primitive
-(`CalendarSpan`) and the removal of the top bar on 21 views, so these are the
-first thing to run before any deploy. The numbers quoted further down are from
-earlier sessions and do not describe this code.
+Browser gates **were** run this time, on the built bundle against
+`vite preview` on 4173:
+
+| gate | result |
+|---|---|
+| `clipped` | **0** across 23 views at 1440 / 1024 / 390 |
+| `space -- pullups program` | 1.1 / 1.0 desktop, 2.6 / 1.9 phone — inside budget |
+| `a11y` | 187 scans, **7 serious**, exit 1 — **all seven are on `main` too** |
+| `subtitle-reach` | 25 unreachable, budget 24, exit 1 — **also red on `main`** |
+| per-panel axe probe (throwaway) | **56 scans, 0 serious**, armed with a planted violation |
+
+## Two gates are red on `main`, and that was measured, not assumed
+
+Both were confirmed by building `main` in a throwaway worktree, serving it on
+port 4199, and checking the served bundle hash (`index-C4E_uadf.js`) against
+this branch's (`index-CECylirg.js`) before believing either number — the
+preview-port trap in CLAUDE.md, which has cost this repo three PRs once
+already.
+
+- **`a11y`: 7 serious, identical shards on both.** Four are Cycle's
+  `<span class="num w-10 text-fg-3" title="Cycle day 20">` at **4.01–4.16**;
+  three are Mindset's `style="color: rgb(0,0,0)"` on a brand fill at **3.19
+  latte / 3.92 dawn**. Filed as **COD-314**.
+- **`subtitle-reach`: 25 against a budget of 24**, the same 25 rows on both.
+  Pull-ups contributes **0**.
+
+Neither is in `npm run verify`, which is why both could go red unnoticed —
+the same shape as the `design`/`contrast` note further down this file.
+
+## Where the Pull-ups work got to
+
+The page is one act and one bar: zone 2 is the log form alone in the right-hand
+act column, and the whole review zone is a single eight-panel `SectionRail`
+rendered as a horizontal bar (`railAt="never"`). Measured at `?demo=1`, built
+bundle:
+
+| | before | after |
+|---|---|---|
+| desktop | 1885px · **2.09 screens** | 995–1720px · **1.11–1.91** per panel |
+| phone | 3490px · **4.14 screens** | 1761–4158px per panel |
+| card headers, 8 views | 23 subtitled, **1075px** | 23 subtitled, **687px** |
+| program map, Pull-ups desktop | 377px, 125px cells | **298px**, 104px cells |
+
+Panels, in the order they now appear: Today · Formats · Training set · Form ·
+History · Progressions · Principles · Equipment. Ordered for someone about to
+train — the leftmost row is the default, so that order decides whether arriving
+means doing something or reading about it.
+
+## The next thing
+
+Open the PR's own checklist. Nothing is half-migrated; every commit stands on
+its own. If you want one more pass on this page, the honest weak spot is the
+**phone**: the bar wraps to four rows (101px) because eight labels do not fit
+324px, and the two-column cards cost height on a single-column phone — Formats
+went 3.68 → 4.93 screens there while desktop went 1.91 → 1.84. That trade was
+taken deliberately (a bar that scrolls hides three of the eight rows), but it
+is the thing a phone user would notice first.
 
 ---
 
