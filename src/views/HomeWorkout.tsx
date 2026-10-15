@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
-import { Button } from '../components/ui/button'
-import { PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame } from '../components/page'
-import { ExerciseLibrary, Manual, ProgressionNudge, SessionCard, type SessionItem } from '../components/homeworkout'
+import { PageLayout, StatBar } from '../components/page'
+import { ProgressionNudge, Review, SessionCard, type SessionItem } from '../components/homeworkout'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
-import { HOME_EXERCISES, homeSetRows, type HomeExercise } from '../lib/homeExercises'
+import { homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
-import { ShowMore } from '../components/ShowMore'
 import { useCappedList } from '../lib/useCappedList'
 
 /**
@@ -19,8 +17,10 @@ import { useCappedList } from '../lib/useCappedList'
  *   what is in the session you are building. Facts that change the next thirty
  *   seconds; totals-all-time belong in zone 3 and are there.
  * - ACT    · build the session and log it. One primary button.
- * - REVIEW · the summary, the calendar, the history, then the library and the
- *   manual as reference at the bottom.
+ * - REVIEW · one bar, five panels: History, Movements, How to train, Equipment,
+ *   Sources. It was four peer sections, the last of which carried a rail of its
+ *   own twelve rows — see `components/homeworkout/Review.tsx` for why two
+ *   navigations on one page is the fault and where the other nine rows went.
  *
  * It was a flat three-card `CardGrid` on the legacy `shell/Page`: a session
  * builder, a history list and a catalogue, all peers, with the catalogue — the
@@ -48,7 +48,6 @@ export function HomeWorkout() {
   const [dur, setDur] = useState('')
   const [notes, setNotes] = useState('')
   const [date, setDate] = useState(today)
-  const [openId, setOpenId] = useState<string | null>(null)
 
   const sessions = useMemo(
     () => (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1)),
@@ -128,56 +127,14 @@ export function HomeWorkout() {
         </>
       }
       zone3={
-        <>
-          <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Analytics</h2>
-            <SummaryStrip items={[
-              { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-              { label: 'Exercises logged', value: totalExercises, empty: sessions.length === 0 },
-              { label: 'Movements available', value: HOME_EXERCISES.length },
-            ]} />
-            <div className="mt-3">
-              <CalendarHeatmap ranges storageKey="homeworkout" fluid data={heat} unit="exercises" label="Home-workout exercises per day" />
-            </div>
-          </section>
-
-          <section>
-            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-              <h2 className="text-label text-fg-2">History</h2>
-              <ShowMore list={history} />
-            </div>
-            {sessions.length === 0 ? (
-              <EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame>
-            ) : (
-              <ul>
-                {history.shown.map((w) => {
-                  const open = openId === w.id
-                  return (
-                    <li key={w.id} className="group border-b border-line py-2 text-body last:border-b-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <button onClick={() => setOpenId(open ? null : w.id)} aria-expanded={open} className="min-w-0 flex-1 text-left hover:text-fg-1">
-                          <span className="text-fg-1">{prettyDay(w.date)}</span>
-                          <span className="text-fg-2"> · {w.sets.length} exercise{w.sets.length === 1 ? '' : 's'}{w.durationMin ? ` · ${w.durationMin}m` : ''}</span>
-                          <span className="caret-turn caret-turn-quarter ml-1 inline-block text-micro text-fg-2" data-open={open}>▸</span>
-                        </button>
-                        <Button variant="ghost" size="icon-sm" onClick={() => removeWorkout(w.id)} aria-label={`Delete home workout on ${prettyDay(w.date)}`} className="shrink-0 text-fg-2 reveal hover:text-red">×</Button>
-                      </div>
-                      {open && (
-                        <ul className="collapse-in mt-1.5 ml-1 space-y-0.5">
-                          {w.sets.map((s, i) => <li key={i} className="text-label text-fg-2">• {s}</li>)}
-                          {w.notes && <li className="mt-1 text-label text-fg-2 italic">“{w.notes}”</li>}
-                        </ul>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </section>
-
-          <ExerciseLibrary onAdd={add} />
-          <Manual />
-        </>
+        <Review
+          sessions={sessions}
+          history={history}
+          heat={heat}
+          totalExercises={totalExercises}
+          onAdd={add}
+          onRemove={removeWorkout}
+        />
       }
     />
   )

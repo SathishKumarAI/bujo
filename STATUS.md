@@ -1,18 +1,20 @@
 # STATUS
 
-**Stopped:** 2026-10-15, on `feat/homeworkout-progression-nudge` with **PR #402**
-open. `main` at `96c42d4`. Two PRs merged this session, in this order:
+**Stopped:** 2026-10-15, on `refactor/homeworkout-one-bar` with **PR #404**
+open and awaiting CI. `main` at `9e5678d`. Four PRs merged this session:
 
 | merged | what | item |
 |---|---|---|
 | `4f3b63c` (#400) | Pull-ups: one act, one bar | COD-312 |
 | `96c42d4` (#401) | Home workout: a session carries structured rows | COD-315 |
+| `b34cb6f` (#403) | A logged movement the keyword table cannot read falls back | COD-316 |
+| `9e5678d` (#402) | Home workout: says what to progress to | COD-318 |
 
-Both were merged with CI `a11y` red, and that was checked rather than waved
-through: the failing rows are **byte-identical to `main`'s** three
+All were merged with CI `a11y` red, and that was checked each time rather than
+waved through: the failing rows are **byte-identical to `main`'s** three
 (`desktop · mocha · Cycle`, `desktop · latte · Mind · Mindset`,
-`desktop · latte · Cycle` — all `color-contrast`, all **COD-314**). Neither PR
-put a row on that list.
+`desktop · latte · Cycle` — all `color-contrast`, all **COD-314**). No PR this
+session added a row to that list.
 
 ## The home-workout pass, and the number that moved
 
@@ -56,36 +58,50 @@ against `dist/index.html` first):
 | `clipped` | **0** across 23 views at 1440 / 1024 / 390 |
 | `a11y`, 2 desktop themes + 1 phone | 3 serious, **all three are `main`'s**; Home workout **0 / 0** |
 
-## What was withdrawn, and why that matters more than what shipped
+## The increment I withdrew, then did properly
 
-I planned a `SectionRail` pass on the home-workout review zone, on the strength
-of `npm run space` reporting **9.6 desktop screens open**, and wrote that into
-#401's body as the next increment. **It was wrong, and the correction is posted
-on the PR.** Decomposed per section:
+I planned a `SectionRail` pass on the review zone off `npm run space` reporting
+**9.6 desktop screens open**, wrote that into #401's body, then withdrew it
+after decomposing per section: the page shipped at 2.34 desktop, the ten screens
+were an 83-movement catalogue unfolding from 80px behind a collapsed card, and
+the page already carried a rail inside `Manual.tsx`.
 
-| section, as shipped | desktop | phone |
+**The withdrawal was right about the number and wrong about the fault.** The
+problem was never height — it was that the manual's **twelve-row rail sat at the
+bottom, underneath three peer sections that were not in it.** Two navigations on
+one page. #404 gives the whole review zone **one bar of five rows**, the Pull-ups
+shape:
+
+|  | desktop | phone |
 |---|---|---|
-| Today's session (zone 2) | 334px | 421px |
-| Analytics | 375px | 388px |
-| History | 162px | 162px |
-| Exercise library (collapsed) | 80px | 68px |
-| Manual (**one chapter of twelve**) | 1272px | 1526px |
+| **shipped** | 2.34 → **1.10** | 4.01 → **2.21** |
+| Movements | 7.28 → **1.71** | 16.06 → **4.40** |
+| How to train | 3.47 → **2.19** | 5.27 → **5.12** |
+| Equipment | 1.83 → **1.10** | 2.82 → **2.64** |
+| Sources | 3.61 → **2.50** | 4.89 → **4.72** |
 
-The page ships at **2.34 desktop / 3.45 phone**. The ~10 screens is the
-83-movement catalogue unfolding from 80px — a catalogue behaving correctly
-behind a collapsed card. And this page **already has the rail**: `Manual.tsx`
-carries a twelve-row `SectionRail`. The Pull-ups comparison was not
-like-for-like, because 2.09 there was a *shipped* number.
+Nine of the twelve manual rows were *movement families*, which are a facet of
+the catalogue rather than peers of "Sources" — they now open inside Movements
+when you pick that family, which gave `chapterFor()` its first call site.
 
-The lesson worth keeping: `open` and `shipped` are different questions, and
-quoting the first against the second's budget manufactures a fault.
+Two lessons, both cheap to re-learn the hard way:
+
+- `open` and `shipped` answer different questions, and quoting the first against
+  the second's budget manufactures a fault.
+- A page can be the right **length** and still have the wrong **shape**. The
+  measurement that found this was "how many navigations does this zone have",
+  not a pixel count.
+
+**Phone is the viewport that did not come out even**: How to train 5.12 and
+Sources 4.72 barely moved, because their length is their content — a flat run of
+prose blocks with no second axis — and not their navigation.
 
 ## Filed on the way, all `repo:bujo`
 
 | item | state | what |
 |---|---|---|
-| **COD-316** | Backlog | `fitness.musclesForExercise` returns **nothing for 32 of 83** home movements (Dead bug, Bird dog, Hollow hold, Burpees, Jump rope, Wall sit…). Four counting sites route through it. `exerciseMuscles.allMusclesForExercise` covers all 83 and already falls back to it — blocked by an import cycle, so the fix is a leaf module. This is what decides whether COD-315's rows land on the right muscle. |
-| **COD-317** | Backlog | Two manual rail rows over budget: *How to train* **3.47** desktop / 5.27 phone, *Sources* **3.61** / 4.89, against 1.83–2.28 for the other ten. Also most of the phone fix — the Manual is 1526px of the page's 2911. |
+| **COD-316** | Done (#403) | `fitness.musclesForExercise` returns **nothing for 32 of 83** home movements (Dead bug, Bird dog, Hollow hold, Burpees, Jump rope, Wall sit…). Four counting sites route through it. `exerciseMuscles.allMusclesForExercise` covers all 83 and already falls back to it — blocked by an import cycle, so the fix is a leaf module. This is what decides whether COD-315's rows land on the right muscle. |
+| **COD-317** | In Review (#404) | Two manual rail rows over budget. Closed by the one-bar pass above: worst desktop panel 3.61 → 2.50, so every row is inside the three-screen budget. |
 | **COD-237** | open | Commented: Home workout is a **seventh** page where a rail hides its other panels from the a11y gate — 1 of 12 chapters scanned, every run, every theme. |
 
 ## The next thing

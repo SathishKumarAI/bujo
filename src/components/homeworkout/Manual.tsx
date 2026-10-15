@@ -1,98 +1,31 @@
-import { useStickyState } from '../../lib/useStickyState'
-import { SectionRail } from '../page'
 import { VideoLink } from '../VideoLink'
 import { onRaised } from '../../lib/colors'
 import { FAMILY_LABEL, filterExercises, type Family } from '../../lib/homeExercises'
-import { HOME_MANUAL, HOME_SAFETY, HOME_SOURCES, sourceById } from '../../lib/homeManual'
+import { chapterFor, HOME_SAFETY, HOME_SOURCES, sourceById } from '../../lib/homeManual'
 import { HOME_EQUIPMENT, HOME_GOALS, HOME_LEVERS, HOME_PRINCIPLES } from '../../lib/homeProgramming'
 
 /**
- * ZONE 3 · the manual, as chapters behind a rail.
+ * ZONE 3 · the manual's chapters, as bodies. **This file no longer navigates.**
  *
- * Twelve chapters: the nine movement families, plus programming, kit and the
- * citation ledger. Twelve folds would be twelve grey titles and a page you hunt
- * through; `docs/PAGE-SHAPE.md` says past about four peer groups the group names
- * become navigation, and that is what this is. Same `SectionRail` as Insights,
- * Coaching and the pull-up manual.
+ * It used to own a twelve-row `SectionRail` of its own — the nine movement
+ * families plus programming, kit and the citations — sitting underneath three
+ * peer sections that had no rail at all. Two navigations on one page, which is
+ * the fault `components/homeworkout/Review.tsx` now fixes by having one bar for
+ * the whole review zone.
  *
- * The family rows are rendered **from `HOME_MANUAL`**, not from a hand-written
- * list — the registry decides the chapters, so a family added to
- * `lib/homeExercises.ts` and given a chapter appears here with no edit. The
- * repo's own rule, after a page offered six filter chips over nine
- * differently-named groups.
+ * Where the twelve went:
  *
- * No "All" row. The chapters do not overlap, and all twelve at once is the long
- * page this replaces.
+ * - the **nine family chapters** are a facet of the catalogue, not peers of
+ *   "Sources" — `ExerciseLibrary` renders `FamilyChapter` when you pick a
+ *   family, which is where you are standing when you want it;
+ * - **programming, equipment and sources** became three rows of the one bar.
  *
- * **Known gate ceiling (COD-237).** A rail has no `aria-expanded`, so
- * `openFolds()` in `scripts/a11y-axe.mjs` cannot reach the eleven chapters it
- * does not open on, and the fold column will read 0 rather than 12. The rail is
- * still the right instrument; what is not allowed is letting that number read
- * as coverage. See the PR for what was probed by hand instead.
+ * Nothing inside a chapter changed. `Head` is still exported-by-use here
+ * because each body draws its own title and blurb; the bar's own heading names
+ * the ROW, and for the three reference rows those agree by design.
  */
-const REFERENCE = [
-  { id: 'programming', label: 'How to train' },
-  { id: 'equipment', label: 'Equipment' },
-  { id: 'sources', label: 'Sources' },
-] as const
 
-const CHAPTERS = [
-  ...HOME_MANUAL.map((c) => ({ id: c.family as string, label: FAMILY_LABEL[c.family] })),
-  ...REFERENCE,
-]
-
-export function Manual() {
-  const [chapter, setChapter] = useStickyState<string>(
-    /* The push family first: it is the family with the most variations, the one
-       everybody starts with, and the one people are most often wrong about. */
-    'homeworkout.chapter', 'push', CHAPTERS.map((c) => c.id),
-  )
-
-  return (
-    <section>
-      <h2 className="mb-3 text-label text-fg-2">Manual</h2>
-      {/* Container on the outer div, grid on the inner: an element cannot query
-          itself. Phone column spelled out, or the chip row's min-content sizes
-          the only implicit track and the page scrolls sideways. Both traps are
-          in docs/PAGE-SHAPE.md and both have been hit here before.
-
-          `@2xl` (42rem = 672px), not the `@4xl` (896px) the pull-up manual
-          uses, and the difference is measured rather than preferred. **Zone 3
-          at the 1180 tier is 722px** — the same number PAGE-SHAPE records for
-          a review zone — so `@4xl` never fires there and the rail falls back
-          to its phone chip row ON DESKTOP. With six chapters that is survivable;
-          with twelve it was a **1085px strip inside a 730px box**, so a third
-          of the chapters, Sources among them, were reachable only by
-          horizontally scrolling a control nothing suggests you can scroll.
-          At 672px the vertical rail fires in a 722px column: 192px of rail and
-          a ~500px reading measure, which is the right trade for a chapter list
-          you are meant to navigate. */}
-      <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @2xl/page:grid-cols-[12rem_minmax(0,1fr)]">
-          <SectionRail
-            label="Home workout manual chapters"
-            groups={CHAPTERS.map((c) => ({ id: c.id, label: c.label }))}
-            value={chapter}
-            onChange={(id: string | null) => setChapter(id ?? 'push')}
-            /* MUST match the grid breakpoint above. They disagreeing is worse
-               than either alone: the grid hands the rail a 192px column and
-               the rail, still on its own 896px threshold, fills it with a
-               1085px horizontal strip. Found by measuring, not by reading. */
-            railAt="2xl"
-          />
-          <div className="min-w-0">
-            {chapter === 'programming' ? <Programming />
-              : chapter === 'equipment' ? <Equipment />
-                : chapter === 'sources' ? <Sources />
-                  : <FamilyChapter family={chapter as Family} />}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Head({ title, blurb }: { title: string; blurb: string }) {
+export function Head({ title, blurb }: { title: string; blurb: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
       <h3 className="text-heading font-medium text-fg-1">{title}</h3>
@@ -101,7 +34,7 @@ function Head({ title, blurb }: { title: string; blurb: string }) {
   )
 }
 
-function Cited({ ids, prefix }: { ids: readonly string[]; prefix: string }) {
+export function Cited({ ids, prefix }: { ids: readonly string[]; prefix: string }) {
   const rows = ids.flatMap((id) => sourceById(id) ?? [])
   if (rows.length === 0) return null
   return (
@@ -117,8 +50,11 @@ function Cited({ ids, prefix }: { ids: readonly string[]; prefix: string }) {
   )
 }
 
-function FamilyChapter({ family }: { family: Family }) {
-  const c = HOME_MANUAL.find((x) => x.family === family)
+export function FamilyChapter({ family }: { family: Family }) {
+  /* `chapterFor`, not a `.find` of our own. The helper existed in
+     `lib/homeManual.ts` with no call site at all, which is the shape of a data
+     module quietly going dead — this file had retyped its one line. */
+  const c = chapterFor(family)
   if (!c) return null
   const moves = filterExercises({ family })
 
@@ -165,7 +101,7 @@ function FamilyChapter({ family }: { family: Family }) {
   )
 }
 
-function Block({ title, items }: { title: string; items: string[] }) {
+export function Block({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
       <p className="text-body text-fg-1">{title}</p>
@@ -176,7 +112,7 @@ function Block({ title, items }: { title: string; items: string[] }) {
   )
 }
 
-function Programming() {
+export function Programming() {
   return (
     <>
       <Head title="How to train" blurb="Sets, reps and rest — and how to get harder without a weight rack" />
@@ -246,7 +182,7 @@ function Programming() {
   )
 }
 
-function Equipment() {
+export function Equipment() {
   return (
     <>
       <Head title="Equipment" blurb="In the order it is worth buying — and the first entry is nothing" />
@@ -263,7 +199,7 @@ function Equipment() {
   )
 }
 
-function Sources() {
+export function Sources() {
   return (
     <>
       <Head title="Sources" blurb={`${HOME_SOURCES.length} references, every one fetched and reachable`} />
