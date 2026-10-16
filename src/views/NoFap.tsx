@@ -1,20 +1,20 @@
 import { useMemo } from 'react'
-import { Lifebuoy } from '@/components/icons'
+import { ArrowCounterClockwise, CaretRight, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
-import { Empty, Input } from '../components/ui'
 import { cat, onAccent } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
-import { PageLayout, SectionRail, StatBar, SummaryStrip } from '../components/page'
+import { ActStrip, NextStepBlock, PageLayout, StatBar, useActColumn } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
-import { cn } from '../lib/cn'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
-import { CARDS, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP, visibleCards, type Group } from '../lib/recoveryCards'
+import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryCards'
 import { feedbackLedger } from '../lib/recoveryFeedback'
+import { recoveryStep } from '../lib/recoveryStep'
+import { RecoveryReview } from '../components/recovery/Review'
+import { CopingChapter, LapseTruthCard } from '../components/recovery/CopingChapter'
 import {
   StreakRingCard,
   FeedbackLedgerCard,
@@ -37,12 +37,15 @@ import {
   AddictionBreakdownCard,
   UrgeMixCard,
   AddictionStreaksCard,
+  LogCard,
+  UrgeHistoryCard,
+  BreathingCard,
+  ResetCostCard,
   CommitmentCard,
   TriggerPlansCard,
   TechniquesBlock,
   LadderBlock,
   ResetHistoryBlock,
-  PairedSparkline,
   SosOverlay,
   type DayTallyRow,
 } from '../components/recovery'
@@ -78,11 +81,26 @@ export function NoFap() {
      instead of three, because the rail is single-select where three folds were
      three independent booleans. */
   const [group, setGroup] = useStickyState<Group>('recovery.group', DEFAULT_GROUP, GROUPS)
+  /*
+    STACKED, THE ACT STARTS SHUT (§23).
+
+    Measured on this page at `?demo=1`: the act column is **2,822px on a 390px
+    phone** — a ring, an urge form, a day tally and a reset form — against a
+    2,019px review, and the page came to **5,116px / 6.06 screens**. Below the
+    split that column is the whole width of the page, so the record is six
+    screens down and the rail that reaches it is below *that*.
+
+    Wide it stays open, where it is a column beside the review and open is
+    right. The sticky key means a choice, once made, holds.
+  */
+  const logCol = useActColumn('recovery')
 
   const s = data.nofap
   const plans = s.plans ?? []
   const today = todayISO()
   const stats = streakStats(data, today)
+  /** The one sentence zone 1 opens with. Total — see `lib/recoveryStep.ts`. */
+  const step = recoveryStep(data, today)
   /** Both sides of each addiction, signed. See lib/recoveryFeedback.ts. */
   const ledger = useMemo(() => feedbackLedger(data), [data])
   const vsBest = streakVsBest(stats.current, stats.best)
@@ -184,8 +202,13 @@ export function NoFap() {
     moneysaved: <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />,
     calmstretch: !quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />,
     addictions: <AddictionStreaksCard />,
+    urgehistory: <UrgeHistoryCard />,
+    coping: <CopingChapter />,
+    breathing: <BreathingCard />,
+    lapse: <LapseTruthCard />,
+    resetcost: <ResetCostCard current={stats.current} best={stats.best} totalClean={stats.totalClean} />,
 
-    urgetrend: urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />,
+    urgetrend: urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} relapses={s.relapses} />,
     intensity: intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />,
     cleanrollup: rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />,
     riskhours: peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />,
@@ -221,14 +244,6 @@ export function NoFap() {
     resets: <ResetHistoryBlock relapses={s.relapses} />,
   }
 
-  /* A query crosses groups. Finding a panel whose group you do not remember is
-     the whole reason the filter exists, so it must not be silently intersected
-     with whichever rail row happens to be selected. */
-  const filtering = q.trim().length > 0
-  const visible = visibleCards(filtering ? null : group, q)
-  const show = (id: string) => visible.has(id)
-  /** Panels a group would show under the current query — the rail's counts. */
-  const countOf = (g: Group) => CARDS.filter((c) => c.group === g && visibleCards(g, q).has(c.id) && all[c.id]).length
 
   return (
     <>
@@ -260,156 +275,187 @@ export function NoFap() {
            `MasonryGrid`'s `@3xl` container step — which is exactly why the pane
            below uses `CardGrid`. */
         tier={1180}
+        /*
+          `actTop` · THE ACT STARTS BESIDE ZONE 1, NOT UNDER IT.
+
+          Asked for as "I want it to shrink to the left side, and move the log
+          an urge or reset to the top" — which is one change, not two. Without
+          it zone 1 spans the full 1,180px shell and the act begins below it,
+          so the hero is a wide strip and "Log an urge or a reset" is a scroll
+          down on every visit. With it, zone 1 takes only the review column's
+          width (the shrink) and the act column runs from the top of the page
+          (the move).
+
+          The same layout Nutrition, Fitness and Strength already use, and the
+          reason `layout.css` carries the `auto 1fr` row fix — `min-content
+          auto` left a 96px dead gap under the orient block, measured across
+          five variants.
+        */
+        actTop
+        onSplitChange={logCol.onSplitChange}
+        actShut={logCol.shut}
         zone1={
-          <StatBar facts={[
-            { label: 'Days clean', value: stats.current },
-            { label: 'Personal best', value: stats.best },
-            {
-              label: 'Next milestone',
-              value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
-              prose: true,
-            },
-            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean', prose: true },
-          ]} />
-        }
-        zone2={<>
-        <StreakRingCard stats={stats} relapsedToday={relapsedToday} startedOn={s.startedOn} />
+          /* ONE BLOCK: the sentence, then the four facts.
 
-        {/* ZONE 2 IS ORDERED BY HOW OFTEN THE ACT HAPPENS, not by how bad it is.
-            `PRODUCT.md` ranks capture as the product, and on this page the
-            frequent capture is "I felt an urge and rode it out" — many times a
-            day during a streak. A lapse tally and a reset are rare by
-            definition. Urge surfing was third, and its submit sat under its own
-            four field groups, so the most-repeated act on the page was the one
-            furthest from the top: **y 1613 in an 844px phone viewport**, and
-            1130px inside a 760px scrollport at 1440.
+             Zone 1 was the `StatBar` alone — **53px of four figures** on the
+             page with the most to say. "47 days clean" and "personal best 61"
+             are two numbers a reader has to subtract before either means
+             anything, and the subtraction IS the headline: *you are fourteen
+             days from your record*. Every other page on this contract already
+             had its sentence; `docs/PAGE-ROLLOUT.md` listed Recovery's as
+             missing and it stayed missing through the rail pass.
 
-            The cost, stated: `DayTallyCard` moves down by the height of the
-            urge card. It is one tap either way and it is still the second thing
-            in the column; the alternative — keeping the tally first and
-            accepting that the frequent act needs a scroll — is the arrangement
-            the report was about. */}
-        <UrgeSurfingCard />
+             COLOUR MEANS URGENCY and nothing else — in the left edge and the
+             icon, with `fg-1` text, because an accent as text on a wash of
+             itself is the calibration trap in CLAUDE.md.
 
-        {/* Day log · "it happened today", with a number on it.
-            Second, not third: the quantity-blind version of it used to live
-            three screens down as the per-addiction `Reset` button, in zone 3
-            behind the signature chart, which is not where you press anything on
-            a bad day. */}
-        <DayTallyCard rows={tallyRows} onStep={logLapseDay} />
+             It is a BUTTON into the rail row that elaborates it: a sentence
+             about when urges land, with no way to reach the card about when
+             urges land, is a sentence that sends you looking. */
+          <div className="rounded-card border border-line bg-ink-0 p-3">
+            {(() => {
+              const tone = {
+                first: 'mauve', reset: 'peach', edge: 'red', close: 'peach',
+                record: 'green', quiet: 'green', resisting: 'teal', steady: 'teal',
+              }[step.id]
+              const StepIcon = {
+                first: Lifebuoy, reset: ArrowCounterClockwise, edge: Warning, close: Target,
+                record: Trophy, quiet: Heart, resisting: Clock, steady: Flame,
+              }[step.id]
+              return (
+                <NextStepBlock
+                  text={step.text}
+                  tone={tone}
+                  icon={StepIcon}
+                  destination={GROUP_LABEL[step.group]}
+                  onPick={() => { setGroup(step.group); setQ('') }}
+                />
+              )
+            })()}
+            {/* THE RING LIVES HERE NOW, not in zone 2.
 
-        <LogResetCard best={stats.best} totalClean={stats.totalClean} />
-        </>}
-        zone3={<>
-        {/* Lifetime totals · the record, not the next action. */}
-        {/* **Only the negatives are counted here now.** "Urges resisted" was a
-            score, and a score invites you to protect it: the cheapest way to
-            keep a win counter climbing is to tap the win button, which is not
-            recovery. What stays is what actually happened — days clean, and
-            resets. The urge log itself is untouched and still records the
-            trigger, the intensity and the HALT check, because that is
-            diagnostic data about a hard moment rather than a trophy for it.
-            No existing data was deleted; this is what the page shows, not what
-            it stores. */}
-        <SummaryStrip items={[
-          { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
-          { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
-          { label: 'Urges logged', value: stats.urges, empty: stats.urges === 0 },
-        ]} />
+                It and the `StatBar` under it were saying the same three things
+                — days clean, personal best, next milestone — once as a 160px
+                hero in the act column and once as a row of figures at the top
+                of the page, in two different zones. Reported as "get them all
+                into one card on the left side, I need to waste the space", and
+                the duplication is exactly why the space was being wasted.
 
-        {/* SIGNATURE VISUAL · urges resisted against resets, week by week.
-            Above the rail and outside the registry, so it is on screen whichever
-            group is selected — `docs/PAGE-SHAPE.md`: "Summary, the signature
-            visual, then the list".
+                `bare`, because this block is already a card. */}
+            <StreakRingCard
+              stats={stats}
+              relapsedToday={relapsedToday}
+              startedOn={s.startedOn}
+              bare
+              /* THE FACTS COME BACK INTO THE CARD.
 
-            The brief specified a paired sleep + soreness sparkline here, on the
-            assumption that Recovery meant physical recovery. In this app it is
-            abstinence recovery, and there is no soreness field in the data model
-            at all — so the pairing that would have been invented is replaced by
-            the correlation this page actually exists to reveal: whether
-            resisting urges is holding the resets down. */}
-        <section>
-          <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Urges logged vs resets</h2>
-          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
-        </section>
+                 They were moved out to the review when zone 1 spanned the
+                 full 1,180px shell and the pair read as two separate bands.
+                 `actTop` made zone 1 a 678px left-hand column, and at that
+                 width the ring and its three figures are one object — asked
+                 for as "get them all in one place, like only one card".
 
-        {/* ZONE 3 · the four groups the registry names, in its order, one heading
-            each — replacing three `CollapsibleSection`s that all shipped shut
-            ("Setup", "Deep analytics", "Reference") plus a fourth unfolded
-            "Insights & progress" section. Four peers, each answering a different
-            question about the same streak, is a table of contents; the folds
-            were what was left over, and a chart behind a closed fold is a chart
-            that does not exist.
-
-            No "All" row: the four groups do not overlap, and "all of them" is
-            the page this replaces. The filter below is how you cross them. */}
-        {/* Two divs, and the split is load-bearing: an element cannot query
-            itself, so `@container/page` and `@4xl/page:grid-cols-…` on one div
-            means the grid never fires. Phone column spelled out, or the chip
-            row's min-content sizes the only implicit track and the page scrolls
-            sideways. Both in docs/PAGE-SHAPE.md. */}
-        <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
-          <SectionRail
-            label="Recovery groups"
-            groups={GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: countOf(g) }))}
-            value={filtering ? null : group}
-            onChange={(g) => { setGroup((g as Group | null) ?? DEFAULT_GROUP); setQ('') }}
-            filtering={filtering}
-            onClear={() => setQ('')}
-          />
-          <div className="min-w-0">
-            {/* The panel filter. Twenty panels over four groups, and the query
-                someone types is the measure ("money", "hour", "HALT") rather
-                than the heading — which is what `words` in the registry is for.
-                `min-h-11` because COD-96 counts the controls under 44px on a
-                phone and this is not going to be the twenty-fifth. */}
-            <Input
-              type="search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Filter these panels — “money”, “hour”, “HALT”…"
-              aria-label="Filter the Recovery panels"
-              className="mb-3 min-h-11"
+                 Still not a duplication: zone 1 prints the run and the next
+                 milestone, and these are the three it does NOT print. The
+                 review's `SummaryStrip` is gone with them, so nothing says
+                 any of this twice. */
+              aside={
+                <div className="mt-3 border-t border-line pt-2.5">
+                  <StatBar facts={[
+                    { label: 'Personal best', value: `${stats.best}d` },
+                    /* "Total clean" — four facts in a 324px StatBar gave this
+                       label 63px of the 72 it needs, and the clip gate caught
+                       it the moment the facts came back into the card. The
+                       value is a day count and the card is about days; the
+                       word was the part carrying no information. */
+                    { label: 'Total clean', value: stats.totalClean },
+                    { label: 'Resets', value: s.relapses.length },
+                    { label: 'Urges logged', value: stats.urges },
+                  ]} />
+                </div>
+              }
             />
-            {visible.size === 0 ? (
-              <Empty>Nothing matches “{q}” on this page. Clear the filter, or pick a different group in the rail.</Empty>
-            ) : (
-              GROUPS.map((g) => {
-                const ids = CARDS.filter((c) => c.group === g && show(c.id) && all[c.id])
-                if (ids.length === 0) return null
-                return (
-                  /* `data-domain`, not `data-group` — the same DOM hook Insights
-                     uses, so one probe can read both pages. The registry's noun
-                     is `group`; this is the shared attribute. */
-                  <section key={g} data-domain={g} className="mb-6 last:mb-0">
-                    <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                      <h2 className="text-heading font-medium text-fg-1">{GROUP_LABEL[g]}</h2>
-                      <p className="text-label text-fg-2">{GROUP_BLURB[g]}</p>
-                      <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
-                    </div>
-                    {/* Two columns is the ceiling here, and it is a correction
-                        rather than a preference — the same one #288 made on
-                        Cycle. `CardGrid` asks the *viewport*, so at 1600 its
-                        `2xl:grid-cols-3` fires inside this 722px split column
-                        and resolves to three tracks of **227px**: literally the
-                        "cards a third of the size" half of the report this pass
-                        answers. Two tracks of 350 is what 1440 already gives.
-                        `MasonryGrid` is not the alternative — it breaks on its
-                        *container* at 768px, so at 722 it silently draws one
-                        column. `min-w-0` per cell so a wide chart cannot drag
-                        the shared track. */}
-                    <CardGrid className="2xl:grid-cols-2">
-                      {ids.map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{all[c.id]}</div>)}
-                    </CardGrid>
-                  </section>
-                )
-              })
-            )}
           </div>
-        </div>
-        </div>
-        </>}
+        }
+        zone2={logCol.shut ? (
+          <ActStrip
+            label="Log an urge or a reset"
+            summary={relapsedToday ? 'Reset logged today' : `${stats.current} days clean`}
+            onOpen={logCol.open}
+          />
+        ) : (<>
+        {/* THE TITLE IS THE TOGGLE, and it says so (§27). A heading that is
+            secretly a button is a feature nobody finds, and the `title` it
+            would otherwise rely on does not exist on a phone. */}
+        <h2 className="text-heading font-medium text-fg-1">
+          <button
+            type="button"
+            onClick={logCol.close}
+            aria-expanded
+            title="Hide the log — the review takes the width"
+            className="group flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
+          >
+            Log an urge or a reset{' '}
+            <span className="inline-flex shrink-0 items-center gap-1 text-label font-normal text-fg-2 group-hover:text-fg-1">
+              Tap to hide
+              <Icon as={CaretRight} size="sm" />
+            </span>
+          </button>
+        </h2>
+
+        {/* THREE ACTS, ONE CARD, ONE AT A TIME.
+
+            It was three stacked cards — an urge form with ~20 chips, a day
+            tally with four streaks, and a reset form — all open, all the
+            time, three borders and three headings deep. Reported by pasting
+            the whole column back: "this be included in one card, and I don't
+            want to scroll this much".
+
+            They are three different acts rather than three parts of one, and
+            in the moment they are mutually exclusive. `LogCard` keeps the
+            frequent one (an urge) as the default, which is the ordering the
+            previous pass measured and argued for — the other two simply stop
+            costing a scroll to get past. */}
+        <LogCard
+          urge={<UrgeSurfingCard bare />}
+          tally={<DayTallyCard rows={tallyRows} onStep={logLapseDay} bare />}
+          reset={<LogResetCard best={stats.best} totalClean={stats.totalClean} bare />}
+        />
+        </>)}
+        zone3={
+          <RecoveryReview
+            group={group}
+            onGroup={setGroup}
+            q={q}
+            onQ={setQ}
+            cards={all}
+            signature={<>
+            {/* The record's figures are in zone 1's card, beside the ring —
+                one object, not a band under another band. */}
+        {/* THE SUMMARY STRIP IS GONE, and it went for the reason the hero
+            moved: it printed `Total clean days`, `Resets` and `Urges logged`
+            two inches under a zone-1 block that now prints the same three.
+            Moving the ring up without taking this out would have traded one
+            duplication for another — which is what the first attempt did, and
+            the page grew by 185px for it.
+
+            The three facts live in zone 1, beside the ring, where they are the
+            context for the number rather than a second copy of it. */}
+
+        {/* THE SIGNATURE BAND IS GONE, and it went because it was a second
+            drawing of a chart already on the page.
+
+            "Urges logged vs resets" sat above the rail on every row, and it
+            drew `urgeTrend.weeks` — the exact series `UrgeTrendCard` draws,
+            over the same eight weeks. Reported as "move it somewhere else,
+            it's a waste of space here"; moving a near-copy would have kept
+            the duplication and just relocated it. Its one extra signal, a
+            marker on weeks containing a reset, is now a `ReferenceDot` on
+            that card, under Patterns › The urges. */}
+
+            </>}
+          />
+        }
       />
     </>
   )

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally, goalTier, moneySaved } from './streak'
+import { restartFrom, streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally, goalTier, moneySaved } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData, Relapse } from './types'
 
@@ -55,7 +55,30 @@ describe('streak', () => {
     expect(s.next?.day).toBe(14)
     expect(s.prevDay).toBe(7)
     expect(s.daysToNext).toBe(4)
-    expect(s.progressPct).toBe(Math.round(((10 - 7) / (14 - 7)) * 100))
+    /*
+      MEASURED FROM ZERO, toward the milestone the card names.
+
+      This asserted `(10 - 7) / (14 - 7)` — progress through the current
+      SEGMENT — and that is what made the ring read as 13% at 16 days under a
+      line saying "One month · 14 days to go". The card shows a day count, a
+      milestone and a bar; the only reading a person takes from those three is
+      "how far to the milestone", so that is what the bar now is.
+    */
+    expect(s.progressPct).toBe(Math.round((10 / 14) * 100))
+  })
+
+  it('never runs backwards on the day a milestone is reached', () => {
+    // The old segment maths reset to ~0% the moment you ARRIVED at a rung,
+    // which reads as losing progress for gaining it.
+    const at = (startedOn: string, today: string) => {
+      const d = emptyJournal()
+      d.nofap = { startedOn, best: 0, relapses: [] }
+      return streakStats(d, today).progressPct
+    }
+    const dayBefore = at('2026-06-08', '2026-06-21') // 13 days, next is 14
+    const dayOf = at('2026-06-08', '2026-06-22')     // 14 days, next is 30
+    expect(dayOf).toBeGreaterThan(0)
+    expect(dayBefore).toBeGreaterThan(80)
   })
 
   it('topTriggers ranks reasons by frequency', () => {
@@ -394,5 +417,70 @@ describe('haltTally', () => {
     const d = emptyJournal()
     d.nofap.urgeLog = [{ id: '1', date: '2026-06-18' }]
     expect(haltTally(d)).toEqual([])
+  })
+})
+
+/**
+ * `Math.max(undefined, …)` is NaN, and NaN renders.
+ *
+ * `NoFapState.best` is typed `number` and the type is right about the code —
+ * but a journal written before that field existed, or restored from a partial
+ * import, has no `best`, and the page then drew "Personal best NaN" while
+ * `recordApproach` reported tier `far` on a streak that was actually a record,
+ * because every comparison against NaN is false. Found by a test fixture that
+ * left the field out; the fixture was wrong and the code was worse.
+ */
+describe('a streak with no stored best', () => {
+  it('derives one instead of returning NaN', () => {
+    const j = {
+      entries: [], habits: [], workouts: [], metrics: [], collections: [], settings: {},
+      nofap: {
+        startedOn: '2026-10-06',
+        relapses: [{ id: 'a', date: '2026-10-05' }, { id: 'b', date: '2026-09-21' }],
+        urgeLog: [],
+      },
+    } as never
+    const s = streakStats(j, '2026-10-16')
+    expect(Number.isFinite(s.best)).toBe(true)
+    // The live run is 10 days and the longest completed gap is 14, so the best
+    // is the gap — the stored field being absent must not hide it.
+    expect(s.best).toBe(14)
+    expect(s.current).toBe(10)
+  })
+})
+
+/**
+ * `startedOn` is derived from the latest reset, so correcting or deleting one
+ * has to move it. The bug this guards is silent: the streak keeps counting
+ * from a day that no longer has a reset on it, and every figure on the page is
+ * then measured from a date nothing records.
+ */
+describe('restartFrom', () => {
+  const s = (relapses: Relapse[]) => ({ startedOn: '2026-10-05', relapses })
+
+  it('restarts from the latest remaining reset', () => {
+    const left = [rel('2026-09-20'), rel('2026-10-01')]
+    expect(restartFrom(s(left), left, '2026-10-16')).toBe('2026-10-01')
+  })
+
+  it('is not fooled by the list being out of order', () => {
+    const left = [rel('2026-10-01'), rel('2026-09-20')]
+    expect(restartFrom(s(left), left, '2026-10-16')).toBe('2026-10-01')
+  })
+
+  it('falls back to the first reset ever when the last one is deleted', () => {
+    // Deleting your ONLY reset should put you back to where tracking began,
+    // not to the day you pressed delete.
+    const before = [rel('2026-09-20')]
+    expect(restartFrom({ startedOn: '2026-09-20', relapses: before }, [], '2026-10-16')).toBe('2026-09-20')
+  })
+
+  it('falls back to today when nothing recorded a start at all', () => {
+    expect(restartFrom({ startedOn: '2026-10-05', relapses: [] }, [], '2026-10-16')).toBe('2026-10-16')
+  })
+
+  it('never returns a date in the future', () => {
+    const left = [rel('2026-10-01')]
+    expect(restartFrom(s(left), left, '2026-10-16') <= '2026-10-16').toBe(true)
   })
 })

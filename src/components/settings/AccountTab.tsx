@@ -100,6 +100,29 @@ export function AccountTab() {
             <div className="mt-3 space-y-2 border-t border-line pt-3">
               <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
               <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
+              {/* NESTED UNDER THE THING IT AFFECTS, and only while that thing
+                  is on — a discreet-mode switch on a page you do not have is a
+                  setting about nothing.
+
+                  The hint says what it is AND what it is not, because a
+                  privacy control that oversells itself is worse than none: it
+                  is a display swap for a glance over your shoulder, the
+                  passcode is the actual lock, and your own names stay your
+                  own because this file has no business renaming them. */}
+              {s.nofapEnabled && (
+                <div className="border-l-2 border-line pl-3">
+                  <Toggle
+                    label="Discreet labels on Recovery"
+                    on={s.discreetRecovery === true}
+                    onChange={(v) => setSettings({ discreetRecovery: v })}
+                  />
+                  <p className="mt-1 text-label text-fg-2">
+                    Shows “Pattern A”, “Habit N” and the like instead of the explicit words. Display only —
+                    nothing stored changes and your exports keep the real names. Addictions you named
+                    yourself are left alone. For a real lock, use the passcode under Privacy.
+                  </p>
+                </div>
+              )}
             </div>
             {/* One switch cannot pay for a card's padding: on its own this was a
                 324×95 band at 44% fill on the phone, the only card the space

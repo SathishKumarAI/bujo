@@ -27,6 +27,21 @@ import { TECHNIQUES } from '../components/recovery/TechniquesBlock'
 /* Seeded through storage, not through an effect. `replaceAll` is a fresh
    identity each render, so `useEffect(…, [replaceAll])` re-seeds forever — the
    first version of the Insights twin of this file hung the runner. */
+/**
+ * JSDOM REPORTS A 0px SHELL, SO THE ACT STARTS SHUT.
+ *
+ * `PageLayout` decides the split by measuring `.page-shell`'s `clientWidth`,
+ * and `useActColumn` shuts the act when stacked — which is the measured
+ * default, not a bug (CLAUDE.md records it). So every test that reaches into
+ * zone 2 has to open the strip first, and asserting the strip is THERE on the
+ * way in is the only coverage that default gets outside a browser probe.
+ */
+async function openAct() {
+  const strip = screen.getByRole('button', { name: /Log an urge or a reset/i })
+  expect(strip).toHaveAttribute('aria-expanded', 'false')
+  await userEvent.click(strip)
+}
+
 function mount() {
   localStorage.setItem('bujo:data', JSON.stringify(generateDemoData()))
   return render(
@@ -248,9 +263,16 @@ describe('Recovery · the registry is the page', () => {
     expect(text('Porn')).toContain('Lapse days')
   })
 
-  it('puts the urge submits before the fields they annotate', () => {
+  it('puts the urge submits before the fields they annotate', async () => {
     const { container } = mount()
-    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    await openAct()
+    /* The three logging acts are one card now (`LogCard`), with the urge form
+       as the default tab, and that card has no title of its own — the zone-2
+       heading above it already carries one. So anchor on the chooser's
+       accessible name, which is structure rather than copy: a test keyed to a
+       heading breaks every time the wording moves, and this one already has
+       twice. */
+    const card = container.querySelector('[role="radiogroup"][aria-label="What are you logging?"]')!.closest('section')!
     const controls = [...card.querySelectorAll('button, fieldset, input')]
     const held = controls.findIndex((el) => /felt it and held/i.test(el.textContent || ''))
     const gaveIn = controls.findIndex((el) => /gave in/i.test(el.textContent || ''))
@@ -268,9 +290,16 @@ describe('Recovery · the registry is the page', () => {
    * exists to remove, so it is asserted rather than trusted: both outcomes are
    * reachable from the same card, and neither is styled as a punishment.
    */
-  it('offers both endings from the same form', () => {
+  it('offers both endings from the same form', async () => {
     const { container } = mount()
-    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    await openAct()
+    /* The three logging acts are one card now (`LogCard`), with the urge form
+       as the default tab, and that card has no title of its own — the zone-2
+       heading above it already carries one. So anchor on the chooser's
+       accessible name, which is structure rather than copy: a test keyed to a
+       heading breaks every time the wording moves, and this one already has
+       twice. */
+    const card = container.querySelector('[role="radiogroup"][aria-label="What are you logging?"]')!.closest('section')!
     const labels = [...card.querySelectorAll('button')].map((b) => (b.textContent || '').toLowerCase())
     expect(labels.some((l) => /held/.test(l))).toBe(true)
     expect(labels.some((l) => /gave in/.test(l))).toBe(true)

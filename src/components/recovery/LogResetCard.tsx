@@ -13,7 +13,7 @@ import { todayISO } from '../../lib/date'
  * last thing you need, a reset is logged afterwards and the reason is the only
  * part of it that is any use later.
  */
-export function LogResetCard({ best, totalClean }: { best: number; totalClean: number }) {
+export function LogResetCard({ best, totalClean, bare = false }: { best: number; totalClean: number; bare?: boolean }) {
   const { logRelapse } = useJournal()
   const [trigger, setTrigger] = useState('')
   const [note, setNote] = useState('')
@@ -25,8 +25,7 @@ export function LogResetCard({ best, totalClean }: { best: number; totalClean: n
     setTrigger(''); setNote(''); setErr('')
   }
 
-  return (
-    <Card hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">
+  const body = (<>
       <div className="space-y-3">
         <label className="block text-body text-fg-1">
           Reason <span style={{ color: onRaised('red') }}>*</span>
@@ -40,6 +39,8 @@ export function LogResetCard({ best, totalClean }: { best: number; totalClean: n
         <Button variant="danger" size="lg" onClick={relapse} className="w-full">Log reset &amp; restart</Button>
         <p className="text-label text-fg-2">Records the reason today, then restarts the days-clean counter. Your best ({best}d) and total ({totalClean}d) are kept.</p>
       </div>
-    </Card>
+</>)
+  return bare ? body : (
+    <Card hideInfo title="Log a reset" subtitle="Reflect, learn, restart the counter">{body}    </Card>
   )
 }

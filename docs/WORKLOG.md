@@ -4290,3 +4290,79 @@ Researched a sweep of habit/fitness apps and built a feature from each, plus a d
 **Process learned:** always `git checkout -b` BEFORE editing (committed to main twice by mistake; recovered via `git branch -f main origin/main` + rebase, since `reset --hard` is deny-listed). Playwright works in-sandbox (system Chrome + `?view=` deep-link + "This device only" gate-bypass) for screenshots/measurements; persistent Chrome/MCP can't stay up.
 
 **Open (user-decided):** secure PostgREST API tier (JWT+RLS+TLS) — designed, offered, not yet built; enable Google in Supabase; PostgREST/desktop native build.
+
+## 2026-10-16 — Nutrition and Recovery onto the three-zone contract, and a gate that had been red for days
+
+Five PRs merged (#413–#416) and one open (#417). 2,129 tests green; both a11y
+gates green, one of them for the first time in days.
+
+**Nutrition (#414, #416 · COD-331, COD-333).** Fourth page onto the contract,
+and the first where the contract was not the main problem: **adding a food
+stored no food** — it folded four macros into four running totals and threw the
+item away, so there was nothing to edit, nothing to delete and no undo at any
+price. `USER-CONTROL.md` rule 1 with no edit path to find, because the record
+itself was a sum.
+
+- 1,159 → 945px desktop, 3,703 → 1,380px phone, act column 2,258px → a 41px
+  strip.
+- The day's log moved out of the act and **above** the macro split — the split
+  is the consequence, and you cannot judge a ratio you cannot correct.
+- 103 foods behind a search, cuisines as a two-column filter, calories in their
+  own mono column, the weight as three bars plus `sr-only` text.
+- Follow-up: the act's two forms were cramped on **desktop** — the custom-food
+  grid broke on `sm:`, a viewport query, inside a 424px act column, so it drew
+  five 77px columns at 1440 and got *worse the bigger the screen*. Both grids
+  now ask the container.
+- Trend gained a wave (target as a band, gaps where unlogged) and a 20-week
+  calendar; Trend and Patterns re-split so each answers one question —
+  **Trend is WHEN, Patterns is WHY**.
+
+**The a11y gate (#415 · COD-332).** It had been red on `main` and on every open
+branch for days and nobody put it there: CI installed `@axe-core/playwright`
+unpinned, axe went 4.13 → 4.14 on its own, and 4.14 turned
+`label-content-name-mismatch` on. **137 controls over nine components**, all
+real — a pill drawing `migrated 4×` named "Migration history for …", a rail
+painting `All24`. Three page passes had shipped under that red. Fixed, and the
+workflow now pins both gate dependencies so a new rule set arrives as a commit.
+
+**Recovery (#417 · COD-334).** The contract pass plus nine rounds of reported
+changes: 5,116 → 1,581px on a phone, act column 2,822px → a strip, the view
+433 lines with zone 3 in its own module.
+
+- `actTop` answered "shrink it to the left" and "move the log to the top" with
+  one prop.
+- `LogCard` — three logging acts in one card with one chooser; one picker
+  instead of two that overlapped on the same three answers; intensity as five
+  buttons.
+- `CardDeck` — one card at a time, native scroll-snap, height following the
+  card in view; `a11y-panels` presses Next to the end of every deck so the
+  cards it hides are still scanned.
+- **Discreet mode** — a display-only label swap (`Porn` → `Pattern A`) that
+  states on its own toggle that it is not security.
+- **Sourced coping content** — urge surfing (Marlatt/MBRP), cyclic sighing
+  (the Stanford trial), movement, HALT, the **abstinence violation effect** as
+  the real answer to "is it okay to start again", and what a reset costs today
+  in the reader's own numbers, with the kept half the same size as the lost.
+
+**Defects found and fixed along the way** (all pre-existing, none reported as
+bugs): `Math.max(undefined, …)` rendering "Personal best NaN"; "past your old
+record" permanent and false for anyone who has never reset; a chart drawing
+bars **only where there was no data**; a progress ring measuring against
+something other than the sentence beside it; a tie reported as a winner; a
+read-only history on the page's most consequential record; and the demo seeding
+three food names that had stopped existing, on a four-day window against a card
+that reads fourteen.
+
+**Patterns extracted:** `ResetField` (§26), title-as-toggle (§27), a library
+behind a search with its groups as a filter (§28), the record beside the figure
+it explains (§29), `CardDeck` (§30), several acts in one card (§31), and a
+privacy mode that states its limits (§32). `NextStepBlock` replaced four
+byte-identical copies of the same markup across four views.
+
+**Process learned, all now in CLAUDE.md:** a gate red on `main` as well as your
+branch is the gate's environment, not your diff; reading a gate through
+`tail -2` can print one gate's failure beside the next one's pass; two adjacent
+spans with no text node between them paint one word (`All24`, `Oct 16+232023`)
+and only `textContent` shows it; a copy of a shared component is the one place
+a shared fix cannot reach; and a test keyed to copy breaks every time the copy
+moves.

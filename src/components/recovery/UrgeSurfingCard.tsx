@@ -2,13 +2,13 @@ import { HandFist } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, useRef } from 'react'
 import { useJournal } from '../../store'
-import { Card, Input, Pill } from '../ui'
+import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
 import { cat, onRaised } from '../../lib/colors'
-import { prettyDay } from '../../lib/date'
-import { URGE_PRESETS, HALT_STATES, haltTally, type HaltState } from '../../lib/streak'
+import { URGE_PRESETS, HALT_STATES, type HaltState } from '../../lib/streak'
 import { LONELY_KINDS } from '../../lib/recoveryFeedback'
-import { techniqueRanking, matchPlanForTrigger } from '../../lib/urge'
+import { matchPlanForTrigger } from '../../lib/urge'
+import { discreetly } from '../../lib/discreet'
 import { ChipPick } from '../ui/quickpick'
 import { notify } from '../../lib/notify'
 
@@ -18,11 +18,13 @@ const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }
   { id: 'halt', label: 'HALT check' },
   { id: 'reach-out', label: 'Reach out' },
 ]
-const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
-  surf: 'Surf it', delay: 'Delay 10 min', halt: 'HALT check', 'reach-out': 'Reach out',
-}
 /** Intensity 1–5 on the app's severity ramp. Index is `intensity - 1`. */
 const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
+/**
+ * The word beside the number, because "3" alone is a number on a scale nobody
+ * was told the ends of. One idea each, so a string is right.
+ */
+const INTENSITY_WORD = ['Faint', 'Mild', 'Moderate', 'Strong', 'Overwhelming'] as const
 
 /**
  * Urge surfing · pick what it was, log the win with date + time.
@@ -72,8 +74,8 @@ const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
  * inflates `stats.urges`, the conversion rate and the page's signature chart,
  * none of which are worth a phantom win.
  */
-export function UrgeSurfingCard() {
-  const { data, resistUrge, removeUrge, logLapseDay } = useJournal()
+export function UrgeSurfingCard({ bare = false }: { bare?: boolean } = {}) {
+  const { data, resistUrge, logLapseDay } = useJournal()
   const [urge, setUrge] = useState('')
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
@@ -81,15 +83,15 @@ export function UrgeSurfingCard() {
   const [addictionId, setAddictionId] = useState('')
   const [lonelyKind, setLonelyKind] = useState('')
   const addictions = data.nofap.addictions ?? []
+  /* DISCREET MODE · a display swap, bound once so this card cannot label half
+     its chips and not the other half. The VALUE stays the real word — only
+     `label` changes, so what is stored and what is matched are untouched. */
+  const label = discreetly(data.settings)
   /** Guards the fat-finger double-tap; see the docstring above. */
   const lastUrgeAt = useRef(0)
 
   const plans = data.nofap.plans ?? []
   const matchedPlan = matchPlanForTrigger(plans, urge)
-  const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
-  const haltRank = haltTally(data)
-  const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
-  const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
 
   /**
    * ONE FORM, TWO ENDINGS.
@@ -135,8 +137,7 @@ export function UrgeSurfingCard() {
     }
   }
 
-  return (
-    <Card hideInfo title="Urge surfing" subtitle="Feeling an urge? Name it and log it — it crests and passes in minutes.">
+  const body = (<>
       {/* THE ACT, FIRST · see the docstring. Full width and `lg` (44px) because
           this is the control a thumb aims at mid-urge, and `primary` because
           it is the page's one loud thing to do. */}
@@ -151,7 +152,7 @@ export function UrgeSurfingCard() {
           someone they are bad for being honest. */}
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="primary" size="lg" onClick={() => logUrge('resisted')} className="flex-1 gap-2">
-          <Icon as={HandFist} size="md" /> I felt it and held
+          <Icon as={HandFist} size="sm" /> I felt it and held
         </Button>
         <Button variant="secondary" size="lg" onClick={() => logUrge('followed')} className="flex-1 gap-2">
           I gave in
@@ -166,35 +167,52 @@ export function UrgeSurfingCard() {
           three copies of the same markup differing only in accent. They
           are one component now (`ChipPick`), which also gives them the
           44px targets and the press feedback the copies never had. */}
-      {/* WHICH ONE. Without this the ledger cannot tell a resisted cigarette
-          from a resisted scroll, and every per-addiction reading on the page is
-          a name join that matches nothing (COD-251). Sourced from the user's
-          OWN addictions, so the two vocabularies cannot drift again; the preset
-          chips below stay for anyone who has not added any yet. */}
-      {addictions.length > 0 && (
-        <ChipPick
-          label="Which one?"
-          className="mb-3"
-          value={addictionId}
-          onChange={(v) => setAddictionId(addictionId === v ? '' : String(v))}
-          options={addictions.map((a) => ({ value: a.id, label: a.name }))}
-          hint="So the win lands on the right streak."
-        />
-      )}
+      {/*
+        ONE PICKER, not two that overlap.
+
+        It was two rows: "Which one?" listing the addictions you track (which
+        binds the streak the win lands on — COD-251) and "What is it?" listing
+        twelve generic presets. `Nicotine`, `Porn` and `Doomscrolling` appeared
+        in BOTH, so the most common answers were asked for twice and the
+        difference between the rows — one sets an id, one sets text — was
+        invisible. Reviewed as "the most confusing part of the form", and that
+        is fair.
+
+        Now: your own tracked things first, then the presets you do not track,
+        then the typed escape hatch. Picking a tracked one sets the id AND the
+        text, so the streak is INFERRED from the habit rather than asked for
+        separately. Picking an untracked preset sets the text alone, which is
+        exactly what it meant before.
+      */}
       <ChipPick
-        label="What is it?"
+        label="What was the urge for?"
         value={urge || null}
-        onChange={(u) => setUrge(String(u))}
-        options={URGE_PRESETS.map((u) => ({ value: u, label: u }))}
-        /* `after`, not a row of its own beneath the chips. `ChipPick` documents
-           this slot as "a typed escape hatch … on the end of the row", and the
-           input was instead a full-width field stranded under a wrapped chip
-           row — the reader met ten chips, then a lone box, then Intensity, with
-           nothing saying the box belonged to the chips. Inline it is the
-           eleventh option, which is what it is. */
+        onChange={(v) => {
+          const picked = String(v)
+          const own = addictions.find((a) => a.name === picked)
+          setUrge(picked)
+          // The id is the binding; the name is what the log reads back.
+          setAddictionId(own ? own.id : '')
+        }}
+        options={[
+          ...addictions.map((a) => ({ value: a.name, label: label(a.name), hint: `Tracked · the win lands on your ${label(a.name)} streak` })),
+          ...URGE_PRESETS
+            .filter((u) => !addictions.some((a) => a.name.toLowerCase() === u.toLowerCase()))
+            .map((u) => ({ value: u, label: label(u) })),
+        ]}
+        hint={addictions.length > 0
+          ? 'The ones you track come first — picking one lands the win on that streak.'
+          : undefined}
         after={
           <>
-            <Input value={urge} onChange={(e) => setUrge(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && logUrge('resisted')} placeholder="…or type your own" list="urge-presets" className="w-[11rem]" />
+            <Input
+              value={urge}
+              onChange={(e) => { setUrge(e.target.value); setAddictionId('') }}
+              onKeyDown={(e) => e.key === 'Enter' && logUrge('resisted')}
+              placeholder="…or type your own"
+              list="urge-presets"
+              className="w-[11rem]"
+            />
             {/* `TriggerPlansCard` in zone 3 lists against this same id. An `id`
                 reference across two zones is the kind of link a file split
                 breaks silently, so it is written down at both ends. */}
@@ -220,27 +238,51 @@ export function UrgeSurfingCard() {
           raw hue as text.
           `h-11`: a bare range input is ~20px tall, which is a COD-96 hit — the
           box around it does the work, the thumb still centres. */}
-      {/* `control-max` on the WRAPPER, not just the slider.
+      {/*
+        FIVE BUTTONS, NOT A SLIDER.
 
-          Measured at 1440 before this: the range ended at x=1272 (the 380px
-          `.zone-act` control cap catches `input[type=range]` like any other
-          input) while this header was a plain flex row spanning the whole card
-          and right-aligning "3/5" at x=1286 — **14px past the slider it
-          labels**. A readout that does not end where its control ends reads as
-          a mistake, and it was invisible at 390 where the column is narrower
-          than the cap and everything lines up by accident.
+        Reviewed as "replace the intensity slider with five tappable buttons —
+        faster on mobile and more precise", and both halves are right. A range
+        input needs a drag to the right pixel on a touch screen to say "4", and
+        it reports the value in a readout beside it rather than on the thing
+        you pressed. Five targets need one tap and show the answer where the
+        answer is.
 
-          `.control-max` is the existing opt-in for "cap me like a control"
-          (`styles/layout.css`), so one class puts the header and the slider on
-          one width instead of hard-coding 380 twice. */}
+        It also removes the `accentColor` readout the review called out as
+        clashing: the ramp is now carried by the SELECTED button only, so at
+        rest the row is five neutral chips and the colour appears on exactly
+        one of them.
+
+        A `radiogroup`, because that is what it is — and arrow keys move
+        through it for free once the roles are right.
+      */}
       <div className="control-max mt-3">
-        <div className="flex items-center justify-between text-label text-fg-1">
-          <label htmlFor="urge-intensity">Intensity</label>
-          <span className="num font-medium" style={{ color: onRaised(INTENSITY_HUE[intensity - 1]) }}>{intensity}/5</span>
+        <div className="mb-1 flex items-center justify-between text-label text-fg-1">
+          <span id="urge-intensity-label">Intensity</span>
+          <span className="text-label text-fg-2">{INTENSITY_WORD[intensity - 1]}</span>
         </div>
-        <input id="urge-intensity" type="range" min={1} max={5} step={1} value={intensity}
-          onChange={(e) => setIntensity(Number(e.target.value))}
-          className="h-11 w-full" style={{ accentColor: cat(INTENSITY_HUE[intensity - 1]) }} aria-label="Urge intensity, 1 to 5" />
+        <div role="radiogroup" aria-labelledby="urge-intensity-label" className="flex gap-1.5">
+          {[1, 2, 3, 4, 5].map((n) => {
+            const on = intensity === n
+            const hue = INTENSITY_HUE[n - 1]
+            return (
+              <button
+                key={n}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                aria-label={`Intensity ${n} of 5 · ${INTENSITY_WORD[n - 1]}`}
+                onClick={() => setIntensity(n)}
+                className={`num h-11 flex-1 rounded-control border text-body transition-colors ${
+                  on ? 'font-medium' : 'border-line bg-ink-2 text-fg-2 hover:border-line-strong hover:text-fg-1'
+                }`}
+                style={on ? { borderColor: cat(hue), background: `${cat(hue)}22`, color: onRaised(hue) } : undefined}
+              >
+                {n}
+              </button>
+            )
+          })}
+        </div>
       </div>
       {/* Technique chips (U8) */}
       <div className="mt-3">
@@ -280,41 +322,16 @@ export function UrgeSurfingCard() {
           />
         )}
       </div>
-      {/* Most-effective technique tally (U8) */}
-      {techRank.length > 0 && (
-        <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-          <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: onRaised('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
-          <div className="flex flex-wrap gap-1.5">
-            {techRank.map((t) => (
-              <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* HALT pattern tally · which unmet need accompanies urges most */}
-      {haltRank.length > 0 && (
-        <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-          <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
-          <div className="flex flex-wrap gap-1.5">
-            {haltRank.map((h) => (
-              <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>
-            ))}
-          </div>
-        </div>
-      )}
-      {urgeLog.length > 0 && (
-        <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto">
-          {urgeLog.map((u) => (
-            <li key={u.id} className="group flex items-center gap-2 rounded-card bg-ink-2 px-2.5 py-1.5 text-body">
-              <Icon as={HandFist} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
-              <span className="text-fg-1">{u.trigger || 'Urge'}</span>
-              <span className="ml-auto text-label text-fg-2">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
-              <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 reveal hover:text-red">×</Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-label text-fg-2">+ {data.nofap.urgesResisted} logged before dated entries existed.</p>}
-    </Card>
+      {/* THE TALLIES AND THE LIST LEFT THIS CARD.
+
+          They were two tally panels and a fifteen-row history inside a 424px
+          act column, under a form with twenty chips — reported by pasting the
+          whole column back with "a lot of content in here is not needed".
+          They are things you READ (§29), so they live in the review now, in
+          `UrgeHistoryCard`, where the list also finally got an Edit and a
+          delete that asks. */}
+</>)
+  return bare ? body : (
+    <Card hideInfo title="Urge surfing" subtitle="Feeling an urge? Name it and log it — it crests and passes in minutes.">{body}    </Card>
   )
 }

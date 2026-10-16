@@ -37,7 +37,7 @@ export function LapseCountCard({ name, byWeekday, peak, trend }: {
   const dir = DIRECTION[trend.direction]
   return (
     <Card enlargeable band hideInfo
-      title={<span className="inline-flex items-center gap-2"><Icon as={ChartBar} size="md" className="text-red" /> {name} · how many</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={ChartBar} size="sm" className="text-red" /> {name} · how many</span>}
       subtitle={`${peak.label}s average ${peak.avg} · your heaviest weekday`}
     >
       <div className="h-44 w-full" role="img" aria-label={`Average ${name} per lapse day by weekday: ${byWeekday.map((w) => `${w.label} ${w.avg == null ? 'none logged' : w.avg}`).join(', ')}`}>

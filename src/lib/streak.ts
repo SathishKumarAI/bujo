@@ -157,15 +157,41 @@ export function streakStatsFor(
 
   // Best = the longest streak ever: the stored best, the live run, OR the
   // longest historical gap between relapses (which the stored best may predate).
-  const best = Math.max(storedBest, current, longestGap)
+  //
+  // `?? 0` AND `Number.isFinite`, because `Math.max(undefined, 10, 14)` is
+  // **NaN** — not a smaller number, not a throw, a value that renders as
+  // "Personal best NaN" and makes every comparison downstream false, so
+  // `recordApproach` reports tier `far` on a streak that is actually a record.
+  // The type says `best: number` and is right about the code; it cannot say
+  // anything about a journal written before the field existed, or restored
+  // from a partial import. Found when a test fixture omitted it and the
+  // sentence under this came out as "best null".
+  const seed = Number.isFinite(storedBest) ? storedBest : 0
+  const best = Math.max(seed, current, longestGap)
 
   const gaps = dates.length - 1
   const avgGap = gaps >= 1 ? Math.round(completed / gaps) : 0
 
   const next = STREAK_MILESTONES.find((m) => m.day > current)
   const prevDay = [...STREAK_MILESTONES].reverse().find((m) => m.day <= current)?.day ?? 0
-  const span = next ? next.day - prevDay : 1
-  const progressPct = next ? Math.min(100, Math.round(((current - prevDay) / span) * 100)) : 100
+  /*
+    PROGRESS TOWARD THE MILESTONE THE PAGE NAMES, measured from zero.
+
+    It used to measure from the PREVIOUS milestone: `(current - prevDay) /
+    (next.day - prevDay)`. At 16 days that is `(16 - 14) / 16` = **13%**, drawn
+    directly under a line reading "Next: One month · 14 days to go" — and a
+    reader seeing 16, 30 and a bar reads the bar as 16 of 30. Reported as "the
+    progress ring and bar look wrong", and the reader was right: not because
+    segment progress is a bad idea, but because nothing on the card said that
+    is what it was, and the sentence beside it implied the other one.
+
+    Measuring from zero also stops the bar jumping backwards to ~0 on the day
+    you REACH a milestone, which reads as losing progress for gaining one.
+
+    `prevDay` stays on the result — it is what `recordApproach` and the ladder
+    use to know which rung you are on.
+  */
+  const progressPct = next ? Math.min(100, Math.round((current / next.day) * 100)) : 100
   const daysToNext = next ? next.day - current : 0
 
   const counts = new Map<string, number>()
@@ -465,4 +491,44 @@ export function dayHabitSummary(
     pct: due.length > 0 ? Math.round((done / due.length) * 100) : null,
     atRisk: atRiskHabits(data, day).length,
   }
+}
+
+/**
+ * WHERE THE STREAK RESTARTS once a reset is corrected or removed.
+ *
+ * `startedOn` is not an independent fact: `logRelapse` sets it to the reset's
+ * date, so the current streak counts from the latest reset. Edit that reset's
+ * day, or delete it, and `startedOn` has to move with it — otherwise the page
+ * counts from a day that no longer has a reset on it, which is
+ * `USER-CONTROL.md`'s "an edit rewrites EVERY stored shape, not the one the
+ * list renders" with the streak as the shape nobody rewrote.
+ *
+ * Three cases, and the third is the one worth naming:
+ *
+ * | after the edit | restarts from |
+ * |---|---|
+ * | some resets remain | the latest of them |
+ * | none remain | `firstStartedOn` — the day tracking began |
+ * | none remain and nothing recorded it | today, so the streak is 0 and not negative |
+ *
+ * The second case is why this takes the whole streak rather than just the
+ * list: deleting your only reset should put you back to the day you started,
+ * not to the day you deleted it.
+ */
+export function restartFrom(
+  s: { startedOn: string; firstStartedOn?: string; relapses: Relapse[] },
+  relapses: Relapse[],
+  today = todayISO(),
+): string {
+  let latest = ''
+  for (const r of relapses) if (r.date > latest) latest = r.date
+  if (latest) return latest
+  return s.firstStartedOn || earliestOf(s.relapses) || today
+}
+
+/** The oldest reset on record, or '' — the only trace of when tracking began. */
+function earliestOf(relapses: Relapse[]): string {
+  let first = ''
+  for (const r of relapses) if (!first || r.date < first) first = r.date
+  return first
 }

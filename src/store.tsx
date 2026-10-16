@@ -1,4 +1,5 @@
 import { challengeRuleKey } from './lib/recordKeys'
+import { restartFrom } from './lib/streak'
 import {
   createContext,
   useCallback,
@@ -25,6 +26,7 @@ import type {
   MonthlyMeta,
   Recurrence,
   Relapse,
+  UrgeWin,
   Routine,
   Settings,
   Weather,
@@ -180,8 +182,14 @@ interface Store {
   setCycle: (date: string, patch: Partial<CyclePoint>) => void
   // nofap
   logRelapse: (r: Omit<Relapse, 'id'>) => void
+  /** Correct a logged reset — its day, its reason, its note or its count. */
+  updateRelapse: (id: string, patch: Partial<Omit<Relapse, 'id'>>) => void
+  /** Take a reset off the record entirely, with undo. */
+  removeRelapse: (id: string) => void
   resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5; outcome?: 'resisted' | 'followed'; lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' }) => void
   removeUrge: (id: string) => void
+  /** Correct a logged urge — what it was, the day, the intensity. */
+  updateUrge: (id: string, patch: Partial<Omit<UrgeWin, 'id'>>) => void
   /**
    * One-tap "it happened today" with a count. `null` targets the primary
    * streak, otherwise an `AddictionStreak` id. `step` may be -1 to walk back an
@@ -754,6 +762,32 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           }
         }),
 
+      /*
+        CORRECTING AND REMOVING A RESET — `USER-CONTROL.md` rule 1, which this
+        page failed on its most consequential record: a reset logged by mistake
+        could not be taken back at any price, and a wrong reason could not be
+        fixed. `logRelapse` has existed since the page did; neither of these
+        had ever been written.
+
+        **`startedOn` is derived, not stored independently.** `logRelapse` sets
+        it to the reset's date, so editing or deleting the LATEST reset has to
+        move it back or the streak counts from a day that no longer has a reset
+        on it — which is the silent-divergence case `USER-CONTROL.md` describes
+        as "an edit rewrites EVERY stored shape, not the one the list renders".
+        `restartFrom` is that one rule, written once and used by both.
+      */
+      updateRelapse: (id, p) =>
+        patch((d) => {
+          const relapses = d.nofap.relapses.map((r) => (r.id === id ? { ...r, ...p } : r))
+          return { ...d, nofap: { ...d.nofap, relapses, startedOn: restartFrom(d.nofap, relapses) } }
+        }),
+
+      removeRelapse: (id) =>
+        removeWithUndo('Reset', (d) => {
+          const relapses = d.nofap.relapses.filter((r) => r.id !== id)
+          return { ...d, nofap: { ...d.nofap, relapses, startedOn: restartFrom(d.nofap, relapses) } }
+        }),
+
       /**
        * One-tap "it happened today", with a quantity — `null` for the primary
        * streak, an addiction id for one of the tracked ones.
@@ -802,6 +836,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               // that never claimed to be lonely at all.
               lonelyKind: entry?.halt?.includes('lonely') ? entry.lonelyKind : undefined,
             }],
+          },
+        })),
+
+      /*
+        CORRECTING AN URGE. The list's only affordance was a `×` that deleted
+        on the first click — word for word the failure `USER-CONTROL.md` was
+        written after, still sitting on the record of someone's hardest
+        moments. Unlike a reset, an urge touches no derived streak: it feeds
+        the tallies and the hour histogram, and both recompute from the log.
+      */
+      updateUrge: (id, p) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            urgeLog: (d.nofap.urgeLog ?? []).map((u) => (u.id === id ? { ...u, ...p } : u)),
           },
         })),
 

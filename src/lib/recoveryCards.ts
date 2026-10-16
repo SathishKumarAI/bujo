@@ -110,12 +110,51 @@ export interface CardMeta {
    * about how a panel is laid out depends on where its element happens to sit.
    */
   wide?: boolean
+  /**
+   * The sub-section this card belongs to, for a group too big to read at once.
+   *
+   * Only `patterns` uses one: nine cards measured **4,063px / 4.51 desktop
+   * screens and 6.37 on a phone**, which is the "a rail fixes a page once and
+   * one row re-grows beside it" case. §16 puts the threshold at about five.
+   *
+   * **It lives HERE, in the registry, and that is the whole safety of it.**
+   * The chips are derived from this field and the cards render behind it, so a
+   * chip that selects nothing and a card no chip can reach are both
+   * unrepresentable. The alternative — a chip list written beside the render
+   * conditions — is the hand-written list resolved against another source that
+   * this repo has been bitten by four times (`BottomNav`'s `PRIMARY`,
+   * `view-ids.mjs`, the a11y `VIEWS`, `demoFoodLog`'s food names).
+   */
+  facet?: Facet
+}
+
+/**
+ * The sub-sections of `patterns`, in reading order.
+ *
+ * Split by WHEN YOU ASK, which is the same rule the rail itself follows:
+ *
+ * | facet | the question |
+ * |---|---|
+ * | `when` | at what hour, on what weekday, how many times |
+ * | `urges` | how often they come, how hard they hit, and for what |
+ * | `what` | what runs up to a reset, and how each thing is doing |
+ */
+export const FACETS = ['when', 'urges', 'what'] as const
+export type Facet = (typeof FACETS)[number]
+
+export const FACET_LABEL: Record<Facet, string> = {
+  when: 'When',
+  urges: 'The urges',
+  what: 'What sets it off',
 }
 
 export const CARDS: CardMeta[] = [
   // FIRST in the group, deliberately. It is the card that answers "was that a
   // win or a loss", which is the question every other card on this page assumes
   // you have already answered for yourself.
+  /* THE URGE RECORD, in the first row with the ledger it explains (§29). It
+     was inside the act column, under the form that writes it. */
+  { id: 'urgehistory', title: 'Urges you logged', group: 'feedback', words: 'urge history log what helped halt technique tally resisted gave in edit delete when' },
   { id: 'feedback', title: 'Win or loss, per thing', group: 'feedback', wide: true, words: 'feedback positive negative resisted followed slipped net ratio verdict porn nicotine alcohol doomscrolling loneliness stress what to try next' },
   { id: 'streakvsbest', title: 'Streak vs best', group: 'progress', words: 'streak best record pace comeback days clean ahead behind' },
   { id: 'selfefficacy', title: 'Self-efficacy', group: 'progress', words: 'conversion resisted rate urges won confidence percent' },
@@ -123,23 +162,25 @@ export const CARDS: CardMeta[] = [
   { id: 'timereclaimed', title: 'Time reclaimed', group: 'progress', words: 'time hours reclaimed days back given hours per day' },
   { id: 'moneysaved', title: 'Money saved', group: 'progress', words: 'money cost per day saved currency spend' },
   { id: 'calmstretch', title: 'Calm stretch', group: 'progress', words: 'calm quiet stretch days since last urge craving' },
-  { id: 'addictions', title: 'Per-addiction streaks', group: 'progress', words: 'addiction separate streak sugar smoking scrolling best resets cost add remove' },
+  // `wide`: it holds one panel per tracked thing, side by side, and two of
+  // those in a 350px column is two stacked rows again.
+  { id: 'addictions', title: 'Per-addiction streaks', group: 'progress', wide: true, words: 'addiction separate streak sugar smoking scrolling doomscrolling porn nicotine best resets cost add remove each own' },
 
   /* The paired "urges logged vs resets" sparkline is NOT here. It is zone 3's
      signature visual and sits above the rail, on screen whichever group is
      selected — `docs/PAGE-SHAPE.md`: "Summary, the signature visual, then the
      list". A registry row for it would put the page's one always-visible chart
      inside a group you have to pick. */
-  { id: 'urgetrend', title: 'Urge trend', group: 'patterns', words: 'urge frequency trend per week rising falling bars' },
-  { id: 'intensity', title: 'Urge intensity', group: 'patterns', words: 'intensity strength 1 5 rated average distribution' },
-  { id: 'cleanrollup', title: 'Clean rollup', group: 'patterns', words: 'clean weeks rollup perfect window run' },
-  { id: 'riskhours', title: 'High-risk hours', group: 'patterns', words: 'hour time of day heatmap peak late night risk when' },
-  { id: 'riskdays', title: 'Riskiest days', group: 'patterns', words: 'weekday day of week relapse reset pattern saturday risk' },
+  { id: 'urgetrend', title: 'Urge trend', group: 'patterns', words: 'urge frequency trend per week rising falling bars' , facet: 'urges' },
+  { id: 'intensity', title: 'Urge intensity', group: 'patterns', words: 'intensity strength 1 5 rated average distribution' , facet: 'urges' },
+  { id: 'cleanrollup', title: 'Clean rollup', group: 'patterns', words: 'clean weeks rollup perfect window run' , facet: 'when' },
+  { id: 'riskhours', title: 'High-risk hours', group: 'patterns', words: 'hour time of day heatmap peak late night risk when' , facet: 'when' },
+  { id: 'riskdays', title: 'Riskiest days', group: 'patterns', words: 'weekday day of week relapse reset pattern saturday risk' , facet: 'when' },
   /* One id for the whole set, the way Insights registers `habitgrids`: there
      is one card per counted streak and the number of them is the user's data,
      not the registry's. A per-streak id would make the registry disagree with
      the page the moment somebody adds an addiction. */
-  { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', words: 'how many count quantity weekday average lapse times per day' },
+  { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', words: 'how many count quantity weekday average lapse times per day' , facet: 'when' },
   /* Per-addiction "how much · on what days · at what times", one card per
      tracked addiction under one id — the same shape as `lapsecounts` above and
      for the same reason: how many addictions there are is the user's data, not
@@ -161,13 +202,27 @@ export const CARDS: CardMeta[] = [
      buys the 412px back. A phone is unaffected: one column either way, and the
      card is legible there (24px calendar cells, `document.body.scrollWidth` 390,
      no overflow). */
-  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate', wide: true },
-  { id: 'triggers', title: 'Trigger patterns', group: 'patterns', words: 'trigger reason cause pattern top gap between resets' },
-  { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', words: 'urges by type addiction mix what you resist most bar' },
+  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate', wide: true , facet: 'what' },
+  { id: 'triggers', title: 'Trigger patterns', group: 'patterns', words: 'trigger reason cause pattern top gap between resets' , facet: 'what' },
+  { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', words: 'urges by type addiction mix what you resist most bar' , facet: 'urges' },
 
   { id: 'commitment', title: 'My commitment', group: 'plan', words: 'commitment contract quit date reason why promise' },
   { id: 'triggerplans', title: 'Trigger plans', group: 'plan', words: 'trigger plan if then coping response when i will' },
 
+  /*
+    THE COPING CHAPTER AND ITS TOOLS, first in `reference`.
+
+    Asked for as "exercises, meditation, breathing … is it okay to break the
+    cycle and continue again … what is the consequence of going back". They go
+    here rather than in `plan` because `plan` is what YOU wrote down and this
+    is what is known — and first in the group because somebody who opens
+    Reference mid-urge should land on something they can do, not on a ladder of
+    milestones.
+  */
+  { id: 'coping', title: 'How to get through it', group: 'reference', words: 'how cope technique urge surf breathe breathing meditation exercise move halt craving evidence research marlatt stanford what to do right now' },
+  { id: 'breathing', title: 'Breathe with it', group: 'reference', words: 'breathe breathing cyclic sigh physiological sigh calm timer meditation exhale stanford five minutes' },
+  { id: 'lapse', title: 'Starting again', group: 'reference', words: 'lapse relapse slip okay start again shame guilt abstinence violation effect forgive continue after a reset' },
+  { id: 'resetcost', title: 'What a reset costs today', group: 'reference', words: 'cost consequence reset relapse lose days milestone keep total clean what happens if' },
   { id: 'techniques', title: 'Beat the urge', group: 'reference', words: 'technique surf delay halt play forward remove cue reach out coping', wide: true },
   { id: 'ladder', title: 'Recovery ladder', group: 'reference', words: 'ladder milestone benefit days clears next 7 14 30 90' },
   { id: 'resets', title: 'Reset history', group: 'reference', words: 'reset history relapse log reason reflection past' },

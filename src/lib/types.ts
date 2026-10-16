@@ -763,6 +763,15 @@ export interface Settings {
   demoVersion?: number
   /** Show the abstinence / NoFap streak journal. Auto-on for male. */
   nofapEnabled: boolean
+  /**
+   * Swap the sensitive Recovery labels for neutral ones on screen.
+   *
+   * DISPLAY ONLY — the journal keeps the real word, exports carry it, and
+   * turning this off shows it again. See `lib/discreet.ts` for what it is and,
+   * more importantly, what it is not: the passcode is the security feature,
+   * this is for the two seconds someone glances at your screen.
+   */
+  discreetRecovery?: boolean
   /** Intermittent-fasting target window in hours (e.g. 16 for 16:8). */
   fastTargetHours?: number
   /** ISO datetime of an in-progress fast's start (set while fasting). */

@@ -41,7 +41,7 @@ been done (COD-329) and is kept in the table as the worked example.
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | ~~Nutrition~~ | `views/Nutrition.tsx` | 424 | ✓ | ✓ | n/a (3 rows) | **Done, 2026-10-16** — see `docs/pages/nutrition.md` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
-| Recovery | `views/NoFap.tsx` | 416 | ✓ | — | — | `actShut` + arm `a11y-panels` (COD-237 names this page) |
+| ~~Recovery~~ | `views/NoFap.tsx` | 433 | ✓ | ✓ | ✓ (9 cards) | **Done, COD-334** — see `docs/pages/recovery.md` |
 | Cycle | `views/Cycle.tsx` | 593 | ✓ | — | — | Arm `a11y-panels`; then sub-sections on the long row |
 
 ## The order, per page
@@ -125,8 +125,13 @@ each one is a commit.
   a 10–20 landmark while counting a set once per muscle the lift works, so
   nine of twelve muscles are permanently "over 20". Filed during the Strength
   pass, not fixed in it.
-- **Challenges, Recovery and Cycle** are the three left. Recovery and Cycle
-  have rails that `a11y-panels` does not drive yet.
+- **Challenges and Cycle** are the two left. Cycle has a rail that
+  `a11y-panels` does not drive yet; Recovery's is armed, and arming it found
+  32 violations the main gate structurally could not see.
+- Recovery's pass added three more patterns: `CardDeck` (§30), several acts in
+  one card (§31), and a privacy mode that states its own limits (§32). §30 is
+  the one to reach for next — Cycle's longest row is the same shape as the
+  nine-card `Patterns` row it was built for.
 - Nutrition's pass added four patterns rather than only consuming them —
   `ResetField` (§26), the title-as-toggle (§27), a library behind a search with
   its groups as a filter (§28), and the record living beside the figure it

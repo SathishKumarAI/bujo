@@ -1,103 +1,98 @@
 # STATUS
 
-**Stopped:** 2026-10-16, on `feat/nutrition-trends`, **one PR open**.
-Nutrition's review rows now answer one question each; both a11y gates green.
+**Stopped:** 2026-10-16, on `feat/recovery-pass`, **one PR open** (#417).
+Recovery is done; Cycle is the last page on the contract.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | Nutrition (#414), the account-menu name (#413) and the a11y gate (#415, COD-332) all merged | up to date |
-| `feat/nutrition-trends` | — | the act's forms, the wave and the calendar, the Trend/Patterns re-split, the demo's food receipt, and 32 more name mismatches | committed, PR next |
+| `main` | — | Nutrition (#414), the account-menu name (#413), the a11y gate (#415) and Nutrition's follow-up (#416) all merged | up to date |
+| `feat/recovery-pass` | **#417** | COD-334 — the whole Recovery pass, nine rounds of it | pushed, CI green on the earlier commits, **not merged** |
 
-Nothing is stacked.
-
-## What landed today
-
-**Nutrition (#414, COD-331)** — fourth page onto the three-zone contract, and
-the first where the contract was not the main problem: **adding a food stored no
-food.** It folded four macros into four running totals and threw the item away,
-so there was nothing to edit, nothing to delete and no undo at any price —
-`USER-CONTROL.md` rule 1 with no edit path to find, because the record itself
-was a sum.
-
-| | before | after |
-|---|---|---|
-| page, desktop 1440 | 1159px | **945px** |
-| page, phone 390 | 3703px | **1380px** |
-| act column, phone | 2258px | **41px** (a strip) |
-| review zone | 842px, three stacked sections | one bar, three rows |
-
-Four patterns came out of it rather than only going in — `REUSABLE-PATTERNS.md`
-§26 `ResetField`, §27 the title-as-toggle, §28 a library behind a search with
-its groups as a filter, §29 the record living beside the figure it explains.
-Full write-up in `docs/pages/nutrition.md`.
-
-**The a11y gate (#415, COD-332)** — it had been red on `main` and on every open
-branch for days and nobody put it there: CI installed `@axe-core/playwright`
-unpinned, axe went 4.13 → 4.14 with no commit, and 4.14 turned
-`label-content-name-mismatch` on. **137 controls over nine components**, all
-real. Now **187 of 187 scans across 12 of 12 shards, all five themes, no serious
-or critical**, and the workflow pins both gate dependencies.
-
-## What landed after that
-
-**Nutrition, second pass** — four asks, all measured in a browser first:
-
-| asked | was | is |
-|---|---|---|
-| "the totals form is overflowing · keep everything side by side · show the calories outside of it" | four full-width 416px rows, unit inside a `pr-12` box; and the custom-food grid drawing **five 77px columns at 1440** off a `sm:` viewport query inside a 424px act column | four 98px columns in one row (2×158 on a phone), unit in the label; both grids on `@container/act` |
-| "add a heat map of calories by day · and a wavy texture with high and low peaks" | neither existed | `Day by day` (area chart, target drawn as a band, gaps where unlogged) and `Calories by day` (20-week calendar) |
-| "trends and patterns are the same — combine them if so" | Trend held the fortnight, the targets AND the training split | **Trend is WHEN, Patterns is WHY** — the training split moved, each row has one question |
-| "mention you can tap to hide the log" | a `title` a phone cannot show | `Log what you ate · Tap to hide` |
-
-Two defects found on the way, both fixed here: the demo seeded `foodLog` with
-**three names that no longer exist** and on **four days against a card that
-reads fourteen**, so Nutrition's best card rendered two rows; and
-`a11y:panels` found **32 more name mismatches** in `BarList`, invisible to the
-main gate because they sit on rail rows it never opens.
+Nothing is stacked. #417 merges on its own.
 
 ## The next action
 
-1. **Open the PR for `feat/nutrition-trends`** and merge on green.
-2. Then **Recovery (`views/NoFap.tsx`)**, then **Cycle (`views/Cycle.tsx`)** —
-   the user's order, "let's go one after the other". `docs/PAGE-ROLLOUT.md` has
-   the per-page first move; three pages are left (Challenges too).
-   **Carry §29 into Recovery first**: its urge log sits in the act under the
-   form, for exactly the reason Nutrition's did.
+1. **Merge #417.** The last commits were still building at the stop — check
+   `gh pr checks 417` once and merge on green. Everything in it is green
+   locally, including both a11y gates.
+2. Then **Cycle** (`views/Cycle.tsx`, 593 lines), the last page.
+   `docs/PAGE-ROLLOUT.md` has its first move: arm `a11y-panels` for its rail,
+   then sub-sections on the long row. **Reach for `CardDeck` (§30)** — Cycle's
+   longest row is the same shape as the nine-card `Patterns` row it was built
+   for.
+3. Challenges is the only other page left on the rollout.
 
-## Traps that cost time today, now written down
+## What landed in #417
 
-- **A gate red on `main` as well as your branch is the gate's environment, not
-  your diff.** `gh run list --branch main --workflow a11y.yml` answers it in
-  seconds. Recorded in CLAUDE.md with both corollaries: WCAG 2.5.3 compares a
-  name against the **painted** text (`aria-hidden` is no exemption), and two
-  adjacent spans with no text node between them paint one word (`All24`).
-- **Reading a gate through `tail -2` hid a failure.** The design gate's last
-  failing line and the next gate's pass printed together and looked like one
-  clean result. Read the exit code.
-- **A gate that hard-codes a label it does not own breaks when the label moves.**
-  `scanInsightsAll` matched `All — ` and reported "no All row" while printing
-  seven rows including `All 28 panels`. Its failure message printing what it DID
-  find is the only reason that cost minutes instead of an hour.
-- `npm run a11y:panels` now carries a Nutrition entry; `BUJO_CANARY=1` reports
-  176 planted violations, which is what proves the pass can see them. It is the
-  **only** gate that sees a rail row other than the default — it found 32
-  violations the full `a11y` run could not, and the truncated food labels on
-  Patterns were found by neither, only by looking.
-- **Two adjacent spans paint one word.** `All24`, `Log what you ateTap to
-  hide`, `Oct 16+232023` — three instances in one day, each invisible in the
-  JSX. Measure `textContent`, and put the space INSIDE a span rather than
-  between them when the row's columns are measured.
-- **A copy of a shared component is the one place a shared fix cannot reach.**
-  Pickleball's weekday card held forty retyped lines of `BarList` and was the
-  last page still failing after the primitive was fixed.
+The three-zone contract pass plus nine rounds of reported changes. Measured at
+`?demo=1` each time, with the served bundle hash checked against
+`dist/index.html`:
+
+| | before | after |
+|---|---|---|
+| page, desktop | 1,653px · 1.84 screens | **1,129px · 1.25** |
+| page, phone | **5,116px · 6.06 screens** | **1,581px · 1.76** |
+| act column, phone | **2,822px** | **41px** strip |
+| `views/NoFap.tsx` | 416 → 613 mid-pass | **433** |
+
+- **`actTop`** — one prop answering both "shrink it to the left side" and
+  "move the log to the top": zone 1 takes the review column's width, the act
+  runs from y87.
+- **One card for three acts** (`LogCard`), one picker instead of two that
+  overlapped, intensity as five buttons rather than a slider.
+- **`CardDeck`** — one card at a time, and `a11y-panels` now steps every card
+  of every deck (`9/9` in its table).
+- **Discreet mode** — a display-only label swap that says on the toggle that
+  it is not security.
+- **Sourced coping content** — urge surfing, cyclic sighing, movement, HALT,
+  the abstinence violation effect, and what a reset costs today in the
+  reader's own numbers.
+
+**Six pre-existing defects fell out**, all fixed and tested: `best` rendering
+as NaN, a permanent-and-false "past your old record", a chart drawing bars
+only where there was *no* data, a ring measuring against something other than
+the sentence beside it, a tie reported as a winner, and a read-only history on
+the page's most consequential record.
+
+## Open, from an outside review of this page
+
+Not done, in the order I would take them:
+
+1. **Branch the form on outcome** — "I gave in" should ask what was different
+   and hide "What helped?". Deliberately not done: the two outcome buttons sit
+   above the fields by a measured, test-pinned decision (that submit used to be
+   1,130px down the column), and branching means choosing the outcome first,
+   which reverses it. Worth doing as its own change with its own measurement.
+2. **A "Held / Slipped" tag on every urge row** — the outcome is carried by
+   icon colour alone, which is the one accessibility point in that review the
+   gates cannot see.
+3. **Rename "Win or loss"** — a judgemental frame on a recovery tool, working
+   against the page's own "both count" message.
+4. **Drop the counts from the rail rows** — they read as notification badges.
+5. The demo banner and the sidebar's top gap are **app-shell, not this page**.
+
+## Traps that cost time, now written down
+
+All six are in CLAUDE.md with their measurements. The two most reusable:
+
+- **A test keyed to copy breaks every time the copy moves.**
+  `NoFap.test.tsx` broke three times inside one change, never about the
+  behaviour under test. Anchor on a `role` or an `aria-label` instead.
+- **A percentage height on a flex child with no height resolves to nothing.**
+  It drew a chart's bars only where there was no data, and a screenshot cannot
+  show that — count the DOM.
 
 ## Environment
 
-`playwright` and `@axe-core/playwright` are still **not** in `package.json`
-(COD-273) — install them per machine, now at the pinned versions the workflow
-uses:
+Two preview servers were up at the stop: **4173** (the repo default, what CI
+uses) and **4299**. Start one with `npx vite preview --port 4173 --strictPort`,
+and always pass `BUJO_URL` — a gate without it grades whichever app started on
+the default port first.
+
+`playwright` and `@axe-core/playwright` are still not in `package.json`
+(COD-273). Install them at the versions the workflow now pins:
 
 ```
 npm i -D --no-save playwright@1.64.1 @axe-core/playwright@4.14.0
@@ -105,4 +100,6 @@ npx playwright install chromium
 ```
 
 A throwaway probe must live in the **repo root**, not the scratchpad: ESM
-resolves `playwright` relative to the script, not to the working directory.
+resolves `playwright` relative to the script, not the working directory. Delete
+them before committing — three slipped into commits this session and had to be
+reset back out.

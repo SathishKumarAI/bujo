@@ -40,7 +40,7 @@ export function StreakVsBestCard({
       </div>
       {comeback.isComeback && (
         <div className="mt-3 inline-flex w-full items-center gap-2 rounded-card p-2.5 text-body" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
-          <Icon as={ArrowCounterClockwise} size="md" style={{ color: onRaised('green') }} className="shrink-0" />
+          <Icon as={ArrowCounterClockwise} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
           <span className="text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: onRaised('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
         </div>
       )}
