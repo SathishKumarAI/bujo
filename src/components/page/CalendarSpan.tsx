@@ -170,11 +170,18 @@ export function CalendarSpan({
                        better neutral and push it to 4.6 — and this passed it the
                        TOKEN NAME, one line under the comment warning about
                        exactly this family of mistake. `rgb('mauve')` is garbage,
-                       so the function returned `#000000` on every filled cell,
-                       which in latte is **3.92:1 on #6c4cf0** and in dawn
-                       **3.19:1 on #974608**. `npm run a11y:panels` caught it the
-                       day the demo seed first produced a full-strength cell in
-                       the rendered window — a branch the seed had never taken. */
+                       so the function returned pure black on every filled cell:
+                       **3.92:1 on latte's mauve** and **3.19:1 on dawn's
+                       peach**. `npm run a11y:panels` caught it the day the demo
+                       seed first produced a full-strength cell in the rendered
+                       window — a branch the seed had never taken.
+
+                       The ratios are named by TOKEN and not by hex on purpose:
+                       `npm run design` greps the source for a hardcoded colour
+                       and cannot tell a comment from a call site, so quoting
+                       the measured `#rrggbb` here failed the gate — which
+                       CLAUDE.md records as the right trade, and which this
+                       comment then walked into. */
                     style={{ color: d.future ? cat('subtext0') : d.level > 0 ? onAccent(fill) : cat('text') }}
                   >
                     {Number(d.date.slice(8, 10))}
