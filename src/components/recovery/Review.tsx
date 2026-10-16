@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Empty, Input } from '../ui'
-import { SectionRail } from '../page'
-import { cn } from '../../lib/cn'
-import { CardGrid, SPAN_2 } from '../shell/CardGrid'
+import { CardDeck, SectionRail } from '../page'
 import {
   CARDS, FACETS, FACET_LABEL, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP,
   visibleCards, type Facet, type Group,
@@ -165,41 +163,22 @@ export function RecoveryReview({ group, onGroup, q, onQ, cards, signature }: {
                         />
                       </div>
                     )}
-                    {/* CATEGORISED, NOT FILTERED AWAY.
+                    {/*
+                      ONE DECK, NOT ONE PER CATEGORY.
 
-                        Asked for as "categorize them into category instead of
-                        just keeping all them in together — keep them together,
-                        but categorize them". So the default (`All`) renders the
-                        three categories as labelled sub-sections in order,
-                        side by side within each, rather than as nine
-                        undifferentiated cards; the chips above then narrow to
-                        one when you want only that. Keeping them together and
-                        telling you which is which are not in tension — the
-                        version that was in tension was the one that did
-                        neither. */}
-                    {g === 'patterns' && facet == null && ids.length > 4 ? (
-                      FACETS.map((f) => {
-                        const inFacet = ids.filter((c) => c.facet === f)
-                        if (inFacet.length === 0) return null
-                        return (
-                          <section key={f} className="mb-5 last:mb-0">
-                            <h3 className="mb-2 flex items-baseline gap-2 text-label font-medium text-fg-2">
-                              {FACET_LABEL[f]}
-                              <span className="num text-fg-3">{inFacet.length}</span>
-                            </h3>
-                            <CardGrid className="2xl:grid-cols-2">
-                              {inFacet.map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{cards[c.id]}</div>)}
-                            </CardGrid>
-                          </section>
-                        )
-                      })
-                    ) : (
-                      <CardGrid className="2xl:grid-cols-2">
-                        {ids
-                          .filter((c) => g !== 'patterns' || facet == null || c.facet === facet)
-                          .map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{cards[c.id]}</div>)}
-                      </CardGrid>
-                    )}
+                      The first attempt rendered a deck per category at `All`,
+                      which is three decks stacked — and measured **4,583px**,
+                      taller than the nine-card grid it replaced. "I'll just
+                      show one card, and if they are interested they will go to
+                      another" means ONE track: the categories narrow what is
+                      IN it, and the deck shows one card of whatever is left.
+                    */}
+                    <CardDeck
+                      label={`${GROUP_LABEL[g]} cards`}
+                      items={ids
+                        .filter((c) => g !== 'patterns' || facet == null || c.facet === facet)
+                        .map((c) => ({ key: c.id, title: c.title, node: <div data-card={c.id} className="min-w-0">{cards[c.id]}</div> }))}
+                    />
                   </section>
                 )
               })

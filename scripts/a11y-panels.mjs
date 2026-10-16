@@ -76,6 +76,47 @@ const settle = async (page) => {
   await page.waitForTimeout(120)
 }
 
+
+/**
+ * STEP EVERY CARD OF EVERY DECK, because a deck shows one at a time.
+ *
+ * `CardDeck` is a snap scroller: nine cards exist in the DOM but only one is
+ * in view, and the eight others are scrolled out of the clip rect. axe reads
+ * the rendered tree, so they ARE scanned — but anything that depends on being
+ * ON SCREEN is not, and the page's own "is this reachable" assertions are not
+ * either. More to the point, this is exactly the COD-237 shape one level down:
+ * a control that shows one of N and a gate that looks at whichever one it
+ * opened on.
+ *
+ * So the gate drives it. Each "Next card" press is followed by a settle and
+ * a scan, and the count returned goes in the table beside the fold count —
+ * a deck that stops stepping is then visible as a number that stopped moving.
+ */
+async function deckCards(page) {
+  return await page.evaluate(() => {
+    const decks = [...document.querySelectorAll('#main [role="group"][aria-label$="cards"]')]
+    return decks.reduce((n, d) => n + d.children.length, 0)
+  })
+}
+
+async function stepDecks(page, onEach) {
+  const next = () => page.evaluate(() => {
+    const b = [...document.querySelectorAll('#main button[aria-label^="Next card"]')].find((x) => !x.disabled)
+    if (!b) return false
+    b.click()
+    return true
+  })
+  // A hard cap, because a deck that never disables its Next button would
+  // otherwise spin this gate forever — the failure mode is a hang, which is
+  // worse than a red.
+  for (let i = 0; i < 20; i++) {
+    if (!(await next())) return i
+    await settle(page)
+    await onEach()
+  }
+  return 20
+}
+
 async function openFolds(page) {
   let opened = 0
   for (let pass = 0; pass < 4; pass++) {
@@ -93,7 +134,7 @@ async function openFolds(page) {
 
 const browser = await chromium.launch({ args: ['--no-sandbox'] })
 let serious = 0
-console.log('viewport · theme · page/row            folds  violations')
+console.log('viewport · theme · page/row            folds  cards  violations')
 
 for (const vp of [
   { name: 'desktop', width: 1440, height: 900, themes: DESKTOP_THEMES },
@@ -160,8 +201,18 @@ for (const vp of [
       const res = await new AxeBuilder({ page }).include('#main').analyze()
       const bad = res.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
       serious += bad.length
+
+      /* AND EVERY OTHER CARD OF THE DECK. See `stepDecks` — a row that shows
+         one of nine is the COD-237 blind spot wearing a scroller. */
+      const cards = await deckCards(page)
+      const stepped = await stepDecks(page, async () => {
+        const r = await new AxeBuilder({ page }).include('#main').analyze()
+        const b = r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
+        serious += b.length
+        for (const v of b) bad.push(v)
+      })
       console.log(
-        `${vp.name.padEnd(8)} ${theme.padEnd(7)} ${`${page_id}/${label}`.padEnd(22)} ${String(folds).padStart(3)}   ` +
+        `${vp.name.padEnd(8)} ${theme.padEnd(7)} ${`${page_id}/${label}`.padEnd(22)} ${String(folds).padStart(3)} ${String(cards ? `${stepped + 1}/${cards}` : '–').padStart(5)}   ` +
         (bad.length === 0 ? 'clean' : bad.map((v) => `${v.impact} ${v.id} ×${v.nodes.length} · ${v.nodes[0]?.failureSummary?.split('\n')[1] ?? ''}`).join(' | ')),
       )
     }
