@@ -156,6 +156,13 @@ design gate greps the source for a hardcoded colour and **cannot tell a comment
 from a call site**: a docstring quoting a measured `#rrggbb` fails it, and that
 is the right trade. Run all four before pushing.
 
+**Written down and then walked into, 2026-10-16.** A comment in `CalendarSpan`
+recording the contrast bug it had just fixed quoted the three colours involved
+as hexes; `npm run verify` was green, `main` went red on push, and the fix was
+to name them by TOKEN ("latte's mauve") instead. The lesson is not the rule —
+the rule was already here — it is that `verify` passing is not the same as the
+gates passing, and the four that are not in it are the four nobody remembers.
+
 **Always set `BUJO_URL`.** Every script here reads it (`space-audit.mjs` also
 still accepts its old `BASE_URL`). The default port belongs to whichever preview
 server started first on this machine, which is how `npm run smoke` spent three
