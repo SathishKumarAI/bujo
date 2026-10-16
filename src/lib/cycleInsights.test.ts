@@ -4,7 +4,7 @@ import { addDays } from './date'
 import {
   avgCycleLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
   driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
-  phaseBands, phaseOf,
+  morningsSinceTemp, nextStep, phaseBands, phaseOf,
 } from './cycleInsights'
 
 const p = (date: string, flags: string[] = ['period']): CyclePoint => ({ date, flags })
@@ -267,5 +267,97 @@ describe('drivePeak refuses to name a peak it cannot see', () => {
     const peak = drivePeak(rows([2, 3, 4.5, 3]))
     expect(peak).not.toBeNull()
     expect(peak!.id).toBe('ovulation')
+  })
+})
+
+/**
+ * EVERY RULE, AND THE ORDER THEY FIRE IN.
+ *
+ * A priority list is only as good as the case that proves the second rule can
+ * beat the third — `nextStep` returning one sentence means an untested rule is
+ * an unreachable rule, and nothing else in the app would notice.
+ */
+describe('nextStep says what to do, in order of urgency', () => {
+  /** A cycle starting `startedAgo` days before `today`, with no temperatures. */
+  const cycleFrom = (today: string, startedAgo: number, bleed = 4): CyclePoint[] =>
+    Array.from({ length: bleed }, (_, i) => p(addDays(today, -startedAgo + i)))
+
+  const today = '2026-10-16'
+
+  it('asks for the first period when nothing is logged', () => {
+    const step = nextStep([], { today })
+    expect(step.id).toBe('first')
+    expect(step.group).toBe('cycle')
+  })
+
+  it('counts the days past the estimate, and does not call it a result', () => {
+    // Two cycles 28 days apart, the last one starting 35 days ago: 7 days late.
+    const entries = [...cycleFrom(today, 63), ...cycleFrom(today, 35)]
+    const step = nextStep(entries, { today })
+    expect(step.id).toBe('late')
+    expect(step.text).toContain('7 days past the estimate')
+    expect(step.text).not.toMatch(/pregnan|late period|problem/i)
+  })
+
+  it('says a period is due within two days, and carries the spread', () => {
+    const entries = [...cycleFrom(today, 56), ...cycleFrom(today, 27)]
+    const step = nextStep(entries, { today, spread: 2 })
+    expect(step.id).toBe('due')
+    expect(step.text).toContain('(±2d)')
+  })
+
+  /**
+   * The floor that stops the page nagging a reader who has never taken a
+   * temperature: `morningsSinceTemp` is `null` with no reading in 30 days, and
+   * `stale` needs a number.
+   */
+  it('mentions a missing temperature only once temperatures are being taken', () => {
+    const base = [...cycleFrom(today, 40), ...cycleFrom(today, 12)]
+    expect(nextStep(base, { today }).id).not.toBe('stale')
+
+    const withTemp = [...base, { date: addDays(today, -4), flags: [], temp: 36.4 }]
+    const step = nextStep(withTemp, { today })
+    expect(step.id).toBe('stale')
+    expect(step.text).toContain('4 mornings')
+    expect(step.group).toBe('fertility')
+  })
+
+  it('names the fertile window when today is inside it', () => {
+    const entries = [...cycleFrom(today, 40), ...cycleFrom(today, 12)]
+    const step = nextStep(entries, { today, fertileFrom: 10, fertileTo: 15 })
+    expect(step.id).toBe('fertile')
+    expect(step.text).toContain('days 10–15')
+  })
+
+  it('reports the sample size rather than hiding it, under three cycles', () => {
+    const entries = [...cycleFrom(today, 40), ...cycleFrom(today, 12)]
+    const step = nextStep(entries, { today })
+    expect(step.id).toBe('young')
+    expect(step.text).toContain('1 complete cycle')
+    expect(step.group).toBe('patterns')
+  })
+
+  it('falls through to the day and the phase once the record is steady', () => {
+    const entries = [0, 1, 2, 3].map((i) => cycleFrom(today, 100 - i * 28)).flat()
+    const step = nextStep(entries, { today })
+    expect(step.id).toBe('steady')
+    expect(step.text).toMatch(/^Day \d+/)
+  })
+
+  it('always returns a sentence, so zone 1 never renders a hole', () => {
+    for (const entries of [[], cycleFrom(today, 3), cycleFrom(today, 200)]) {
+      expect(nextStep(entries, { today }).text.length).toBeGreaterThan(20)
+    }
+  })
+})
+
+describe('morningsSinceTemp distinguishes "none" from "none lately"', () => {
+  it('is null when no temperature was taken in the last 30 days', () => {
+    expect(morningsSinceTemp([p('2026-09-01')], '2026-10-16')).toBeNull()
+    expect(morningsSinceTemp([{ date: '2026-08-01', flags: [], temp: 36.5 }], '2026-10-16')).toBeNull()
+  })
+
+  it('counts the mornings since the last one inside the window', () => {
+    expect(morningsSinceTemp([{ date: '2026-10-13', flags: [], temp: 36.5 }], '2026-10-16')).toBe(3)
   })
 })

@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, CaretRight, ShieldWarning } from '@/components/icons'
+import { CalendarBlank, CaretRight, CheckCircle, Drop, ShieldWarning, Sparkle, Target, Thermometer, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { ActStrip, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
+import { ActStrip, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
 import {
   avgCycleLength, avgPeriodLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
-  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
+  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, nextStep, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
 import { analyseCycles, detectOvulation, predict } from '../lib/ovulation'
@@ -139,6 +139,25 @@ export function Cycle() {
   const phase = day != null ? phaseOf(day, length, analysis.current.day) : null
   const nextPeriod = nextPeriodEstimate(log, today)
   const untilNext = daysUntilNextPeriod(log, today)
+
+  /**
+   * WHAT TO DO, which this page did not say.
+   *
+   * Zone 1 was four facts and the privacy line — "Day 23 · Luteal · ~2 Nov
+   * ±2d · 29 days" — and left the reader to work out that the thing to do was
+   * take tomorrow's temperature. `docs/PAGE-ROLLOUT.md` step 6, and Cycle was
+   * the last page on the contract without it.
+   *
+   * It reads the SAME detection engine the pill and the chart read, rather
+   * than a second copy of "when did she ovulate".
+   */
+  const step = nextStep(log, {
+    today,
+    fertileFrom: analysis.current.fertileFrom,
+    fertileTo: analysis.current.fertileTo,
+    ovulationDay: analysis.current.day,
+    spread: prediction.spread,
+  })
 
   const goal: CycleGoal = data.settings.cycleGoal ?? 'understand'
   const detectedDay = analysis.current.day
@@ -409,6 +428,12 @@ export function Cycle() {
   return (
     <PageLayout
       tier={1180}
+      /* NOT `actTop`. It is what Recovery needed, and it buys nothing here:
+         measured at 1440 with the act open, `This cycle` is **1,306px either
+         way** — the act column is 807px and zone 1 is ~120px, so moving the
+         orient block into the left column does not shorten the taller column.
+         Zone 1 here is still a BAR (a sentence and four facts), which is the
+         shape the contract gives both columns by default. */
       onSplitChange={logCol.onSplitChange}
       actShut={logCol.shut}
       zone1={
@@ -417,6 +442,19 @@ export function Cycle() {
            would spell "Luteal · estimate" in the typewriter. The shape is the
            contract's — one row, at most four facts, spanning both columns. */
         <div className="border-b border-line pb-3">
+        {/* COLOUR IS URGENCY and nothing else — the edge and the glyph, with
+            `fg-1` text, because an accent as text on a wash of itself is the
+            calibration trap in CLAUDE.md. And it is a BUTTON into the row
+            that elaborates it: a sentence about the fertile window with no
+            way to reach the fertile-window card is a sentence that sends you
+            looking. */}
+        <NextStepBlock
+          text={step.text}
+          tone={{ first: 'mauve', late: 'peach', due: 'peach', stale: 'yellow', fertile: 'teal', young: 'teal', steady: 'green' }[step.id]}
+          icon={{ first: Sparkle, late: Warning, due: Drop, stale: Thermometer, fertile: Target, young: CalendarBlank, steady: CheckCircle }[step.id]}
+          destination={GROUP_LABEL[step.group]}
+          onPick={() => setGroup(step.group)}
+        />
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
           <Fact label={<>Cycle day<InfoTip tip="cycle-day" onMore={showManual} /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           {/* The pill now says HOW it knows, not just what it thinks.
