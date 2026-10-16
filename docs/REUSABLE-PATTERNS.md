@@ -888,3 +888,109 @@ first and the chart reads as their result.
 day's metric, the confirm dialog), so the view owns the component and the review
 borrows it as a `ReactNode`. Rebuilding it from props is a second opinion about
 what the day holds, and two opinions is how §25's duplicate timers happened.
+
+---
+
+## 30 · One card at a time — `components/page/CardDeck.tsx`
+
+**What it is.** A row of cards rendered as a native scroll-snap deck: one in
+view, the rest a swipe away, with a count, arrows and (above three cards) dots.
+
+**Why.** Asked for as *"I'll just show one card, and if they are interested
+they will go to another card, like a loop scrolling — focus on one thing at a
+time"*. Recovery's `Patterns` row held nine cards and rendered **4,063px /
+4.51 desktop screens, 6.37 on a phone** as a grid. Sub-sections (§16) cut that
+by *hiding* six of them; a deck shows one and keeps all nine reachable.
+
+**Native scroll-snap, not a carousel library.** `overflow-x-auto snap-x
+snap-mandatory` with `snap-center` children is the whole mechanism — momentum
+scrolling, trackpad swipes, touch flings and keyboard scrolling all come from
+the platform, it costs no dependency, and **the scroller IS the state**: the
+dots read the scroll position rather than drive it, so an index and a scroll
+can never disagree.
+
+**Three measurements that shaped it, all of them corrections:**
+
+| tried | measured | why it was wrong |
+|---|---|---|
+| a deck per category at `All` | **4,583px page** — taller than the grid | three decks stacked. "One card" means ONE track; the categories decide what is in it |
+| one deck, natural height | track = tallest card, so every card got a **1,519px** box | a flex row is the height of its tallest child — which is the "there are empty spaces" report, created by the fix for the previous one |
+| one deck, height follows the card | **282 → 269 → 173px** as you step | a `ResizeObserver` on the active slide. It observes rather than reads once, because a fold opening inside a panel is the common case |
+
+**The floor is two, and it moved there on a measurement.** It started at four,
+on the reasoning that below that a deck is a control in front of content that
+already fitted. Then a two-card row (a wide ledger and a history) measured
+**2,057px** stacked against roughly half for a deck. Two large cards are not
+"content that already fitted". One card stays a plain render — a one-card
+carousel is only furniture.
+
+**And the gate has to step it.** A deck showing one of nine is COD-237's blind
+spot wearing a scroller. `scripts/a11y-panels.mjs` presses Next to the end of
+every deck and scans each card, with a hard cap so a deck that never disables
+Next fails as a red rather than as a hang; the table prints `9/9` beside the
+fold count, so a deck that stops stepping shows up as a number that stopped
+moving.
+
+**Accessibility a scroller actually needs:** the track is a labelled
+`tabIndex={0}` region (`scrollable-region-focusable` is a serious violation
+this repo has shipped), the dots are real buttons naming their destination, and
+the count is live. Arrow keys then work for free.
+
+---
+
+## 31 · Several acts, one card — `components/recovery/LogCard.tsx`
+
+**What it is.** When a zone-2 column holds two or more forms that are
+alternatives to each other, they become one card with one chooser instead of a
+stack of cards.
+
+**Why.** Recovery's act column was three cards — an urge form with ~20 chips, a
+day tally with four streaks, a reset form — all open, all the time, three
+borders and three headings deep. Reported by pasting the whole column back:
+*"this be included in one card, and I don't want to scroll this much"*.
+
+**The test is whether they are alternatives.** "I felt an urge", "it happened
+today" and "I am resetting the counter" are mutually exclusive in the moment,
+so showing all three is showing two things nobody is doing. Compare Nutrition,
+where the picker and the custom-food form are *steps of one act* and belong in
+sequence.
+
+| rule | why |
+|---|---|
+| Each form gets a `bare` mode | or it is three cards in a trench coat — two borders and two paddings per form |
+| It opens on the FREQUENT one | `PRODUCT.md` ranks capture as the product; the rare acts stop costing a scroll to get past |
+| Not sticky | somebody who logged a reset yesterday should not open the page on the reset form today. The rail row is a place you return to; this is a choice you make in the moment (§16's rule) |
+| The card takes no title | the zone-2 heading already names the column, and it is the toggle that hides it (§27), so it cannot move. Printing it again was the same sentence twice, eight pixels apart |
+| Mount only the chosen one | a hidden form is still a form's worth of controls in the tab order and in every gate's DOM walk |
+
+---
+
+## 32 · A privacy mode that says what it is not — `lib/discreet.ts`
+
+**What it is.** A display-only label swap for a page whose words are sensitive:
+`Porn` → `Pattern A`, `Nicotine` → `Habit N`, behind a toggle.
+
+**Why it is worth building.** It is the only privacy idea that changes whether
+somebody logs honestly at all. Recovery asks people to record the worst ninety
+seconds of their day; a person who has to check the room first logs vaguely or
+not at all, and a vague log is what every pattern card on that page is made of.
+
+**Four rules, and the last two are the ones that make it honest:**
+
+1. **Swap, do not redact.** `•••` makes a form unusable — you cannot pick a
+   thing you cannot read. Each label gets a neutral word that is still
+   unambiguous to the person using it, in the same position.
+2. **Bind the setting once** (`discreetly(settings)` returns the mapper) so a
+   card cannot label half its chips and not the other half.
+3. **Nothing stored changes.** The journal keeps the real word, exports carry
+   it, and turning the mode off shows it again. A mode that rewrote the data
+   would be a mode that lost it.
+4. **Say what it is NOT, on the toggle.** It is not security — anyone who opens
+   Settings sees the switch and anyone who scrolls sees a page about streaks.
+   The hint points at the passcode for that, and says plainly that names you
+   chose yourself are left alone, because this file has no business renaming
+   somebody's "Instagram". **A privacy control that oversells itself is worse
+   than none**, and that sentence belongs in the UI rather than in a docstring.
+
+The tests assert the shape rather than the vocabulary: no mapping is blank, and
+none maps *back* to something more explicit.

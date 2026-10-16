@@ -463,6 +463,60 @@ the test that hides it: **`expect(null).toBeGreaterThanOrEqual(0)` coerces and
 passes**, so `weekdayConsistency returns 7 values in 0..1` would have gone on
 passing whatever that function returned. Assert `not.toBeNull()` first.
 
+Trap: **two charts of one dataset, and the duplicate is the one that is
+always on screen.** Recovery's "signature visual" sat above the rail on every
+row and drew `urgeTrend.weeks` — the series `UrgeTrendCard` already drew, over
+the same eight weeks. Reported as "move it somewhere else, it's a waste of
+space"; moving it would have kept the duplication and changed its address. The
+question to ask of any always-visible band is **what series does it draw**, and
+then grep that series: its only unique signal here was a dot on weeks
+containing a reset, which is a marker, not a chart. Deleting it took a
+component, a lib module and a test with it.
+
+Trap: **a chart can have an axis nobody can see.** The same card carried
+`<YAxis width={30}>` behind `margin={{ left: -24 }}` — the ticks were rendered
+and then pushed off the canvas, so the chart had a scale that existed in the
+DOM and nowhere else. An outside review asked for "a light y-axis or value
+labels" on a card that already had one. A negative margin on a Recharts
+container eats the axis gutter first; if an axis is missing, check the margin
+before adding the axis.
+
+Trap: **a percentage height on a flex child with no height resolves to
+nothing.** `PairedSparkline` sized its bars `height: ${(count / max) * 100}%`
+inside `flex flex-col justify-end` columns that had no height of their own, so
+**every real bar computed to 0px** while the zero-weeks — which used an
+absolute `6px` stub — were the only thing that drew. The chart showed bars
+exactly where there was no data. A screenshot cannot show this (it looks like
+"sparse data"); counting the DOM can, and the fix is absolute units, which need
+no containing block.
+
+Trap: **a test keyed to copy breaks every time the copy moves.**
+`NoFap.test.tsx` found its subject with `/^Urge surfing/` on a section's text,
+then `/Log an urge or a reset/`, then needed a third edit in the same change
+when the card stopped carrying a title at all — three breakages, none of them
+about the behaviour under test. Anchor on structure instead: a `role`, an
+`aria-label`, a `data-` hook. `container.querySelector('[role="radiogroup"]
+[aria-label="What are you logging?"]').closest('section')` survives every
+rewording, and if the accessible name goes, that IS a regression worth failing.
+
+Trap: **a tie is not a winner, and a descending sort will pick one anyway.**
+"HALT pattern: Lonely most often · 6×" printed directly above `Lonely 6 ·
+Tired 6 · Angry 1` — the headline read `rows[0]` and the winner was decided by
+the order `HALT_STATES` happens to be declared in. There is no honest
+tie-break; the fix is to say there is a tie (`topTied` / `tiedLabel` in
+`lib/urge.ts`). Same family as every other overstatement in this file: a figure
+claiming more than its sample supports.
+
+Trap: **a progress bar measured against something other than the sentence
+beside it.** `streakStats.progressPct` measured from the PREVIOUS milestone —
+`(16−14)/(30−14)` = 13% — and was drawn directly under "Next: One month · 14
+days to go". A reader seeing 16, 30 and a bar reads 16 of 30. Segment progress
+is not a bad idea; it is a bad idea *unlabelled next to a sentence implying the
+other one*, and it also jumps backwards to ~0% on the day you REACH a
+milestone, which reads as losing progress for gaining it. If a figure and a
+sentence share a card, they measure the same thing or one of them says what it
+measures.
+
 Trap: **a chart is not empty because a full-page screenshot says so.** The
 screenshot tool downscales, and 2px strokes at `opacity 0.35` vanish — Trackers'
 Mood/Stress/Sleep line chart and its category radar both read as bare grids at

@@ -53,6 +53,22 @@ numbers can also be typed by hand, and re-summing the log silently throws that
 away. Same shape as the `setRows` case above, from the other end: there, one
 stored shape was left stale; here, a recount would have destroyed the other one.
 
+**And the rule applies hardest where the record is worst to lose.** Recovery's
+reset history and its urge log were both read-only, on the page that records
+somebody's hardest moments — the urge list's only affordance was a `×` that
+deleted on the first click, which is word for word the failure this document
+was written after, shipped again on a more sensitive record. `logRelapse` had
+existed since the page did; `updateRelapse` and `removeRelapse` had never been
+written.
+
+**A derived field is a stored shape too.** `startedOn` is set from the latest
+reset, so editing a reset's date or deleting one has to move it — or the page
+counts from a day that no longer has a reset on it, and every figure is
+measured from a date nothing records. `restartFrom` in `lib/streak.ts` is that
+rule written once and used by both mutations, with the case worth naming in a
+test: **deleting your only reset puts you back to the day tracking began, not
+to the day you pressed delete.**
+
 ### 2 · Anything destructive asks first, and says what it is destroying
 
 Not a generic "Are you sure?". Name the thing and its size: *"The 4 exercises
