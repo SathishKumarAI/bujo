@@ -83,7 +83,8 @@ export function ProgressionNudge({ rows, onAdd }: {
                 size="sm"
                 onClick={() => onAdd(r.to)}
                 className="ml-auto text-fg-1 hover:border-mauve"
-                aria-label={`Add ${r.to.name} ${r.to.reps} to today’s session`}
+                /* Leads with the painted "Add 3×12". */
+                aria-label={`Add ${r.to.reps} of ${r.to.name} to today’s session`}
               >
                 {/* "Add 3×12", not the bare spec the library tile uses — there
                     the movement name sits directly above the button, and here

@@ -166,6 +166,27 @@ export function ChipPick<T extends string | number>({
         {options.map((o) => {
           const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
           const t = o.tone ?? tone
+          /*
+            DRAW SHORT, ANNOUNCE LONG — but the long one has to CONTAIN the
+            short one.
+
+            `label-content-name-mismatch` (WCAG 2.5.3) compares the accessible
+            name against the painted text: a chip drawing `Mod` and named
+            `Moderate` fails it, because a speech-input user says "click Mod"
+            and nothing answers. Announcing MORE is fine; announcing something
+            ELSE is not. So when a `name` does not already contain the drawn
+            label, the label is prefixed rather than replaced — which keeps the
+            whole point of the prop (a bare `20` is meaningless read aloud) and
+            makes the chip reachable by what it shows.
+
+            Only a string label can be checked. A `ReactNode` label (the food
+            chips draw bars, a name and a number) names itself from its own
+            content, including the `sr-only` text inside it.
+          */
+          const drawn = typeof o.label === 'string' ? o.label : ''
+          const spoken = o.name && drawn && !o.name.toLowerCase().includes(drawn.toLowerCase())
+            ? `${drawn} — ${o.name}`
+            : o.name
           return (
             <button
               // `type="button"` is load-bearing: a bare <button> inside a form
@@ -184,7 +205,7 @@ export function ChipPick<T extends string | number>({
               /* A shortened label is a shortened *name* unless it is said
                  somewhere. `Med` and a bare `20` are legible on screen beside
                  their legend and meaningless read aloud on their own. */
-              aria-label={o.name}
+              aria-label={spoken}
               className={cn(
                 /*
                   `transition-all` ANIMATED THE LAYOUT, not just the colours.

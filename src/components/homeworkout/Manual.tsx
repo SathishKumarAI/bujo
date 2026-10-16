@@ -103,7 +103,9 @@ export function FamilyChapter({ family, onAdd }: { family: Family; onAdd?: (ex: 
               <VideoLink name={m.name} yt={m.yt} label="" size="sm" />
               {onAdd && (
                 <Button variant="secondary" size="sm" onClick={() => onAdd(m)} className="text-fg-1 hover:border-mauve"
-                  aria-label={`Add ${m.name} ${m.reps} to today’s session`}>
+                  /* Leads with the painted "Add 3×12" — WCAG 2.5.3 wants
+                     the name to contain what the button shows. */
+                  aria-label={`Add ${m.reps} of ${m.name} to today’s session`}>
                   <Icon as={Plus} size="sm" /> Add {m.reps}
                 </Button>
               )}

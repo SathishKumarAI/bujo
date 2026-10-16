@@ -482,7 +482,12 @@ export function Plan() {
                             style={washStyle(t.count >= 4 ? 'red' : t.count >= 2 ? 'peach' : 'yellow')}
                           title={`Migrated ${t.count} time${t.count === 1 ? '' : 's'}, tap for history`}
                           aria-expanded={open}
-                          aria-label={`Migration history for "${t.text}"`}
+                          /* Leads with what it draws ("migrated 4×"), because
+                             `label-content-name-mismatch` compares the name
+                             against the painted text and "Migration history
+                             for …" does not contain it. A speech-input user
+                             says what they see. */
+                          aria-label={`Migrated ${t.count} times — history for "${t.text}"`}
                         >
                           migrated {t.count}×
                         </button>

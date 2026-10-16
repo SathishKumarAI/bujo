@@ -195,11 +195,18 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
             onClick={() => onChange(r.value)}
             disabled={empty}
             aria-current={on ? 'true' : undefined}
-            /* Explicit, because the two spans render as "All24" — the count
-               sits flush against the label with no text node between them,
-               so a screen reader reads one token and a number becomes part
-               of the name. */
-            aria-label={r.count == null ? r.label : `${r.label} — ${r.count} ${r.count === 1 ? 'panel' : 'panels'}`}
+            /* Explicit, because the two spans render as "All 24" and a count
+               with no unit is a number nobody can place — the name says what
+               the 24 counts.
+
+               The separator is a SPACE and not an em dash, and that is not
+               cosmetic: `label-content-name-mismatch` (WCAG 2.5.3) requires
+               the accessible name to CONTAIN the visible text, and "All 24"
+               is not inside "All — 24 panels". A voice-control user says what
+               they see, so the name has to start with it. Same rule as §3's
+               draw-short/announce-long: announcing MORE is fine, announcing
+               something ELSE is not. */
+            aria-label={r.count == null ? r.label : `${r.label} ${r.count} ${r.count === 1 ? 'panel' : 'panels'}`}
             className={`
               shrink-0 snap-start whitespace-nowrap rounded-pill px-2.5 py-1 text-label transition-colors
               ${o.row}
@@ -210,7 +217,10 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
                   : 'text-fg-2 hover:bg-ink-2 hover:text-fg-1'}
             `}
           >
-            <span>{r.label}</span>
+            {/* A real space between the label and the count, so the visible
+                text reads "All 24" rather than "All24" — the name above is
+                built to contain exactly this. */}
+            <span>{r.label}</span>{' '}
             {/* No `opacity-70`.
                 It was there to keep the count quieter than the label, and it is
                 the wrong tool: the count is information — it is in the row's
@@ -229,7 +239,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
                 every other rail state went unrendered — see `scanInsightsAll`
                 in `scripts/a11y-axe.mjs`. Arming that pass turned a green run
                 red on this line, which is what it was for. */}
-            {r.count != null && <span className={`num ml-1.5 ${o.count}`}>{r.count}</span>}
+            {r.count != null && <span className={`num ${o.count}`}>{r.count}</span>}
           </button>
         )
       })}

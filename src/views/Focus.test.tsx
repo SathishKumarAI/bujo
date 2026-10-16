@@ -45,7 +45,7 @@ afterEach(() => localStorage.clear())
 
 /** The rail names itself "Rhythm — 2 panels"; match on the label half. */
 const railRow = (label: string) =>
-  screen.getByRole('button', { name: (name) => name.startsWith(`${label} — `) })
+  screen.getByRole('button', { name: (name) => name.startsWith(`${label} `) })
 
 describe('Focus · the registry is the review zone', () => {
   it('reaches every registered card through the rail, and no unregistered one', async () => {
@@ -77,7 +77,7 @@ describe('Focus · the registry is the review zone', () => {
       // The rail's count is a promise about what the row holds. Computed from a
       // different predicate than the render, it can lie in either direction.
       expect(railRow(FOCUS_GROUP_LABEL[g]).getAttribute('aria-label'))
-        .toBe(`${FOCUS_GROUP_LABEL[g]} — ${cards.length} ${cards.length === 1 ? 'panel' : 'panels'}`)
+        .toBe(`${FOCUS_GROUP_LABEL[g]} ${cards.length} ${cards.length === 1 ? 'panel' : 'panels'}`)
     }
   })
 
