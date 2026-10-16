@@ -1,4 +1,4 @@
-import { ArrowCounterClockwise, Check, Crosshair, Plus, Stack, X } from '@/components/icons'
+import { ArrowCounterClockwise, Check, Crosshair, Plus, Stack, Timer, X } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import type { Dispatch, SetStateAction } from 'react'
 import { Input } from '../ui'
@@ -11,6 +11,7 @@ import {
 } from '../../lib/fitness'
 import type { JournalData, Split } from '../../lib/types'
 import { newSetRow, type SetRow } from './setRow'
+import { restFor, restLabel, sessionMinutes } from '../../lib/rest'
 import { DayPick } from '../ui/quickpick'
 import { addDays, todayISO } from '../../lib/date'
 
@@ -111,7 +112,7 @@ const TOUCH = 'h-11 w-full @min-[30rem]/act:h-7'
 export function SessionLogger({
   data, split, setSplit, rows, setRows, setRow, addRow, onLoadRoutine,
   focusEx, setFocusEx, recentExercises, unit, defaultBar, warmStep, onFinish,
-  date, setDate,
+  date, setDate, onRest,
 }: {
   data: JournalData
   split: Split
@@ -131,6 +132,14 @@ export function SessionLogger({
   /** The day the session is filed under. Gym had no date control at all. */
   date: string
   setDate: (d: string) => void
+  /**
+   * Start the rest for one set.
+   *
+   * The timer lives in the view because it has to survive this row being
+   * edited, deleted or reordered — a countdown mounted inside the row it
+   * belongs to would restart every time you typed a rep into it.
+   */
+  onRest: (exercise: string, seconds: number) => void
 }) {
   /* The standard day for the split that is selected — the only preset worth
      offering, because the reader has already said which day this is. */
@@ -140,6 +149,8 @@ export function SessionLogger({
   // rather than waiting for Finish to say anything.
   const done = rows.filter((r) => r.weight.trim() && r.reps.trim())
   const vol = Math.round(done.reduce((s, r) => s + Number(r.weight) * Number(r.reps), 0))
+  /* Work plus rest over the sets that have reps — see `lib/rest.ts`. */
+  const estimate = sessionMinutes(rows, data.settings)
 
   return (
     /* `@container/act` — the set row's breakpoint asks about THIS box, which
@@ -274,6 +285,22 @@ export function SessionLogger({
                   )}
                   {oneRM && <span style={{ color: onRaised('mauve') }}>1RM ~{oneRM}{unit}</span>}
                   {complete && <span className="inline-flex items-center gap-0.5" style={{ color: onRaised('green') }}><AppIcon as={Check} size="sm" /> logged</span>}
+                  {/* ONE CONTROL, NOT TWO. It starts the rest this set is due,
+                      and the duration is not edited here — the timer's own
+                      `+30s` writes back to the exercise, which is where the
+                      change is felt. A second control per row for a number you
+                      change once per exercise would cost 44px on every row. */}
+                  {row.exercise.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => onRest(row.exercise.trim(), restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))}
+                      title={`Rest ${restLabel(restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))} after this set`}
+                      aria-label={`Start the rest after ${row.exercise.trim()}`}
+                      className="inline-flex items-center gap-1 hover:text-fg-1"
+                    >
+                      <AppIcon as={Timer} size="sm" /> {restLabel(restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))}
+                    </button>
+                  )}
                   {row.exercise.trim() && <VideoLink name={row.exercise.trim()} size="sm" className="text-micro" />}
                 </div>
               )}
@@ -313,10 +340,24 @@ export function SessionLogger({
       </div>
 
       {done.length > 0 && (
-        <div className="mt-2 flex items-center gap-2 text-label">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-label">
           <span className="inline-flex items-center gap-1 font-medium" style={{ color: onRaised('green') }}><AppIcon as={Check} size="sm" /> {done.length} set{done.length === 1 ? '' : 's'}</span>
           <span className="text-fg-2">·</span>
           <span className="text-fg-1">{vol.toLocaleString()}{unit} volume</span>
+          {/* WILL THIS FIT IN THE HOUR I HAVE? Asked for directly, and it is
+              the one number a session's cost comes down to: the reps are three
+              seconds each and the rest is whatever each exercise is set to, so
+              the estimate moves as you build the session rather than being a
+              thing you work out afterwards. The rest after the last set is not
+              counted — you are not resting after you leave. */}
+          {estimate.minutes > 0 && (
+            <>
+              <span className="text-fg-2">·</span>
+              <span className="inline-flex items-center gap-1 text-fg-1" title={`${estimate.workMin} min under load, ${estimate.restMin} min resting`}>
+                <AppIcon as={Timer} size="sm" style={{ color: onRaised('blue') }} /> ≈ {estimate.minutes} min
+              </span>
+            </>
+          )}
         </div>
       )}
 

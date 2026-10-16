@@ -229,6 +229,17 @@ export interface WorkoutSet {
   rpe?: number
   /** warmup · working (default) · drop set. */
   kind?: 'warmup' | 'working' | 'drop'
+  /**
+   * Seconds rested AFTER this set.
+   *
+   * Written by the logger from `lib/rest.ts`'s `restFor`, so a session carries
+   * the rest it was actually run with rather than only its sets — which is what
+   * makes "how long does this session take" answerable from history rather
+   * than from an assumption. Optional and never backfilled: a session logged
+   * before this existed rested for an unknown time, and a guessed 90 would be
+   * a number nobody measured.
+   */
+  restSec?: number
 }
 
 /** An intermittent-fasting window: when eating stopped → when it resumed. */
@@ -833,6 +844,15 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /**
+   * Rest in seconds per exercise, keyed by the lower-cased exercise name.
+   *
+   * "Some exercise needs 3 minutes, some needs 2" — so it is per exercise and
+   * not one global number. Written from the rest timer's own `+30s`, which is
+   * where the change is felt; see `lib/rest.ts` for the precedence over the
+   * rep-count rule.
+   */
+  restByExercise?: Record<string, number>
   /** Daily typing-practice goal in minutes (default treated as 60 in code). */
   typingGoalMin?: number
   /** Weekly pickleball-games goal (shown on Pickleball + Goals). */

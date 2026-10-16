@@ -19,7 +19,20 @@ import { Button } from '../ui/button'
  * Remount to restart. The call site keys it on the exercise, so ticking the next
  * lift is a new timer rather than a mutation of the old one.
  */
-export function RestTimer({ seconds, exercise, onDismiss }: { seconds: number; exercise: string; onDismiss: () => void }) {
+export function RestTimer({ seconds, exercise, onDismiss, onExtend }: {
+  seconds: number
+  exercise: string
+  onDismiss: () => void
+  /**
+   * Told the new total when `+30s` is pressed.
+   *
+   * Optional, because the Program tab prescribes its rest and has nothing to
+   * remember. Strength does: the lifter who adds thirty seconds to a deadlift
+   * is saying deadlifts need longer, and the next set should know. Making the
+   * change where it is felt is the whole point — see `lib/rest.ts`.
+   */
+  onExtend?: (seconds: number) => void
+}) {
   const [end, setEnd] = useState(() => Date.now() + seconds * 1000)
   /** Milliseconds left, frozen, while paused. `null` means running. */
   const [held, setHeld] = useState<number | null>(null)
@@ -53,6 +66,7 @@ export function RestTimer({ seconds, exercise, onDismiss }: { seconds: number; e
     // `max(end, now)` so +30s on a finished timer gives thirty more seconds
     // rather than thirty minus however long it has been sitting at zero.
     else setEnd(Math.max(end, Date.now()) + ms)
+    onExtend?.(seconds + ms / 1000)
   }
 
   return (
