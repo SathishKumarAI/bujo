@@ -98,8 +98,23 @@ export function RecoveryReview({ group, onGroup, q, onQ, cards, signature }: {
             row's min-content sizes the only implicit track and the page scrolls
             sideways. Both in docs/PAGE-SHAPE.md. */}
         <div className="@container/page">
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+        {/* ONE COLUMN, so the rail is a horizontal bar at every width.
+
+            Reported as "when I'm shrinking the log, the Win or loss /
+            Progress / Patterns are moving to the sidebar — can you make them
+            horizontal only?" — and that is exactly what happened: hiding the
+            act widens this column past the `@4xl/page` step, the grid handed
+            the rail an 11rem track and `SectionRail` filled it vertically. So
+            the page rearranged itself as a side effect of putting the log
+            away, which is a layout changing for a reason the reader did not
+            ask about.
+
+            `railAt="never"` plus a single-column grid is the one-bar-per-
+            review-zone shape (§2) the other four pages on this contract
+            already use. */}
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
           <SectionRail
+            railAt="never"
             label="Recovery groups"
             groups={GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: countOf(g) }))}
             value={filtering ? null : group}

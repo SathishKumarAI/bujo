@@ -8,7 +8,7 @@ import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
-import { ActStrip, NextStepBlock, PageLayout, SummaryStrip, useActColumn } from '../components/page'
+import { ActStrip, NextStepBlock, PageLayout, StatBar, useActColumn } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryCards'
 import { feedbackLedger } from '../lib/recoveryFeedback'
@@ -275,6 +275,23 @@ export function NoFap() {
            `MasonryGrid`'s `@3xl` container step — which is exactly why the pane
            below uses `CardGrid`. */
         tier={1180}
+        /*
+          `actTop` · THE ACT STARTS BESIDE ZONE 1, NOT UNDER IT.
+
+          Asked for as "I want it to shrink to the left side, and move the log
+          an urge or reset to the top" — which is one change, not two. Without
+          it zone 1 spans the full 1,180px shell and the act begins below it,
+          so the hero is a wide strip and "Log an urge or a reset" is a scroll
+          down on every visit. With it, zone 1 takes only the review column's
+          width (the shrink) and the act column runs from the top of the page
+          (the move).
+
+          The same layout Nutrition, Fitness and Strength already use, and the
+          reason `layout.css` carries the `auto 1fr` row fix — `min-content
+          auto` left a 96px dead gap under the orient block, measured across
+          five variants.
+        */
+        actTop
         onSplitChange={logCol.onSplitChange}
         actShut={logCol.shut}
         zone1={
@@ -330,6 +347,33 @@ export function NoFap() {
               relapsedToday={relapsedToday}
               startedOn={s.startedOn}
               bare
+              /* THE FACTS COME BACK INTO THE CARD.
+
+                 They were moved out to the review when zone 1 spanned the
+                 full 1,180px shell and the pair read as two separate bands.
+                 `actTop` made zone 1 a 678px left-hand column, and at that
+                 width the ring and its three figures are one object — asked
+                 for as "get them all in one place, like only one card".
+
+                 Still not a duplication: zone 1 prints the run and the next
+                 milestone, and these are the three it does NOT print. The
+                 review's `SummaryStrip` is gone with them, so nothing says
+                 any of this twice. */
+              aside={
+                <div className="mt-3 border-t border-line pt-2.5">
+                  <StatBar facts={[
+                    { label: 'Personal best', value: `${stats.best}d` },
+                    /* "Total clean" — four facts in a 324px StatBar gave this
+                       label 63px of the 72 it needs, and the clip gate caught
+                       it the moment the facts came back into the card. The
+                       value is a day count and the card is about days; the
+                       word was the part carrying no information. */
+                    { label: 'Total clean', value: stats.totalClean },
+                    { label: 'Resets', value: s.relapses.length },
+                    { label: 'Urges logged', value: stats.urges },
+                  ]} />
+                </div>
+              }
             />
           </div>
         }
@@ -392,22 +436,8 @@ export function NoFap() {
             onQ={setQ}
             cards={all}
             signature={<>
-            {/* THE RECORD, IN THE REVIEW — out of the top bar.
-
-                These four were in zone 1 beside the ring, which made the top
-                bar **227px desktop and 461px on a phone** before a word of the
-                record. They are not orientation: "what do I do now" is the
-                sentence and "how long" is the ring, and `Personal best`,
-                `Total clean days`, `Resets` and `Urges logged` are all things
-                you read ABOUT the record rather than to decide anything. They
-                are not a duplicate here either, which is what they were before
-                the ring moved up — zone 1 no longer prints any of them. */}
-            <SummaryStrip items={[
-              { label: 'Personal best', value: stats.best, suffix: 'd', empty: stats.best === 0 },
-              { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
-              { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
-              { label: 'Urges logged', value: stats.urges, empty: stats.urges === 0 },
-            ]} />
+            {/* The record's figures are in zone 1's card, beside the ring —
+                one object, not a band under another band. */}
         {/* THE SUMMARY STRIP IS GONE, and it went for the reason the hero
             moved: it printed `Total clean days`, `Resets` and `Urges logged`
             two inches under a zone-1 block that now prints the same three.

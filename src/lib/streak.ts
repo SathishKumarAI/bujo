@@ -174,8 +174,24 @@ export function streakStatsFor(
 
   const next = STREAK_MILESTONES.find((m) => m.day > current)
   const prevDay = [...STREAK_MILESTONES].reverse().find((m) => m.day <= current)?.day ?? 0
-  const span = next ? next.day - prevDay : 1
-  const progressPct = next ? Math.min(100, Math.round(((current - prevDay) / span) * 100)) : 100
+  /*
+    PROGRESS TOWARD THE MILESTONE THE PAGE NAMES, measured from zero.
+
+    It used to measure from the PREVIOUS milestone: `(current - prevDay) /
+    (next.day - prevDay)`. At 16 days that is `(16 - 14) / 16` = **13%**, drawn
+    directly under a line reading "Next: One month · 14 days to go" — and a
+    reader seeing 16, 30 and a bar reads the bar as 16 of 30. Reported as "the
+    progress ring and bar look wrong", and the reader was right: not because
+    segment progress is a bad idea, but because nothing on the card said that
+    is what it was, and the sentence beside it implied the other one.
+
+    Measuring from zero also stops the bar jumping backwards to ~0 on the day
+    you REACH a milestone, which reads as losing progress for gaining one.
+
+    `prevDay` stays on the result — it is what `recordApproach` and the ladder
+    use to know which rung you are on.
+  */
+  const progressPct = next ? Math.min(100, Math.round((current / next.day) * 100)) : 100
   const daysToNext = next ? next.day - current : 0
 
   const counts = new Map<string, number>()

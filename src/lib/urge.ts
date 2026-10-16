@@ -740,3 +740,37 @@ export const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string>
   halt: 'HALT check',
   'reach-out': 'Reach out',
 }
+
+/**
+ * THE ROWS SHARING THE TOP COUNT — because a tie is not a winner.
+ *
+ * Both tallies on Recovery print "X most often · N×" off `rows[0]` of a
+ * descending sort, and a sort breaks ties by whatever order the source list
+ * happened to be in. Reported against a real screen: **"HALT pattern: Lonely
+ * most often · 6×"** printed directly above `Lonely 6 · Tired 6 · Angry 1`.
+ * The headline contradicted the evidence underneath it, and the thing that
+ * decided the winner was the order `HALT_STATES` is declared in.
+ *
+ * This is the same family as every other overstatement this repo has had to
+ * correct — a figure that claims more than its sample supports. The fix is not
+ * a better tie-break, because there is no honest one: it is to say there is a
+ * tie.
+ */
+export function topTied<T extends { count: number }>(rows: T[]): T[] {
+  if (rows.length === 0) return []
+  const top = Math.max(...rows.map((r) => r.count))
+  return rows.filter((r) => r.count === top)
+}
+
+/**
+ * "Lonely", or "Lonely & Tired", or "Lonely, Tired & Angry".
+ *
+ * Caps at three before falling back to a count, because a four-way tie named
+ * in full is a sentence nobody finishes reading.
+ */
+export function tiedLabel(labels: string[]): string {
+  if (labels.length === 0) return ''
+  if (labels.length === 1) return labels[0]
+  if (labels.length > 3) return `${labels.length} of them, tied`
+  return `${labels.slice(0, -1).join(', ')} & ${labels[labels.length - 1]}`
+}

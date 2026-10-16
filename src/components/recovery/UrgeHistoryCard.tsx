@@ -9,7 +9,7 @@ import { onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import { useCappedList } from '../../lib/useCappedList'
 import { ShowMore } from '../ShowMore'
-import { techniqueRanking, TECH_LABEL } from '../../lib/urge'
+import { techniqueRanking, tiedLabel, topTied, TECH_LABEL } from '../../lib/urge'
 import { haltTally } from '../../lib/streak'
 
 /**
@@ -47,6 +47,11 @@ export function UrgeHistoryCard() {
 
   const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
   const haltRank = haltTally(data)
+  /* A TIE IS NOT A WINNER. Both headlines read `rows[0]` of a descending
+     sort, so "Lonely most often · 6×" printed above `Lonely 6 · Tired 6` —
+     the winner decided by the order the states are declared in. */
+  const techTop = topTied(techRank)
+  const haltTop = topTied(haltRank)
   const urges = [...(data.nofap.urgeLog ?? [])].sort((a, b) => ((a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1))
   const list = useCappedList(urges, 6)
   const fmtTime = (iso?: string) => {
@@ -66,7 +71,8 @@ export function UrgeHistoryCard() {
       {techRank.length > 0 && (
         <div className="mb-2 rounded-card bg-ink-2 p-2.5 text-label">
           <div className="mb-1 text-fg-1">
-            Most-used technique: <span className="font-medium" style={{ color: onRaised('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×
+            {techTop.length > 1 ? 'Most-used, tied: ' : 'Most-used technique: '}
+            <span className="font-medium" style={{ color: onRaised('teal') }}>{tiedLabel(techTop.map((t) => TECH_LABEL[t.technique]))}</span> · {techTop[0].count}×
           </div>
           <div className="flex flex-wrap gap-1.5">
             {techRank.map((t) => <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>)}
@@ -76,7 +82,8 @@ export function UrgeHistoryCard() {
       {haltRank.length > 0 && (
         <div className="mb-2 rounded-card bg-ink-2 p-2.5 text-label">
           <div className="mb-1 text-fg-1">
-            HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×
+            HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{tiedLabel(haltTop.map((h) => h.label))}</span>
+            {haltTop.length > 1 ? ' tied on ' : ' most often · '}{haltTop[0].count}×
           </div>
           <div className="flex flex-wrap gap-1.5">
             {haltRank.map((h) => <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>)}

@@ -55,7 +55,30 @@ describe('streak', () => {
     expect(s.next?.day).toBe(14)
     expect(s.prevDay).toBe(7)
     expect(s.daysToNext).toBe(4)
-    expect(s.progressPct).toBe(Math.round(((10 - 7) / (14 - 7)) * 100))
+    /*
+      MEASURED FROM ZERO, toward the milestone the card names.
+
+      This asserted `(10 - 7) / (14 - 7)` — progress through the current
+      SEGMENT — and that is what made the ring read as 13% at 16 days under a
+      line saying "One month · 14 days to go". The card shows a day count, a
+      milestone and a bar; the only reading a person takes from those three is
+      "how far to the milestone", so that is what the bar now is.
+    */
+    expect(s.progressPct).toBe(Math.round((10 / 14) * 100))
+  })
+
+  it('never runs backwards on the day a milestone is reached', () => {
+    // The old segment maths reset to ~0% the moment you ARRIVED at a rung,
+    // which reads as losing progress for gaining it.
+    const at = (startedOn: string, today: string) => {
+      const d = emptyJournal()
+      d.nofap = { startedOn, best: 0, relapses: [] }
+      return streakStats(d, today).progressPct
+    }
+    const dayBefore = at('2026-06-08', '2026-06-21') // 13 days, next is 14
+    const dayOf = at('2026-06-08', '2026-06-22')     // 14 days, next is 30
+    expect(dayOf).toBeGreaterThan(0)
+    expect(dayBefore).toBeGreaterThan(80)
   })
 
   it('topTriggers ranks reasons by frequency', () => {

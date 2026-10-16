@@ -39,17 +39,21 @@ import { Icon } from '@/components/Icon'
  * buttons naming the card they go to, and the live count is announced. Arrow
  * keys work because the browser scrolls a focused scroll container for free.
  *
- * **Not for two or three cards.** Below four a deck is a control standing in
- * front of content that already fitted; `CardDeck` renders a plain stack then,
- * which is also what keeps a filtered-down row from becoming a one-card
- * carousel.
+ * **The floor is TWO, and it moved there on a measurement.** It started at
+ * four, on the reasoning that below that a deck is a control standing in front
+ * of content that already fitted. Then Recovery's `Win or loss` row became two
+ * cards — a wide ledger and the urge history — and stacking them measured
+ * **2,057px of review** against roughly half that for a deck. Two large cards
+ * stacked are not "content that already fitted"; they are the wall this
+ * component exists to remove. One card is still a plain render, because a
+ * one-card carousel is only furniture.
  */
-export function CardDeck({ items, label, minCards = 4 }: {
+export function CardDeck({ items, label, minCards = 2 }: {
   /** One entry per card. `key` is also what the dot announces. */
   items: { key: string; title: string; node: ReactNode }[]
   /** Names the deck for assistive tech: "Patterns cards". */
   label: string
-  /** Below this many, render a plain stack instead. */
+  /** Below this many, render a plain stack instead. Two is the floor — see above. */
   minCards?: number
 }) {
   const track = useRef<HTMLDivElement>(null)
@@ -165,9 +169,19 @@ export function CardDeck({ items, label, minCards = 4 }: {
         ))}
       </div>
 
-      {/* The dots name their destination — "a shortened label is a shortened
-          name unless it is said somewhere" (§3). `aria-current` rather than a
-          colour alone, so the position survives a reader who cannot see it. */}
+      {/* DOTS ONLY WHEN THEY ADD SOMETHING.
+
+          Reviewed as "there's currently a 1 of 2 pager, left/right arrows, a
+          horizontal scrollbar, pagination dots and Show all — use one way to
+          navigate". Fair: at two or three cards the count and the arrows
+          already say everything the dots do, and a row of two dots under a
+          card is furniture. They earn their place once there are enough cards
+          that jumping beats stepping.
+
+          They name their destination — "a shortened label is a shortened name
+          unless it is said somewhere" (§3) — and carry `aria-current` rather
+          than relying on colour. */}
+      {items.length > 3 && (
       <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
         {items.map((c, i) => (
           <button
@@ -180,6 +194,7 @@ export function CardDeck({ items, label, minCards = 4 }: {
           />
         ))}
       </div>
+      )}
     </div>
   )
 }

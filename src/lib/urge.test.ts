@@ -6,7 +6,7 @@ import {
   urgeConversion, paceToRecord,
   urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup,
   timeReclaimed, addictionPortfolio, recordApproach, urgeQuietStretch,
-  urgesLabelled, urgeLabelCoverage,
+  urgesLabelled, urgeLabelCoverage, topTied, tiedLabel,
 } from './urge'
 import type { UrgeWin, TriggerPlan, Relapse } from './types'
 
@@ -543,5 +543,44 @@ describe('urgeLabelCoverage', () => {
 
   it('survives an empty log', () => {
     expect(urgeLabelCoverage([], ['Sugar'])).toEqual({ matched: 0, total: 0 })
+  })
+})
+
+/**
+ * A tie is not a winner.
+ *
+ * "HALT pattern: Lonely most often · 6×" was printed above a list reading
+ * `Lonely 6 · Tired 6 · Angry 1` — the headline picked a winner that the
+ * evidence under it did not support, and what decided it was the order the
+ * states happen to be declared in.
+ */
+describe('topTied', () => {
+  it('returns every row sharing the top count', () => {
+    const rows = [{ label: 'Lonely', count: 6 }, { label: 'Tired', count: 6 }, { label: 'Angry', count: 1 }]
+    expect(topTied(rows).map((r) => r.label)).toEqual(['Lonely', 'Tired'])
+  })
+
+  it('returns one row when there is a clear winner', () => {
+    expect(topTied([{ count: 4 }, { count: 2 }])).toHaveLength(1)
+  })
+
+  it('is empty for an empty tally, rather than inventing a leader', () => {
+    expect(topTied([])).toEqual([])
+  })
+})
+
+describe('tiedLabel', () => {
+  it('names one, two or three', () => {
+    expect(tiedLabel(['Lonely'])).toBe('Lonely')
+    expect(tiedLabel(['Lonely', 'Tired'])).toBe('Lonely & Tired')
+    expect(tiedLabel(['Lonely', 'Tired', 'Angry'])).toBe('Lonely, Tired & Angry')
+  })
+
+  it('counts rather than listing once a tie stops being readable', () => {
+    expect(tiedLabel(['A', 'B', 'C', 'D'])).toBe('4 of them, tied')
+  })
+
+  it('says nothing when there is nothing', () => {
+    expect(tiedLabel([])).toBe('')
   })
 })
