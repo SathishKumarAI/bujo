@@ -101,10 +101,16 @@ each one is a commit.
 
 ## Open, and worth doing before the next page
 
-- **`main`'s a11y job has been failing since 2026-10-15 09:08**, independently
-  of any of this work: a shell dropdown trigger fails
-  `label-content-name-mismatch` on every view. Every PR shows UNSTABLE because
-  of it. Fix it before it becomes the reason nobody reads a red a11y run.
+- ~~**`main`'s a11y job has been failing since 2026-10-15 09:08**~~ — **fixed.**
+  The account-menu trigger's only visible text is its suggestion-count badge,
+  and the count was not part of its accessible name, so
+  `label-content-name-mismatch` fired as serious on **every view in the app**.
+  It started the day a journal first produced a suggestion rather than on the
+  commit that introduced it, because `suggestions > 0` is a branch and no gate
+  renders an app with nothing to suggest — the same shape as every other "a
+  branch the seed never takes cannot fail" entry. The name carries the count
+  now rather than the badge being hidden, because the badge is the one thing on
+  that control that changes from day to day.
 - **COD-237** still names four rail pages whose other rows no gate reaches —
   Insights, Coaching, Pull-ups, Help, Recovery and Cycle, less the two now
   armed. `scripts/a11y-panels.mjs` takes one `PAGES` entry per page, plus one

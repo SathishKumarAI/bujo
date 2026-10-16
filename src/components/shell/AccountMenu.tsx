@@ -120,7 +120,27 @@ export function AccountMenu({
     <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Account and app menu" title={`Account, ${label}`} className="relative">
+        {/* THE BADGE'S NUMBER HAS TO BE IN THE ACCESSIBLE NAME.
+
+            axe's `label-content-name-mismatch`: an element's visible text must
+            be part of its accessible name, and this trigger's only visible text
+            is the suggestion COUNT in the badge below — `2` against a name of
+            "Account and app menu". It fails as **serious on every view in the
+            app**, because the trigger is in the shell, and it started failing
+            the day a journal first produced a suggestion rather than on the
+            commit that introduced it: `suggestions > 0` is the branch, and no
+            gate renders an app with nothing to suggest.
+
+            Naming the count rather than hiding it, because the badge is the one
+            thing on this control that changes from day to day — `aria-hidden`
+            on the span would satisfy the rule by deleting the information. */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={suggestions > 0 ? `Account and app menu · ${suggestions} suggestions` : 'Account and app menu'}
+          title={`Account, ${label}`}
+          className="relative"
+        >
           {/* The provider's own picture when there is one. It is the cheapest
               possible confirmation that a sign-in landed — a signed-out app
               cannot produce it — and it is why this trigger is the first place
