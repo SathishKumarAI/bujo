@@ -47,6 +47,24 @@ afterEach(() => localStorage.clear())
 const railRow = (label: string) =>
   screen.getByRole('button', { name: (name) => name.startsWith(`${label} `) })
 
+/**
+ * OPEN THE ACT COLUMN, because jsdom reports a 0px shell.
+ *
+ * `PageLayout` decides the split by measuring `.page-shell`, and `useActColumn`
+ * starts SHUT when stacked — so every component test on this page meets the
+ * `ActStrip` where a browser at 1440 meets the day editor. That is the measured
+ * default, not a bug, and the right fix is for the test to press the strip
+ * rather than to shim a width into jsdom.
+ *
+ * The `aria-expanded="false"` assertion on the way in is the only coverage that
+ * default has outside a browser probe.
+ */
+async function openAct(user: ReturnType<typeof userEvent.setup>) {
+  const strip = screen.getByRole('button', { name: /^Log a day/ })
+  expect(strip).toHaveAttribute('aria-expanded', 'false')
+  await user.click(strip)
+}
+
 describe('Cycle · the registry is the review zone', () => {
   it('reaches every registered card through the rail, and no unregistered one', async () => {
     const user = userEvent.setup()
@@ -103,6 +121,7 @@ describe('Cycle · the registry is the review zone', () => {
   it('decodes every flag, with the meaning exactly as `flags.ts` writes it', async () => {
     const user = userEvent.setup()
     const { container } = mount()
+    await openAct(user)
     const rows = [...container.querySelectorAll('#cycle-flag-meanings > div')]
     expect(rows).toHaveLength(FLAGS.length)
     for (const [i, f] of FLAGS.entries()) {

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, ShieldWarning } from '@/components/icons'
+import { CalendarBlank, CaretRight, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { PageLayout, SectionRail, SummaryStrip } from '../components/page'
+import { ActStrip, PageLayout, SectionRail, SummaryStrip, useActColumn } from '../components/page'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
@@ -92,6 +92,13 @@ export function Cycle() {
   const log = data.cycle
 
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]))
+  /* The act column, which this page was the last on the contract not to have.
+     Measured before: the review panel was **678px at 1440 and 854px at 1920**
+     with the day editor holding 424/520px of the shell on every visit, and no
+     way to give it back. Stacked it is worse than that — the editor, the
+     legend and the month fold are 682px of phone above a review the page
+     exists to show, which is why `useActColumn` starts shut when stacked. */
+  const logCol = useActColumn('cycle')
   /* Which zone-3 group is on screen. Sticky, because the four folds it replaces
      each had a `stickyKey` and losing that is a regression dressed as a
      redesign — `allowed` is the registry, so a renamed group cannot resurrect
@@ -393,6 +400,8 @@ export function Cycle() {
   return (
     <PageLayout
       tier={1180}
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
       zone1={
         /* Not `StatBar`: three of these four are estimates and the phase is a
            coloured pill, and a bar that renders every value in the mono face
@@ -451,8 +460,41 @@ export function Cycle() {
         <CyclePrivacyLine />
         </div>
       }
-      zone2={
-        <Card band title="Log a day" subtitle="Tap a day, set a temperature, flag what happened, rate the drive" hideInfo>
+      zone2={logCol.shut ? (
+        /* Shut, the act is a 40px rail and the review takes the width back —
+           and stacked, `layout.css` lays the same button down into a 44px bar
+           rather than a tower of rotated text. The summary names the day it
+           would open on, because a shut panel with no summary is a mystery. */
+        <ActStrip
+          label="Log a day"
+          summary={selEntry?.temp != null ? `${prettyDay(sel)} · logged` : prettyDay(sel)}
+          onOpen={logCol.open}
+        />
+      ) : (
+        <Card
+          band
+          title="Log a day"
+          subtitle="Tap a day, set a temperature, flag what happened, rate the drive"
+          hideInfo
+          /* THE HINT IS DRAWN, not left in a `title` (§27). A phone cannot
+             hover, and an affordance nobody finds is an affordance nobody
+             uses — which is how this page shipped with no way to put the
+             editor away at all. In `right` rather than wrapped around the
+             heading because `Card` already owns the header row and already
+             names its own controls after the card. */
+          right={
+            <button
+              type="button"
+              onClick={logCol.close}
+              aria-expanded
+              aria-label="Hide the log — the review takes the width"
+              className="group inline-flex shrink-0 items-center gap-1 text-label text-fg-2 transition-colors hover:text-fg-1"
+            >
+              Tap to hide
+              <Icon as={CaretRight} size="sm" />
+            </button>
+          }
+        >
           <DayEditor
             date={sel}
             entry={selEntry}
@@ -516,7 +558,7 @@ export function Cycle() {
             </div>
           )}
         </Card>
-      }
+      )}
       zone3={
         <>
           <SummaryStrip items={[
