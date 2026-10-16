@@ -157,7 +157,17 @@ export function streakStatsFor(
 
   // Best = the longest streak ever: the stored best, the live run, OR the
   // longest historical gap between relapses (which the stored best may predate).
-  const best = Math.max(storedBest, current, longestGap)
+  //
+  // `?? 0` AND `Number.isFinite`, because `Math.max(undefined, 10, 14)` is
+  // **NaN** — not a smaller number, not a throw, a value that renders as
+  // "Personal best NaN" and makes every comparison downstream false, so
+  // `recordApproach` reports tier `far` on a streak that is actually a record.
+  // The type says `best: number` and is right about the code; it cannot say
+  // anything about a journal written before the field existed, or restored
+  // from a partial import. Found when a test fixture omitted it and the
+  // sentence under this came out as "best null".
+  const seed = Number.isFinite(storedBest) ? storedBest : 0
+  const best = Math.max(seed, current, longestGap)
 
   const gaps = dates.length - 1
   const avgGap = gaps >= 1 ? Math.round(completed / gaps) : 0

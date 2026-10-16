@@ -4,8 +4,8 @@
  *   BUJO_URL=http://localhost:4173 npm run a11y:panels
  *   BUJO_CANARY=1 ... — plant a violation and prove the run can go red
  *
- * **Pickleball, Fitness, Strength and Nutrition today, and the list is meant to
- * grow.** COD-237
+ * **Pickleball, Fitness, Strength, Nutrition and Recovery today, and the list
+ * is meant to grow.** COD-237
  * names six pages whose rails make `npm run a11y` cover less than it did as
  * folds: Insights, Coaching, Pickleball, Pull-ups, Help and Recovery. Adding
  * one is a `PAGES` entry — do it in the same change as the rail, or the page's
@@ -55,6 +55,15 @@ const PAGES = [
   { view: 'fitness', label: 'fitness·sport', rows: ['Volume', 'Sessions', 'Bests', 'Mix'], ui: { 'fitness.mode': 'sport' } },
   { view: 'gym', rows: ['Week', 'Sessions', 'Strength', 'Balance', 'Body', 'Load', 'Lookup'] },
   { view: 'nutrition', rows: ['Today', 'Trend', 'Patterns'] },
+  /**
+   * RECOVERY, which COD-237 named as one of the six pages a rail made less
+   * visible to `npm run a11y` — and which stayed unarmed through its own rail
+   * pass, so five groups have been graded by the one the page opens on.
+   *
+   * Its `patterns` row also carries sub-section chips now; those are inside
+   * the row, so opening the row reaches them, and the chips default to All.
+   */
+  { view: 'nofap', label: 'recovery', rows: ['Win or loss', 'Progress', 'Patterns', 'Plan', 'Reference'] },
 ]
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

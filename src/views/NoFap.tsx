@@ -1,20 +1,21 @@
 import { useMemo } from 'react'
-import { Lifebuoy } from '@/components/icons'
+import { ArrowCounterClockwise, CaretRight, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
 import { Empty, Input } from '../components/ui'
-import { cat, onAccent } from '../lib/colors'
+import { cat, onAccent, onRaised } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
-import { PageLayout, SectionRail, StatBar, SummaryStrip } from '../components/page'
+import { ActStrip, PageLayout, SectionRail, StatBar, SummaryStrip, useActColumn } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { cn } from '../lib/cn'
 import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
-import { CARDS, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP, visibleCards, type Group } from '../lib/recoveryCards'
+import { CARDS, FACETS, FACET_LABEL, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP, visibleCards, type Facet, type Group } from '../lib/recoveryCards'
 import { feedbackLedger } from '../lib/recoveryFeedback'
+import { recoveryStep } from '../lib/recoveryStep'
 import {
   StreakRingCard,
   FeedbackLedgerCard,
@@ -66,6 +67,38 @@ import {
  * file derives the numbers, owns the rail state, and wires the three zones. It
  * was **929 lines**; the ceiling in `CLAUDE.md` is 500 and the target ~300.
  */
+/**
+ * The sub-section chips, module level.
+ *
+ * Declared inside the render it would be a NEW component type every render, so
+ * React remounts the whole subtree: every chart re-enters and every fold inside
+ * it snaps shut. eslint's `no-create-component-during-render` says so before
+ * any of that is visible — §16 records the same rule for Pickleball's `Facet`.
+ */
+function ChipRow({ active, onPick, counts, total }: {
+  active: Facet | null
+  onPick: (f: Facet | null) => void
+  counts: readonly (readonly [Facet, number])[]
+  total: number
+}) {
+  const chip = (on: boolean) =>
+    `min-h-11 rounded-pill border px-3 text-label transition-colors ${
+      on ? 'border-line-strong bg-ink-3 text-fg-1' : 'border-line bg-ink-2 text-fg-2 hover:border-line-strong hover:text-fg-1'
+    }`
+  return (
+    <>
+      <button type="button" onClick={() => onPick(null)} aria-pressed={active == null} className={chip(active == null)}>
+        All <span className="num text-fg-2">{total}</span>
+      </button>
+      {counts.map(([f, n]) => n === 0 ? null : (
+        <button key={f} type="button" onClick={() => onPick(active === f ? null : f)} aria-pressed={active === f} className={chip(active === f)}>
+          {FACET_LABEL[f]} <span className="num text-fg-2">{n}</span>
+        </button>
+      ))}
+    </>
+  )
+}
+
 export function NoFap() {
   const { data, logLapseDay, setStreakCost } = useJournal()
   const currency = data.settings.currencySymbol || '$'
@@ -78,11 +111,40 @@ export function NoFap() {
      instead of three, because the rail is single-select where three folds were
      three independent booleans. */
   const [group, setGroup] = useStickyState<Group>('recovery.group', DEFAULT_GROUP, GROUPS)
+  /*
+    STACKED, THE ACT STARTS SHUT (§23).
+
+    Measured on this page at `?demo=1`: the act column is **2,822px on a 390px
+    phone** — a ring, an urge form, a day tally and a reset form — against a
+    2,019px review, and the page came to **5,116px / 6.06 screens**. Below the
+    split that column is the whole width of the page, so the record is six
+    screens down and the rail that reaches it is below *that*.
+
+    Wide it stays open, where it is a column beside the review and open is
+    right. The sticky key means a choice, once made, holds.
+  */
+  const logCol = useActColumn('recovery')
+  /*
+    SUB-SECTIONS FOR THE ONE GROUP THAT NEEDS THEM (§16).
+
+    `patterns` holds nine cards and measured **4,063px / 4.51 desktop screens,
+    6.37 on a phone** — the "a rail fixes a page once and one row re-grows
+    beside it" case. §16 puts the threshold at about five, and the other four
+    groups hold 1, 6, 2 and 3.
+
+    **Not sticky, and not in the URL.** A sub-section is a narrowing you do
+    while reading; persist it and somebody opens the page a week later with six
+    cards missing and no memory of hiding them. The rail row IS a place you
+    return to, which is why that one is sticky and this is not.
+  */
+  const [facet, setFacet] = useState<Facet | null>(null)
 
   const s = data.nofap
   const plans = s.plans ?? []
   const today = todayISO()
   const stats = streakStats(data, today)
+  /** The one sentence zone 1 opens with. Total — see `lib/recoveryStep.ts`. */
+  const step = recoveryStep(data, today)
   /** Both sides of each addiction, signed. See lib/recoveryFeedback.ts. */
   const ledger = useMemo(() => feedbackLedger(data), [data])
   const vsBest = streakVsBest(stats.current, stats.best)
@@ -260,19 +322,89 @@ export function NoFap() {
            `MasonryGrid`'s `@3xl` container step — which is exactly why the pane
            below uses `CardGrid`. */
         tier={1180}
+        onSplitChange={logCol.onSplitChange}
+        actShut={logCol.shut}
         zone1={
-          <StatBar facts={[
-            { label: 'Days clean', value: stats.current },
-            { label: 'Personal best', value: stats.best },
-            {
-              label: 'Next milestone',
-              value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
-              prose: true,
-            },
-            { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean', prose: true },
-          ]} />
+          /* ONE BLOCK: the sentence, then the four facts.
+
+             Zone 1 was the `StatBar` alone — **53px of four figures** on the
+             page with the most to say. "47 days clean" and "personal best 61"
+             are two numbers a reader has to subtract before either means
+             anything, and the subtraction IS the headline: *you are fourteen
+             days from your record*. Every other page on this contract already
+             had its sentence; `docs/PAGE-ROLLOUT.md` listed Recovery's as
+             missing and it stayed missing through the rail pass.
+
+             COLOUR MEANS URGENCY and nothing else — in the left edge and the
+             icon, with `fg-1` text, because an accent as text on a wash of
+             itself is the calibration trap in CLAUDE.md.
+
+             It is a BUTTON into the rail row that elaborates it: a sentence
+             about when urges land, with no way to reach the card about when
+             urges land, is a sentence that sends you looking. */
+          <div className="rounded-card border border-line bg-ink-0 p-3">
+            {(() => {
+              const tone = {
+                first: 'mauve', reset: 'peach', edge: 'red', close: 'peach',
+                record: 'green', quiet: 'green', resisting: 'teal', steady: 'teal',
+              }[step.id]
+              const StepIcon = {
+                first: Lifebuoy, reset: ArrowCounterClockwise, edge: Warning, close: Target,
+                record: Trophy, quiet: Heart, resisting: Clock, steady: Flame,
+              }[step.id]
+              return (
+                <button
+                  type="button"
+                  onClick={() => { setGroup(step.group); setQ('') }}
+                  className="mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left transition-colors hover:bg-ink-2"
+                  style={{ borderLeftColor: cat(tone) }}
+                >
+                  <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
+                  <span className="min-w-0 text-body text-fg-1">{step.text}</span>
+                  <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
+                    {GROUP_LABEL[step.group]} →
+                  </span>
+                </button>
+              )
+            })()}
+            <StatBar facts={[
+              { label: 'Days clean', value: stats.current },
+              { label: 'Personal best', value: stats.best },
+              {
+                label: 'Next milestone',
+                value: nextBenefit ? `${nextBenefit.label} · ${stats.daysToNext}d` : 'All cleared',
+                prose: true,
+              },
+              { label: 'Today', value: relapsedToday ? 'Reset logged' : 'Clean', prose: true },
+            ]} />
+          </div>
         }
-        zone2={<>
+        zone2={logCol.shut ? (
+          <ActStrip
+            label="Log an urge or a reset"
+            summary={relapsedToday ? 'Reset logged today' : `${stats.current} days clean`}
+            onOpen={logCol.open}
+          />
+        ) : (<>
+        {/* THE TITLE IS THE TOGGLE, and it says so (§27). A heading that is
+            secretly a button is a feature nobody finds, and the `title` it
+            would otherwise rely on does not exist on a phone. */}
+        <h2 className="text-heading font-medium text-fg-1">
+          <button
+            type="button"
+            onClick={logCol.close}
+            aria-expanded
+            title="Hide the log — the review takes the width"
+            className="group flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
+          >
+            Log an urge or a reset{' '}
+            <span className="inline-flex shrink-0 items-center gap-1 text-label font-normal text-fg-2 group-hover:text-fg-1">
+              Tap to hide
+              <Icon as={CaretRight} size="sm" />
+            </span>
+          </button>
+        </h2>
+
         <StreakRingCard stats={stats} relapsedToday={relapsedToday} startedOn={s.startedOn} />
 
         {/* ZONE 2 IS ORDERED BY HOW OFTEN THE ACT HAPPENS, not by how bad it is.
@@ -299,7 +431,7 @@ export function NoFap() {
         <DayTallyCard rows={tallyRows} onStep={logLapseDay} />
 
         <LogResetCard best={stats.best} totalClean={stats.totalClean} />
-        </>}
+        </>)}
         zone3={<>
         {/* Lifetime totals · the record, not the next action. */}
         {/* **Only the negatives are counted here now.** "Urges resisted" was a
@@ -354,7 +486,7 @@ export function NoFap() {
             label="Recovery groups"
             groups={GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: countOf(g) }))}
             value={filtering ? null : group}
-            onChange={(g) => { setGroup((g as Group | null) ?? DEFAULT_GROUP); setQ('') }}
+            onChange={(g) => { setGroup((g as Group | null) ?? DEFAULT_GROUP); setQ(''); setFacet(null) }}
             filtering={filtering}
             onClear={() => setQ('')}
           />
@@ -399,8 +531,25 @@ export function NoFap() {
                         *container* at 768px, so at 722 it silently draws one
                         column. `min-w-0` per cell so a wide chart cannot drag
                         the shared track. */}
+                    {/* The chips, for the one group big enough to need them.
+                        Counts come from the same `ids` the cards do, so a chip
+                        can never offer a card that is not there — and a facet
+                        whose cards are all filtered out disappears rather than
+                        selecting nothing. */}
+                    {g === 'patterns' && ids.length > 4 && (
+                      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                        <ChipRow
+                          active={facet}
+                          onPick={setFacet}
+                          counts={FACETS.map((f) => [f, ids.filter((c) => c.facet === f).length] as const)}
+                          total={ids.length}
+                        />
+                      </div>
+                    )}
                     <CardGrid className="2xl:grid-cols-2">
-                      {ids.map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{all[c.id]}</div>)}
+                      {ids
+                        .filter((c) => g !== 'patterns' || facet == null || c.facet === facet)
+                        .map((c) => <div key={c.id} data-card={c.id} className={cn('min-w-0', c.wide && SPAN_2)}>{all[c.id]}</div>)}
                     </CardGrid>
                   </section>
                 )

@@ -1,4 +1,5 @@
 import { cat } from '../../lib/colors'
+import { BAND_PX, barHeight } from '../../lib/sparkBars'
 import { addDays, prettyDay } from '../../lib/date'
 
 /**
@@ -22,7 +23,7 @@ export function PairedSparkline({ weeks, relapses }: {
     <div>
       {/* The frame draws at zero data — an empty axis says "this is where the
           comparison goes", where a hidden chart says nothing at all. */}
-      <div className="flex h-24 items-end gap-1.5 border-b border-line" role="img" aria-label={
+      <div className="flex items-end gap-1.5 border-b border-line" style={{ height: BAND_PX }} role="img" aria-label={
         weeks.length === 0
           ? 'Urges and resets by week: nothing logged yet'
           : `Urges resisted and resets over ${weeks.length} weeks: ${weeks.map((w) => `week of ${prettyDay(w.weekStart)}, ${w.count} urges, ${resetsIn(w.weekStart)} resets`).join('; ')}`
@@ -34,15 +35,13 @@ export function PairedSparkline({ weeks, relapses }: {
               {resets > 0 && (
                 <span className="mx-auto mb-0.5 block h-1.5 w-1.5 rounded-control" style={{ background: cat('red') }} />
               )}
-              {/* A zero week draws a visible stub, not a 2%-of-96px hairline.
-                  At `Math.max(2, …)` an empty chart rendered ~2px of `ink-3`
-                  under a baseline and read as a chart that had failed to draw
-                  — the frame was there and said nothing. The stub is the
-                  lighter inset tier so a real one-urge week still reads as
-                  taller and darker than "no urges". */}
+              {/* A zero week draws a visible stub, not a hairline. The stub is
+                  the lighter inset tier so a real one-urge week still reads as
+                  taller and darker than "no urges". Height in PX — see
+                  `barHeight` above for why a percentage drew nothing. */}
               <div
                 className={`rounded-t ${w.count > 0 ? 'bg-ink-3' : 'bg-ink-2'}`}
-                style={{ height: w.count > 0 ? `${Math.max(6, (w.count / max) * 100)}%` : '6px' }}
+                style={{ height: barHeight(w.count, max) }}
               />
             </div>
           )

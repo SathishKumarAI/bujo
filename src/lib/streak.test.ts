@@ -396,3 +396,32 @@ describe('haltTally', () => {
     expect(haltTally(d)).toEqual([])
   })
 })
+
+/**
+ * `Math.max(undefined, …)` is NaN, and NaN renders.
+ *
+ * `NoFapState.best` is typed `number` and the type is right about the code —
+ * but a journal written before that field existed, or restored from a partial
+ * import, has no `best`, and the page then drew "Personal best NaN" while
+ * `recordApproach` reported tier `far` on a streak that was actually a record,
+ * because every comparison against NaN is false. Found by a test fixture that
+ * left the field out; the fixture was wrong and the code was worse.
+ */
+describe('a streak with no stored best', () => {
+  it('derives one instead of returning NaN', () => {
+    const j = {
+      entries: [], habits: [], workouts: [], metrics: [], collections: [], settings: {},
+      nofap: {
+        startedOn: '2026-10-06',
+        relapses: [{ id: 'a', date: '2026-10-05' }, { id: 'b', date: '2026-09-21' }],
+        urgeLog: [],
+      },
+    } as never
+    const s = streakStats(j, '2026-10-16')
+    expect(Number.isFinite(s.best)).toBe(true)
+    // The live run is 10 days and the longest completed gap is 14, so the best
+    // is the gap — the stored field being absent must not hide it.
+    expect(s.best).toBe(14)
+    expect(s.current).toBe(10)
+  })
+})
