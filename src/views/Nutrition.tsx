@@ -9,10 +9,10 @@ import { Icon } from '@/components/Icon'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn } from '../components/page'
+import { ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
-import { cat, onRaised } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
 import { MacroBar } from '../components/nutrition/DayCards'
 import { FoodPicker } from '../components/nutrition/FoodPicker'
@@ -233,24 +233,14 @@ export function Nutrition() {
           {(() => {
             const tone = { first: 'mauve', untracked: 'yellow', over: 'peach', protein: 'teal', left: 'green', done: 'green' }[step.id]
             const StepIcon = { first: Plus, untracked: NotePencil, over: Gauge, protein: Target, left: ForkKnife, done: Trophy }[step.id]
-            const body = (
-              <>
-                <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
-                <span className="min-w-0 text-body text-fg-1">{step.text}</span>
-                {step.group && (
-                  <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
-                    {NUTRITION_PANELS.find((g) => g.id === step.group)?.label} →
-                  </span>
-                )}
-              </>
-            )
-            const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
-            return step.group ? (
-              <button type="button" onClick={() => setPanel(step.group!)} className={`${shell} transition-colors hover:bg-ink-2`} style={{ borderLeftColor: cat(tone) }}>
-                {body}
-              </button>
-            ) : (
-              <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+            return (
+              <NextStepBlock
+                text={step.text}
+                tone={tone}
+                icon={StepIcon}
+                destination={step.group ? NUTRITION_PANELS.find((g) => g.id === step.group)?.label : undefined}
+                onPick={step.group ? () => setPanel(step.group!) : undefined}
+              />
             )
           })()}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">

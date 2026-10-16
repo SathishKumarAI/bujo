@@ -6,7 +6,7 @@ import { notify } from '../lib/notify'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
 import {
-  ActStrip, ActivityForm, PageLayout, StatBar, useActColumn,
+  ActStrip, ActivityForm, NextStepBlock, PageLayout, StatBar, useActColumn,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
 import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, OWN_PAGE, type Mode } from '../domain/activities'
@@ -18,7 +18,6 @@ import { weeklyActiveMinutes } from '../lib/fitness'
 import { cadence, nextStep } from '../lib/fitnessReview'
 import { FITNESS_PANELS } from '../components/fitness/panels'
 import { FitnessReview } from '../components/fitness/Review'
-import { cat, onRaised } from '../lib/colors'
 import { useStickyState } from '../lib/useStickyState'
 
 /**
@@ -239,32 +238,14 @@ export function Fitness() {
       {(() => {
         const tone = { first: 'mauve', lapse: 'yellow', goal: 'teal', today: 'green', milestone: 'mauve' }[step.id]
         const StepIcon = { first: Plus, lapse: Gauge, goal: Target, today: Trophy, milestone: Trophy }[step.id]
-        const body = (
-          <>
-            <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
-            <span className="min-w-0 text-body text-fg-1">{step.text}</span>
-            {/* The destination is named on a desktop and dropped on a phone —
-                the sentence names what to do in its own words, the whole row is
-                the button, and a phone has no hover to need the hint. */}
-            {step.group && (
-              <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
-                {FITNESS_PANELS.find((g) => g.id === step.group)?.label} →
-              </span>
-            )}
-          </>
-        )
-        const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
-        return step.group ? (
-          <button
-            type="button"
-            onClick={() => setPanel(step.group!)}
-            className={`${shell} transition-colors hover:bg-ink-2`}
-            style={{ borderLeftColor: cat(tone) }}
-          >
-            {body}
-          </button>
-        ) : (
-          <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+        return (
+          <NextStepBlock
+            text={step.text}
+            tone={tone}
+            icon={StepIcon}
+            destination={step.group ? FITNESS_PANELS.find((g) => g.id === step.group)?.label : undefined}
+            onPick={step.group ? () => setPanel(step.group!) : undefined}
+          />
         )
       })()}
       <StatBar

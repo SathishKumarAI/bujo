@@ -6,8 +6,7 @@ import { Card, Input, Textarea } from '../components/ui'
 import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
 import { durationOptions } from '../components/ui/quickpick.options'
 import { Button } from '../components/ui/button'
-import { ActStrip, PageLayout, DisclosureRow, StatBar, useActColumn } from '../components/page'
-import { cat, onRaised } from '../lib/colors'
+import { ActStrip, PageLayout, DisclosureRow, StatBar, useActColumn, NextStepBlock } from '../components/page'
 import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
@@ -182,36 +181,14 @@ export function Pickleball() {
       {(() => {
         const tone = { first: 'mauve', event: 'peach', goal: 'teal', lapse: 'yellow', milestone: 'mauve' }[step.id]
         const StepIcon = { first: Plus, event: CalendarDot, goal: Target, lapse: Gauge, milestone: Trophy }[step.id]
-        const body = (
-          <>
-            <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
-            <span className="min-w-0 text-body text-fg-1">{step.text}</span>
-            {/* The destination is named on a desktop and dropped on a phone.
-                Measured: the row is 39px wide-screen and was **156px** at
-                390px — four lines, because "Riverside Autumn Open is in 9 days
-                — the prep checklist is under Competition." already wraps to
-                three and the panel name added a fourth. The sentence names the
-                panel in its own words, the whole row is the button, and a
-                phone has no hover to need the hint. */}
-            {step.group && (
-              <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
-                {PB_PANELS.find((g) => g.id === step.group)?.label} →
-              </span>
-            )}
-          </>
-        )
-        const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
-        return step.group ? (
-          <button
-            type="button"
-            onClick={() => setPanel(step.group!)}
-            className={`${shell} transition-colors hover:bg-ink-2`}
-            style={{ borderLeftColor: cat(tone) }}
-          >
-            {body}
-          </button>
-        ) : (
-          <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+        return (
+          <NextStepBlock
+            text={step.text}
+            tone={tone}
+            icon={StepIcon}
+            destination={step.group ? PB_PANELS.find((g) => g.id === step.group)?.label : undefined}
+            onPick={step.group ? () => setPanel(step.group!) : undefined}
+          />
         )
       })()}
       {/* ONE BAR, NOT A CARD.
