@@ -2,13 +2,12 @@ import { HandFist } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, useRef } from 'react'
 import { useJournal } from '../../store'
-import { Card, Input, Pill } from '../ui'
+import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
 import { cat, onRaised } from '../../lib/colors'
-import { prettyDay } from '../../lib/date'
-import { URGE_PRESETS, HALT_STATES, haltTally, type HaltState } from '../../lib/streak'
+import { URGE_PRESETS, HALT_STATES, type HaltState } from '../../lib/streak'
 import { LONELY_KINDS } from '../../lib/recoveryFeedback'
-import { techniqueRanking, matchPlanForTrigger } from '../../lib/urge'
+import { matchPlanForTrigger } from '../../lib/urge'
 import { ChipPick } from '../ui/quickpick'
 import { notify } from '../../lib/notify'
 
@@ -18,9 +17,6 @@ const TECHNIQUES: { id: 'surf' | 'delay' | 'halt' | 'reach-out'; label: string }
   { id: 'halt', label: 'HALT check' },
   { id: 'reach-out', label: 'Reach out' },
 ]
-const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
-  surf: 'Surf it', delay: 'Delay 10 min', halt: 'HALT check', 'reach-out': 'Reach out',
-}
 /** Intensity 1–5 on the app's severity ramp. Index is `intensity - 1`. */
 const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
 
@@ -73,7 +69,7 @@ const INTENSITY_HUE = ['green', 'teal', 'yellow', 'peach', 'red'] as const
  * none of which are worth a phantom win.
  */
 export function UrgeSurfingCard() {
-  const { data, resistUrge, removeUrge, logLapseDay } = useJournal()
+  const { data, resistUrge, logLapseDay } = useJournal()
   const [urge, setUrge] = useState('')
   const [intensity, setIntensity] = useState(3)
   const [technique, setTechnique] = useState<'surf' | 'delay' | 'halt' | 'reach-out' | undefined>(undefined)
@@ -86,10 +82,6 @@ export function UrgeSurfingCard() {
 
   const plans = data.nofap.plans ?? []
   const matchedPlan = matchPlanForTrigger(plans, urge)
-  const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
-  const haltRank = haltTally(data)
-  const urgeLog = [...(data.nofap.urgeLog ?? [])].sort((a, b) => (a.at ?? a.date) < (b.at ?? b.date) ? 1 : -1)
-  const fmtTime = (iso?: string) => { try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' } }
 
   /**
    * ONE FORM, TWO ENDINGS.
@@ -151,7 +143,7 @@ export function UrgeSurfingCard() {
           someone they are bad for being honest. */}
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="primary" size="lg" onClick={() => logUrge('resisted')} className="flex-1 gap-2">
-          <Icon as={HandFist} size="md" /> I felt it and held
+          <Icon as={HandFist} size="sm" /> I felt it and held
         </Button>
         <Button variant="secondary" size="lg" onClick={() => logUrge('followed')} className="flex-1 gap-2">
           I gave in
@@ -280,41 +272,14 @@ export function UrgeSurfingCard() {
           />
         )}
       </div>
-      {/* Most-effective technique tally (U8) */}
-      {techRank.length > 0 && (
-        <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-          <div className="mb-1 text-fg-1">Most-used technique: <span className="font-medium" style={{ color: onRaised('teal') }}>{TECH_LABEL[techRank[0].technique]}</span> · {techRank[0].count}×</div>
-          <div className="flex flex-wrap gap-1.5">
-            {techRank.map((t) => (
-              <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* HALT pattern tally · which unmet need accompanies urges most */}
-      {haltRank.length > 0 && (
-        <div className="mt-2 rounded-card bg-ink-2 p-2.5 text-label">
-          <div className="mb-1 text-fg-1">HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{haltRank[0].label}</span> most often · {haltRank[0].count}×</div>
-          <div className="flex flex-wrap gap-1.5">
-            {haltRank.map((h) => (
-              <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>
-            ))}
-          </div>
-        </div>
-      )}
-      {urgeLog.length > 0 && (
-        <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto">
-          {urgeLog.map((u) => (
-            <li key={u.id} className="group flex items-center gap-2 rounded-card bg-ink-2 px-2.5 py-1.5 text-body">
-              <Icon as={HandFist} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
-              <span className="text-fg-1">{u.trigger || 'Urge'}</span>
-              <span className="ml-auto text-label text-fg-2">{prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}</span>
-              <Button variant="ghost" size="icon-sm" onClick={() => removeUrge(u.id)} aria-label="Remove" className="text-fg-2 reveal hover:text-red">×</Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {(data.nofap.urgesResisted ?? 0) > 0 && <p className="mt-2 text-label text-fg-2">+ {data.nofap.urgesResisted} logged before dated entries existed.</p>}
+      {/* THE TALLIES AND THE LIST LEFT THIS CARD.
+
+          They were two tally panels and a fifteen-row history inside a 424px
+          act column, under a form with twenty chips — reported by pasting the
+          whole column back with "a lot of content in here is not needed".
+          They are things you READ (§29), so they live in the review now, in
+          `UrgeHistoryCard`, where the list also finally got an Edit and a
+          delete that asks. */}
     </Card>
   )
 }

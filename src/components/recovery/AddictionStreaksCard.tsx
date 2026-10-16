@@ -67,7 +67,7 @@ export function AddictionStreaksCard() {
             return (
               <li key={a.id} className="group rounded-card border border-line bg-ink-2 px-3 py-2.5">
                 <div className="flex items-center gap-3">
-                  <Icon as={Flame} size="md" style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
+                  <Icon as={Flame} size="sm" style={{ color: reset ? cat('red') : cat('peach') }} className="shrink-0" />
                   <div className="min-w-0 flex-1">
                     {/* `flex-wrap`, found by the clip gate the moment the
                         demo seed first put an addiction on this page: three

@@ -724,3 +724,19 @@ export function cleanRollup(
   for (const mo of monthSet) if (!dirtyMonths.has(mo)) cleanMonths++
   return { cleanWeeks, cleanMonths, totalWeeks, totalMonths }
 }
+
+/**
+ * The label for each coping technique, in one place.
+ *
+ * It lived as a `const` inside `UrgeSurfingCard` while `techniqueRanking` —
+ * which returns the ids it labels — lives here, so the card that logged an
+ * urge owned the words and the card that reported on them had to import from
+ * it. Two components need it now (the form and the history), which is the
+ * moment a constant stops belonging to a component.
+ */
+export const TECH_LABEL: Record<'surf' | 'delay' | 'halt' | 'reach-out', string> = {
+  surf: 'Surf it',
+  delay: 'Delay 10 min',
+  halt: 'HALT check',
+  'reach-out': 'Reach out',
+}

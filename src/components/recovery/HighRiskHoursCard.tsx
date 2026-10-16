@@ -19,7 +19,7 @@ type PeakHour = NonNullable<ReturnType<typeof peakUrgeHour>>
  */
 export function HighRiskHoursCard({ hourHist, peakHour }: { hourHist: HourHist; peakHour: PeakHour }) {
   return (
-    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Clock} size="md" className="text-peach" /> High-risk hours</span>} subtitle={`Urges cluster around ${peakHour.label}, pre-plan a defense`}>
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Clock} size="sm" className="text-peach" /> High-risk hours</span>} subtitle={`Urges cluster around ${peakHour.label}, pre-plan a defense`}>
       <HourStrip hourHist={hourHist} label={`Hour-of-day urge heatmap; peak at ${peakHour.label} with ${peakHour.count} urges`} />
       <p className="mt-1.5 text-label text-fg-2">Tallest heat at <span className="font-medium" style={{ color: onRaised('peach') }}>{peakHour.label}</span> · {peakHour.count} urge{peakHour.count === 1 ? '' : 's'}.</p>
     </Card>

@@ -152,6 +152,9 @@ export const CARDS: CardMeta[] = [
   // FIRST in the group, deliberately. It is the card that answers "was that a
   // win or a loss", which is the question every other card on this page assumes
   // you have already answered for yourself.
+  /* THE URGE RECORD, in the first row with the ledger it explains (§29). It
+     was inside the act column, under the form that writes it. */
+  { id: 'urgehistory', title: 'Urges you logged', group: 'feedback', words: 'urge history log what helped halt technique tally resisted gave in edit delete when' },
   { id: 'feedback', title: 'Win or loss, per thing', group: 'feedback', wide: true, words: 'feedback positive negative resisted followed slipped net ratio verdict porn nicotine alcohol doomscrolling loneliness stress what to try next' },
   { id: 'streakvsbest', title: 'Streak vs best', group: 'progress', words: 'streak best record pace comeback days clean ahead behind' },
   { id: 'selfefficacy', title: 'Self-efficacy', group: 'progress', words: 'conversion resisted rate urges won confidence percent' },
@@ -206,6 +209,20 @@ export const CARDS: CardMeta[] = [
   { id: 'commitment', title: 'My commitment', group: 'plan', words: 'commitment contract quit date reason why promise' },
   { id: 'triggerplans', title: 'Trigger plans', group: 'plan', words: 'trigger plan if then coping response when i will' },
 
+  /*
+    THE COPING CHAPTER AND ITS TOOLS, first in `reference`.
+
+    Asked for as "exercises, meditation, breathing … is it okay to break the
+    cycle and continue again … what is the consequence of going back". They go
+    here rather than in `plan` because `plan` is what YOU wrote down and this
+    is what is known — and first in the group because somebody who opens
+    Reference mid-urge should land on something they can do, not on a ladder of
+    milestones.
+  */
+  { id: 'coping', title: 'How to get through it', group: 'reference', words: 'how cope technique urge surf breathe breathing meditation exercise move halt craving evidence research marlatt stanford what to do right now' },
+  { id: 'breathing', title: 'Breathe with it', group: 'reference', words: 'breathe breathing cyclic sigh physiological sigh calm timer meditation exhale stanford five minutes' },
+  { id: 'lapse', title: 'Starting again', group: 'reference', words: 'lapse relapse slip okay start again shame guilt abstinence violation effect forgive continue after a reset' },
+  { id: 'resetcost', title: 'What a reset costs today', group: 'reference', words: 'cost consequence reset relapse lose days milestone keep total clean what happens if' },
   { id: 'techniques', title: 'Beat the urge', group: 'reference', words: 'technique surf delay halt play forward remove cue reach out coping', wide: true },
   { id: 'ladder', title: 'Recovery ladder', group: 'reference', words: 'ladder milestone benefit days clears next 7 14 30 90' },
   { id: 'resets', title: 'Reset history', group: 'reference', words: 'reset history relapse log reason reflection past' },

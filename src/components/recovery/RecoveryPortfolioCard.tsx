@@ -9,7 +9,7 @@ type Portfolio = ReturnType<typeof addictionPortfolio>
 /** Multi-addiction overview (#408) · whole recovery portfolio ranked by current streak. */
 export function RecoveryPortfolioCard({ portfolio }: { portfolio: Portfolio }) {
   return (
-    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={ListNumbers} size="md" className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding, ranked by current run">
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={ListNumbers} size="sm" className="text-mauve" /> Recovery portfolio</span>} subtitle="Every streak you’re holding, ranked by current run">
       <ul className="space-y-1.5">
         {portfolio.map((p, i) => (
           <li key={p.id} className="flex items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">

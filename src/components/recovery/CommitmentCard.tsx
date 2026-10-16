@@ -18,7 +18,7 @@ export function CommitmentCard() {
   const daysSinceQuit = commitment?.quitDate ? Math.max(0, dayDiff(commitment.quitDate, today)) : null
 
   return (
-    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="md" className="text-mauve" /> My commitment</span>}
+    <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={Heart} size="sm" className="text-mauve" /> My commitment</span>}
       subtitle="Your quit-date contract, the reason you’re doing this"
       right={hasCommitment && !editing ? <Button variant="secondary" size="sm" onClick={() => setEditing(true)} className="text-label">Edit</Button> : undefined}>
       {hasCommitment && !editing ? (

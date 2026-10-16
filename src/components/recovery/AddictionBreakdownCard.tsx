@@ -96,7 +96,7 @@ export function AddictionBreakdownCard({
 
   return (
     <Card enlargeable band hideInfo
-      title={<span className="inline-flex items-center gap-2"><Icon as={Flame} size="md" className="text-red" /> {name}</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Flame} size="sm" className="text-red" /> {name}</span>}
       subtitle={
         total == null
           ? 'Nothing logged yet · the grids below fill in as you log'

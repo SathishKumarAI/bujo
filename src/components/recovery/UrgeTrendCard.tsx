@@ -12,7 +12,7 @@ type Trend = ReturnType<typeof urgeFrequencyTrend>
 export function UrgeTrendCard({ urgeTrend }: { urgeTrend: Trend }) {
   return (
     <Card enlargeable band
-      title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <Icon as={TrendDown} size="md" className="text-green" /> : urgeTrend.direction === 'up' ? <Icon as={TrendUp} size="md" className="text-peach" /> : <Icon as={PersonSimpleRun} size="md" className="text-fg-2" />} Urge trend</span>}
+      title={<span className="inline-flex items-center gap-2">{urgeTrend.direction === 'down' ? <Icon as={TrendDown} size="sm" className="text-green" /> : urgeTrend.direction === 'up' ? <Icon as={TrendUp} size="sm" className="text-peach" /> : <Icon as={PersonSimpleRun} size="sm" className="text-fg-2" />} Urge trend</span>}
       subtitle={urgeTrend.direction === 'down' ? 'Cravings are easing week over week' : urgeTrend.direction === 'up' ? 'Urges have picked up lately · lean on your plan' : 'Holding steady week to week'}>
       <div className="h-40 w-full" role="img" aria-label={`Weekly urge counts, oldest to newest: ${urgeTrend.weeks.map((w) => w.count).join(', ')}`}>
         <ResponsiveContainer width="100%" height="100%">

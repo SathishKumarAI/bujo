@@ -26,6 +26,7 @@ import type {
   MonthlyMeta,
   Recurrence,
   Relapse,
+  UrgeWin,
   Routine,
   Settings,
   Weather,
@@ -187,6 +188,8 @@ interface Store {
   removeRelapse: (id: string) => void
   resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5; outcome?: 'resisted' | 'followed'; lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' }) => void
   removeUrge: (id: string) => void
+  /** Correct a logged urge — what it was, the day, the intensity. */
+  updateUrge: (id: string, patch: Partial<Omit<UrgeWin, 'id'>>) => void
   /**
    * One-tap "it happened today" with a count. `null` targets the primary
    * streak, otherwise an `AddictionStreak` id. `step` may be -1 to walk back an
@@ -833,6 +836,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
               // that never claimed to be lonely at all.
               lonelyKind: entry?.halt?.includes('lonely') ? entry.lonelyKind : undefined,
             }],
+          },
+        })),
+
+      /*
+        CORRECTING AN URGE. The list's only affordance was a `×` that deleted
+        on the first click — word for word the failure `USER-CONTROL.md` was
+        written after, still sitting on the record of someone's hardest
+        moments. Unlike a reset, an urge touches no derived streak: it feeds
+        the tallies and the hour histogram, and both recompute from the log.
+      */
+      updateUrge: (id, p) =>
+        patch((d) => ({
+          ...d,
+          nofap: {
+            ...d.nofap,
+            urgeLog: (d.nofap.urgeLog ?? []).map((u) => (u.id === id ? { ...u, ...p } : u)),
           },
         })),
 

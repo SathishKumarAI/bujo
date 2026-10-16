@@ -74,7 +74,7 @@ export function TechniquesBlock({ plans, next, daysToNext }: {
 }) {
   return (
     <RefBlock
-      title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="md" className="text-mauve" /> Beat the urge</span>}
+      title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="sm" className="text-mauve" /> Beat the urge</span>}
       subtitle="Proven techniques, an urge peaks and passes in ~15–20 min"
     >
       <div className="@container/tech">

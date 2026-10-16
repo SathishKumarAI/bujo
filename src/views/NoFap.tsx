@@ -14,6 +14,7 @@ import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryC
 import { feedbackLedger } from '../lib/recoveryFeedback'
 import { recoveryStep } from '../lib/recoveryStep'
 import { RecoveryReview } from '../components/recovery/Review'
+import { CopingChapter, LapseTruthCard } from '../components/recovery/CopingChapter'
 import {
   StreakRingCard,
   FeedbackLedgerCard,
@@ -36,6 +37,9 @@ import {
   AddictionBreakdownCard,
   UrgeMixCard,
   AddictionStreaksCard,
+  UrgeHistoryCard,
+  BreathingCard,
+  ResetCostCard,
   CommitmentCard,
   TriggerPlansCard,
   TechniquesBlock,
@@ -198,6 +202,11 @@ export function NoFap() {
     moneysaved: <MoneySavedCard currency={currency} costPerDay={s.costPerDay} savedMoney={savedMoney} totalClean={stats.totalClean} onCostChange={setStreakCost} />,
     calmstretch: !quiet.empty && quiet.days >= 1 && <CalmStretchCard quiet={quiet} />,
     addictions: <AddictionStreaksCard />,
+    urgehistory: <UrgeHistoryCard />,
+    coping: <CopingChapter />,
+    breathing: <BreathingCard />,
+    lapse: <LapseTruthCard />,
+    resetcost: <ResetCostCard current={stats.current} best={stats.best} totalClean={stats.totalClean} />,
 
     urgetrend: urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />,
     intensity: intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />,

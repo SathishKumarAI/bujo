@@ -85,7 +85,7 @@ export function DayTallyCard({ rows, onStep }: {
                 {r.count > 0 && (
                   <Button variant="ghost" size="icon-lg" onClick={() => onStep(r.id, -unitOf(r.unit).step)}
                     aria-label={`Less ${r.name} today`}>
-                    <Icon as={Minus} size="md" />
+                    <Icon as={Minus} size="sm" />
                   </Button>
                 )}
                 {/* ONE TAP PER REAL ANSWER, not one tap per unit.
