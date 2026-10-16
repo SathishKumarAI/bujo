@@ -14,6 +14,119 @@ while thirteen views had moved to `PageLayout`, and the census numbers were what
 you would expect of the holdout: 4.67 screens at 1440 (third tallest page in the
 app), 6.89 at 390, ten folds of which **ten were open**.
 
+## What shipped · COD-329, 2026-10-15
+
+The three-zone pass above left the shape right and the SIZE wrong. Measured at
+`?demo=1` against a preview, before this change:
+
+| | shipped | opened | act column | review |
+|---|---|---|---|---|
+| 1440 | 1538px · 1.7 screens | 3234px · 3.6 | **3001px** | 678 × **3016px** |
+| 1920 | 1539 · 1.4 | 3056 · 2.8 | 2838 | 1062 × 2563 |
+| 1152 (stacked) | 2304 · 2.6 | **6262 · 7.0** | 2712 | 825 × 3292 |
+| 390 | 3048 · 3.6 | **7262 · 8.6** | 2998 | 324 × 3737 |
+
+**28 `aria-expanded` controls**, four review folds of which three started shut.
+A fold hides a section's height and keeps its row; the page you landed on was a
+form and four identical grey bars, and the answer you came back for was behind
+whichever one you guessed right. That is the same finding the Home Workout pass
+wrote down ("a review zone has one navigation in it") arriving a cluster later.
+
+### Shape, now
+
+| zone | holds |
+|---|---|
+| 1 · orient | Train next · Last session · Sets this week · Stalled lifts |
+| 2 · act | The set logger, last session, the rest timer, the tools fold — **and a control that puts the whole column away** |
+| 3 · review | One bar of five rows |
+
+| # | row | the question |
+|---|---|---|
+| 1 | Week | what have I done in seven days, and where is the volume going |
+| 2 | Sessions | what did I log — and the page had **no history at all** before |
+| 3 | Strength | am I getting stronger: records, standards, effort |
+| 4 | Balance | what am I neglecting: movement split, recovery, frequency, stalls |
+| 5 | Body | how is my body changing: weight trend and photos |
+
+**It opens on Week, not Sessions** — the one difference from the sport pages,
+and the reason is that a lifting session is logged set by set with the logger
+already open in zone 2, so what you want afterwards is what the week now looks
+like.
+
+### The history the page never had
+
+You logged a session, a rollup card appeared until your next keystroke, and
+after that the session existed only inside twelve analytics. There was no list,
+so there was nothing to correct: a set typed as `120` instead of `12` was
+permanent, while `updateWorkout` had been in the store the whole time —
+`USER-CONTROL.md` rule 1 failing on the page with the most data entry in the
+app.
+
+**Sets are grouped the way a lifter says them.** One row per stored set made
+the first demo card **thirteen rows**, five of them the identical string
+"Bench Press 65lb × 5". `groupSets` collapses a run into `5 × 65lb × 5` and
+keeps the set that BROKE separate — `5,5,5,5,4` prints two lines, because the
+failure is the interesting part. Bodyweight is `BW`, never `0lb`. Phone
+Sessions row: 2039px → **1450px**.
+
+The editor rewrites BOTH stored shapes through `setLineOf`, which the logger
+also calls: `setRows` is what every analytic counts, `sets` is what `parseSet`
+reads, and rewriting one is how a corrected session keeps reporting its old
+numbers.
+
+### The charts
+
+Reported as *"some of the charts are looking like just a generic slop"*.
+
+- **A house axis style** (`components/page/chartStyle.ts`): horizontal
+  gridlines only, no axis line, no tick marks, `subtext0` ticks (`overlay0` on
+  a card is 2.57:1), compact figures (`14k`), and `minTickGap` so twenty dated
+  points thin themselves instead of running together. 39 `CartesianGrid` call
+  sites exist in the app; these four are migrated, the rest are a follow-up.
+- **Every subtitle states the finding**: "This week 14k lb · 9% above your
+  eight-week average of 13k", not "weekly working-set volume".
+- **The current week is drawn quietly** and says so under the chart — the last
+  bar covers a week that has not finished, and a short bar at the right-hand
+  end reads as a collapse rather than as Tuesday.
+- **The movement radar became four bars.** Four axes make a quadrilateral, so
+  there is no baseline for a shape to be lopsided against, and with Core at
+  zero — true in the demo and in most real weeks — it collapsed to a triangle
+  against an empty axis. Measured: a **224px plot holding a small purple
+  triangle**, with the four real numbers printed as a caption because the chart
+  could not carry them.
+- **`pl-2` on the lift table's numeric columns.** At 390px the right-aligned
+  cells butted into each other: `146lb1.61×` read as one wrong number. Invisible
+  to both rendering gates; caught on a screenshot.
+
+### Measured after
+
+| | shipped | review | worst row |
+|---|---|---|---|
+| 1440 | **1051px · 1.2 screens** | 678 × **786px** | 1490px (Balance) |
+| 1920 | 1125 · 1.0 | 1062 × 786 | — |
+| 1152 | **1085 · 1.2** | 825 × 786 | — |
+| 390 | **1593 · 1.9** | 324 × 1025 | 1912 (Balance) |
+
+`views/Gym.tsx` 781 → 558 lines. Folds on the page 28 → 18.
+
+**a11y per row**: `npm run a11y:panels` drives all five — part of **126 scans ·
+0 serious · 0 critical** across three pages, armed on a planted violation
+(`BUJO_CANARY=1` → 36 criticals). The fold counts it prints for the gym rows
+(14–29) are the act column being opened by `openFolds`, because `ActStrip`
+renders `aria-expanded="false"` — which is what you want from a gate meant to
+see the whole page.
+
+### Still open after this pass
+
+- **`MuscleVolumeBalance` cannot be satisfied.** Its landmark is 10–20 hard
+  sets per muscle per week, and it counts a set once per muscle the lift works
+  — so the demo journal's 134 weekly sets render as traps 96, lats 91, biceps
+  76, i.e. every muscle permanently "over 20" in red. The card is arithmetically
+  right and useless as drawn; either the landmark needs to be per *direct* set
+  or the count needs a divisor. Filed, not fixed here.
+- The act column is still ~3000px with the tools fold open. Shutting the column
+  is the answer the user has; shortening it is a separate measurement.
+
 ## What shipped · 2026-08-28
 
 | Was | Now |
@@ -57,7 +170,7 @@ a clean `npm run a11y` here as "clean for whatever happened to be expanded".
 |---|---|
 | 1 · orient | Train next · Last session · Sets this week · Stalled lifts |
 | 2 · act | The set logger, its one disclosure, and the rest timer |
-| 3 · review | Session rollup (after Finish) → this-week strip → **muscle volume balance** → nine folded sections |
+| 3 · review | Session rollup (after Finish) → this-week strip → **muscle volume balance** → nine folded sections · **superseded by the five-row bar, COD-329** |
 
 **Stalled lifts is in zone 1 on purpose.** A lift with no new top set in three
 sessions is the one number on this page that should change what you load today,
