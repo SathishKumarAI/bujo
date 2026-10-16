@@ -96,8 +96,19 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
           restore-keys: ${{ runner.os }}-playwright-
       - name: Install Playwright
+      # PINNED, and the pin is the point.
+      #
+      # These two are installed per job rather than living in `package.json`
+      # (COD-273), and they were installed UNPINNED — so `@axe-core/playwright`
+      # went 4.13 to 4.14 with no commit, 4.14 turned
+      # `label-content-name-mismatch` on, and this gate went red on `main` and
+      # on every open branch at once, days before anybody read the log. A gate
+      # whose rule set can change without a diff produces a red nobody can
+      # date, which is one step from a gate nobody runs.
+      #
+      # Bumping these is now a commit, with the new rules' findings in it.
         run: |
-          npm i -D --no-save playwright @axe-core/playwright
+          npm i -D --no-save playwright@1.64.1 @axe-core/playwright@4.14.0
           npx playwright install --with-deps chromium
       - name: Serve preview
         run: npx vite preview --port 4173 &
@@ -188,8 +199,9 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
           restore-keys: ${{ runner.os }}-playwright-
       - name: Install Playwright
+      # Pinned — see the job above. Both versions move together.
         run: |
-          npm i -D --no-save playwright @axe-core/playwright
+          npm i -D --no-save playwright@1.64.1 @axe-core/playwright@4.14.0
           npx playwright install --with-deps chromium
       - name: Serve preview
         run: npx vite preview --port 4173 &

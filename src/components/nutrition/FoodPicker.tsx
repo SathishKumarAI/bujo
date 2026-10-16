@@ -119,7 +119,14 @@ export function FoodPicker({ usual, mine, onAdd }: {
                 }`}
               >
                 {label}
-                <span className="num text-fg-2">{n}</span>
+                {/* INHERITS the button's own colour rather than stating
+                    `text-fg-2`. On the selected button the ground is `ink-3`,
+                    where `fg-2` measures **3.83:1** at 13px — caught by
+                    `npm run a11y` on the day this shipped. The count is
+                    information, not furniture: the mono face already separates
+                    it from the label, which is the rule `SectionRail` arrived
+                    at for the same chip. */}
+                <span className="num">{n}</span>
               </button>
             ))}
           </div>
