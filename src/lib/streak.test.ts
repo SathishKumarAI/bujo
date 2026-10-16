@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally, goalTier, moneySaved } from './streak'
+import { restartFrom, streakStats, addictionStats, unlockedBenefits, nextHabitMilestone, STREAK_MILESTONES, habitComeback, longestStreakEver, daysSinceLastMiss, atRiskHabits, weeklyGoalProgress, haltTally, goalTier, moneySaved } from './streak'
 import { emptyJournal } from './storage'
 import type { Habit, JournalData, Relapse } from './types'
 
@@ -423,5 +423,41 @@ describe('a streak with no stored best', () => {
     // is the gap — the stored field being absent must not hide it.
     expect(s.best).toBe(14)
     expect(s.current).toBe(10)
+  })
+})
+
+/**
+ * `startedOn` is derived from the latest reset, so correcting or deleting one
+ * has to move it. The bug this guards is silent: the streak keeps counting
+ * from a day that no longer has a reset on it, and every figure on the page is
+ * then measured from a date nothing records.
+ */
+describe('restartFrom', () => {
+  const s = (relapses: Relapse[]) => ({ startedOn: '2026-10-05', relapses })
+
+  it('restarts from the latest remaining reset', () => {
+    const left = [rel('2026-09-20'), rel('2026-10-01')]
+    expect(restartFrom(s(left), left, '2026-10-16')).toBe('2026-10-01')
+  })
+
+  it('is not fooled by the list being out of order', () => {
+    const left = [rel('2026-10-01'), rel('2026-09-20')]
+    expect(restartFrom(s(left), left, '2026-10-16')).toBe('2026-10-01')
+  })
+
+  it('falls back to the first reset ever when the last one is deleted', () => {
+    // Deleting your ONLY reset should put you back to where tracking began,
+    // not to the day you pressed delete.
+    const before = [rel('2026-09-20')]
+    expect(restartFrom({ startedOn: '2026-09-20', relapses: before }, [], '2026-10-16')).toBe('2026-09-20')
+  })
+
+  it('falls back to today when nothing recorded a start at all', () => {
+    expect(restartFrom({ startedOn: '2026-10-05', relapses: [] }, [], '2026-10-16')).toBe('2026-10-16')
+  })
+
+  it('never returns a date in the future', () => {
+    const left = [rel('2026-10-01')]
+    expect(restartFrom(s(left), left, '2026-10-16') <= '2026-10-16').toBe(true)
   })
 })

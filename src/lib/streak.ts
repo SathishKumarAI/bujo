@@ -476,3 +476,43 @@ export function dayHabitSummary(
     atRisk: atRiskHabits(data, day).length,
   }
 }
+
+/**
+ * WHERE THE STREAK RESTARTS once a reset is corrected or removed.
+ *
+ * `startedOn` is not an independent fact: `logRelapse` sets it to the reset's
+ * date, so the current streak counts from the latest reset. Edit that reset's
+ * day, or delete it, and `startedOn` has to move with it — otherwise the page
+ * counts from a day that no longer has a reset on it, which is
+ * `USER-CONTROL.md`'s "an edit rewrites EVERY stored shape, not the one the
+ * list renders" with the streak as the shape nobody rewrote.
+ *
+ * Three cases, and the third is the one worth naming:
+ *
+ * | after the edit | restarts from |
+ * |---|---|
+ * | some resets remain | the latest of them |
+ * | none remain | `firstStartedOn` — the day tracking began |
+ * | none remain and nothing recorded it | today, so the streak is 0 and not negative |
+ *
+ * The second case is why this takes the whole streak rather than just the
+ * list: deleting your only reset should put you back to the day you started,
+ * not to the day you deleted it.
+ */
+export function restartFrom(
+  s: { startedOn: string; firstStartedOn?: string; relapses: Relapse[] },
+  relapses: Relapse[],
+  today = todayISO(),
+): string {
+  let latest = ''
+  for (const r of relapses) if (r.date > latest) latest = r.date
+  if (latest) return latest
+  return s.firstStartedOn || earliestOf(s.relapses) || today
+}
+
+/** The oldest reset on record, or '' — the only trace of when tracking began. */
+function earliestOf(relapses: Relapse[]): string {
+  let first = ''
+  for (const r of relapses) if (!first || r.date < first) first = r.date
+  return first
+}
