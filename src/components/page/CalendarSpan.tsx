@@ -1,4 +1,4 @@
-import { cat, onAccent } from '../../lib/colors'
+import { cardSurface, cat, onAccent, over } from '../../lib/colors'
 import { prettyDay, fromISODay } from '../../lib/date'
 import type { DayCell } from '../ui/day-grid'
 
@@ -93,8 +93,23 @@ export function CalendarSpan({
           // half opacity so the month reads as "this much has happened" at a
           // glance. It is not `blank` (which draws nothing) and not a level-0
           // rest day (which is a day that happened and was empty).
-          const bg = d.blank ? 'transparent' : d.level === 0 ? cat(emptyColor) : cat(color)
-          const opacity = d.blank ? 1 : d.future ? 0.4 : RAMP[d.level]
+          /* THE RAMP IS IN THE COLOUR, NOT IN `opacity`.
+
+             It was `style={{ background, opacity: RAMP[level] }}` — and
+             `opacity` fades the whole element, so the DATE NUMBER inside a
+             level-2 cell was painted at 60% too. CLAUDE.md: "opacity on text
+             produces a colour no gate can check" — `check-contrast` reads
+             token values and a faded token is not a token, and axe reads
+             whatever the blend happens to be. Compositing the accent onto the
+             card with `over()` gives the same picture with an OPAQUE colour,
+             which is a colour a foreground can be solved against.
+
+             A future day is drawn as the empty cell with a quieter NUMBER
+             rather than a faded cell, for the same reason. */
+          const fill = d.level === 0 || d.future
+            ? cat(emptyColor)
+            : over(cat(color), cardSurface(), RAMP[d.level])
+          const bg = d.blank ? 'transparent' : fill
           return (
             <div
               key={d.date || `blank-${i}`}
@@ -114,7 +129,7 @@ export function CalendarSpan({
               // data points. 4:3 keeps the calendar shape, fills the same
               // width, and costs ~145px less height.
               className={`relative flex flex-col items-center justify-center rounded-control ${week ? 'h-16' : 'h-10'}`}
-              style={{ background: bg, opacity }}
+              style={{ background: bg }}
             >
               {!d.blank && (
                 <>
@@ -150,7 +165,17 @@ export function CalendarSpan({
                        screenshot: the empty days were tinted like the full
                        ones. A fallback that returns a plausible colour is a
                        fallback that hides its own misuse. */
-                    style={{ color: d.level > 0 ? onAccent(color) : cat('text') }}
+                    /* `onAccent(cat(color))`, not `onAccent(color)`.
+                       `onAccent` takes a HEX — it parses the colour to pick the
+                       better neutral and push it to 4.6 — and this passed it the
+                       TOKEN NAME, one line under the comment warning about
+                       exactly this family of mistake. `rgb('mauve')` is garbage,
+                       so the function returned `#000000` on every filled cell,
+                       which in latte is **3.92:1 on #6c4cf0** and in dawn
+                       **3.19:1 on #974608**. `npm run a11y:panels` caught it the
+                       day the demo seed first produced a full-strength cell in
+                       the rendered window — a branch the seed had never taken. */
+                    style={{ color: d.future ? cat('subtext0') : d.level > 0 ? onAccent(fill) : cat('text') }}
                   >
                     {Number(d.date.slice(8, 10))}
                   </span>
