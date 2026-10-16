@@ -266,7 +266,13 @@ describe('Recovery · the registry is the page', () => {
   it('puts the urge submits before the fields they annotate', async () => {
     const { container } = mount()
     await openAct()
-    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    /* The three logging acts are one card now (`LogCard`), with the urge form
+       as the default tab, and that card has no title of its own — the zone-2
+       heading above it already carries one. So anchor on the chooser's
+       accessible name, which is structure rather than copy: a test keyed to a
+       heading breaks every time the wording moves, and this one already has
+       twice. */
+    const card = container.querySelector('[role="radiogroup"][aria-label="What are you logging?"]')!.closest('section')!
     const controls = [...card.querySelectorAll('button, fieldset, input')]
     const held = controls.findIndex((el) => /felt it and held/i.test(el.textContent || ''))
     const gaveIn = controls.findIndex((el) => /gave in/i.test(el.textContent || ''))
@@ -287,7 +293,13 @@ describe('Recovery · the registry is the page', () => {
   it('offers both endings from the same form', async () => {
     const { container } = mount()
     await openAct()
-    const card = [...container.querySelectorAll('section')].find((s) => /^Urge surfing/.test(s.textContent || ''))!
+    /* The three logging acts are one card now (`LogCard`), with the urge form
+       as the default tab, and that card has no title of its own — the zone-2
+       heading above it already carries one. So anchor on the chooser's
+       accessible name, which is structure rather than copy: a test keyed to a
+       heading breaks every time the wording moves, and this one already has
+       twice. */
+    const card = container.querySelector('[role="radiogroup"][aria-label="What are you logging?"]')!.closest('section')!
     const labels = [...card.querySelectorAll('button')].map((b) => (b.textContent || '').toLowerCase())
     expect(labels.some((l) => /held/.test(l))).toBe(true)
     expect(labels.some((l) => /gave in/.test(l))).toBe(true)

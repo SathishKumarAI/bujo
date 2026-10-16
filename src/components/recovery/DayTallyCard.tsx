@@ -48,16 +48,14 @@ export interface DayTallyRow {
  * silently wins, which is what had been eating `text-label` on the Reset button
  * one card over.
  */
-export function DayTallyCard({ rows, onStep }: {
+export function DayTallyCard({ rows, onStep, bare = false }: {
   rows: DayTallyRow[]
   onStep: (id: string | null, step: number) => void
+  /** Render without the `Card` wrapper, for a host that already is one. */
+  bare?: boolean
 }) {
   const anyLogged = rows.some((r) => r.count > 0)
-  return (
-    <Card hideInfo
-      title="Did it happen today?"
-      subtitle="One tap logs the day · tap again for each time it happened."
-    >
+  const body = (<>
       <ul className="space-y-2">
         {rows.map((r) => (
           <li key={r.id ?? 'primary'} className="rounded-card bg-ink-2 px-3 py-2">
@@ -124,6 +122,11 @@ export function DayTallyCard({ rows, onStep }: {
           The first tap of a day restarts that counter · ⌘Z undoes a mis-tap.
         </p>
       )}
-    </Card>
+</>)
+  return bare ? body : (
+    <Card hideInfo
+      title="Did it happen today?"
+      subtitle="One tap logs the day · tap again for each time it happened."
+    >{body}    </Card>
   )
 }

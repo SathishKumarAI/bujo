@@ -8,6 +8,7 @@ import { cat, onRaised } from '../../lib/colors'
 import { todayISO } from '../../lib/date'
 import { addictionStats, moneySaved, ADDICTION_PRESETS } from '../../lib/streak'
 import { useConfirm } from '../ConfirmDialog'
+import { discreetly } from '../../lib/discreet'
 
 /**
  * Per-addiction streaks (BUJO-199) · each tracked as its own streak + best.
@@ -43,6 +44,7 @@ export function AddictionStreaksCard() {
   const currency = data.settings.currencySymbol || '$'
   const today = todayISO()
   const addictions = data.nofap.addictions ?? []
+  const label = discreetly(data.settings)
 
   return (
     <Card band hideInfo title="Per-addiction streaks" subtitle="Track each habit separately, its own counter, best & resets">
@@ -76,7 +78,7 @@ export function AddictionStreaksCard() {
                         able to do this; nothing had ever rendered it with
                         data. */}
                     <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="truncate font-medium text-fg-1">{a.name}</span>
+                      <span className="truncate font-medium text-fg-1">{label(a.name)}</span>
                       {/* `fg-2`, not `fg-3`. The quietest neutral at 10px on
                           `ink-2` measured **3.88 mocha · 4.49 latte · 3.78 neon
                           · 3.81 vscode** — four of five under the floor, caught

@@ -37,6 +37,7 @@ import {
   AddictionBreakdownCard,
   UrgeMixCard,
   AddictionStreaksCard,
+  LogCard,
   UrgeHistoryCard,
   BreathingCard,
   ResetCostCard,
@@ -403,30 +404,24 @@ export function NoFap() {
           </button>
         </h2>
 
-        {/* ZONE 2 IS ORDERED BY HOW OFTEN THE ACT HAPPENS, not by how bad it is.
-            `PRODUCT.md` ranks capture as the product, and on this page the
-            frequent capture is "I felt an urge and rode it out" — many times a
-            day during a streak. A lapse tally and a reset are rare by
-            definition. Urge surfing was third, and its submit sat under its own
-            four field groups, so the most-repeated act on the page was the one
-            furthest from the top: **y 1613 in an 844px phone viewport**, and
-            1130px inside a 760px scrollport at 1440.
+        {/* THREE ACTS, ONE CARD, ONE AT A TIME.
 
-            The cost, stated: `DayTallyCard` moves down by the height of the
-            urge card. It is one tap either way and it is still the second thing
-            in the column; the alternative — keeping the tally first and
-            accepting that the frequent act needs a scroll — is the arrangement
-            the report was about. */}
-        <UrgeSurfingCard />
+            It was three stacked cards — an urge form with ~20 chips, a day
+            tally with four streaks, and a reset form — all open, all the
+            time, three borders and three headings deep. Reported by pasting
+            the whole column back: "this be included in one card, and I don't
+            want to scroll this much".
 
-        {/* Day log · "it happened today", with a number on it.
-            Second, not third: the quantity-blind version of it used to live
-            three screens down as the per-addiction `Reset` button, in zone 3
-            behind the signature chart, which is not where you press anything on
-            a bad day. */}
-        <DayTallyCard rows={tallyRows} onStep={logLapseDay} />
-
-        <LogResetCard best={stats.best} totalClean={stats.totalClean} />
+            They are three different acts rather than three parts of one, and
+            in the moment they are mutually exclusive. `LogCard` keeps the
+            frequent one (an urge) as the default, which is the ordering the
+            previous pass measured and argued for — the other two simply stop
+            costing a scroll to get past. */}
+        <LogCard
+          urge={<UrgeSurfingCard bare />}
+          tally={<DayTallyCard rows={tallyRows} onStep={logLapseDay} bare />}
+          reset={<LogResetCard best={stats.best} totalClean={stats.totalClean} bare />}
+        />
         </>)}
         zone3={
           <RecoveryReview

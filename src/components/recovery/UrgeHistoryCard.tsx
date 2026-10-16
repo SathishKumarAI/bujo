@@ -11,6 +11,7 @@ import { useCappedList } from '../../lib/useCappedList'
 import { ShowMore } from '../ShowMore'
 import { techniqueRanking, tiedLabel, topTied, TECH_LABEL } from '../../lib/urge'
 import { haltTally } from '../../lib/streak'
+import { discreetly } from '../../lib/discreet'
 
 /**
  * EVERY URGE YOU LOGGED, and what it taught — out of the act column.
@@ -58,6 +59,7 @@ export function UrgeHistoryCard() {
     try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' }
   }
   const before = data.nofap.urgesResisted ?? 0
+  const label = discreetly(data.settings)
 
   return (
     <Card
@@ -107,7 +109,7 @@ export function UrgeHistoryCard() {
                   is the timestamp rather than a guess at what the word was. */}
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Icon as={HandFist} size="sm" style={{ color: onRaised(u.outcome === 'followed' ? 'peach' : 'green') }} className="shrink-0" />
-                <span className="min-w-0 text-fg-1">{u.trigger || 'Urge'}</span>
+                <span className="min-w-0 text-fg-1">{label(u.trigger || 'Urge')}</span>
                 {u.intensity && <span className="num shrink-0 text-label text-fg-2">{u.intensity}/5</span>}
                 <span className="ml-auto shrink-0 text-label text-fg-2">
                   {prettyDay(u.date)}{fmtTime(u.at) ? ` · ${fmtTime(u.at)}` : ''}
