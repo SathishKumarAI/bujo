@@ -42,7 +42,7 @@ been done (COD-329) and is kept in the table as the worked example.
 | ~~Nutrition~~ | `views/Nutrition.tsx` | 424 | ✓ | ✓ | n/a (3 rows) | **Done, 2026-10-16** — see `docs/pages/nutrition.md` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
 | ~~Recovery~~ | `views/NoFap.tsx` | 433 | ✓ | ✓ | ✓ (9 cards) | **Done, COD-334** — see `docs/pages/recovery.md` |
-| Cycle | `views/Cycle.tsx` | 593 | ✓ | — | — | Arm `a11y-panels`; then sub-sections on the long row |
+| ~~Cycle~~ | `views/Cycle.tsx` | 705 | ✓ | ✓ | n/a (3 rows max) | **Done, COD-334** — see `docs/pages/cycle.md` |
 
 ## The order, per page
 
@@ -111,10 +111,10 @@ each one is a commit.
   branch the seed never takes cannot fail" entry. The name carries the count
   now rather than the badge being hidden, because the badge is the one thing on
   that control that changes from day to day.
-- **COD-237** still names four rail pages whose other rows no gate reaches —
-  Insights, Coaching, Pull-ups, Help, Recovery and Cycle, less the two now
-  armed. `scripts/a11y-panels.mjs` takes one `PAGES` entry per page, plus one
-  per sticky-state variant the page can be in.
+- **COD-237** now names three rail pages whose other rows no gate reaches —
+  Insights, Coaching, Pull-ups and Help, less Recovery and Cycle, both armed.
+  `scripts/a11y-panels.mjs` takes one `PAGES` entry per page, plus one per
+  sticky-state variant the page can be in.
 - **`npm run a11y:panels` is still not in CI**, which is how every "a gate
   nobody runs" entry in CLAUDE.md started. It is 91 scans and some minutes;
   the a11y workflow is red on `main` for an unrelated reason, so adding a
@@ -125,13 +125,14 @@ each one is a commit.
   a 10–20 landmark while counting a set once per muscle the lift works, so
   nine of twelve muscles are permanently "over 20". Filed during the Strength
   pass, not fixed in it.
-- **Challenges and Cycle** are the two left. Cycle has a rail that
-  `a11y-panels` does not drive yet; Recovery's is armed, and arming it found
-  32 violations the main gate structurally could not see.
+- **Challenges is the one left.** Cycle is done (COD-334): its six rail rows
+  are armed in `a11y-panels`, and arming it found a `label-content-name-mismatch`
+  on all twelve of them at once — the same lesson Recovery's arming taught with
+  32 violations. Every rail page on the rollout is now driven per row.
 - Recovery's pass added three more patterns: `CardDeck` (§30), several acts in
-  one card (§31), and a privacy mode that states its own limits (§32). §30 is
-  the one to reach for next — Cycle's longest row is the same shape as the
-  nine-card `Patterns` row it was built for.
+  one card (§31), and a privacy mode that states its own limits (§32). §30 has
+  since taken its third caller — Cycle's manual, nine sections that were
+  5,435px on a phone inside somebody else's rail row.
 - Nutrition's pass added four patterns rather than only consuming them —
   `ResetField` (§26), the title-as-toggle (§27), a library behind a search with
   its groups as a filter (§28), and the record living beside the figure it

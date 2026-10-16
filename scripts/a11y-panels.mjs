@@ -4,8 +4,8 @@
  *   BUJO_URL=http://localhost:4173 npm run a11y:panels
  *   BUJO_CANARY=1 ... — plant a violation and prove the run can go red
  *
- * **Pickleball, Fitness, Strength, Nutrition and Recovery today, and the list
- * is meant to grow.** COD-237
+ * **Pickleball, Fitness, Strength, Nutrition, Recovery and Cycle today, and
+ * the list is meant to grow.** COD-237
  * names six pages whose rails make `npm run a11y` cover less than it did as
  * folds: Insights, Coaching, Pickleball, Pull-ups, Help and Recovery. Adding
  * one is a `PAGES` entry — do it in the same change as the rail, or the page's
@@ -64,6 +64,14 @@ const PAGES = [
    * the row, so opening the row reaches them, and the chips default to All.
    */
   { view: 'nofap', label: 'recovery', rows: ['Win or loss', 'Progress', 'Patterns', 'Plan', 'Reference'] },
+  /**
+   * CYCLE, the last of the six pages COD-237 named and the one with the most
+   * to hide: six rail rows, of which `npm run a11y` has only ever scanned
+   * `This cycle`. Its `Manual` row is a `CardDeck` of nine sections, so
+   * `stepDecks` below is doing real work here — without it the gate would see
+   * one of nine and call the row covered.
+   */
+  { view: 'cycle', rows: ['This cycle', 'How you feel', 'Fertility', 'Patterns', 'Guide', 'Manual'] },
 ]
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

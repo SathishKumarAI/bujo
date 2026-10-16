@@ -37,7 +37,7 @@ user · **P3** = polish, worth doing when nearby.
 | Fitness | [Fitness](fitness.md) · [Strength](gym.md) · [Pull-ups](pullups.md) · [Home Workout](home-workout.md) · [Nutrition](nutrition.md) |
 | Sports | [Pickleball](pickleball.md) · [Coaching](coaching.md) |
 | Habits | [Trackers](trackers.md) · [Challenges](challenges.md) · [Focus](focus.md) |
-| Wellbeing | [Mindset](mindset.md) · Cycle¹ · [Recovery](recovery.md) |
+| Wellbeing | [Mindset](mindset.md) · [Cycle](cycle.md)¹ · [Recovery](recovery.md) |
 | Library | [Collections](collections.md) · [Reading](reading.md) · [Goals](goals.md) |
 | Review | [Insights](insights.md) · [Stats](stats.md) |
 | System | [Settings](settings.md) · [Account](account.md) · [Help](help.md) · [Welcome](welcome.md) |

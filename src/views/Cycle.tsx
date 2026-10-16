@@ -534,7 +534,16 @@ export function Cycle() {
               type="button"
               onClick={logCol.close}
               aria-expanded
-              aria-label="Hide the log — the review takes the width"
+              /* THE NAME CONTAINS THE PAINTED TEXT, which is not a style
+                 preference: `label-content-name-mismatch` (WCAG 2.5.3)
+                 compares the accessible name against what is DRAWN, because a
+                 speech-input user says what they can see. Announcing more is
+                 fine; announcing something else is a serious violation, and
+                 the first version of this button said "Hide the log — …"
+                 while painting "Tap to hide". Caught by `a11y:panels` on the
+                 run that armed this page — on all twelve of its rows at once,
+                 since the button is in zone 2 and every row renders it. */
+              aria-label="Tap to hide the log — the review takes the width"
               className="group inline-flex shrink-0 items-center gap-1 text-label text-fg-2 transition-colors hover:text-fg-1"
             >
               Tap to hide
