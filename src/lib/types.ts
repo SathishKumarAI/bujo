@@ -141,10 +141,27 @@ export type MoodReason =
 export interface LoggedFood {
   id: string
   name: string
+  /** Total for the servings below — not per serving. */
   kcal: number
   protein: number
   carbs: number
   fat: number
+  /**
+   * How many servings this row is.
+   *
+   * Asked for as "let's say I had a lot of rice today, so I want to edit, add
+   * more rice on top of it". Before this the only way to log a second helping
+   * was a second row, so a day of rice read as four identical lines and the
+   * review's "what it was made of" counted four foods instead of one food four
+   * times.
+   *
+   * The macro fields stay the TOTAL rather than the per-serving amount, because
+   * every reader on the page adds them up and a reader that had to multiply
+   * would be a second place to get the multiplication wrong. Optional and
+   * absent means one — a row logged before this existed is one serving, which
+   * is exactly what it was.
+   */
+  servings?: number
 }
 
 export interface DailyMetric {
@@ -844,6 +861,31 @@ export interface Settings {
   zoom: number
   /** Weekly active-minutes goal shown on the Fitness view. */
   fitnessGoalMin?: number
+  /**
+   * The nutrition page's daily targets.
+   *
+   * It shipped with `const TARGET = { calories: 2000, … }` in the view and the
+   * comment "a balanced default until targets are user-settable" — and nothing
+   * ever made them settable, so every ring, tone and over/under verdict on the
+   * page judged the day against a number the person could not change. Same
+   * defect as `fitnessGoalMin` having three readers and no writer.
+   *
+   * Partial on purpose: setting a calorie target should not force someone to
+   * decide on a fat target in the same breath. `targetsOf` fills the rest from
+   * `DEFAULT_TARGETS`, and is the single reader so a ring and the sentence
+   * beside it cannot disagree about what they measure against.
+   */
+  nutritionTargets?: { calories?: number; protein?: number; carbs?: number; fat?: number }
+  /**
+   * Foods the person added themselves, so the picker is not only the forty
+   * built-in ones.
+   *
+   * In settings rather than in a collection of its own: it is a small list of
+   * preferences about how to log, not a record of what happened, and the
+   * records (`DailyMetric.foodLog`) carry their own copy of the numbers so
+   * deleting a custom food never rewrites history.
+   */
+  customFoods?: { name: string; serving: string; kcal: number; protein: number; carbs: number; fat: number }[]
   /**
    * Rest in seconds per exercise, keyed by the lower-cased exercise name.
    *
