@@ -159,7 +159,9 @@ export const CARDS: CardMeta[] = [
   { id: 'timereclaimed', title: 'Time reclaimed', group: 'progress', words: 'time hours reclaimed days back given hours per day' },
   { id: 'moneysaved', title: 'Money saved', group: 'progress', words: 'money cost per day saved currency spend' },
   { id: 'calmstretch', title: 'Calm stretch', group: 'progress', words: 'calm quiet stretch days since last urge craving' },
-  { id: 'addictions', title: 'Per-addiction streaks', group: 'progress', words: 'addiction separate streak sugar smoking scrolling best resets cost add remove' },
+  // `wide`: it holds one panel per tracked thing, side by side, and two of
+  // those in a 350px column is two stacked rows again.
+  { id: 'addictions', title: 'Per-addiction streaks', group: 'progress', wide: true, words: 'addiction separate streak sugar smoking scrolling doomscrolling porn nicotine best resets cost add remove each own' },
 
   /* The paired "urges logged vs resets" sparkline is NOT here. It is zone 3's
      signature visual and sits above the rail, on screen whichever group is
