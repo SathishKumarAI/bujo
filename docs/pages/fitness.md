@@ -6,8 +6,18 @@
 
 Everything you do that is not lifting and not a pickleball match: cardio
 (run, cycle, swim, row, walk, hike, yoga, HIIT, other) and sport (a game of
-anything). Strength owns lifting (`?view=gym`), Pickleball owns pickleball
-(`?view=pickleball`); this page owns the rest of the record.
+anything — the kind chips are Basketball · Cricket · Tennis · Badminton ·
+Football · Soccer · Volleyball · Table tennis). Strength owns lifting
+(`?view=gym`), Pickleball owns pickleball (`?view=pickleball`), Pull-ups and
+Home workout own theirs; this page owns the rest.
+
+**The form offers nothing that has a logger of its own** (`OWN_PAGE` in
+`domain/activities.ts`), and a `?activity=` link for one of those goes to its
+page. Pickleball used to LEAD the Sport segment — a duration-and-notes form
+for a sport whose own page records the format, the score, the partner, the
+venue and the points, into a different collection. The activity itself is
+kept: an already-logged one still has its label and is still editable here,
+because `optionsFor` puts the current activity in its own select.
 
 Two modes, one toggle, and **every fact re-reads on the switch** — a mode
 toggle that only moves a highlight was the bug the first pass over this page
@@ -59,12 +69,26 @@ have already let go is worth less than the fact that you stopped.
 There is no `event` rule — nothing in a `Workout` has a date you cannot move —
 and the `goal` rule is cardio-only, because a game has no minutes denominator.
 
+### The record is cards, three at a time
+
+A session is a named item with a figure beside the name and a short body, so it
+is a `PanelCard` — the shape Home Workout reached one page earlier. The card
+carries the pace, the effort, the calories and the note; a row could only ever
+hold the activity, the day and two numbers. **Three** (`HISTORY_CAP`), with
+`Show all (7)` carrying the total, because a list collapsed to three with an
+unlabelled button cannot be told from a list that only ever had three.
+
+**Edit** is a named control that opens `ActivityForm` inside the card, on the
+*session's* own mode — so a push day stays correctable as a push day. It was a
+modal opened by clicking anywhere on the row. **Delete asks first** and names
+what it removes.
+
 ### Figures lead back to your entries
 
 Every activity row and every weekday bar is a button. It opens Sessions
-filtered to exactly those rows, where the editor and × already live, and the
-filter states itself as a chip you can take off (`3 of 17 ×`). Not sticky, not
-in the URL, cleared when you change rail row.
+filtered to exactly those rows, where Edit and × live, and the filter states
+itself as a chip you can take off (`3 of 17 ×`). Not sticky, not in the URL,
+cleared when you change rail row.
 
 ### The weekly target has a control now
 
@@ -111,7 +135,8 @@ files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at 1440 / 1024 / 390.
 | The shell, zone 1, the next-step row, the log form | `src/views/Fitness.tsx` |
 | The bar and which cards each row holds | `src/components/fitness/Review.tsx` |
 | The four rail rows, and what each says about when to read it | `src/components/fitness/panels.ts` |
-| The record, the filter chip, the edit dialog, the weekly target | `src/components/fitness/History.tsx` |
+| The session card, its inline editor, the weekly target | `src/components/fitness/History.tsx` |
+| Which activities the form may offer, and where a link for the others goes | `src/domain/activities.ts` → `OWN_PAGE`, `optionsFor` |
 | Every read-only card | `src/components/fitness/Cards.tsx` |
 | Every aggregate, and `nextStep` | `src/lib/fitnessReview.ts` |
 | A comparison drawn as bars | `src/components/page/BarList.tsx` |
@@ -145,6 +170,11 @@ files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at 1440 / 1024 / 390.
   went red on a correct change; they now open the strip and assert
   `aria-expanded=false` on the way in, which is the only coverage that default
   has outside a browser.
+- **A card with no `group` hides every `.reveal` control inside it.**
+  `PanelCard` had none, so the × on a history card was `opacity: 0` on any
+  hover-capable device and reachable only by tabbing — visible on a phone,
+  invisible on a desktop, which is the opposite of the intent. Home Workout has
+  shipped that way since its own history landed. Fixed in the shared card.
 - **`prettyDay` in a 56px label column is eight identical ellipses.** "Fri, Aug
   15" needs ~86px; the seven-day blocks all start on the same weekday anyway,
   so the weekday carried no information.
