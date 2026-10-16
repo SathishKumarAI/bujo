@@ -6,8 +6,7 @@ import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '.
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { ActStrip, PageLayout, SectionRail, SummaryStrip, useActColumn } from '../components/page'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
+import { ActStrip, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
@@ -597,26 +596,40 @@ export function Cycle() {
                 value={group}
                 onChange={(id) => setGroup((id as CycleGroup | null) ?? DEFAULT_GROUP)}
               />
-              <div className="min-w-0">
+              {/* A SECOND `@container/page`, on the panel rather than on the
+                  zone. The outer one is what the rail's own
+                  `@4xl/page:grid-cols-[11rem_…]` asks, and it is the width of
+                  zone 3 INCLUDING the 11rem rail and the 2rem gap — so a
+                  `StatGrid` step resolved against it is asking about a box
+                  208px wider than the grid it sizes. Nested containers of the
+                  same name resolve to the nearest ancestor, so the steps now
+                  measure the panel they are actually laying out. */}
+              <div className="@container/page min-w-0">
                 <section data-domain={group}>
                   <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
                     <h2 className="text-heading font-medium text-fg-1">{GROUP_LABEL[group]}</h2>
                     <p className="text-label text-fg-2">{GROUP_BLURB[group]}</p>
                     <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
                   </div>
-                  {/* Two columns is the ceiling here, and it is a correction
-                      rather than a preference. `CardGrid` asks the *viewport*,
-                      so at 1600 its `2xl:grid-cols-3` fired inside this 722px
-                      split column and resolved to three tracks of **227px** —
-                      the "cards a third of the size" half of the report. Two
-                      tracks of 350 is what 1440 already did. `MasonryGrid` is
-                      not the answer either: it breaks on its container at
-                      768px, so at 722 it would silently draw one column. */}
-                  <CardGrid className="2xl:grid-cols-2">
+                  {/* `StatGrid`, because this column's width is decided by
+                      the page split and by whether the act is open — never by
+                      the window. `CardGrid` asks the viewport, which was wrong
+                      twice over: at 1600 its `2xl:grid-cols-3` fired inside a
+                      722px split column and resolved to three tracks of
+                      **227px**, and the `2xl:grid-cols-2` pinned here to stop
+                      that then capped the panel at two tracks forever — so
+                      putting the act away bought width nothing spent. COD-247.
+
+                      `steps="pair"`: these are rings, diagrams and short
+                      legends, not stat tiles, so the 450px floor would have
+                      made the 846px panel a single column — and two is the
+                      ceiling because no group here has more than two cards
+                      that are not full-width. */}
+                  <StatGrid steps="pair">
                     {shown.map((c) => (
-                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>{cards[c.id]}</div>
+                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_PANEL}` : 'min-w-0'}>{cards[c.id]}</div>
                     ))}
-                  </CardGrid>
+                  </StatGrid>
                 </section>
               </div>
             </div>
