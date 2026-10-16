@@ -116,6 +116,52 @@ Reported as *"some of the charts are looking like just a generic slop"*.
 renders `aria-expanded="false"` — which is what you want from a gate meant to
 see the whole page.
 
+### The act column, second round
+
+The bar fixed the review and left the act at **3001px**: the logger, the
+last-session card, the rest timer and a "Look up & tools" fold. Reported as
+"it is wasting scrolling", and the fix was to decide what each piece is for.
+
+| Piece | Where it went | Why |
+|---|---|---|
+| Anatomy, plate maths, saved routines, coach sessions, the wger library | **Tools, a rail row** | They are consulted between DECISIONS. Zone 3 is beside zone 2, not below it, so the anatomy map and the logger are now on screen together — which the fold never allowed |
+| Rest timer | stayed in zone 2 | Used between SETS, 80px, and a timer you navigate to is a timer you do not start |
+| `LastSessionCard` | **deleted** | Every card in the Sessions row carries **Load**, so any session reloads, not only the latest of the selected split. `lastSessionOfSplit` went with it — no other reader |
+
+| | act column | sticky | folds on the page | landing |
+|---|---|---|---|---|
+| 1440 | 3001px → **541px** | now **true** | 28 → **5** | 1003px · 1.1 screens |
+| 1152 | 2712 → **41** (strip) | true | 4 | 1085 · 1.2 |
+| 390 | 2998 → **41** (strip) | true | 4 | 1593 · 1.9 |
+
+`PageLayout` sticks the act only while it is shorter than the viewport, so at
+3001px it became its own scrollport; at 541px it sticks, which is what it was
+built for. `views/Gym.tsx` is **367 lines**, down from 781 at the start of the
+pass.
+
+The tools reach the review as a **slot**, not as eleven props: everything in
+them reads state the act owns, and threading that through the review would make
+it know what a set row is.
+
+### The barbell
+
+Reported as *"make the plates look real… it really looks like AI slop"*. It was
+nine flat rectangles, one accent each from the palette, all the same thickness,
+heights scaled by `p / max`, with the weight printed inside at 8px.
+
+Now: real diameters and thicknesses in millimetres (450mm for a 25kg down to
+160mm for a 1.25), the **IWF colour code** mapped onto the nearest tokens, a
+gradient plus a one-pixel specular edge and a dark trailing edge per disc, the
+sleeve drawn **through** the stack with the collar over the inner edge, knurl
+ticks on the shaft, and no numbers on the discs — side-on you cannot see a
+plate's face.
+
+**The first version was lit from below in every light theme**, because it shaded
+with `cat('text')` over `cat('crust')` and those swap ends between mocha and
+latte. A specular highlight is the room's light, not a palette entry: `#fff` at
+0.22 over `#000` at 0.3, in every theme. Caught by screenshotting two themes
+side by side — the only way this class of bug has ever been caught here.
+
 ### Still open after this pass
 
 - **`MuscleVolumeBalance` cannot be satisfied.** Its landmark is 10–20 hard

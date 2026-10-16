@@ -37,7 +37,7 @@ been done (COD-329) and is kept in the table as the worked example.
 
 | Page | View | Lines | Rail | `actShut` | Sub-sections | The one thing to do first |
 |---|---|---|---|---|---|---|
-| ~~Strength~~ | `views/Gym.tsx` | 558 | ✓ | ✓ | n/a (5 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
+| ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (6 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | Nutrition | `views/Nutrition.tsx` | 531 | — | — | — | `nextStep` — the page has no sentence at all, not even a `StatBar` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
@@ -59,7 +59,11 @@ each one is a commit.
    The default row is the one you want after the primary button, which need not
    be the first.
 3. **`useActColumn` + `ActStrip`** — never a bare `useState` for this, and
-   never `actLast` unless the act is genuinely short. A page whose act is over
+   never `actLast` unless the act is genuinely short. **And ask what is in the
+   act that is not the act**: Strength's column was 3001px because four
+   reference panels lived under the logger in a fold. Moved to a rail row they
+   are *beside* it instead of below it, and the column came back to 541px and
+   became sticky again. A page whose act is over
    ~500px must be measured stacked: at 1152 and 1024 the zones are a single
    column while every viewport test still says "desktop".
 4. **`StatGrid`** for the cards, never `CardGrid` — the panel's width is
