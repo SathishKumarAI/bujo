@@ -36,16 +36,35 @@ function mount() {
 
 const activitySelect = () => screen.getByLabelText('Activity') as HTMLSelectElement
 
+/**
+ * THE ACT COLUMN STARTS SHUT WHEN THE ZONES ARE STACKED, so every test that
+ * wants the form has to open it — and in jsdom the zones are ALWAYS stacked.
+ *
+ * `PageLayout` decides the split by measuring `.page-shell`'s `clientWidth`,
+ * which jsdom reports as 0, so it tells the page it is stacked and
+ * `useActColumn` shuts the column: that is the measured default (`ActStrip`
+ * 41px and the rail at y415, against a form pushing the rail to y1057). The
+ * assertion that the strip is there is therefore not ceremony — it is the only
+ * coverage this behaviour has outside a browser probe.
+ */
+async function openLog(user: ReturnType<typeof userEvent.setup>) {
+  const strip = screen.getByRole('button', { name: /^Log a (session|game)/ })
+  expect(strip).toHaveAttribute('aria-expanded', 'false')
+  await user.click(strip)
+}
+
 describe('Fitness · deep-linked activity vs stored mode', () => {
   afterEach(() => {
     localStorage.clear()
     window.history.replaceState({}, '', '/')
   })
 
-  it('takes the mode from ?activity= even when another mode is stored', () => {
+  it('takes the mode from ?activity= even when another mode is stored', async () => {
+    const user = userEvent.setup()
     localStorage.setItem('bujo.ui.fitness.mode', 'sport')
     window.history.replaceState({}, '', '/?view=fitness&activity=run')
     mount()
+    await openLog(user)
 
     const select = activitySelect()
     expect(select.value).toBe('run')
@@ -59,6 +78,7 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
     localStorage.setItem('bujo.ui.fitness.mode', 'sport')
     window.history.replaceState({}, '', '/?view=fitness&activity=run')
     mount()
+    await openLog(user)
     expect(activitySelect().value).toBe('run')
 
     // Radix `ToggleGroup type="single"` renders radios, not buttons.
@@ -70,10 +90,12 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
     expect([...select.options].map((o) => o.value)).toContain(select.value)
   })
 
-  it('falls back to the stored mode with no ?activity=', () => {
+  it('falls back to the stored mode with no ?activity=', async () => {
+    const user = userEvent.setup()
     localStorage.setItem('bujo.ui.fitness.mode', 'sport')
     window.history.replaceState({}, '', '/?view=fitness')
     mount()
+    await openLog(user)
 
     const select = activitySelect()
     expect([...select.options].map((o) => o.value)).toContain(select.value)
@@ -150,7 +172,8 @@ describe('Fitness · a strength deep link', () => {
     window.history.replaceState({}, '', '/')
   })
 
-  it('redirects to Strength instead of landing on a toggle that cannot hold it', () => {
+  it('redirects to Strength instead of landing on a toggle that cannot hold it', async () => {
+    const user = userEvent.setup()
     const seen: string[] = []
     window.history.replaceState({}, '', '/?view=fitness&activity=pullups')
     render(
@@ -164,6 +187,7 @@ describe('Fitness · a strength deep link', () => {
     )
     expect(seen).toContain('gym')
     // And it does not silently preselect a strength activity on the way out.
+    await openLog(user)
     expect([...activitySelect().options].map((o) => o.value)).toContain(activitySelect().value)
   })
 })

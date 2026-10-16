@@ -28,5 +28,6 @@ export { EmptyFrame } from './EmptyFrame'
  */
 export { PanelGrid, PanelCard, DefList, Tag } from './Panel'
 export { StatGrid } from './StatGrid'
+export { BarList, type BarRow } from './BarList'
 export { ActStrip } from './ActStrip'
 export { useActColumn } from './useActColumn'
