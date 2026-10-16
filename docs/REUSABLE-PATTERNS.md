@@ -671,6 +671,60 @@ furniture 1110px wide. Keep the heading for the document outline, draw nothing.
 
 ---
 
+## 24 · Sort the act's passengers by the question they answer
+
+**What it is.** When an act column has grown a fold of reference panels, do not
+move the fold to the review bar as one row called Tools. Ask what each panel is
+used *between*, and let that decide where it goes.
+
+**Measured on Strength.** The act was **3001px** at 1440 beside a 678px review,
+because five panels lived under the logger in a `QuietSection`. Sorted:
+
+| Panel | Went to | Used between |
+|---|---|---|
+| Saved routines · Coach sessions | a **Load** row | decisions — "start from a prescription" |
+| Anatomy map · the exercise library | a **Lookup** row | decisions — "what is this lift" |
+| Plate calculator | stayed in **zone 2** | sets — a target weight, at the rack |
+| Rest timer | stayed in **zone 2** | sets — and a timer you navigate to is one you do not start |
+
+Act **3001px → 541px**, and once it is under the viewport `PageLayout` makes the
+column sticky again instead of giving it its own scrollport. Folds on the page
+28 → 5.
+
+**The move does not cost the "used during the act" argument**, which is what
+kept them in zone 2 in the first place: zone 3 is BESIDE zone 2, not below it,
+so the anatomy map and the logger are on screen together on a desktop — which a
+fold under the form never allowed. On a phone it is one tap on the bar instead
+of a fold plus a scroll.
+
+**Pass them as a SLOT, not as props.** Those panels read state the act owns —
+the focused lift, the split, `addRow` — and threading eleven props through the
+review would make it know what a set row is. A `ReactNode` per row keeps the
+ownership where it is.
+
+---
+
+## 25 · One opinion per question, cited from both places
+
+**What it is.** When a second surface needs a number the app already decides
+somewhere, import the decision rather than restating it.
+
+**Three instances in one pass.** Rest between sets was about to become a
+constant in the logger while `lib/programs.ts` already stated the rule for the
+hypertrophy block (12+ reps → 30s, 8–11 → 120s, under 8 → 180s). The stored
+set-line format was written inline in `finish()` and would have been retyped in
+the history editor — `setLineOf` now, one formatter, two callers. And there were
+**two rest timers**: one decrementing a `setInterval` (it drifts, and a
+throttled background tab comes back insisting four seconds have passed) and one
+counting against a deadline, naming the exercise, with tests. The second was
+strictly better and already existed.
+
+**The test is not "is this duplicated" but "could these disagree".** Two timers
+cannot disagree about anything a user sees until one of them is wrong about the
+time — which is exactly what the drifting one was.
+
+---
+
 ## 23 · The act column, stacked — `useActColumn`
 
 **What it is.** The open/shut state of zone 2, with the one rule nobody
