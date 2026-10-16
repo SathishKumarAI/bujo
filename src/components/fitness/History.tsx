@@ -1,123 +1,139 @@
 import { useState } from 'react'
-import { Trash } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
-import { Card, Empty, Input } from '../ui'
+import { Empty, Input } from '../ui'
 import { Button } from '../ui/button'
 import { useConfirm } from '../ConfirmDialog'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { ActivityForm, draftOf, workoutOf, type ActivityDraft } from '../page'
+import { ActivityForm, DefList, PanelCard, PanelGrid, Tag, draftOf, workoutOf, type ActivityDraft } from '../page'
 import { fullLabelOf, modeOf } from '../../domain/activities'
 import { prettyDay } from '../../lib/date'
+import { pace } from '../../lib/fitness'
 import { displayDistance } from '../../lib/units'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
 import { WORKOUT_KEY } from '../../lib/recordKeys'
+import type { CappedList } from '../../lib/useCappedList'
 import type { DistanceUnit, Workout } from '../../lib/types'
 
 /**
- * THE RECORD · every session in this mode, newest first, and a way to fix one.
+ * THE RECORD · the last three sessions as cards, each correctable in place.
  *
- * WHAT THIS FILE OWNS: the list, the filter chip, the edit dialog and the
- * weekly-minutes field under them.
- * WHAT IT DOES NOT OWN: which panel is on screen, or any aggregate.
+ * WHAT THIS FILE OWNS: the session card, its inline editor, and the weekly
+ * target under them.
+ * WHAT IT DOES NOT OWN: which panel is on screen, the cap (`Review` holds the
+ * `CappedList` because the `ShowMore` affordance lives in the panel header),
+ * or any aggregate.
  *
- * FIVE ROWS AND THE REST SCROLLS, rather than `ShowMore`'s eight-then-all. The
- * card was either 162px or the height of your whole history, and a list you
- * occasionally dig through should not change the height of the page to be
- * read — the same measurement that put Pickleball's history in a `max-h` box.
- * `tabIndex` and a name because it scrolls: a scroll region no keyboard can
- * reach is the `scrollable-region-focusable` violation this repo has shipped
- * twice.
+ * **It was a list of one-line rows in a 15rem scroller.** Asked for directly:
+ * *"could you make this into like a cards kind of history instead of just
+ * showing like a line… show like the last three… and if they want, they can
+ * view the full history as well"*. It is the shape Home Workout already landed
+ * on one page earlier, and the argument there applies here unchanged — a
+ * session is a named item with a figure beside the name and a short body,
+ * which is what `PanelCard` is for. The row could only ever show the activity,
+ * the day and two numbers; the card shows the pace, the effort, the calories
+ * and what you wrote about it, without a click.
  *
- * THE WEEKLY TARGET LIVES HERE, and until now it lived NOWHERE. `fitnessGoalMin`
- * is read by this page's headline fact, by `lib/coach.ts` and by Goals, and
- * there was no control for it anywhere in the app — a 150-minute default
- * governing the one fact in zone 1 that has a denominator. `USER-CONTROL.md`'s
- * first rule is that anything a person's numbers are measured against has to be
- * theirs to set. Under the sessions it is counting is where you are standing
- * when you decide whether 150 was the right number.
+ * **Edit is a named control, not a click target you have to discover.** The
+ * row opened a modal when you clicked anywhere on it — undiscoverable, and a
+ * dialog over a page you were reading. `USER-CONTROL.md` rule 1 is that `add`
+ * without a visible `edit` is a bug; the Home Workout pass fixed exactly this
+ * and the fix did not reach here because this page's editor already existed in
+ * a drawer nobody could see. The editor is `ActivityForm` — the same form that
+ * logs a session, so a corrected session cannot be a shape the logger would
+ * never produce — opened in the card body, with the session's OWN mode: a push
+ * day stays correctable to a pull day and never silently becomes a Run.
+ *
+ * **Delete asks first and names what it removes.** It deleted on the first
+ * click with no confirmation, which is the Home Workout history defect
+ * verbatim, inherited when this list was carried over.
  */
-export function FitnessHistory({ sessions, unit, total, filterLabel, onClearFilter }: {
-  /** Already filtered — by mode, and by the figure the reader clicked. */
-  sessions: Workout[]
+export function FitnessHistory({ list, unit }: {
+  /** The mode's sessions, already filtered by any drill-down, capped at three. */
+  list: CappedList<Workout>
   unit: DistanceUnit
-  /** How many sessions exist in this mode, for the filter chip's "3 of 17". */
-  total: number
-  /** Set while a figure is driving the list. Names what is being shown. */
-  filterLabel?: string | null
-  onClearFilter?: () => void
 }) {
-  const { data, removeWorkout, setSettings } = useJournal()
-  const [editing, setEditing] = useState<Workout | null>(null)
+  const { data, updateWorkout, removeWorkout, setSettings } = useJournal()
+  const confirm = useConfirm()
+  const [editing, setEditing] = useState<string | null>(null)
   const justCaptured = useJustCaptured()
 
   return (
-    <Card
-      band
-      title="History"
-      subtitle="Tap a row to correct it, × to remove"
-      collapsible
-      right={filterLabel ? (
-        /* THE FILTER STATES ITSELF AND COMES OFF IN ONE TAP. A list that is
-           quietly short reads as broken rather than as filtered. */
-        <button
-          type="button"
-          onClick={onClearFilter}
-          className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-ink-2 px-2.5 py-0.5 text-label text-fg-1 transition-colors hover:border-line-strong"
-        >
-          {filterLabel} · {sessions.length} of {total}
-          <span aria-hidden>×</span>
-          <span className="sr-only">Clear this filter</span>
-        </button>
-      ) : undefined}
-    >
-      {sessions.length === 0 ? (
-        <Empty>{filterLabel ? `No sessions match ${filterLabel}.` : 'Log a session and it appears here.'}</Empty>
+    <>
+      {list.total === 0 ? (
+        <Empty>Log a session and it appears here, newest first.</Empty>
       ) : (
-        <div
-          className={sessions.length > 5 ? 'max-h-[15rem] overflow-y-auto pr-1' : undefined}
-          tabIndex={sessions.length > 5 ? 0 : undefined}
-          role={sessions.length > 5 ? 'group' : undefined}
-          aria-label={sessions.length > 5 ? `All ${sessions.length} sessions, scrollable` : undefined}
-        >
-          <ul className="divide-y divide-surface0">
-            {/* Every row, inside the scrollport — never a slice. A list cut
-                at N with no way to reach N+1 is COD-303, which shipped on four
-                history lists at four different numbers. */}
-            {sessions.map((w) => {
-              const fresh = justCaptured.has(WORKOUT_KEY(w.id))
-              return (
-                <li
-                  key={w.id}
-                  {...justCapturedProps(fresh)}
-                  className={`group flex items-center justify-between gap-2 py-2 ${fresh ? 'just-captured' : ''}`}
-                >
-                  <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                    <span className="truncate font-medium text-fg-1">{fullLabelOf(w.activity, w.subActivity)}</span>
-                    <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
-                  </button>
-                  <div className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
-                    {w.durationMin != null && <span>{w.durationMin}m</span>}
-                    {w.distanceKm != null && <span>{displayDistance(w.distanceKm, unit)}{unit}</span>}
+        <PanelGrid>
+          {list.shown.map((w) => {
+            const fresh = justCaptured.has(WORKOUT_KEY(w.id))
+            const name = fullLabelOf(w.activity, w.subActivity)
+            const speed = pace(w.distanceKm, w.durationMin, unit)
+            return (
+              <PanelCard
+                key={w.id}
+                title={name}
+                right={
+                  <span className="flex items-center gap-1.5" {...justCapturedProps(fresh)}>
+                    {w.durationMin != null && <Tag>{w.durationMin}m</Tag>}
+                    {w.distanceKm != null && <Tag>{displayDistance(w.distanceKm, unit)} {unit}</Tag>}
+                    {/* Edit before delete, and both named. */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditing(editing === w.id ? null : w.id)}
+                      aria-expanded={editing === w.id}
+                      aria-label={`Edit ${name} on ${prettyDay(w.date)}`}
+                      className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
+                    >{editing === w.id ? 'Close' : 'Edit'}</Button>
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      onClick={() => removeWorkout(w.id)}
-                      aria-label={`Delete ${fullLabelOf(w.activity, w.subActivity)} on ${prettyDay(w.date)}`}
+                      onClick={async () => {
+                        if (await confirm({
+                          title: 'Delete this session?',
+                          description: `${name} on ${prettyDay(w.date)} is removed from your history. This cannot be undone.`,
+                          confirmLabel: 'Delete session',
+                          destructive: true,
+                        })) removeWorkout(w.id)
+                      }}
+                      aria-label={`Delete ${name} on ${prettyDay(w.date)}`}
                       className="text-fg-2 reveal hover:text-red"
                     >×</Button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-      {sessions.length > 5 && (
-        <p className="mt-2 text-label text-fg-2">Showing 5 of {sessions.length} · scroll for the rest</p>
+                  </span>
+                }
+              >
+                {editing === w.id ? (
+                  <SessionEdit
+                    workout={w}
+                    unit={unit}
+                    onSave={(patch) => { updateWorkout(w.id, patch); setEditing(null) }}
+                    onCancel={() => setEditing(null)}
+                  />
+                ) : (
+                  <>
+                    {/* The facts a row could not hold. Pace only when both
+                        halves of it were logged — `pace()` returns '' rather
+                        than a made-up number, and a blank row is not a fact. */}
+                    <DefList rows={[
+                      ['When', prettyDay(w.date)],
+                      ...(speed ? [['Pace', speed] as [string, string]] : []),
+                      ...(w.rpe != null ? [['Effort', `RPE ${w.rpe}`] as [string, string]] : []),
+                      ...(w.calories != null ? [['Burned', `${w.calories} kcal`] as [string, string]] : []),
+                    ]} />
+                    {w.notes && <p className="mt-2 border-t border-line pt-2 text-label italic text-fg-2">“{w.notes}”</p>}
+                  </>
+                )}
+              </PanelCard>
+            )
+          })}
+        </PanelGrid>
       )}
 
-      <label className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-label text-fg-2">
+      {/* THE WEEKLY TARGET LIVES HERE, and until now it lived NOWHERE.
+          `fitnessGoalMin` is read by this page's headline fact, by
+          `lib/coach.ts` and by Goals, and no control for it existed anywhere in
+          the app — a 150-minute default governing the one zone-1 fact with a
+          denominator. Under the sessions it counts is where you are standing
+          when you decide whether 150 was the right number. */}
+      <label className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3 text-label text-fg-2">
         Weekly target
         <Input
           type="number"
@@ -128,65 +144,42 @@ export function FitnessHistory({ sessions, unit, total, filterLabel, onClearFilt
         />
         active minutes a week
       </label>
-
-      <EditDialog workout={editing} onClose={() => setEditing(null)} />
-    </Card>
+    </>
   )
 }
 
-/** In-place edit for a logged session, so correcting one costs no scrolling. */
-function EditDialog({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
-  const { updateWorkout, removeWorkout } = useJournal()
-  return (
-    <Dialog open={!!workout} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit session</DialogTitle></DialogHeader>
-        {workout && (
-          <EditFields
-            workout={workout}
-            onSave={(p) => { updateWorkout(workout.id, p); onClose() }}
-            onDelete={() => { removeWorkout(workout.id); onClose() }}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function EditFields({ workout, onSave, onDelete }: {
+/**
+ * The inline editor: the logging form, in the card, for one session.
+ *
+ * `ActivityForm` rather than a second set of fields, for the reason
+ * `SessionEditor` gives on Home Workout — an editor that writes a different
+ * shape from the logger is how a corrected session keeps reporting its old
+ * numbers. `workoutOf` rewrites every stored field, including the `distanceKm`
+ * conversion, so a 5-mile run edited to 6 is 9.66km in the journal and not 6.
+ */
+function SessionEdit({ workout, unit, onSave, onCancel }: {
   workout: Workout
-  onSave: (p: Omit<Workout, 'id'>) => void
-  onDelete: () => void
+  unit: DistanceUnit
+  onSave: (patch: Omit<Workout, 'id'>) => void
+  onCancel: () => void
 }) {
-  const confirm = useConfirm()
-  const { data } = useJournal()
-  const unit = data.settings.distanceUnit
   const [draft, setDraft] = useState(() => draftOf(workout, unit))
   const patch = (p: Partial<ActivityDraft>) => setDraft((cur) => ({ ...cur, ...p }))
-  // The session's own mode, not the page's: editing a push day should let you
-  // correct it to a pull day, never silently reclassify it as a Run.
   return (
-    <div className="space-y-3">
+    <div className="mt-2 space-y-3 border-t border-line pt-3">
       <ActivityForm
+        // The SESSION's mode, not the page's: a push day logged last year must
+        // stay correctable as a push day rather than being reclassified by
+        // whichever toggle happens to be selected.
         mode={modeOf(draft.activity)}
+        heading="Edit this session"
         draft={draft}
         onChange={patch}
         onSubmit={() => onSave(workoutOf(draft, unit))}
         unit={unit}
-        submitLabel="Save session"
+        submitLabel="Save changes"
       />
-      <Button
-        variant="ghost"
-        onClick={async () => {
-          if (await confirm({
-            title: 'Delete this session?',
-            description: 'The session and its sets are removed from your history. This cannot be undone.',
-            confirmLabel: 'Delete session',
-            destructive: true,
-          })) onDelete()
-        }}
-        className="inline-flex items-center gap-1.5 text-red hover:text-red"
-      ><Icon as={Trash} size="sm" /> Delete</Button>
+      <Button variant="secondary" onClick={onCancel} className="w-full">Cancel</Button>
     </div>
   )
 }

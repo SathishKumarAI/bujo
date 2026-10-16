@@ -1,4 +1,4 @@
-import { activitiesForMode, asks, kindsFor, labelOf, MODE_COPY, type ActivityKey, type Mode } from '../../domain/activities'
+import { asks, kindsFor, labelOf, MODE_COPY, optionsFor, type ActivityKey, type Mode } from '../../domain/activities'
 import { Input, Textarea } from '../ui'
 import { NumField } from './NumField'
 import { Button } from '../ui/button'
@@ -85,6 +85,7 @@ export function ActivityForm({
   onSubmit,
   unit,
   submitLabel = 'Log session',
+  heading,
   right,
 }: {
   mode: Mode
@@ -93,6 +94,16 @@ export function ActivityForm({
   onSubmit: () => void
   unit: DistanceUnit
   submitLabel?: string
+  /**
+   * Overrides the mode's own heading.
+   *
+   * The default is `MODE_COPY[mode].formHeading` — "Log a cardio session" —
+   * which is right for the act column and wrong everywhere this same form is
+   * used to CORRECT a session that already exists. The history card's inline
+   * editor passes "Edit this session"; nothing else passes anything, so the
+   * mode copy stays the single source for the logging case.
+   */
+  heading?: React.ReactNode
   /** e.g. a "Repeat last" affordance beside the heading. */
   right?: React.ReactNode
 }) {
@@ -102,7 +113,7 @@ export function ActivityForm({
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-heading font-medium text-fg-1">
-          {MODE_COPY[mode].formHeading}
+          {heading ?? MODE_COPY[mode].formHeading}
         </h2>
         {right}
       </div>
@@ -121,7 +132,12 @@ export function ActivityForm({
           onChange={(e) => onChange({ activity: e.target.value as ActivityKey, subActivity: '' })}
           className="mt-1 w-full rounded-control border border-ctl-ring bg-ink-2 px-3 py-2 text-body text-fg-1"
         >
-          {activitiesForMode(mode).map(([key, a]) => (
+          {/* `optionsFor`, not `activitiesForMode`: Pickleball, Pull-ups and
+              Home workout each have a logger of their own and are not offered
+              here (`OWN_PAGE`) — but one already logged stays editable, so the
+              selected activity is always in the list. A controlled select whose
+              value is absent renders as the first option, silently. */}
+          {optionsFor(mode, activity).map(([key, a]) => (
             <option key={key} value={key}>{a.label}</option>
           ))}
         </select>

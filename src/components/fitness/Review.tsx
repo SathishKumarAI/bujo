@@ -8,6 +8,8 @@ import { labelOf, type Mode } from '../../domain/activities'
 import {
   activityMix, bestsByActivity, cadence, fitnessMilestones, weekdayLoad, weeklyLoad,
 } from '../../lib/fitnessReview'
+import { ShowMore } from '../ShowMore'
+import { useCappedList } from '../../lib/useCappedList'
 import { FITNESS_PANELS } from './panels'
 import { FitnessHistory } from './History'
 import { ActivityMixCard, BestsCard, CadenceCard, MilestonesCard, WeekdayLoadCard, WeeklyLoadCard } from './Cards'
@@ -75,6 +77,13 @@ export function FitnessReview({ sessions, mode, unit, panel, onPanel }: {
       : w.activity === focus.value))
     : sessions
   const focusLabel = focus && (focus.kind === 'weekday' ? `${focus.value} sessions` : labelOf(focus.value))
+  /* THE LAST THREE, AND THE REST ONE CLICK AWAY. `HISTORY_CAP` is 3 and the
+     affordance carries the total (`Show all (17)`), because a history
+     collapsed to three with an unlabelled button cannot be told from a history
+     that only ever had three. The cap lives here rather than in `History`
+     because the button lives in the panel header, which is this component's —
+     the same split `components/homeworkout/Review.tsx` uses. */
+  const history = useCappedList(shown)
 
   // One pass each over a list of sessions, and `sessions` is a fresh array
   // every render — see the no-`useMemo` note in `lib/fitnessReview.ts`.
@@ -116,17 +125,28 @@ export function FitnessReview({ sessions, mode, unit, panel, onPanel }: {
                 {current.label}
               </h3>
               <p className="text-label text-fg-2">{current.blurb}</p>
+              {panel === 'sessions' && (
+                <span className="ml-auto flex flex-wrap items-center gap-2">
+                  {/* The filter states itself and comes off in one tap. A list
+                      that is quietly short reads as broken rather than as
+                      filtered. */}
+                  {focusLabel && (
+                    <button
+                      type="button"
+                      onClick={() => setFocus(null)}
+                      className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-ink-2 px-2.5 py-0.5 text-label text-fg-1 transition-colors hover:border-line-strong"
+                    >
+                      {focusLabel} · {shown.length} of {sessions.length}
+                      <span aria-hidden>×</span>
+                      <span className="sr-only">Clear this filter</span>
+                    </button>
+                  )}
+                  <ShowMore list={history} />
+                </span>
+              )}
             </div>
 
-            {panel === 'sessions' && (
-              <FitnessHistory
-                sessions={shown}
-                unit={unit}
-                total={sessions.length}
-                filterLabel={focusLabel}
-                onClearFilter={() => setFocus(null)}
-              />
-            )}
+            {panel === 'sessions' && <FitnessHistory list={history} unit={unit} />}
 
             {panel === 'volume' && (<>
               <SummaryStrip items={[
