@@ -1,6 +1,6 @@
 import type { JournalData, Routine, Split } from './types'
 import { musclesForExercise } from './muscleMap'
-import { allMusclesForExercise } from './exerciseMuscles'
+import { allMusclesForExercise, muscleRolesFor, muscleWorkFor } from './exerciseMuscles'
 
 /* Re-exported so the five modules importing it from here keep working. The
    matcher moved to a leaf to break the `fitness` ↔ `exerciseMuscles` cycle; it
@@ -357,6 +357,88 @@ export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days 
 }
 
 // ── Estimated-1RM progression (F: #101) ──────────────────────────────────────
+export interface MuscleLoad {
+  /** wger muscle id. */
+  muscle: number
+  /** Sets where this muscle was the PRIMARY mover. */
+  direct: number
+  /** Sets where it assisted. */
+  indirect: number
+  /** `direct + indirect / 2`, rounded to half a set. The figure graded. */
+  load: number
+}
+
+/**
+ * WEEKLY LOAD PER MUSCLE, COUNTING AN ASSIST AS HALF A SET.
+ *
+ * `weeklySetsPerMuscle` adds a whole set to **every** muscle a lift touches,
+ * which is the right answer to "was this muscle involved" and the wrong one to
+ * "did this muscle get its ten to twenty". Measured on the demo journal: 134
+ * working sets in a week rendered as traps 96, lats 91, biceps 76 — nine of
+ * twelve muscles permanently over a target of 20, in red, on the page's
+ * signature card. The arithmetic was right and the card was useless (COD-330).
+ *
+ * A deadlift set is a hamstring set and half a trap set. That is the convention
+ * the 10–20 landmark is stated in — direct sets count one, indirect count a
+ * half — so the figure the card grades has to be counted the same way or the
+ * comparison is two different currencies, which is the trap CLAUDE.md records
+ * from the recovery ledger.
+ *
+ * **`muscleWorkFor` is the source**, because it already resolves the awkward
+ * half: curated primary/secondary roles where they exist, and the older
+ * keyword table as all-primary where they do not — "exactly as much as it
+ * knows", which is also exactly what we want counted here. `unroled` reports
+ * how much of the week came from that fallback, so the card can say how much
+ * of its own figure is a guess rather than implying precision it does not have.
+ *
+ * `weeklySetsPerMuscle` is deliberately left alone: it has four other callers
+ * and re-basing every muscle number the app has printed is COD-316's problem,
+ * not this card's.
+ */
+export function weeklyMuscleLoad(data: JournalData, today = todayISO(), days = 7): {
+  rows: MuscleLoad[]
+  /** Working sets counted. */
+  sets: number
+  /** Of those, how many had no curated roles and were counted all-primary. */
+  unroled: number
+} {
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const direct = new Map<number, number>()
+  const indirect = new Map<number, number>()
+  let sets = 0
+  let unroled = 0
+
+  const add = (exercise: string, n = 1) => {
+    const work = muscleWorkFor(exercise)
+    if (!work) return
+    sets += n
+    if (!muscleRolesFor(exercise)) unroled += n
+    for (const id of work.primary) direct.set(id, (direct.get(id) ?? 0) + n)
+    for (const id of work.secondary) indirect.set(id, (indirect.get(id) ?? 0) + n)
+  }
+
+  for (const w of data.workouts) {
+    if (!inWindow(w.date)) continue
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) if (r.kind !== 'warmup' && r.exercise.trim()) add(r.exercise)
+    } else {
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.sets) }
+    }
+  }
+
+  const ids = new Set([...direct.keys(), ...indirect.keys()])
+  const rows = [...ids]
+    .map((muscle) => {
+      const d = direct.get(muscle) ?? 0
+      const i = indirect.get(muscle) ?? 0
+      return { muscle, direct: d, indirect: i, load: Math.round((d + i / 2) * 2) / 2 }
+    })
+    .sort((a, b) => (b.load - a.load) || (a.muscle - b.muscle))
+
+  return { rows, sets, unroled }
+}
+
 /**
  * Best estimated 1-rep max per day for an exercise (Epley over every logged
  * working set that day), ascending by date — a strength-trend line that credits
