@@ -1,6 +1,6 @@
 import type { JournalData, Routine, Split } from './types'
 import { musclesForExercise } from './muscleMap'
-import { allMusclesForExercise } from './exerciseMuscles'
+import { allMusclesForExercise, muscleRolesFor, muscleWorkFor } from './exerciseMuscles'
 
 /* Re-exported so the five modules importing it from here keep working. The
    matcher moved to a leaf to break the `fitness` ↔ `exerciseMuscles` cycle; it
@@ -357,6 +357,88 @@ export function weeklySetsPerMuscle(data: JournalData, today = todayISO(), days 
 }
 
 // ── Estimated-1RM progression (F: #101) ──────────────────────────────────────
+export interface MuscleLoad {
+  /** wger muscle id. */
+  muscle: number
+  /** Sets where this muscle was the PRIMARY mover. */
+  direct: number
+  /** Sets where it assisted. */
+  indirect: number
+  /** `direct + indirect / 2`, rounded to half a set. The figure graded. */
+  load: number
+}
+
+/**
+ * WEEKLY LOAD PER MUSCLE, COUNTING AN ASSIST AS HALF A SET.
+ *
+ * `weeklySetsPerMuscle` adds a whole set to **every** muscle a lift touches,
+ * which is the right answer to "was this muscle involved" and the wrong one to
+ * "did this muscle get its ten to twenty". Measured on the demo journal: 134
+ * working sets in a week rendered as traps 96, lats 91, biceps 76 — nine of
+ * twelve muscles permanently over a target of 20, in red, on the page's
+ * signature card. The arithmetic was right and the card was useless (COD-330).
+ *
+ * A deadlift set is a hamstring set and half a trap set. That is the convention
+ * the 10–20 landmark is stated in — direct sets count one, indirect count a
+ * half — so the figure the card grades has to be counted the same way or the
+ * comparison is two different currencies, which is the trap CLAUDE.md records
+ * from the recovery ledger.
+ *
+ * **`muscleWorkFor` is the source**, because it already resolves the awkward
+ * half: curated primary/secondary roles where they exist, and the older
+ * keyword table as all-primary where they do not — "exactly as much as it
+ * knows", which is also exactly what we want counted here. `unroled` reports
+ * how much of the week came from that fallback, so the card can say how much
+ * of its own figure is a guess rather than implying precision it does not have.
+ *
+ * `weeklySetsPerMuscle` is deliberately left alone: it has four other callers
+ * and re-basing every muscle number the app has printed is COD-316's problem,
+ * not this card's.
+ */
+export function weeklyMuscleLoad(data: JournalData, today = todayISO(), days = 7): {
+  rows: MuscleLoad[]
+  /** Working sets counted. */
+  sets: number
+  /** Of those, how many had no curated roles and were counted all-primary. */
+  unroled: number
+} {
+  const inWindow = (date: string) => { const diff = dayDiff(date, today); return diff >= 0 && diff < days }
+  const direct = new Map<number, number>()
+  const indirect = new Map<number, number>()
+  let sets = 0
+  let unroled = 0
+
+  const add = (exercise: string, n = 1) => {
+    const work = muscleWorkFor(exercise)
+    if (!work) return
+    sets += n
+    if (!muscleRolesFor(exercise)) unroled += n
+    for (const id of work.primary) direct.set(id, (direct.get(id) ?? 0) + n)
+    for (const id of work.secondary) indirect.set(id, (indirect.get(id) ?? 0) + n)
+  }
+
+  for (const w of data.workouts) {
+    if (!inWindow(w.date)) continue
+    const rows = w.setRows ?? []
+    if (rows.length) {
+      for (const r of rows) if (r.kind !== 'warmup' && r.exercise.trim()) add(r.exercise)
+    } else {
+      for (const line of w.sets) { const p = parseSet(line); if (p) add(p.exercise, p.sets) }
+    }
+  }
+
+  const ids = new Set([...direct.keys(), ...indirect.keys()])
+  const rows = [...ids]
+    .map((muscle) => {
+      const d = direct.get(muscle) ?? 0
+      const i = indirect.get(muscle) ?? 0
+      return { muscle, direct: d, indirect: i, load: Math.round((d + i / 2) * 2) / 2 }
+    })
+    .sort((a, b) => (b.load - a.load) || (a.muscle - b.muscle))
+
+  return { rows, sets, unroled }
+}
+
 /**
  * Best estimated 1-rep max per day for an exercise (Epley over every logged
  * working set that day), ascending by date — a strength-trend line that credits
@@ -851,53 +933,3 @@ export function trainRestRatio(data: JournalData, today = todayISO(), days = 28)
   }
 }
 
-/** One exercise from a past session, collapsed to its working sets. */
-export interface LastSessionLift {
-  exercise: string
-  /** Working sets only — warm-ups are not what you load against. */
-  sets: { weight?: number; reps?: number }[]
-  /** Heaviest working set, for the one-line summary. */
-  topWeight: number
-}
-
-export interface LastSessionOfSplit {
-  date: string
-  lifts: LastSessionLift[]
-}
-
-/**
- * What you did the last time you trained this split.
- *
- * The single most-used number in a gym is "what did I lift last time", and
- * this page had no answer to it: the logger opened empty, the PR table gives
- * an all-time best rather than last Tuesday, and the progression chart is
- * per-exercise and four folds down. So loading the bar meant remembering, or
- * leaving the app.
- *
- * Working sets only. A warm-up is not what you load against, and including
- * them would make the top set of a light session look heavy.
- *
- * Reads `setRows` and falls back to nothing rather than parsing the legacy
- * `sets` strings: those carry no reliable per-set structure (see the note on
- * `parseSet`), and inventing a weight to put in front of someone about to
- * load a bar is the one place in this app where a guess is dangerous.
- * Returns `null` when the split has never been logged.
- */
-export function lastSessionOfSplit(data: JournalData, split: Split): LastSessionOfSplit | null {
-  const w = [...data.workouts]
-    .filter((x) => x.split === split && (x.setRows?.length ?? 0) > 0)
-    .sort((a, b) => (a.date < b.date ? 1 : -1))[0]
-  if (!w) return null
-  const byExercise = new Map<string, LastSessionLift>()
-  for (const r of w.setRows ?? []) {
-    if (r.kind === 'warmup') continue
-    const name = r.exercise.trim()
-    if (!name) continue
-    const row = byExercise.get(name) ?? { exercise: name, sets: [], topWeight: 0 }
-    row.sets.push({ weight: r.weight, reps: r.reps })
-    row.topWeight = Math.max(row.topWeight, r.weight ?? 0)
-    byExercise.set(name, row)
-  }
-  const lifts = [...byExercise.values()]
-  return lifts.length ? { date: w.date, lifts } : null
-}

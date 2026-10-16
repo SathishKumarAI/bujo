@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio, lastSessionOfSplit, workoutVolume } from './fitness'
+import { epley1RM, musclesForExercise, nextSplit, parseSet, personalRecords, PPL_PRESETS, splitMeta, pace, weeklyActiveMinutes, cardioPBs, platesPerSide, barExceedsTarget, lastSetFor, sessionVolume, sessionSummary, warmupRamp, exerciseProgression, isNewPR, weeklySetsPerMuscle, e1rmProgression, bigThreeTotal, relativeStrength, strengthBand, latestBodyweight, neglectedMuscles, stalledLifts, repPRs, volumeByCategory, muscleRecovery, recoveryState, exerciseFrequency, trainRestRatio, workoutVolume, weeklyMuscleLoad } from './fitness'
 import { plateColor } from '../components/PlateStack'
 import { generateDemoData } from './demo'
 import { emptyJournal } from './storage'
-import type { JournalData, Split, Workout, WorkoutSet } from './types'
+import type { JournalData, Workout } from './types'
 
 const workout = (p: Partial<Workout>): Workout => ({
   id: p.id ?? 'w1', date: p.date ?? '2026-06-10', activity: 'strength',
@@ -699,50 +699,55 @@ describe('exerciseFrequency / trainRestRatio (#102 / #474)', () => {
   })
 })
 
-describe('lastSessionOfSplit', () => {
-  const w = (date: string, split: Split, rows: WorkoutSet[]): Workout => ({
-    id: date, date, activity: 'strength', split, sets: [], notes: '', setRows: rows,
+
+/**
+ * The card this feeds grades against a landmark stated in DIRECT sets, so the
+ * only assertions worth having are that an assist counts half and that the
+ * fallback declares itself. COD-330.
+ */
+describe('weeklyMuscleLoad (COD-330 · an assist is half a set)', () => {
+  const sess = (exercises: string[]): JournalData => ({
+    ...emptyJournal(),
+    workouts: [workout({
+      date: '2026-06-10',
+      split: 'push',
+      setRows: exercises.map((exercise) => ({ exercise, weight: 100, reps: 5, kind: 'working' as const })),
+    })],
   })
 
-  it('is null when the split has never been logged', () => {
-    expect(lastSessionOfSplit({ ...emptyJournal(), workouts: [] }, 'pull')).toBeNull()
+  it('counts a primary muscle whole and a secondary one half', () => {
+    // Close-grip bench is triceps-primary, chest-secondary in the roles table.
+    const { rows } = weeklyMuscleLoad(sess(['Close grip bench press']), '2026-06-10')
+    const tri = rows.find((r) => r.direct > 0 && r.indirect === 0)!
+    const assisted = rows.find((r) => r.indirect > 0 && r.direct === 0)!
+    expect(tri.load).toBe(1)
+    expect(assisted.load).toBe(0.5)
   })
 
-  it('takes the most recent session of that split, not the most recent session', () => {
-    const d = emptyJournal()
-    d.workouts = [
-      w('2026-06-01', 'pull', [{ exercise: 'Row', weight: 60, reps: 8, kind: 'working' }]),
-      w('2026-06-03', 'pull', [{ exercise: 'Row', weight: 70, reps: 8, kind: 'working' }]),
-      w('2026-06-05', 'push', [{ exercise: 'Bench', weight: 80, reps: 5, kind: 'working' }]),
-    ]
-    const r = lastSessionOfSplit(d, 'pull')!
-    expect(r.date).toBe('2026-06-03')
-    expect(r.lifts[0].topWeight).toBe(70)
+  it('never grades a muscle above the number of sets that touched it', () => {
+    // The defect this replaces: `weeklySetsPerMuscle` gave every muscle of a
+    // five-muscle lift a whole set each, so one session of 10 sets could read
+    // as 50 and no muscle could ever land inside a 10–20 band.
+    const { rows, sets } = weeklyMuscleLoad(sess(Array(10).fill('Deadlift')), '2026-06-10')
+    expect(sets).toBe(10)
+    for (const r of rows) expect(r.load).toBeLessThanOrEqual(sets)
   })
 
-  it('groups sets by exercise and drops warm-ups', () => {
-    // A warm-up counted as a working set makes a light day look heavy, and the
-    // top weight is the number someone loads a bar against.
-    const d = emptyJournal()
-    d.workouts = [w('2026-06-01', 'push', [
-      { exercise: 'Bench', weight: 20, reps: 10, kind: 'warmup' },
-      { exercise: 'Bench', weight: 60, reps: 8, kind: 'working' },
-      { exercise: 'Bench', weight: 65, reps: 6, kind: 'working' },
-      { exercise: 'Dip', reps: 10, kind: 'working' },
-    ])]
-    const r = lastSessionOfSplit(d, 'push')!
-    expect(r.lifts.map((l) => l.exercise)).toEqual(['Bench', 'Dip'])
-    expect(r.lifts[0].sets).toHaveLength(2)
-    expect(r.lifts[0].topWeight).toBe(65)
-    // An unloaded lift is 0, not undefined — the card prints reps for it.
-    expect(r.lifts[1].topWeight).toBe(0)
+  it('reports how much of the week had no curated roles', () => {
+    /* `Front raise` is in the keyword table and in no roles rule, so it is
+       counted all-primary — which is all that table knows, and the card has to
+       be able to say how much of its figure came from that. `Close grip bench
+       press` is roles-known, so it does not count toward it. */
+    const { sets, unroled } = weeklyMuscleLoad(sess(['Close grip bench press', 'Front raise']), '2026-06-10')
+    expect(sets).toBe(2)
+    expect(unroled).toBe(1)
+    expect(weeklyMuscleLoad(sess(['Close grip bench press']), '2026-06-10').unroled).toBe(0)
   })
 
-  it('ignores sessions that only carry legacy set strings', () => {
-    // `parseSet` cannot recover reliable per-set structure, and inventing a
-    // weight to put in front of someone about to load a bar is not acceptable.
-    const d = emptyJournal()
-    d.workouts = [{ id: '1', date: '2026-06-01', activity: 'strength', split: 'pull', sets: ['Row 3x8 @ 60kg'], notes: '' }]
-    expect(lastSessionOfSplit(d, 'pull')).toBeNull()
+  it('ignores warm-ups and anything outside the window', () => {
+    const d = sess(['Deadlift'])
+    d.workouts[0].setRows![0].kind = 'warmup'
+    expect(weeklyMuscleLoad(d, '2026-06-10').sets).toBe(0)
+    expect(weeklyMuscleLoad(sess(['Deadlift']), '2026-06-30').sets).toBe(0)
   })
 })

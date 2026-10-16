@@ -35,3 +35,21 @@ export const newSetRow = (patch: Partial<SetRow> = {}): SetRow => ({
   reps: '',
   ...patch,
 })
+
+/**
+ * The stored human-readable line for one set — the OTHER shape a session is
+ * kept in.
+ *
+ * A `Workout` carries both `setRows` (what every analytic counts) and `sets`
+ * (strings, which is what legacy journals hold and what `parseSet` reads). The
+ * format was written inline inside `Gym`'s `finish()`, so the history editor
+ * would have been a second opinion about it — and `REUSABLE-PATTERNS.md` §4 is
+ * explicit that an edit must rewrite EVERY stored shape, not the one the list
+ * renders. One source, two callers.
+ *
+ * `1x`, not `Nx`: one row is one set, so the count is 1 and the number after
+ * the `x` is the reps. It held the loop index once, which left `parseSet`
+ * reading the rep slot as a set count.
+ */
+export const setLineOf = (r: { exercise: string; weight: string; reps: string }, unit: string): string =>
+  `${r.exercise.trim()} 1x${r.reps || '?'} @ ${r.weight || '0'}${unit}`

@@ -2,7 +2,15 @@
 
 A checklist with a specific origin. Home Workout shipped a history list whose
 only affordance was a `×` that deleted a session **on the first click, with no
-confirmation and no way to correct anything**. Mistype one rep count and the
+confirmation and no way to correct anything**.
+
+> **Strength was worse, and it is the third adopter (COD-329).** It had **no
+> history at all**: you logged a session, a rollup card appeared until your next
+> keystroke, and after that the session existed only inside twelve analytics —
+> so a set typed as `120` instead of `12` was permanent, while `updateWorkout`
+> had been in the store the whole time. Rule 1 does not only mean "`add`
+> without `edit` is a bug"; it means **a record with no LIST has no edit**,
+> however many charts read it. Mistype one rep count and the
 price was the whole session: the date, the duration, the notes and every other
 exercise in it, retyped from memory.
 

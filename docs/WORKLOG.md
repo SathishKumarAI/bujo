@@ -26,6 +26,164 @@ Rules the three share:
 
 ---
 
+## 2026-10-16 — Fitness and Strength onto the contract, and four defects the pages were hiding (COD-329, PR #410 · #411)
+
+Two pages off `docs/PAGE-ROLLOUT.md`, in two stacked PRs, driven from the
+running app rather than from the source. Sixteen commits. Everything below was
+measured against a local preview of each branch's own build at `?demo=1`, with
+the served bundle hash checked against `dist/index.html`.
+
+### Fitness · PR #410
+
+| | before | after |
+|---|---|---|
+| phone landing | 1905px · 2.3 screens | **1279px · 1.5** |
+| stacked (1152) landing | 1402px · 1.6 | **972px · 1.1**, strip 41px |
+| review zone, cardio | 553px, two sections | 513px, four rows |
+| review zone, **sport** | **47px** — one empty frame | **513px** |
+| review width @1440, log open → hidden | 678 either way | 678 → **1054** |
+| review width hidden @1920 / @2560 | — | **1534 / 1870**, no empty track |
+| `views/Fitness.tsx` | 388 lines | 338, plus 638 in `components/fitness/` |
+
+`lib/fitnessReview.ts` is new, because `lib/fitness.ts` is 903 lines of
+strength analytics and nothing in it answers "am I running enough". One bar of
+four rows (Volume · Sessions · Bests · Mix), `useActColumn` + `ActStrip`, a
+`nextStep` sentence, drill-down from any figure to the sessions behind it, and
+the history as three cards with a named **Edit** — `add` without a visible
+`edit` is `USER-CONTROL.md` rule 1.
+
+**Three findings worth more than the pixels:**
+
+- **Sport mode's review zone was 47px** — a single empty frame — because
+  `lib/demo.ts` seeded no workout whose activity derives that mode (pickleball
+  lives in another collection). At five themes and two viewports, on every gate
+  run, for the life of the page. Third unseeded-domain instance after
+  `data.cycle` and `activity: 'pullups'`. `DEMO_VERSION` 20 → 21.
+- **Two "this week" figures disagreed by 4.7x and both were correct.** The
+  weekly bars were toned against `fitnessGoalMin`, which `weeklyActiveMinutes`
+  computes over EVERY activity, while the card counts one mode: **578 minutes
+  in zone 1 against a 123-minute bar**, and a red bar on a good week. Scope is
+  part of a comparison's currency, exactly like a unit.
+- **`fitnessGoalMin` had three readers and no writer.** The page's headline
+  fact, Goals and `lib/coach.ts` all measured against a 150-minute default that
+  nothing in the app could change. The field now sits under the sessions it
+  counts.
+
+Also: **pickleball left the Fitness form** (`OWN_PAGE`) — it led the Sport
+segment while its own page records the format, the score, the partner and the
+points, into a *different collection*, so every total disagreed with itself.
+The activity is kept, because journals hold it and `optionsFor` keeps a
+selected activity in its own select; a `?activity=` link for any page-owning
+activity now redirects there, which also sends a pull-up link to Pull-ups
+rather than to Strength.
+
+### Strength · PR #411
+
+| | before | after |
+|---|---|---|
+| landing @1440 | 1538px · 1.7 screens | **1003px · 1.1** |
+| landing @390 | 3048px · 3.6 | **1593px · 1.9** |
+| opened @1152 | **6262px · 7.0** | — (the bar replaced the folds) |
+| review column | 678 × **3016px** | 678 × **786px** |
+| **act column** | **3001px** | **541px**, and sticky again |
+| `aria-expanded` on the page | **28** | **5** |
+| `views/Gym.tsx` | 781 lines | **367** |
+
+Four `QuietSection` folds became one bar of seven rows (Week · Sessions ·
+Strength · Balance · Body · Load · Lookup, 469px of chips in a 678px panel).
+The act can be put away and starts away when the zones stack.
+
+**The page had no history at all.** You logged a session, a rollup card
+appeared until your next keystroke, and after that the session existed only
+inside twelve analytics — so a set typed as `120` instead of `12` was
+permanent, while `updateWorkout` had been in the store the whole time. Three
+`PanelCard`s now, with a named **Edit**, a **Load** on every session, a delete
+that names what it removes, and set lines grouped the way a lifter says them
+(`5 × 65lb × 5`, with the set that BROKE kept separate — `5,5,5,5,4` prints two
+lines). Phone Sessions row 2039px → **1450px**.
+
+**Rest is per exercise** (`lib/rest.ts`): `settings.restByExercise` keyed by
+lift, the timer's `+30s` writing back to it — the change made during the rest
+that was too short rather than in a field to go and find — and `sessionMinutes`
+printing `≈ N min` beside the volume, which is the answer to "will this fit in
+the hour I have". The default comes from the reps by the thresholds
+`lib/programs.ts` already states. Each set stores the rest it was run with.
+
+### The four defects the pages were hiding
+
+Each was invisible to at least one gate, and three were found by looking at the
+rendered page rather than at the markup.
+
+1. **`onAccent(color)` was handed a token name, not a hex.** `CalendarSpan`'s
+   date numbers therefore painted `#000000` on every filled cell in every theme:
+   **3.92:1 on latte's mauve, 3.19:1 on dawn's peach**. Caught by
+   `npm run a11y:panels` — the day the seed first produced a full-strength cell
+   in the rendered window, which is "a branch the seed never takes cannot fail"
+   for the third time. The ramp also moved out of `opacity`, which had been
+   fading the date numbers along with their cells.
+2. **The set row broke on `sm:` inside a 416px column.** A viewport query on a
+   box the page split sizes, so seven desktop tracks were drawn in 416px and
+   `Weight`/`Reps`/`RPE` rendered as `lb`, `re`, `RP`. The comment above it
+   asserted the slack "has hundreds to spare at sm", which is the misreading
+   itself. Now `@container/act`; measured per field: 100px at 1440, 56 at 1920,
+   78 at 390, nothing clipped.
+3. **`PanelCard` had no `group`,** so every `.reveal` control inside one was
+   invisible on a hover-capable device — the × on a history card could only be
+   reached by tabbing. Home Workout had shipped that way since its own history
+   landed.
+4. **The muscle-balance card could not be satisfied** (COD-330, filed in the
+   first round and fixed in the second). It graded against a 10–20 landmark
+   while counting a whole set for every muscle a lift touches, so nine of
+   twelve muscles sat permanently "over 20" in red. `weeklyMuscleLoad` counts
+   an assist as half a set — the convention the landmark is stated in — and the
+   card draws the band instead of colour-coding against it, which retires the
+   three-dot legend.
+
+### What was thrown away
+
+- **A radar with four axes.** Four corners are not a comparison: you cannot
+  tell 2,563 from 7,703 by looking at one, and with Core at zero — true in the
+  demo and in most real weeks — the polygon collapsed against an empty axis.
+  Measured: a 224px plot holding a small purple triangle, with the four real
+  numbers printed underneath as a caption because the chart could not carry
+  them. Four `BarList` rows say it in a quarter of the height.
+- **The second rest timer.** Two existed: one decrementing a `setInterval`
+  (drifts; a throttled tab comes back insisting four seconds have passed) and
+  one counting against a deadline, naming the exercise, with tests. Deleted the
+  first and pointed Strength at the second.
+- **`LastSessionCard`**, and `lastSessionOfSplit` with it — the card showed one
+  session of the selected split with one Load button; every history card
+  carries Load now, so any session reloads.
+- **The barbell's first redesign**, which shaded with `cat('text')` over
+  `cat('crust')` and was therefore **lit from below in every light theme**.
+  Caught by screenshotting mocha and latte side by side. A specular highlight
+  is the room's light, not a palette entry.
+
+### Verified
+
+Per branch, against a preview of its own build: `tsc -b` clean, **2027 tests /
+149 files**, eslint clean (one pre-existing `App.tsx` warning), `vite build`
+clean, `design` 473 files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean
+at 1440 / 1024 / 390, and **`npm run a11y:panels` 140 scans · 0 serious · 0
+critical** across three pages — armed first, since `BUJO_CANARY=1` reports 36
+criticals on one theme. Every layout number above came from a throwaway probe
+driving each rail row at 390 / 1152 / 1440 / 1920 / 2560, because `npm run
+space` grades only the row the rail opens on (COD-237).
+
+### Still open
+
+- **The demo journal trains 138 working sets a week** across a gym session most
+  days plus pull-ups plus home workouts — three programmes at once. Even the
+  corrected per-muscle count puts lats at 87, which is honest arithmetic over an
+  unrealistic seed. Trimming it will move every snapshot that pins a seeded
+  number.
+- `npm run a11y:panels` is still local-only, at 140 scans. `main`'s a11y job
+  has been red since 2026-10-15 09:08 on an unrelated shell-dropdown violation,
+  so every PR shows UNSTABLE and adding a second browser gate to that workflow
+  buys nothing until it is fixed.
+- Four pages left on the rollout: Nutrition, Challenges, Recovery, Cycle.
+
+
 ## 2026-10-15 — Pull-ups driven from the running app, and a seed that had never seeded it (COD-312, PR #400)
 
 One page, one session, nine commits, every change measured on the built bundle

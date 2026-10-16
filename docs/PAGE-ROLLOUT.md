@@ -21,7 +21,9 @@ finding, not a licence to invent a seventh disclosure implementation.
 | One bar per review zone | `components/page/SectionRail.tsx`, `railAt="never"` | Five short rows, read left to right, in reading order |
 | Sub-section chips | `components/pickleball/Review.tsx` + `Facet.tsx` | A row with 7+ cards narrows to 2–4 without a second navigation |
 | `StatGrid` | `components/page/StatGrid.tsx` | Columns that answer to the PANEL's width, solved from a ~450px card floor. **Was `components/pickleball/PanelGrid`**; renamed on the move because `page/Panel.tsx` already exports a `PanelGrid` for reference items |
-| `BarList` | `components/page/BarList.tsx` | A comparison of more than about five things, as one bar per row (§21). Written on its fourth caller |
+| `BarList` | `components/page/BarList.tsx` | A comparison of more than about five things, as one bar per row (§21). Written on its fourth caller; it also replaced Strength's four-axis radar, which had no baseline to be lopsided against |
+| The house axis style | `components/page/chartStyle.ts` | Horizontal gridlines only, no axis line or ticks, `subtext0` tick text, compact figures, `minTickGap`. Four of 39 `CartesianGrid` call sites migrated |
+| A session history card | `components/fitness/History.tsx` · `components/gym/History.tsx` | Three `PanelCard`s, `ShowMore` carrying the total, a named **Edit** that opens the real form in the card, and a delete that asks |
 | The next-step sentence | `lib/pickleball.ts` → `nextStep` | Zone 1 says what to do, not only what is true |
 | Drill-down to entries | `Review.tsx`'s `focus` + `onPick` | Every figure opens the rows behind it, where Edit and × live |
 | A worked comparison card | `components/pickleball/SignalCards.tsx` → `WeekdayPerformanceCard` | What `BarList` looks like wrapped in a `Card`, with the subtitle saying the finding |
@@ -35,7 +37,7 @@ been done (COD-329) and is kept in the table as the worked example.
 
 | Page | View | Lines | Rail | `actShut` | Sub-sections | The one thing to do first |
 |---|---|---|---|---|---|---|
-| Strength | `views/Gym.tsx` | 781 | — | — | — | **Split the file**, then one bar over the review |
+| ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (7 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | Nutrition | `views/Nutrition.tsx` | 531 | — | — | — | `nextStep` — the page has no sentence at all, not even a `StatBar` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
@@ -57,7 +59,14 @@ each one is a commit.
    The default row is the one you want after the primary button, which need not
    be the first.
 3. **`useActColumn` + `ActStrip`** — never a bare `useState` for this, and
-   never `actLast` unless the act is genuinely short. A page whose act is over
+   never `actLast` unless the act is genuinely short. **And ask what is in the
+   act that is not the act**: Strength's column was 3001px because four
+   reference panels lived under the logger in a fold. Moved to a rail row they
+   are *beside* it instead of below it, and the column came back to 541px and
+   became sticky again. **Sort them by the question they answer**, not into one
+   row called Tools: Strength's five split into Load (put a prescription in the
+   logger) and Lookup (what is this lift), with the plate calculator staying in
+   the act because it is neither. A page whose act is over
    ~500px must be measured stacked: at 1152 and 1024 the zones are a single
    column while every viewport test still says "desktop".
 4. **`StatGrid`** for the cards, never `CardGrid` — the panel's width is
@@ -81,6 +90,9 @@ each one is a commit.
   disclosures (`CollapsibleSection`, `Card collapsible`, `DisclosureRow`) and
   that was two too many; the act-collapse was briefly built twice in one week
   (`collapsibleAct` vs `actShut`) and had to be converged.
+- A breakpoint that asks about the WINDOW when the box is sized by the page
+  split. Strength's set row used `sm:` inside a 416px act column and drew seven
+  desktop tracks in it, clipping three inputs to two characters each.
 - A threshold copied from another page. Pickleball's drill split at 58rem was
   right until the log moved beside it, then it was 40rem. Measure the block.
 - A chip list written beside the render conditions. One source, two readers.
@@ -103,3 +115,10 @@ each one is a commit.
   second browser gate to it buys nothing until that is fixed.
 - With the act open the review is one column, so a short card looks sparse at
   702px. Pairing short cards needs a dense/span rule, not a new grid.
+- **COD-330**: Strength's signature card grades weekly sets per muscle against
+  a 10–20 landmark while counting a set once per muscle the lift works, so
+  nine of twelve muscles are permanently "over 20". Filed during the Strength
+  pass, not fixed in it.
+- **Nutrition, Challenges, Recovery and Cycle** are the four left. Nutrition
+  still has no sentence and no `StatBar`; Recovery and Cycle have rails that
+  `a11y-panels` does not drive yet.

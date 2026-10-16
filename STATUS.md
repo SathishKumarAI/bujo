@@ -1,181 +1,74 @@
 # STATUS
 
-**Stopped:** 2026-10-15, on `feat/fitness-pass`, **one PR open** — the Fitness
-pass (COD-329), the second page off `docs/PAGE-ROLLOUT.md`.
+**Stopped:** 2026-10-16, on `feat/strength-pass`, **two PRs open and stacked** —
+Fitness (#410) and Strength (#411), both COD-329.
 
 ## Where it stands
 
-Five commits on `feat/fitness-pass`, pushed, PR open against `main`. Nothing
-else in flight; `main` is where PR #409 left it.
+| branch | PR | what | state |
+|---|---|---|---|
+| `feat/fitness-pass` | **#410** | Fitness: one bar of four rows, `useActColumn`, `nextStep`, a three-card history with a named Edit, pickleball out of the form, sport seeded | pushed, open against `main` |
+| `feat/strength-pass` | **#411** | Strength: one bar of seven rows, the logger put away, the history the page never had, per-exercise rest, the charts | pushed, open against **`feat/fitness-pass`** |
 
-| commit | what |
-|---|---|
-| `a556d7d` | `lib/fitnessReview.ts` — the aggregates cardio and sport never had, with the floors asserted and armed on planted regressions |
-| `e54b1b7` | the stat-card grid moves to `components/page/StatGrid.tsx` |
-| `d426cf5` | the page: one bar of four rows, `useActColumn` + `ActStrip`, `nextStep` in zone 1 |
-| `3c9b00f` | the demo seeds `sport` workouts; `DEMO_VERSION` 20 → 21 |
-| (next) | `a11y-panels` drives both pages and both Fitness modes; the docs |
+**#410 merges first.** #411 is stacked on it (it uses `StatGrid`, `BarList`,
+`chartStyle` and the capped-list history pattern), so after #410 squash-merges:
+`git rebase --onto main <old-base-sha> feat/strength-pass` and **retarget #411
+to `main` BEFORE the parent's branch is deleted** — GitHub closes a child whose
+base branch is gone and will not reopen it (CLAUDE.md records #145/#147 having
+to be re-created as #148/#149).
 
-Verified on this branch, against a local preview of its own build:
-**2006 tests / 147 files**, `tsc -b` clean, eslint clean, `vite build` clean,
-`design` 466 files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at
-1440 / 1024 / 390, **`a11y:panels` 91 scans · 0 serious · 0 critical** (armed:
-`BUJO_CANARY=1` on one theme reports 26).
+Verified on `feat/strength-pass`, against a local preview of its own build:
+**2027 tests / 149 files**, `tsc -b` clean, eslint clean (one pre-existing
+`App.tsx` warning), `vite build` clean, `design` 473 files, `contrast` 5 themes,
+`smoke` 23/23, `clipped` clean at 1440 / 1024 / 390, and **`a11y:panels` 140
+scans · 0 serious · 0 critical** (armed: `BUJO_CANARY=1` reports 36).
 
 ## The next action
 
-`docs/PAGE-ROLLOUT.md` — **Strength (`views/Gym.tsx`, 781 lines) is next, and
-its first step is splitting the file**, not the rail. Then Nutrition,
-Challenges, Recovery, Cycle.
+1. **Merge #410, rebase and retarget #411, merge it.** Nothing else is in
+   flight.
+2. Then `docs/PAGE-ROLLOUT.md` — **four pages left: Nutrition, Challenges,
+   Recovery, Cycle.** Nutrition is next and has no orient sentence and no
+   `StatBar` at all.
 
-Two things to know before starting it:
+Three things to know before starting one:
 
-- **`npm run a11y:panels` is still local-only.** It is 91 scans now; the a11y
-  workflow has been red on `main` since 2026-10-15 09:08 for an unrelated
-  shell-dropdown violation, so adding a second browser gate to it buys nothing
-  until that is fixed. That red is also why every PR shows UNSTABLE.
-- **Measure a rail page per row with a throwaway probe** — `npm run space`
-  grades only the row the rail opens on. Fitness reports 1.0 desktop screens
-  and its worst row is 1.4.
+- **`npm run a11y:panels` is local-only and now 140 scans.** `main`'s a11y job
+  has been red since 2026-10-15 09:08 on an unrelated shell-dropdown
+  `label-content-name-mismatch`, which is why every PR shows UNSTABLE. Fix that
+  before adding a second browser gate to the workflow.
+- **Measure a rail page per row with a throwaway probe.** `npm run space`
+  grades only the row the rail opens on — Strength reports ~1.1 screens and its
+  worst row is 1.5.
+- **Any breakpoint inside zone 2 or zone 3 is a container query.** Strength's
+  set row used `sm:` inside a 416px act column and drew seven desktop tracks in
+  it; three inputs rendered two characters each.
 
-## The Fitness pass · COD-329
+## Open, and worth doing before the next page
 
-Full write-up, with the before/after table and the six traps it paid for:
-**`docs/pages/fitness.md`**. The three worth carrying forward:
+- **The demo journal trains 138 working sets a week** — a gym session most days
+  plus pull-ups plus home workouts, three programmes at once. Every Strength
+  analytic reads high because of it (lats 87 after the COD-330 fix, which is
+  honest arithmetic over an unrealistic seed). Trimming it will move every
+  snapshot that pins a seeded number, so it is its own change.
+- **COD-330 is fixed** (the muscle-balance count), **COD-237 is three pages
+  armed of six.** Insights, Coaching, Pull-ups, Help, Recovery and Cycle still
+  have rails no gate drives.
 
-- **Sport mode's review zone was 47px** — one empty frame — because no seeded
-  workout derived that mode. Third unseeded-domain instance.
-- **Two "this week" figures disagreed by 4.7x**, both correct: zone 1 counts
-  every activity (`weeklyActiveMinutes`, which is what the 150-minute target
-  means in Goals and `lib/coach.ts`), the card counts one mode. Scope is part
-  of a comparison's currency.
-- **jsdom measures a 0px shell**, so component tests always see the stacked
-  layout and the act therefore starts shut. Four Fitness tests went red on a
-  correct change; they open the strip now.
+## The two passes, in one place each
 
-## The Pickleball pass · COD-328
+- **Fitness** — `docs/pages/fitness.md`. Sport mode's review zone was **47px**
+  because no seeded workout derived that mode; two "this week" figures
+  disagreed by **4.7x**, both correct, because one counts every activity and the
+  other one mode; `fitnessGoalMin` had three readers and no writer.
+- **Strength** — `docs/pages/gym.md`. **3001px of act column** beside a 678px
+  review, 28 `aria-expanded` controls, and **no session history at all** — you
+  could not correct a set you mistyped. Now one bar of seven rows, a 541px
+  sticky act, grouped set lines, rest per exercise with a session estimate, and
+  four defects fixed that no gate had caught: `onAccent` handed a token name,
+  a viewport breakpoint inside a page-split column, a `PanelCard` with no
+  `group` hiding every `.reveal` control, and a muscle landmark nobody could
+  reach.
 
-Applied `docs/REUSABLE-PATTERNS.md` — the Pull-ups, Home Workout and Coaching
-patterns — to the last sport page still on the legacy shell.
-
-| commit | what |
-|---|---|
-| `ad1425d` | the act stops re-teaching what Coaching owns |
-| `1d98576` | one sentence at the top says what to do next |
-| `a2d1234` | the record packs two across at 1440, not one |
-| `b9023e3` | the record is a bar with sub-sections, not a column |
-| `7f5ada8` | the page moves onto the shared three-zone shell |
-| `731ee07` | one concern per file, under the 500-line ceiling |
-| `2ba93ed` | the prep checklist is reachable by the gate; the demo gets a future event |
-| `2c6538a` | the last user-visible "bujo" strings say Cadence |
-| `23e18b9` | the log can be put away; nothing overflows; chips say what they are |
-| `35f5fe4` | panels scale with the column; the weekday card is readable; figures lead back to your entries |
-| `0e51a11` | hiding the log scales at every width; Results/Activity replace Performance/Trends |
-| `9134156` | today's drill joins the stat bar; the rail reads in order |
-
-### The page now
-
-`PageLayout` tier 1180, same as Home Workout and Pull-ups:
-
-- **zone 2** — Log a session, in the sticky 38% column, with a **Hide the log**
-  toggle that gives the width back (`PageLayout collapsibleAct`).
-- **zone 1** — one bordered block: the `nextStep` sentence, four totals, and
-  **Today's drill** (merged in, asked for as "one single space"). It is not
-  part of the record, so it does not sit in it.
-- **zone 3** — `components/pickleball/Review.tsx`: one bar of five rows in
-  reading order — **Results · Sessions · Activity · Matchups · Competition** —
-  with sub-section chips inside the rows big enough to need them. The page
-  OPENS on Sessions, which is the thirty seconds after you press Log session;
-  the order is for finding things.
-
-Measured at `?demo=1` against the preview server, both viewports:
-
-| | before the pass | after |
-|---|---|---|
-| desktop landing | 2568px · 2.85 screens | **1136px · 1.26** |
-| phone landing | 4200px · 4.98 screens | **2598px · 3.08** |
-| desktop, worst panel, log open | 2.85 | 2.90 (Activity) |
-| desktop, worst panel, log hidden | — | **1.92** (Results) / 1.77 (Activity) |
-| review width, log hidden, 1920 / 2560 | — | 1590 / 1926 (was 1062 / 1398) |
-| a sub-section picked | — | 338–397px |
-| `views/Pickleball.tsx` | 1233 lines | 406 |
-| `<details>` in `#main` | 1 (invisible to the gate) | 0 |
-
-**a11y, per panel, because the gate cannot reach a rail's other rows**
-(COD-237). A throwaway probe drove all five rows at five desktop themes and two
-phone themes — **35 scans, 0 serious, 0 critical** — with the gate's own waits
-copied (theme asserted on the root, folds to four passes, lazy content
-revealed, a `settle()` immediately before axe). It was **armed on a planted
-violation first**: with `BUJO_CANARY=1` the same run reports 8 criticals, so
-its green means something.
-
-### The second and third rounds, after the first look
-
-Reported and fixed, each measured: the demo banner's 24px overflow (every page
-scrolled sideways on a phone), placeholders wider than their inputs, chips that
-were sentences, a bar that wrapped to three lines, the weekday card as seven
-44px tiles with colour that said nothing, zone 1 as three rows for two facts,
-`CardGrid` giving 353px cards whatever the panel width, and — only above a
-1680px viewport — `layout.css`'s second column rule re-asserting `1fr 32rem`
-with the log hidden, so the review sat beside a 512px empty track.
-
-Also: five cards had never been rendered by any gate because the seed wrote no
-location, opponent, level or points; `nextStep`'s lapse rule now opens Activity;
-every weekday, partner and venue opens Sessions filtered to it.
-
-### Handing over · 2026-10-15, end of session
-
-`docs/PAGE-ROLLOUT.md` is the work list for the next six pages — Strength,
-Fitness, Nutrition, Challenges, Recovery, Cycle. It says where each one stands
-today (all six are already on `PageLayout`; none has the act controls; only
-Recovery and Cycle have a rail), the ten steps in order, and the five things
-not to build a second time.
-
-### Next action
-
-1. **Both PRs merged to `main`** at the end of this session — #407 (Coaching)
-   then #408 (Pickleball), the child retargeted first so the parent's merge
-   could not close it.
-2. Gates all green at `9134156`: `npm run verify` (1986 tests / 145 files),
-   `npm run design` (456 files), `npm run contrast`, and the new
-   `npm run a11y:panels` (35 scans, armed on a canary).
-3. The throwaway probes are gone; the axe one is `scripts/a11y-panels.mjs`,
-   which COD-237 asks for on five more pages.
-
-### Traps found in it, worth not re-learning
-
-- **A rail panel is a page-split column.** `MasonryGrid` breaks on its
-  container at 64rem; the panel beside a 13rem rail is **870px at 1440**, so
-  seven cards drew one column while the class list said two. `CardGrid` asks
-  about the viewport, which is the right question when the width is decided by
-  the page split: **1561px → 1022px**, then → full width as a bar.
-- **A conditional card the demo cannot reach is a card no gate has ever
-  seen.** Every seeded `pickleballEvents` row was in the past, so
-  `upcomingEvents` was empty and the countdown card, its prep checklist and
-  the `event` branch of `nextStep` rendered for nobody. Seeded at +9 days;
-  `DEMO_VERSION` 18 → 19, because demo data is persisted, not regenerated.
-- **A raw `<details>` is invisible to `npm run a11y`** — the third disclosure
-  implementation in this repo to learn it.
-- **Order a priority list by urgency and check it against real data.** The
-  next-step sentence shipped as event → goal → lapse and the demo journal
-  immediately produced "12 more games this week and you hit your goal of 12"
-  ten days into a silence. Lapse outranks goal now.
-- **One source for a chip and the card it counts.** `has` is a map of
-  booleans read by both, so a sub-section chip cannot select an empty panel —
-  the failure mode of every hand-written id list this repo has had.
-- **A component declared inside a render is a new type every render.** `Facet`
-  as a closure remounted every chart on each keystroke-level re-render; eslint
-  names it `no-create-component-during-render`.
-
-### Open questions for the owner
-
-- The phone's worst panel is Activity with every sub-section showing. Picking
-  one takes it under 1.5 screens. Should a phone default to a sub-section
-  rather than All?
-- With the log OPEN the review is one column, so a short card (Recent form
-  fills 0.48 of its box) looks sparse at 702px. Two columns there would be
-  331px, which is the width this pass spent three rounds getting rid of. A
-  dense/span rule could pair short cards; it has not been written.
-- `PracticeTick` writes under one key space shared with Coaching, so ticking
-  "Figure-8" here and in the manual is one record. That is deliberate; if the
-  two pages should ever count separately, the key needs a surface.
+The permanent record of both, with every measurement, is the 2026-10-16 entry
+in `docs/WORKLOG.md`.

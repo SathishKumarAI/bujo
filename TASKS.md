@@ -558,10 +558,16 @@ bottom.
   same blind spot that shipped a critical `select-name` violation in K9. Re-run
   the gate with it open before trusting the clean report. (Low risk: it is one
   labelled input.)
-- [ ] **L7 · The `sport` activity was relabelled `Sport` → `Other sport`** so it
+- [x] **L7 · The `sport` activity was relabelled `Sport` → `Other sport`** so it
   reads sensibly next to Pickleball inside the Sport mode. `normalizeActivity`
   still maps the legacy `'Sport'` string, and tests cover it, but no one has
   looked at a real journal that contains those rows.
+  **Closed by COD-329, by removing the premise:** Pickleball is not offered by
+  the Fitness form any more (`OWN_PAGE` — it has its own page, and logging it
+  here wrote into a different collection), so "Other" distinguished it from
+  nothing. The label is `Sport` again and "Sport · Tennis" reads better than
+  "Other sport · Tennis" on every history card. The legacy mapping is
+  untouched.
 
 ### Process traps this pass hit
 
