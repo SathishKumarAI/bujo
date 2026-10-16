@@ -37,8 +37,8 @@ wrote down ("a review zone has one navigation in it") arriving a cluster later.
 | zone | holds |
 |---|---|
 | 1 · orient | Train next · Last session · Sets this week · Stalled lifts |
-| 2 · act | The set logger, last session, the rest timer, the tools fold — **and a control that puts the whole column away** |
-| 3 · review | One bar of five rows |
+| 2 · act | The set logger, the rest timer, the plate calculator — **and a control that puts the whole column away** |
+| 3 · review | One bar of seven rows |
 
 | # | row | the question |
 |---|---|---|
@@ -47,6 +47,8 @@ wrote down ("a review zone has one navigation in it") arriving a cluster later.
 | 3 | Strength | am I getting stronger: records, standards, effort |
 | 4 | Balance | what am I neglecting: movement split, recovery, frequency, stalls |
 | 5 | Body | how is my body changing: weight trend and photos |
+| 6 | Load | start from a prescription: your saved routines, the coach's 29 |
+| 7 | Lookup | what does this lift hit: the muscle map, the cues, wger's library |
 
 **It opens on Week, not Sessions** — the one difference from the sport pages,
 and the reason is that a lifting session is logged set by set with the logger
@@ -116,60 +118,74 @@ Reported as *"some of the charts are looking like just a generic slop"*.
 renders `aria-expanded="false"` — which is what you want from a gate meant to
 see the whole page.
 
-### The act column, second round
+| Saved routines, coach sessions | **Load, a rail row** | One verb — put a prescription in the logger — from two sources. The logger's own quick-load row was a third door and is gone |
+| Anatomy map, the wger library | **Lookup, a rail row** | Both answer what is this lift. Zone 3 is beside zone 2, not below it, so the map and the logger are on screen together — which the fold never allowed |
+| Plate calculator | **stayed in zone 2** | Not a lookup: a target weight, at the rack, between sets, and it seeds from the heaviest working weight in the open session rather than opening on 100 forever |
 
-The bar fixed the review and left the act at **3001px**: the logger, the
-last-session card, the rest timer and a "Look up & tools" fold. Reported as
-"it is wasting scrolling", and the fix was to decide what each piece is for.
+Asked as *"track the rest time between exercises… some need 3 minutes, some
+2… for 1 hour I want to calculate the exercise and the timings as well as the
+rest"*. `lib/rest.ts` splits that into three:
 
-| Piece | Where it went | Why |
-|---|---|---|
-| Anatomy, plate maths, saved routines, coach sessions, the wger library | **Tools, a rail row** | They are consulted between DECISIONS. Zone 3 is beside zone 2, not below it, so the anatomy map and the logger are now on screen together — which the fold never allowed |
-| Rest timer | stayed in zone 2 | Used between SETS, 80px, and a timer you navigate to is a timer you do not start |
-| `LastSessionCard` | **deleted** | Every card in the Sessions row carries **Load**, so any session reloads, not only the latest of the selected split. `lastSessionOfSplit` went with it — no other reader |
+| Piece | Where |
+|---|---|
+| A rest per exercise, remembered | `settings.restByExercise`, keyed by name |
+| Changed set to set | the timer's `+30s` writes back to that exercise — the change is made during the rest that was too short, so the row needs no second control |
+| Does this fit in an hour? | `sessionMinutes`: reps × 3s plus each set's rest, the last set's excluded, printed beside the volume as `≈ 48 min` |
 
-| | act column | sticky | folds on the page | landing |
-|---|---|---|---|---|
-| 1440 | 3001px → **541px** | now **true** | 28 → **5** | 1003px · 1.1 screens |
-| 1152 | 2712 → **41** (strip) | true | 4 | 1085 · 1.2 |
-| 390 | 2998 → **41** (strip) | true | 4 | 1593 · 1.9 |
+The default comes from the REPS, by the thresholds `lib/programs.ts` already
+states for the hypertrophy block — 12+ → 30s, 8–11 → 120s, under 8 → 180s — so
+the app holds one opinion about rest rather than a constant here and a
+prescription there. Each set stores the rest it was run with
+(`WorkoutSet.restSec`).
 
-`PageLayout` sticks the act only while it is shorter than the viewport, so at
-3001px it became its own scrollport; at 541px it sticks, which is what it was
-built for. `views/Gym.tsx` is **367 lines**, down from 781 at the start of the
-pass.
+**There were two rest timers.** This page's decremented a `setInterval`, so it
+drifted and a throttled tab came back insisting four seconds had passed; the
+Program's counts against a deadline, names the exercise, pauses, adds thirty
+seconds and has tests. The Program's won; this page's is deleted.
 
-The tools reach the review as a **slot**, not as eleven props: everything in
-them reads state the act owns, and threading that through the review would make
-it know what a set row is.
+Verified in the browser: three sets of five → `≈ 7 min`, the row chip `3m`,
+tapping it started `Resting · Deadlift · 2:59`, and `+30s` wrote
+`restByExercise: { deadlift: 210 }` and moved the chip to `3m 30s`.
 
-### The barbell
+### The set row, and the duplicate quick-load · COD-329
 
-Reported as *"make the plates look real… it really looks like AI slop"*. It was
-nine flat rectangles, one accent each from the palette, all the same thickness,
-heights scaled by `p / max`, with the weight printed inside at 8px.
+Two reports with one cause between them.
 
-Now: real diameters and thicknesses in millimetres (450mm for a 25kg down to
-160mm for a 1.25), the **IWF colour code** mapped onto the nearest tokens, a
-gradient plus a one-pixel specular edge and a dark trailing edge per disc, the
-sleeve drawn **through** the stack with the collar over the inner edge, knurl
-ticks on the shaft, and no numbers on the discs — side-on you cannot see a
-plate's face.
+**"Reps, RPE — they are not quite visible."** The row's breakpoint was `sm:`, a
+VIEWPORT query, on a row that lives in a column the page split sizes. At 1440
+the act column is **416px**, so `sm` was true and seven desktop tracks were
+drawn inside it: 308px of fixed track left the picker 108px and each number
+input a 32px text box for a 30px placeholder. It rendered `lb`, `re`, `RP`. The
+comment above it claimed the width came out of the picker's `1fr`, "which has
+hundreds to spare at sm" — it does not, because at `sm` the COLUMN is 416px.
+`@container/act` and `@min-[30rem]/act:` now, measured with each field's own
+`scrollWidth`: 100px each at 1440, 56 at 1920, 78 at 390, nothing clipped.
 
-**The first version was lit from below in every light theme**, because it shaded
-with `cat('text')` over `cat('crust')` and those swap ends between mocha and
-latte. A specular highlight is the room's light, not a palette entry: `#fff` at
-0.22 over `#000` at 0.3, in every theme. Caught by screenshotting two themes
-side by side — the only way this class of bug has ever been caught here.
+**"Push / Pull / Legs … and Quick-load: Push Day / Pull Day — this seems
+duplicated."** `PPL_PRESETS` are named after the splits, so "Push" and "Push
+Day" sat eight pixels apart doing different things: the chip CLASSIFIES the
+session and is safe to press, the preset REPLACES every row you typed. The
+preset row is gone; the presets are one contextual line that appears only while
+the list is empty. And the chips are one line — six with a glyph at `px-3` came
+to ~494px in a 416px column, so the glyph went, the padding tightened, "Full
+body" draws as "Full" and announces in full: **362px in 416**.
 
 ### Still open after this pass
 
-- **`MuscleVolumeBalance` cannot be satisfied.** Its landmark is 10–20 hard
-  sets per muscle per week, and it counts a set once per muscle the lift works
-  — so the demo journal's 134 weekly sets render as traps 96, lats 91, biceps
-  76, i.e. every muscle permanently "over 20" in red. The card is arithmetically
-  right and useless as drawn; either the landmark needs to be per *direct* set
-  or the count needs a divisor. Filed, not fixed here.
+- ~~**`MuscleVolumeBalance` cannot be satisfied.**~~ **Fixed (COD-330):**
+  `weeklyMuscleLoad` counts an assist as half a set, which is the convention
+  the 10–20 landmark is stated in, and the card draws the band instead of
+  colour-coding against it. The three-dot legend is gone — with the target zone
+  on the bar, "in range" is a position rather than a colour to decode — and
+  only under-trained rows carry a tone, because being over 20 on one muscle is
+  information and a wall of red is not. `weeklySetsPerMuscle` is untouched: four
+  other callers, and re-basing every muscle number the app has printed is
+  COD-316's problem.
+- **The demo journal trains more than anyone does.** 138 working sets in seven
+  days, across a gym session most days plus pull-ups plus home workouts, so even
+  the corrected count puts lats at 87 — honest arithmetic over an unrealistic
+  seed. Worth trimming, and it will move every snapshot that pins a seeded
+  number.
 - The act column is still ~3000px with the tools fold open. Shutting the column
   is the answer the user has; shortening it is a separate measurement.
 

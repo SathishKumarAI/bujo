@@ -37,7 +37,7 @@ been done (COD-329) and is kept in the table as the worked example.
 
 | Page | View | Lines | Rail | `actShut` | Sub-sections | The one thing to do first |
 |---|---|---|---|---|---|---|
-| ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (6 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
+| ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (7 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | Nutrition | `views/Nutrition.tsx` | 531 | — | — | — | `nextStep` — the page has no sentence at all, not even a `StatBar` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
@@ -63,7 +63,10 @@ each one is a commit.
    act that is not the act**: Strength's column was 3001px because four
    reference panels lived under the logger in a fold. Moved to a rail row they
    are *beside* it instead of below it, and the column came back to 541px and
-   became sticky again. A page whose act is over
+   became sticky again. **Sort them by the question they answer**, not into one
+   row called Tools: Strength's five split into Load (put a prescription in the
+   logger) and Lookup (what is this lift), with the plate calculator staying in
+   the act because it is neither. A page whose act is over
    ~500px must be measured stacked: at 1152 and 1024 the zones are a single
    column while every viewport test still says "desktop".
 4. **`StatGrid`** for the cards, never `CardGrid` — the panel's width is
@@ -87,6 +90,9 @@ each one is a commit.
   disclosures (`CollapsibleSection`, `Card collapsible`, `DisclosureRow`) and
   that was two too many; the act-collapse was briefly built twice in one week
   (`collapsibleAct` vs `actShut`) and had to be converged.
+- A breakpoint that asks about the WINDOW when the box is sized by the page
+  split. Strength's set row used `sm:` inside a 416px act column and drew seven
+  desktop tracks in it, clipping three inputs to two characters each.
 - A threshold copied from another page. Pickleball's drill split at 58rem was
   right until the log moved beside it, then it was 40rem. Measure the block.
 - A chip list written beside the render conditions. One source, two readers.
