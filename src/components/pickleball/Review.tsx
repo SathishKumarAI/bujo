@@ -4,9 +4,8 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { Card, Empty, Input, Segmented, Textarea } from '../ui'
 import { Button } from '../ui/button'
-import { PanelGrid } from './PanelGrid'
+import { SectionRail, StatGrid } from '../page'
 import { LazyMount } from '../LazyMount'
-import { SectionRail } from '../page'
 import { cat, onRaised } from '../../lib/colors'
 import { todayISO, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
 import {
@@ -459,13 +458,13 @@ export function PickleballReview({ panel, onPanel }: {
             that put the form in context, and the days that go well — each
             chart beside the figures it explains rather than in a gallery of
             charts one rail row away. */}
-        <PanelGrid>
+        <StatGrid>
         <Facet of="form" active={activeFacet}>{has.recentForm && <RecentFormCard form={form} streaks={streaks} />}</Facet>
         <Facet of="form" active={activeFacet}>{has.forecast && <WinRateForecastCard forecast={forecast} />}</Facet>
         <Facet of="margins" active={activeFacet}>{has.points && <PointDifferentialCard points={points} />}</Facet>
         <Facet of="margins" active={activeFacet}>{has.scoring && <ScoringPerformanceCard scoring={scoring} />}</Facet>
         <Facet of="days" active={activeFacet}>{has.weekday && <WeekdayPerformanceCard weekdays={weekdays} onPick={pick('weekday')} />}</Facet>
-        </PanelGrid>
+        </StatGrid>
         {/* The charts are a grid of their own, BELOW the stat cards, not a
             child of theirs. Nested, the whole `LazyMount` was one cell of the
             outer grid, so three charts stacked in a single column beside a
@@ -476,21 +475,21 @@ export function PickleballReview({ panel, onPanel }: {
             {panel === 'activity' && (<>
         {/* AM I PLAYING. Volume, cadence, effort — and the badges, which are
             counts of exactly those and belong with what produces them. */}
-        <PanelGrid>
+        <StatGrid>
         <Facet of="consistency" active={activeFacet}>{has.consistency && <PlayConsistencyCard consistency={consistency} />}</Facet>
         <Facet of="effort" active={activeFacet}>{has.intensity && <SessionIntensityCard load={load} />}</Facet>
         <Facet of="effort" active={activeFacet}>{has.hours && <TimeOnCourtCard hours={hours} />}</Facet>
         <Facet of="badges" active={activeFacet}><MilestonesCard milestones={milestones} /></Facet>
-        </PanelGrid>
+        </StatGrid>
         <LazyMount minHeight={320}><TrendCharts activeFacet={activeFacet} group="activity" /></LazyMount>
             </>)}
             {panel === 'matchups' && (<>
-        <PanelGrid>
+        <StatGrid>
         {partners.length > 0 && <PartnerChemistryCard partners={partners} onPick={pick('partner')} />}
         {venues.length > 0 && <VenuesCard venues={venues} onPick={pick('venue')} />}
         {opponents.length > 0 && <RivalryRecordCard opponents={opponents} />}
         {matchup.length > 0 && <LevelMatchupCard matchup={matchup} />}
-        </PanelGrid>
+        </StatGrid>
             </>)}
           </div>
         </div>

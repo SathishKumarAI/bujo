@@ -3,6 +3,15 @@ import type { ReactNode } from 'react'
 /**
  * The review panel's card grid — on a CONTAINER query, not the viewport.
  *
+ * **It was `components/pickleball/PanelGrid`** and it is here, renamed, because
+ * Fitness is the second page to need it and the honest options were importing a
+ * pickleball module into a cardio page or writing the four thresholds out a
+ * second time. `docs/PAGE-ROLLOUT.md` already listed it as a shared part; this
+ * moves it to where the rest of the contract lives. The name changed with the
+ * address: `page/Panel.tsx` already exports a `PanelGrid`, and two different
+ * grids under one name in one directory is how a call site picks the wrong one.
+ * Class strings unchanged, so nothing it already lays out moves.
+ *
  * `CardGrid` breaks on `md:`/`2xl:`, which asks how wide the WINDOW is. The
  * panel's width is decided by the page split and by whether the act column is
  * open, so the window is the wrong question twice over. Measured at a 1440
@@ -45,7 +54,7 @@ import type { ReactNode } from 'react'
  * right when the page split decides the width, and wrong the moment the column
  * can change width without the window moving.
  */
-export function PanelGrid({ children }: { children: ReactNode }) {
+export function StatGrid({ children }: { children: ReactNode }) {
   return (
     <div data-card-grid className="page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 @min-[58rem]/page:grid-cols-2 @min-[88rem]/page:grid-cols-3 @min-[116rem]/page:grid-cols-4">
       {children}
