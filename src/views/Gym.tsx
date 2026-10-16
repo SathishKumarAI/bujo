@@ -1,14 +1,11 @@
-import { Barbell, Plus, Stack, Trophy, Video, X } from '@/components/icons'
+import { CaretRight, Plus, Trophy, Video, X } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from 'recharts'
 import { useJournal } from '../store'
 import { clearPendingSession, peekPendingSession } from '../lib/pendingSession'
-import { Card, Empty, Input, Pill, StatTile } from '../components/ui'
+import { Card, Empty, Input, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { PageLayout, StatBar, SummaryStrip, DisclosureRow } from '../components/page'
+import { ActStrip, PageLayout, StatBar, DisclosureRow, useActColumn } from '../components/page'
 import { MuscleMap } from '../components/MuscleMap'
 import { BodyView3D } from '../components/gym/BodyView3D'
 import { muscleNames, musclesForSplit } from '../lib/muscles'
@@ -16,30 +13,25 @@ import { notify } from '../lib/notify'
 import { ExerciseDB } from '../components/ExerciseDB'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { RestTimer } from '../components/RestTimer'
-import { ProgressPhotos } from '../components/ProgressPhotos'
 import { QuietSection } from '../components/CollapsibleSection'
 import { CoachSessions } from '../components/gym/CoachSessions'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
 import { splitGlyph } from '../components/glyphs'
 import {
-  RepPRCard, MovementRadar, RecoveryMap, ExerciseFrequencyCard,
-  MuscleVolumeBalance, LiftTable, LastSessionCard, NeglectedMuscles, StalledLifts,
-  SessionLogger, newSetRow, type SetRow,
+  LastSessionCard, SessionLogger, newSetRow, setLineOf, type SetRow,
+  GymReview, GYM_PANELS,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { exerciseInfo } from '../lib/exerciseInfo'
-import { cat, onRaised, rechartsTooltip } from '../lib/colors'
+import { onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import {
-  EXERCISE_LIBRARY, personalRecords, splitMeta, nextSplit,
-  musclesForExercise, epley1RM, platesPerSide, barExceedsTarget, parseSet,
-  weeklyVolumeSeries, exerciseProgression, isNewPR, sessionSummary,
-  weeklySetsPerMuscle, e1rmProgression,
-  bigThreeTotal, relativeStrength, neglectedMuscles, stalledLifts, lastSessionOfSplit,
-  repPRs, volumeByCategory, muscleRecovery, exerciseFrequency, trainRestRatio,
+  EXERCISE_LIBRARY, splitMeta, nextSplit, musclesForExercise, epley1RM,
+  platesPerSide, barExceedsTarget, parseSet, isNewPR, sessionSummary,
+  stalledLifts, lastSessionOfSplit,
 } from '../lib/fitness'
 import { Barbell as BarbellViz } from '../components/PlateStack'
 import { cachedMusclesForName } from '../lib/wger'
+import { useStickyState } from '../lib/useStickyState'
 import type { Routine, Split, WorkoutSet } from '../lib/types'
 
 /**
@@ -67,7 +59,7 @@ import type { Routine, Split, WorkoutSet } from '../lib/types'
  * Zone 3 · summary strip, the volume-balance signature, then folded analytics.
  */
 export function Gym() {
-  const { data, addWorkout, addRoutine, removeRoutine, setBodyMetric } = useJournal()
+  const { data, addWorkout, addRoutine, removeRoutine } = useJournal()
   const suggested = useMemo(() => nextSplit(data), [data])
   // "Load into session" on the Program tab stashes the day's lifts and
   // navigates here — the logger's rows are local state, so there is nothing it
@@ -89,10 +81,13 @@ export function Gym() {
   const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
   // Post-finish session rollup (volume · sets · top set), shown until the next edit.
   const [summary, setSummary] = useState<ReturnType<typeof sessionSummary> | null>(null)
+  /* Which review row is open, and the act column's open/shut. Both sticky, and
+     both owned here: the rail row because zone 1's facts point into it, the
+     column because `PageLayout` has to know (shut, zone 2 becomes a 40px rail
+     and the review takes its width). */
+  const [panel, setPanel] = useStickyState<string>('gym.panel', 'week', GYM_PANELS.map((p) => p.id))
+  const logCol = useActColumn('gym')
 
-  // Body metrics quick entry.
-  const [weight, setWeight] = useState('')
-  const prs = personalRecords(data)
   const unit = data.settings.weightUnit
   // Bar + smallest-plate step default per unit, for the auto warm-up generator.
   const defaultBar = unit === 'lb' ? 45 : 20
@@ -108,30 +103,13 @@ export function Gym() {
     return [...new Set(names)].slice(0, 12)
   }, [data.workouts])
 
-  const volumeSeries = useMemo(() => weeklyVolumeSeries(data), [data])
   // Recomputed on every split change, which is the point: picking "Legs"
   // should immediately show what last leg day looked like.
   const lastOfSplit = useMemo(() => lastSessionOfSplit(data, split), [data, split])
 
   // Muscle focus: a clicked PR/exercise overrides the session/split view.
   const [focusEx, setFocusEx] = useState<string | null>(null)
-  const progression = focusEx ? exerciseProgression(data, focusEx) : []
-  // Estimated-1RM trend for the focused lift (credits rep PRs, not just top weight).
-  const e1rmProg = focusEx ? e1rmProgression(data, focusEx) : []
-  // Weekly hard-sets per muscle — hypertrophy volume balance (read-only).
-  const muscleSets = useMemo(() => weeklySetsPerMuscle(data), [data])
-  // Strength snapshots (all read-only, derived from logged PRs / bodyweight).
-  const bigThree = useMemo(() => bigThreeTotal(data), [data])
-  const relStrength = useMemo(() => relativeStrength(data), [data])
-  const neglected = useMemo(() => neglectedMuscles(data), [data])
   const stalled = useMemo(() => stalledLifts(data), [data])
-  // Movement-balance radar + recovery readiness + frequency/consistency (read-only).
-  const categoryVolume = useMemo(() => volumeByCategory(data), [data])
-  const recovery = useMemo(() => muscleRecovery(data), [data])
-  const frequency = useMemo(() => exerciseFrequency(data), [data])
-  const trainRest = useMemo(() => trainRestRatio(data), [data])
-  // Rep records for the focused lift (best reps at each weight).
-  const repRecords = focusEx ? repPRs(data, focusEx) : []
   const sessionMuscles = [...new Set(rows.flatMap((r) => (r.exercise.trim() ? musclesForExercise(r.exercise) : [])))]
   // For a focused exercise prefer wger's exact muscles (when the catalogue is
   // cached from a prior search); otherwise fall back to the keyword mapper.
@@ -171,14 +149,6 @@ export function Gym() {
     }
     return { lastSession: last, setsThisWeek: sets }
   }, [data.workouts])
-
-  // Zone 3's strip: the same week measured the other way. `weeklyVolumeSeries`
-  // buckets by week and the last bucket is the current one.
-  const volumeThisWeek = volumeSeries.length ? volumeSeries[volumeSeries.length - 1].volume : 0
-  const sessionsThisWeek = data.workouts.filter((w) => {
-    const d = dayDiff(w.date, todayISO())
-    return d >= 0 && d < 7
-  }).length
 
   const lastGap = lastSession ? dayDiff(lastSession.date, todayISO()) : null
   const facts = [
@@ -221,7 +191,7 @@ export function Gym() {
     // Legacy "NxM @ w" set-string: parseSet() reads M (the number after `x`)
     // as reps. One row = one set, so N = 1 (set count) and M = actual reps —
     // previously N held the loop index, leaving the rep slot wrong.
-    const sets = valid.map((r) => `${r.exercise.trim()} 1x${r.reps || '?'} @ ${r.weight || '0'}${unit}`)
+    const sets = valid.map((r) => setLineOf(r, unit))
     if (sets.length === 0) { notify.info('No sets to finish', 'Add a weight and reps to at least one row.'); return }
     // Structured rows for analytics (volume / progression / previous-session).
     const structured: WorkoutSet[] = valid.map((r) => ({
@@ -269,24 +239,6 @@ export function Gym() {
     notify.success(`Routine “${name}” saved`, `${exercises.length} ${exercises.length === 1 ? 'exercise' : 'exercises'}.`)
   }
 
-  // Body-weight chart.
-  const weightRaw = [...data.bodyMetrics]
-    .filter((b) => b.weight != null)
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
-  // Session RPE over time (perceived exertion trend).
-  const rpeSeries = [...data.workouts]
-    .filter((w) => w.rpe != null)
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .slice(-20)
-    .map((w) => ({ date: w.date.slice(5), rpe: w.rpe }))
-
-  // 7-point trailing moving average smooths daily fluctuation.
-  const weightSeries = weightRaw.map((b, i) => {
-    const win = weightRaw.slice(Math.max(0, i - 6), i + 1)
-    const avg = win.reduce((s, x) => s + (x.weight ?? 0), 0) / win.length
-    return { date: b.date.slice(5), weight: b.weight, avg: Math.round(avg * 10) / 10 }
-  })
-
   return (
     <>
       {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
@@ -313,14 +265,35 @@ export function Gym() {
            the logger is 604px tall and the review is 1,500. */
         tier={1440}
         zone1={<StatBar facts={facts} />}
-        zone2={
+        onSplitChange={logCol.onSplitChange}
+        actShut={logCol.shut}
+        zone2={logCol.shut ? (
+          /* THE ACT COLUMN, PUT AWAY. Measured before this: **3001px** of act
+             at 1440 — the logger, last session, the rest timer and a tools
+             fold — beside a 678px review, and 2998px of it above the record on
+             a phone. `useActColumn` also carries the rule nobody guesses:
+             stacked, it starts SHUT, so a 1152px window opens on the record
+             with the logger one tap away rather than a screen down. */
+          <ActStrip
+            label="Today’s session"
+            summary={lastSession ? `${splitMeta(suggested).label} next · last ${lastGap === 0 ? 'today' : lastGap === 1 ? 'yesterday' : prettyDay(lastSession.date)}` : `${splitMeta(suggested).label} suggested`}
+            onOpen={logCol.open}
+          />
+        ) : (
           <>
             {/* The act. No fold — it used to collapse itself below 640px, which
                 hid the only thing the page is for while leaving every chart
                 open. Compactness comes from folding the review instead. */}
             <section>
-              <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">
-                Today’s session · <span style={{ color: onRaised(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span> suggested
+              <h2 className="mb-1 flex items-center justify-between gap-2 border-b border-line pb-1 text-label text-fg-2">
+                <span>
+                  Today’s session · <span style={{ color: onRaised(splitMeta(suggested).color) }}>{splitMeta(suggested).label}</span> suggested
+                </span>
+                {/* Shutting it lives on the thing itself; the strip that comes
+                    back is the way in, so the way out belongs here. */}
+                <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the logger" title="Hide the logger — the review takes the width">
+                  <AppIcon as={CaretRight} size="sm" />
+                </Button>
               </h2>
               <SessionLogger
                 data={data}
@@ -410,213 +383,17 @@ export function Gym() {
               </QuietSection>
             </div>
           </>
-        }
+        )}
         zone3={
-          <>
-            {/* Fired by Finish, dismissed by the next edit. Above the summary
-                strip because it is about the session you just did, not the week. */}
-            {summary && summary.sets > 0 && (
-              <Card
-                band
-                title="Session logged"
-                subtitle="Your last finished workout at a glance"
-                right={<Button variant="ghost" size="icon-sm" onClick={() => setSummary(null)} aria-label="Dismiss summary" className="text-fg-2 hover:text-fg-1"><AppIcon as={X} size="md" /></Button>}
-              >
-                <div className="grid grid-cols-3 gap-3">
-                  <StatTile icon={<AppIcon as={Barbell} size="md" />} color="mauve" value={summary.volume.toLocaleString()} label={`${unit} volume`} />
-                  <StatTile icon={<AppIcon as={Stack} size="md" />} color="blue" value={summary.sets} label={summary.sets === 1 ? 'working set' : 'working sets'} />
-                  <StatTile
-                    icon={<AppIcon as={Trophy} size="md" />}
-                    color="yellow"
-                    value={summary.topSet ? `${summary.topSet.weight}${unit}` : '—'}
-                    label={summary.topSet ? `top · ${summary.topSet.exercise}` : 'top set'}
-                    title={summary.topSet ? `${summary.topSet.exercise} ${summary.topSet.weight}${unit}×${summary.topSet.reps}` : undefined}
-                  />
-                </div>
-              </Card>
-            )}
-
-            <section>
-              <h2 className="mb-2 border-b border-line pb-1 text-label text-fg-2">This week</h2>
-              {/* Deliberately NOT the set count. Zone 1 already prints "Sets
-                  this week", and a strip that repeats a fact from the orient
-                  bar is the same mistake this page made with its three lift
-                  lists — it looks like more information and is not. Volume is
-                  the other half of the same week: sets are the stimulus, volume
-                  is the load. */}
-              <SummaryStrip items={[
-                { label: `${unit} volume`, value: volumeThisWeek, empty: volumeThisWeek === 0, suffix: '' },
-                { label: 'Sessions', value: sessionsThisWeek, empty: sessionsThisWeek === 0 },
-                { label: 'Personal records', value: prs.length, empty: prs.length === 0 },
-              ]} />
-              {/* The signature visual: hard sets per muscle against the 10–20
-                  hypertrophy landmark. It is the one chart here that says what
-                  to do next rather than what happened. */}
-              <div className="mt-3">
-                <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
-              </div>
-            </section>
-
-            <QuietSection title="Am I getting stronger?" subtitle="Records, big-three standards and effort trend" stickyKey="gym.progress">
-              {/* EIGHT FOLDS, ALL SHUT.
-
-                  Every `QuietSection` on this page passed `defaultOpen={false}`,
-                  so the page measured **1.2 screens as shipped against 4.7
-                  opened** — almost everything it holds was behind a bar you had
-                  to find first, and the eight bars were identical grey rows that
-                  gave no clue which one had your squat PR in it.
-
-                  Collapsed by default is right for reference; it is wrong for
-                  the answer you came back for. This group is the payoff — it
-                  opens. The two below stay shut, and their `stickyKey` means
-                  opening one is remembered.
-
-                  Eight groups are now three, merged by the question each
-                  answers rather than by the table it renders. */}
-              {/* `CardGrid`, NOT `MasonryGrid` — measured, not chosen.
-
-                  `MasonryGrid` breaks on its CONTAINER (`@3xl` = 768px) and
-                  this review zone is **722px**. It misses by 46px, so all
-                  three groups resolved to a single column and the first
-                  version of this change packed nothing at all. `CardGrid`
-                  breaks on the viewport, which is the right question when the
-                  column width is decided by the page split rather than by the
-                  card. The two charts keep the full row with `SPAN_2`; a
-                  361px column has no room for an axis. */}
-              <CardGrid>
-              {/* ONE card, not two. `Personal records` and `Strength
-                  standards` stood side by side listing the same lifts —
-                  measured on the rendered page, eight of nine names appeared
-                  twice on the same horizontal band, 360px apart. Third round
-                  of this on this page; see `LiftTable` for why they were
-                  never two subjects. */}
-              <LiftTable
-                className={SPAN_2}
-                prs={prs}
-                relative={relStrength}
-                total={bigThree}
-                unit={unit}
-                focusEx={focusEx}
-                setFocusEx={setFocusEx}
-              />
-              {rpeSeries.length >= 2 && (
-                <Card band className={SPAN_2} title="Effort trend (RPE)" subtitle="Perceived exertion per session, watch for over-reaching" defer enlargeable>
-                  <div className="h-44" role="img" aria-label={`Line chart of session RPE (1-10) over the last ${rpeSeries.length} workouts`}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={rpeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
-                        <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                        <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                        <YAxis domain={[0, 10]} stroke={cat('overlay0')} fontSize={11} />
-                        <Tooltip contentStyle={rechartsTooltip()} />
-                        <Line type="monotone" dataKey="rpe" stroke={cat('red')} dot={{ r: 2 }} strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              )}
-            
-              </CardGrid>
-            </QuietSection>
-
-            <QuietSection title="What am I neglecting?" subtitle="Volume, push/pull/legs balance, what is rested and what has stalled" defaultOpen={false} stickyKey="gym.balance">
-              <CardGrid>
-              <Card band className={SPAN_2} title="Training volume" subtitle={focusEx ? `Weekly volume · ${focusEx}` : 'Weekly working-set volume (weight × reps)'} defer enlargeable>
-                <div className="h-48" role="img" aria-label={focusEx ? `Bar chart of weekly training volume for ${focusEx}` : 'Bar chart of weekly working-set volume (weight × reps)'}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
-                      <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                      <XAxis dataKey="label" stroke={cat('overlay0')} fontSize={11} />
-                      <YAxis stroke={cat('overlay0')} fontSize={11} />
-                      <Tooltip contentStyle={rechartsTooltip()} />
-                      <Bar dataKey="volume" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                {focusEx && progression.length > 1 && (
-                  <div className="mt-4 h-40 border-t border-line pt-3" role="img" aria-label={`Line chart of the heaviest ${focusEx} set per day (${unit})`}>
-                    <p className="mb-1 text-label text-fg-2">{focusEx} · heaviest set per day ({unit})</p>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={progression} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-                        <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                        <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                        <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                        <Tooltip contentStyle={rechartsTooltip()} />
-                        <Line type="monotone" dataKey="weight" stroke={cat('green')} dot={{ r: 2 }} strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                {focusEx && e1rmProg.length > 1 && (
-                  <div className="mt-4 h-40 border-t border-line pt-3" role="img" aria-label={`Line chart of estimated 1-rep max for ${focusEx} per day (${unit})`}>
-                    <p className="mb-1 text-label text-fg-2">{focusEx} · estimated 1RM per day ({unit}) · credits rep PRs</p>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={e1rmProg} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-                        <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                        <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                        <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                        <Tooltip contentStyle={rechartsTooltip()} />
-                        <Line type="monotone" dataKey="e1rm" stroke={cat('yellow')} dot={{ r: 2 }} strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </Card>
-              {focusEx && repRecords.length > 0 && <RepPRCard exercise={focusEx} records={repRecords} unit={unit} />}
-            
-
-              <div className="grid items-start gap-5 lg:grid-cols-2">
-                <MovementRadar data={categoryVolume} unit={unit} />
-                <RecoveryMap recovery={recovery} setFocusEx={setFocusEx} />
-              </div>
-            
-
-              <ExerciseFrequencyCard rows={frequency} ratio={trainRest} setFocusEx={setFocusEx} />
-              <NeglectedMuscles muscles={neglected} setFocusEx={setFocusEx} />
-              <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
-            
-              </CardGrid>
-            </QuietSection>
-
-            <QuietSection title="How is my body changing?" subtitle="Weight trend and dated photos" defaultOpen={false} stickyKey="gym.body">
-              <CardGrid>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={`Today's weight (${unit})`} aria-label={`Today's weight in ${unit}`} className="max-w-[200px]" />
-                <Button
-                  variant="secondary"
-                  className="press-3d"
-                  onClick={() => { if (weight) { setBodyMetric(todayISO(), { weight: Number(weight) }); setWeight('') } }}
-                >
-                  Log weight
-                </Button>
-              </div>
-              {weightSeries.length < 2 ? (
-                <Empty>Log your weight on a couple of days to see the trend.</Empty>
-              ) : (
-                <div className="h-56" role="img" aria-label={`Line chart of body weight over ${weightSeries.length} logged days (${unit})`}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={weightSeries} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-                      <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
-                      <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                      <YAxis domain={['auto', 'auto']} stroke={cat('overlay0')} fontSize={11} />
-                      <Tooltip contentStyle={rechartsTooltip()} />
-                      <Line type="monotone" dataKey="weight" stroke={cat('overlay1')} dot={{ r: 1.5 }} strokeWidth={1} opacity={0.5} />
-                      <Line type="monotone" dataKey="avg" stroke={cat('mauve')} dot={false} strokeWidth={2.5} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            
-
-              <ProgressPhotos />
-            
-              </CardGrid>
-            </QuietSection>
-
-            {/* "Look up & tools" lived here, at the very bottom of the review
-                column — the same mistake this file records fixing for the rest
-                timer. It is in zone 2 with the logger now: tools are used
-                while building a session, and review is for reading. */}
-          </>
+          <GymReview
+            panel={panel}
+            onPanel={setPanel}
+            focusEx={focusEx}
+            setFocusEx={setFocusEx}
+            summary={summary}
+            onDismissSummary={() => setSummary(null)}
+            unit={unit}
+          />
         }
       />
     </>
