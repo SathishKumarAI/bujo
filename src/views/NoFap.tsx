@@ -8,7 +8,7 @@ import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
-import { ActStrip, NextStepBlock, PageLayout, StatBar, useActColumn } from '../components/page'
+import { ActStrip, NextStepBlock, PageLayout, SummaryStrip, useActColumn } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryCards'
 import { feedbackLedger } from '../lib/recoveryFeedback'
@@ -321,21 +321,6 @@ export function NoFap() {
               relapsedToday={relapsedToday}
               startedOn={s.startedOn}
               bare
-              /* WHAT THE RING DOES NOT SAY, beside it rather than under it.
-                 `Days clean` and `Next milestone` are gone from this row
-                 entirely: they are drawn two inches away as a 96pt number and
-                 as a progress bar, and printing them again as figures is the
-                 duplication the report was about. */
-              aside={
-                <div className="mt-3 border-t border-line pt-2.5">
-                  <StatBar facts={[
-                    { label: 'Personal best', value: stats.best },
-                    { label: 'Total clean days', value: stats.totalClean },
-                    { label: 'Resets', value: s.relapses.length },
-                    { label: 'Urges logged', value: stats.urges },
-                  ]} />
-                </div>
-              }
             />
           </div>
         }
@@ -398,6 +383,22 @@ export function NoFap() {
             onQ={setQ}
             cards={all}
             signature={<>
+            {/* THE RECORD, IN THE REVIEW — out of the top bar.
+
+                These four were in zone 1 beside the ring, which made the top
+                bar **227px desktop and 461px on a phone** before a word of the
+                record. They are not orientation: "what do I do now" is the
+                sentence and "how long" is the ring, and `Personal best`,
+                `Total clean days`, `Resets` and `Urges logged` are all things
+                you read ABOUT the record rather than to decide anything. They
+                are not a duplicate here either, which is what they were before
+                the ring moved up — zone 1 no longer prints any of them. */}
+            <SummaryStrip items={[
+              { label: 'Personal best', value: stats.best, suffix: 'd', empty: stats.best === 0 },
+              { label: 'Total clean days', value: stats.totalClean, empty: stats.totalClean === 0 },
+              { label: 'Resets', value: s.relapses.length, empty: s.relapses.length === 0 },
+              { label: 'Urges logged', value: stats.urges, empty: stats.urges === 0 },
+            ]} />
         {/* THE SUMMARY STRIP IS GONE, and it went for the reason the hero
             moved: it printed `Total clean days`, `Resets` and `Urges logged`
             two inches under a zone-1 block that now prints the same three.

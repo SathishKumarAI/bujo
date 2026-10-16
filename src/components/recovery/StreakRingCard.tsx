@@ -55,8 +55,18 @@ export function StreakRingCard({ stats, relapsedToday, startedOn, bare = false, 
           of hero buys 32px of headroom for "Log this urge" above the fold, at a
           size that is still the largest thing on the screen. The SVG fills its
           box rather than carrying a second copy of the number. */}
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
-        <div className={`relative grid shrink-0 place-items-center ${bare ? 'h-32 w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}>
+      {/* BESIDE, NOT ABOVE, in the zone-1 hero.
+
+          `flex-col` until `sm` is right for a card in a 424px act column and
+          wrong for the top bar: stacking the ring over its text made the block
+          **338px on a 390px phone**, which is 40% of the viewport before you
+          have read a word of the record. Side by side at every width, with a
+          112px ring on a narrow screen, it is a strip. The card form keeps the
+          stack — it has a column, not a page width. */}
+      <div className={bare
+        ? 'flex flex-row items-center gap-3 sm:gap-5'
+        : 'flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5'}>
+        <div className={`relative grid shrink-0 place-items-center ${bare ? 'h-28 w-28 sm:h-32 sm:w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}>
           <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
             <circle cx="64" cy="64" r={R} fill="none" stroke={cat('surface0')} strokeWidth="9" />
             <circle cx="64" cy="64" r={R} fill="none" stroke={ringColor} strokeWidth="9" strokeLinecap="round"
@@ -68,7 +78,7 @@ export function StreakRingCard({ stats, relapsedToday, startedOn, bare = false, 
             <div className="mt-1 text-caption tracking-wide text-fg-2 uppercase">days clean</div>
           </div>
         </div>
-        <div className="flex-1 text-center sm:text-left">
+        <div className={bare ? 'min-w-0 flex-1 text-left' : 'flex-1 text-center sm:text-left'}>
           <div className="inline-flex items-center gap-1.5 text-body text-fg-1"><Icon as={Shield} size="sm" style={{ color: ringColor }} /> Your main streak · since {prettyDay(startedOn)}</div>
           {/* The "other urges are logged below" sentence is gone in the zone-1
               hero: every tracked thing now has its OWN streak card in the
