@@ -52,7 +52,7 @@ const PAGES = [
    */
   { view: 'fitness', label: 'fitness·cardio', rows: ['Volume', 'Sessions', 'Bests', 'Mix'], ui: { 'fitness.mode': 'cardio' } },
   { view: 'fitness', label: 'fitness·sport', rows: ['Volume', 'Sessions', 'Bests', 'Mix'], ui: { 'fitness.mode': 'sport' } },
-  { view: 'gym', rows: ['Week', 'Sessions', 'Strength', 'Balance', 'Body'] },
+  { view: 'gym', rows: ['Week', 'Sessions', 'Strength', 'Balance', 'Body', 'Tools'] },
 ]
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

@@ -45,10 +45,20 @@ import type { Workout, WorkoutSet } from '../../lib/types'
  * session, which the logger in zone 2 already does, and a second place to do it
  * is a second opinion about what a session holds.
  */
-export function GymHistory({ list, unit }: {
+export function GymHistory({ list, unit, onLoad }: {
   /** Lifting sessions, newest first, capped. */
   list: CappedList<Workout>
   unit: string
+  /**
+   * Put this session's exercises back in the logger.
+   *
+   * This is what replaced `LastSessionCard` in the act column — that card
+   * showed the last session OF THE SELECTED SPLIT and offered one Load button.
+   * Here every session has one, so "do what I did on Tuesday" works for
+   * Tuesday rather than only for the most recent push day, and the act column
+   * is ~250px shorter for it.
+   */
+  onLoad?: (exercises: string[], split: Workout['split']) => void
 }) {
   const { updateWorkout, removeWorkout } = useJournal()
   const confirm = useConfirm()
@@ -74,6 +84,15 @@ export function GymHistory({ list, unit }: {
               <span className="flex items-center gap-1.5">
                 {volume > 0 && <Tag>{volume.toLocaleString()} {unit}</Tag>}
                 <Tag>{working.length} {working.length === 1 ? 'set' : 'sets'}</Tag>
+                {onLoad && rows.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onLoad([...new Set(rows.map((r) => r.exercise.trim()).filter(Boolean))], w.split)}
+                    aria-label={`Load the ${meta.label} session from ${prettyDay(w.date)} into today's logger`}
+                    className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
+                  >Load</Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"

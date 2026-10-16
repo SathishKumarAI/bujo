@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icon } from '@/components/Icon'
 import { X } from '@/components/icons'
 import { useJournal } from '../../store'
@@ -10,6 +10,7 @@ import { SectionRail, StatGrid, SummaryStrip } from '../page'
 import { onRaised } from '../../lib/colors'
 import { dayDiff, todayISO } from '../../lib/date'
 import { useCappedList } from '../../lib/useCappedList'
+import type { Workout } from '../../lib/types'
 import {
   bigThreeTotal, exerciseFrequency, exerciseProgression, e1rmProgression, muscleRecovery,
   neglectedMuscles, personalRecords, relativeStrength, repPRs, stalledLifts, trainRestRatio,
@@ -50,7 +51,7 @@ import { EffortTrendCard, VolumeTrendCard, WeightTrendCard } from './Charts'
  * `components/pickleball/Review.tsx` records. The view keeps only what the ACT
  * also needs: the focused lift, the just-finished summary, and the unit.
  */
-export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDismissSummary, unit }: {
+export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDismissSummary, unit, tools, onLoadSession }: {
   panel: string
   onPanel: (id: string) => void
   /**
@@ -63,6 +64,19 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
   summary: ReturnType<typeof sessionSummary> | null
   onDismissSummary: () => void
   unit: string
+  /**
+   * The Tools row's contents, passed as a SLOT rather than as eleven props.
+   *
+   * Everything in it (the anatomy map, the plate calculator, saved routines,
+   * the library) reads state the ACT owns — the focused lift, the selected
+   * split, the active muscles, `addRow`. Threading those through here would
+   * make this component know what a set row is, which is exactly the
+   * twenty-prop signature its docstring argues against; a slot keeps the
+   * ownership where it is and still puts the row on the bar.
+   */
+  tools?: ReactNode
+  /** Load a logged session's exercises back into the logger. */
+  onLoadSession?: (exercises: string[], split: Workout['split']) => void
 }) {
   const { data, setBodyMetric } = useJournal()
   const today = todayISO()
@@ -188,7 +202,7 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
               </div>
             </>)}
 
-            {panel === 'sessions' && <GymHistory list={history} unit={unit} />}
+            {panel === 'sessions' && <GymHistory list={history} unit={unit} onLoad={onLoadSession} />}
 
             {panel === 'strength' && (<>
               <StatGrid>
@@ -221,6 +235,8 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
                 <StalledLifts lifts={stalled} unit={unit} setFocusEx={setFocusEx} />
               </StatGrid>
             )}
+
+            {panel === 'tools' && tools}
 
             {panel === 'body' && (<>
               <WeightEntry unit={unit} onLog={(kg) => setBodyMetric(today, { weight: kg })} />
