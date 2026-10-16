@@ -1025,6 +1025,25 @@ them. Derive new seeded fields from something already in hand (the loop index,
 a value already drawn) rather than from a fresh `rand()`, and if you must draw,
 expect every snapshot fixture after that point to move.
 
+Trap: **a seed has to cover the WINDOW the card reads, not merely the field.**
+`lib/demo.ts` wrote `foodLog` on the most recent **four** days, with a comment
+explaining that ninety would imply every day was chip-logged — a good argument
+for a number that was still wrong, because `topFoods` reads **fourteen**. So
+Nutrition's "What it was made of" card had a third of its window and rendered
+as a stub on the one journal anybody ever looks at. "The most recent few" is
+not a window; grep what the card actually asks for.
+
+**And the same seed had gone dead in a second way**: `demoFoodLog` looked six
+names up in `FOODS` and dropped the misses, so when the library was rewritten
+from 48 foods to 103, three of them (`Chicken breast`, `Dal`, `Roti`) silently
+became nothing. The seed kept running, every gate stayed green, and the only
+symptom was a card with two rows in it. **A lookup that silently finds nothing
+passes** — the same shape as the tripwire whose regex stopped matching, and the
+fix is the same: assert the COUNT (`demoFoods.test.ts`), because a name that
+resolves to nothing leaves no trace to assert on. Watch for the test that does
+not catch it either: asserting "every name in the log is in `FOODS`" passes
+trivially, since a dropped name never reaches the log.
+
 Trap: **demo data is persisted, not regenerated.** Editing `src/lib/demo.ts`
 changes nothing for an existing journal — re-seed via Settings → Data → Load
 demo data.
