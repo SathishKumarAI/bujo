@@ -186,7 +186,23 @@ export function ChipPick<T extends string | number>({
                  their legend and meaningless read aloud on their own. */
               aria-label={o.name}
               className={cn(
-                'rounded-pill border text-label transition-all duration-150',
+                /*
+                  `transition-all` ANIMATED THE LAYOUT, not just the colours.
+
+                  Reported as "the animations are not looking good", on the
+                  food picker — where a search re-renders the row on every
+                  keystroke, so each chip animated its own width and padding
+                  toward the next set of labels. That reads as wobbling, and it
+                  is the kind of motion nobody can name but everybody notices.
+
+                  The properties that SHOULD move are the colours and the press
+                  (`active:scale-95` below needs `transform`). Width is not one
+                  of them: a chip is as wide as its label and should arrive that
+                  way. Measured on the rendered page — `transitionProperty` read
+                  `all` on every chip in the app.
+                */
+                'rounded-pill border text-label duration-150',
+                'transition-[color,background-color,border-color,box-shadow,transform]',
                 dense ? 'px-2 py-1' : 'px-3 py-1.5',
                 // The press is the feedback. `active:scale-95` reads as the
                 // control accepting the tap on a touch screen, where there is
