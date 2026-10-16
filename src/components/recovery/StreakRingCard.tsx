@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Shield, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
@@ -19,15 +20,35 @@ const C = 2 * Math.PI * R
  * button competing with it, because logging an urge and logging a reset are two
  * different commitments and neither outranks the other.
  */
-export function StreakRingCard({ stats, relapsedToday, startedOn }: {
+export function StreakRingCard({ stats, relapsedToday, startedOn, bare = false, aside }: {
   stats: Stats
   relapsedToday: boolean
   startedOn: string
+  /**
+   * Render without the `Card` wrapper, for a host that already is one.
+   *
+   * Zone 1 is a bordered block, and this inside it was a card in a card with
+   * two borders and two paddings. It is also where the ring now LIVES: the
+   * hero and the `StatBar` above it were saying the same three things — days
+   * clean, personal best, next milestone — once as a 160px ring and once as a
+   * row of figures, in two different zones. Reported as "get them all into one
+   * card on the left side, I need to waste the space", and the duplication is
+   * the reason the space was being wasted.
+   */
+  bare?: boolean
+  /**
+   * Rendered inside the ring's own text column, not under the whole hero.
+   *
+   * The facts that survived the merge sat in a full-width row beneath, so zone
+   * 1 was `ring (128) + text (150) + facts (56)` stacked — **280px** — while
+   * the ring's right-hand column had room to spare at 1,180px wide. Inside, the
+   * block is `max(ring, text + facts)` instead of their sum.
+   */
+  aside?: ReactNode
 }) {
   const next = stats.next
   const ringColor = relapsedToday ? cat('red') : cat('mauve')
-  return (
-    <Card hideInfo className="glow-mauve">
+  const body = (<>
       {/* 128px on a phone, 160 from `sm`. The ring stacks above its text there,
           so every pixel of it is a pixel of scroll in front of the act below —
           and the act below is the one this page most wants to be frequent. 32px
@@ -35,7 +56,7 @@ export function StreakRingCard({ stats, relapsedToday, startedOn }: {
           size that is still the largest thing on the screen. The SVG fills its
           box rather than carrying a second copy of the number. */}
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
-        <div className="relative grid h-32 w-32 shrink-0 place-items-center sm:h-40 sm:w-40">
+        <div className={`relative grid shrink-0 place-items-center ${bare ? 'h-32 w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}>
           <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90">
             <circle cx="64" cy="64" r={R} fill="none" stroke={cat('surface0')} strokeWidth="9" />
             <circle cx="64" cy="64" r={R} fill="none" stroke={ringColor} strokeWidth="9" strokeLinecap="round"
@@ -49,7 +70,11 @@ export function StreakRingCard({ stats, relapsedToday, startedOn }: {
         </div>
         <div className="flex-1 text-center sm:text-left">
           <div className="inline-flex items-center gap-1.5 text-body text-fg-1"><Icon as={Shield} size="sm" style={{ color: ringColor }} /> Your main streak · since {prettyDay(startedOn)}</div>
-          <p className="mt-0.5 text-label text-fg-2">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>
+          {/* The "other urges are logged below" sentence is gone in the zone-1
+              hero: every tracked thing now has its OWN streak card in the
+              review, so the page shows what this used to have to explain. It
+              stays on the card form, which has no such neighbour. */}
+          {!bare && <p className="mt-0.5 text-label text-fg-2">The ring &amp; ladder track this one streak. Other urges (smoking, scrolling…) are logged + planned below.</p>}
           {relapsedToday && (
             <div className="mt-1.5 rounded-card p-2 text-left text-label" style={{ background: cat('red') + '12', border: `1px solid ${cat('red')}44` }}>
               <span className="inline-flex items-center gap-1 font-medium" style={{ color: onRaised('red') }}><Icon as={X} size="sm" /> Reset today · and that’s okay.</span>
@@ -58,19 +83,20 @@ export function StreakRingCard({ stats, relapsedToday, startedOn }: {
           )}
           {next ? (
             <>
-              <p className="mt-3 text-body text-fg-2">
+              <p className={`${bare ? 'mt-2' : 'mt-3'} text-body text-fg-2`}>
                 Next: <span className="font-medium" style={{ color: onRaised('teal') }}>{next.label}</span> · <span className="text-fg-2">{stats.daysToNext} day{stats.daysToNext === 1 ? '' : 's'} to go</span>
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-2">
                 <div className="h-full rounded-pill transition-[width] duration-500" style={{ width: `${stats.progressPct}%`, background: cat('teal') }} />
               </div>
-              <p className="mt-2 text-label text-fg-2 italic">“{next.benefit}”</p>
+              {!bare && <p className="mt-2 text-label text-fg-2 italic">“{next.benefit}”</p>}
             </>
           ) : (
             <p className="mt-3 text-body" style={{ color: onRaised('peach') }}>Every milestone cleared. You’re writing your own ladder now.</p>
           )}
+          {aside}
         </div>
       </div>
-    </Card>
-  )
+  </>)
+  return bare ? body : <Card hideInfo className="glow-mauve">{body}</Card>
 }
