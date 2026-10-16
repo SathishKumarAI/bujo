@@ -8,10 +8,10 @@ import { Button } from '../components/ui/button'
 import { ActStrip, PageLayout, StatBar, DisclosureRow, useActColumn } from '../components/page'
 import { musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
-import { RestTimer } from '../components/RestTimer'
+import { RestTimer } from '../components/program'
 import {
   SessionLogger, newSetRow, setLineOf, type SetRow,
-  GymReview, GymTools, GYM_PANELS,
+  GymReview, GymLoad, GymLookup, PlateCalculator, GYM_PANELS,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
 import { onRaised } from '../lib/colors'
@@ -22,6 +22,7 @@ import {
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import { useStickyState } from '../lib/useStickyState'
+import { restFor } from '../lib/rest'
 import type { Split, WorkoutSet } from '../lib/types'
 
 /**
@@ -49,7 +50,7 @@ import type { Split, WorkoutSet } from '../lib/types'
  * Zone 3 · summary strip, the volume-balance signature, then folded analytics.
  */
 export function Gym() {
-  const { data, addWorkout, addRoutine, removeRoutine } = useJournal()
+  const { data, addWorkout, addRoutine, removeRoutine, setSettings } = useJournal()
   const suggested = useMemo(() => nextSplit(data), [data])
   // "Load into session" on the Program tab stashes the day's lifts and
   // navigates here — the logger's rows are local state, so there is nothing it
@@ -71,6 +72,9 @@ export function Gym() {
   const [prParty, setPrParty] = useState<{ exercise: string; weight: number; reps: number } | null>(null)
   // Post-finish session rollup (volume · sets · top set), shown until the next edit.
   const [summary, setSummary] = useState<ReturnType<typeof sessionSummary> | null>(null)
+  /* The rest in progress. `key` remounts the countdown, which is how the
+     program's timer restarts — see its docstring. */
+  const [rest, setRest] = useState<{ exercise: string; seconds: number; key: number } | null>(null)
   /* Which review row is open, and the act column's open/shut. Both sticky, and
      both owned here: the rail row because zone 1's facts point into it, the
      column because `PageLayout` has to know (shut, zone 2 becomes a 40px rail
@@ -137,6 +141,14 @@ export function Gym() {
     return { lastSession: last, setsThisWeek: sets }
   }, [data.workouts])
 
+  /* The heaviest working weight in the open logger, for the plate calculator
+     in zone 2. `undefined` rather than 0 with nothing typed: 0 is a target
+     somebody could mean, and absent is absent. */
+  const topWeight = (() => {
+    const w = rows.filter((r) => r.kind !== 'warmup').map((r) => Number(r.weight)).filter((n) => n > 0)
+    return w.length ? Math.max(...w) : undefined
+  })()
+
   const lastGap = lastSession ? dayDiff(lastSession.date, todayISO()) : null
   const facts = [
     { label: 'Train next', value: splitMeta(suggested).label },
@@ -187,6 +199,9 @@ export function Gym() {
       reps: r.reps ? Number(r.reps) : undefined,
       rpe: r.rpe ? Number(r.rpe) : undefined,
       kind: r.kind ?? 'working',
+      // The rest this set was run with, so a session carries how long it took
+      // and not only what was in it.
+      restSec: restFor({ exercise: r.exercise, reps: r.reps, kind: r.kind }, data.settings),
     }))
     // Detect a fresh PR *before* this session is committed (compare vs prior data).
     // The biggest 1RM-improving set wins the celebration.
@@ -300,6 +315,7 @@ export function Gym() {
                 onFinish={finish}
                 date={date}
                 setDate={setDate}
+                onRest={(exercise, seconds) => setRest({ exercise, seconds, key: Date.now() })}
               />
               {/* The page's one disclosure, at the bottom of the form. Naming a
                   routine is done once and then never again for that routine —
@@ -322,15 +338,53 @@ export function Gym() {
 
             {/* THE ONE TOOL THAT DID NOT MOVE TO THE BAR. Everything else in
                 the old "Look up & tools" fold is a lookup between DECISIONS and
-                is now a rail row; a rest timer is used between SETS, it is
-                80px, and a timer you have to navigate to is a timer you do not
-                start. It sits directly under the logger now that the
-                last-session card has gone to the Sessions row, where every
-                session carries its own Load. */}
-            <section className="mt-4">
-              <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Rest timer</h2>
-              <RestTimer />
-            </section>
+                is now a rail row; a rest timer is used between SETS, and a
+                timer you have to navigate to is a timer you do not start.
+
+                IT IS THE PROGRAM'S TIMER NOW, not this page's. There were two
+                implementations: `components/RestTimer.tsx` (this page's —
+                presets, and a `setInterval` that DECREMENTS, so it drifts and
+                a throttled background tab comes back insisting four seconds
+                have passed) and `components/program/RestTimer.tsx`, which
+                counts against a deadline, names the exercise, pauses, adds
+                thirty seconds and is tested. The second is strictly better and
+                already existed; the first is deleted. "The control you need has
+                usually already solved it" — CLAUDE.md.
+
+                Keyed on the set, so starting the next rest is a NEW timer
+                rather than a mutation of the one still running. */}
+            {rest ? (
+              <section className="mt-4">
+                <h2 className="sr-only">Rest timer</h2>
+                <RestTimer
+                  key={rest.key}
+                  seconds={rest.seconds}
+                  exercise={rest.exercise}
+                  onDismiss={() => setRest(null)}
+                  onExtend={(sec) => {
+                    /* `+30s` is also how the exercise's rest is SET. The change
+                       is made where it is felt — during the rest that was too
+                       short — instead of in a field somebody has to go and
+                       find, and the next set of that lift inherits it
+                       (`lib/rest.ts`). */
+                    setRest((r) => (r ? { ...r, seconds: sec } : r))
+                    setSettings({ restByExercise: { ...(data.settings.restByExercise ?? {}), [rest.exercise.toLowerCase()]: sec } })
+                  }}
+                />
+              </section>
+            ) : (
+              <p className="mt-4 text-label text-fg-2">
+                Tap the <span className="text-fg-1">rest</span> on a set to start its countdown.
+              </p>
+            )}
+
+            {/* At the rack, with a number in your head — the same moment as the
+                timer above it, which is why it is here and not on a review row.
+                Its target follows the heaviest working weight in the open
+                session instead of defaulting to 100 forever. */}
+            <div className="mt-4">
+              <PlateCalculator key={unit} unit={unit} sessionTarget={topWeight} />
+            </div>
 
           </>
         )}
@@ -344,8 +398,15 @@ export function Gym() {
             onDismissSummary={() => setSummary(null)}
             unit={unit}
             onLoadSession={(exercises, s) => loadRoutine(exercises, s ?? 'other')}
-            tools={
-              <GymTools
+            load={
+              <GymLoad
+                routines={data.routines}
+                onRemoveRoutine={removeRoutine}
+                onLoadRoutine={loadRoutine}
+              />
+            }
+            lookup={
+              <GymLookup
                 focusEx={focusEx}
                 setFocusEx={setFocusEx}
                 focusLabel={focusLabel}
@@ -353,10 +414,6 @@ export function Gym() {
                 activeMuscles={activeMuscles}
                 recentExercises={recentExercises}
                 addRow={addRow}
-                routines={data.routines}
-                onRemoveRoutine={removeRoutine}
-                onLoadRoutine={loadRoutine}
-                unit={unit}
               />
             }
           />

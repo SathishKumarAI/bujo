@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { Plus, Video, X } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { Card, Empty, Input, Pill } from '../ui'
+import { Card, Empty, Pill } from '../ui'
 import { Button } from '../ui/button'
 import { StatGrid } from '../page'
 import { MuscleMap } from '../MuscleMap'
@@ -13,15 +12,14 @@ import { splitGlyph } from '../glyphs'
 import { muscleNames } from '../../lib/muscles'
 import { exerciseInfo } from '../../lib/exerciseInfo'
 import { onRaised } from '../../lib/colors'
-import { EXERCISE_LIBRARY, musclesForExercise, platesPerSide, barExceedsTarget, splitMeta } from '../../lib/fitness'
-import { Barbell as BarbellViz } from '../PlateStack'
+import { EXERCISE_LIBRARY, musclesForExercise, splitMeta } from '../../lib/fitness'
 import type { Routine, Split } from '../../lib/types'
 
 /**
- * LOOK UP & TOOLS · the five things you consult WHILE building a session.
+ * THE TWO REVIEW ROWS THAT ARE NOT ABOUT THE RECORD · Load and Lookup.
  *
- * WHAT THIS FILE OWNS: the anatomy lookup, the plate calculator, saved
- * routines, and the two library panels beside them.
+ * WHAT THIS FILE OWNS: the anatomy lookup, saved routines, and the two library
+ * panels beside them.
  * WHAT IT DOES NOT OWN: the logger, the record, or which row is on screen.
  *
  * ── Why these are a rail row and not a fold in the act column ─────────────
@@ -41,19 +39,45 @@ import type { Routine, Split } from '../../lib/types'
  * then scroll back to the row you were filling in. On a phone the zones stack
  * and it is one tap on the bar instead of a fold plus a scroll.
  *
- * **The rest timer did NOT move.** It is the one thing here used between sets
- * rather than between decisions, it is 80px, and a timer you have to navigate
- * to is a timer you do not start. It sits directly under the logger now that
- * the last-session card has gone.
+ * **Two rows, not one bucket called Tools.** Asked for as "take the coach
+ * sessions to something, add as a new thing, and the plate calculator again as
+ * a new thing — or think where you can put it". Sorted by the question each
+ * panel answers: **Load** is "put a prescription in today's logger" (saved
+ * routines, the coach's 29 — one verb, two sources), **Lookup** is "what is
+ * this lift" (the muscle map from the muscles out, wger's catalogue from the
+ * other side).
+ *
+ * **The plate calculator is in neither**, because it is not a lookup: you use
+ * it standing at the rack with a target weight, between sets, which is what
+ * the rest timer beside it is for. It went to zone 2 and now seeds its target
+ * from the heaviest weight in the open session.
+ *
+ * **The rest timer did not move either**, for the same reason, and it is 80px:
+ * a timer you have to navigate to is a timer you do not start.
  *
  * **`LastSessionCard` is gone from the act**, and its job is better done where
  * the sessions already are: every card in the Sessions row carries **Load**,
  * so you can reload any session rather than only the most recent one of the
  * selected split.
  */
-export function GymTools({
+/** The **Load** row · one verb, two sources of a prescription. */
+export function GymLoad({ routines, onRemoveRoutine, onLoadRoutine }: {
+  routines: Routine[]
+  onRemoveRoutine: (id: string) => void
+  onLoadRoutine: (exercises: string[], split: Split) => void
+}) {
+  return (
+    <StatGrid>
+      <SavedRoutines routines={routines} onRemove={onRemoveRoutine} onLoad={onLoadRoutine} />
+      {/* Beside Saved routines on purpose: same verb, same object. */}
+      <CoachSessions onLoad={onLoadRoutine} />
+    </StatGrid>
+  )
+}
+
+/** The **Lookup** row · what a lift hits, from the muscles out and the catalogue in. */
+export function GymLookup({
   focusEx, setFocusEx, focusLabel, split, activeMuscles, recentExercises, addRow,
-  routines, onRemoveRoutine, onLoadRoutine, unit,
 }: {
   focusEx: string | null
   setFocusEx: (e: string | null) => void
@@ -62,10 +86,6 @@ export function GymTools({
   activeMuscles: number[]
   recentExercises: string[]
   addRow: (exercise?: string) => void
-  routines: Routine[]
-  onRemoveRoutine: (id: string) => void
-  onLoadRoutine: (exercises: string[], split: Split) => void
-  unit: string
 }) {
   return (
     <StatGrid>
@@ -78,10 +98,6 @@ export function GymTools({
         recentExercises={recentExercises}
         addRow={addRow}
       />
-      <PlateCalculator key={unit} unit={unit} />
-      <SavedRoutines routines={routines} onRemove={onRemoveRoutine} onLoad={onLoadRoutine} />
-      {/* Beside Saved routines on purpose: same verb, same object. */}
-      <CoachSessions onLoad={onLoadRoutine} />
       <Card band collapsible title="Exercise database" subtitle="Search wger’s library, tap a card to view it, then add to your session">
         <ExerciseDB onPick={(name) => { addRow(name); setFocusEx(name) }} />
       </Card>
@@ -164,58 +180,6 @@ function AnatomyCard({
           ))
         )}
       </div>
-    </Card>
-  )
-}
-
-/** Greedy plate-loading helper: target weight → a loaded, animated barbell. */
-function PlateCalculator({ unit }: { unit: string }) {
-  const [target, setTarget] = useState('100')
-  const [bar, setBar] = useState(unit === 'lb' ? '45' : '20')
-  // Plate denominations differ by unit (kg gym plates vs lb).
-  const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
-  // One stepper click = the smallest plate on each side, the smallest change a
-  // real bar can make. Thumb-sized, because this is used standing at a rack.
-  const step = denoms[denoms.length - 1] * 2
-  const plates = platesPerSide(Number(target) || 0, Number(bar) || 0, denoms)
-  const loadable = plates.reduce((a, p) => a + p, 0) * 2 + (Number(bar) || 0)
-  const barOverTarget = barExceedsTarget(Number(target) || 0, Number(bar) || 0)
-  const bump = (d: number) => setTarget(String(Math.max(0, (Number(target) || 0) + d)))
-  return (
-    <Card band title="Plate calculator" subtitle="What to load on the bar">
-      {/* One row, always: Target's stepper trio plus Bar come to ~230px, and
-          the act column never goes below 324. `max-w-*`, not `w-*` — Input's
-          base `w-full` wins the width fight against a bare `w-24`, which is
-          why these two stacked full-width before. */}
-      <div className="mb-3 flex items-end gap-3">
-        <label className="block text-body text-fg-1">
-          Target ({unit})
-          <span className="mt-1 flex items-center gap-1">
-            <Button variant="secondary" size="icon-sm" onClick={() => bump(-step)} aria-label={`Target down ${step} ${unit}`} className="h-9 w-9 shrink-0">−</Button>
-            {/* Inline widths, not utilities: `.zone-act :is(input)` (0-1-1)
-                out-specifies any single-class width, which is how two earlier
-                attempts (`w-24`, `max-w-20`) silently lost. */}
-            <Input type="number" value={target} onChange={(e) => setTarget(e.target.value)} aria-label={`Target weight (${unit})`} className="text-center" style={{ width: 84 }} />
-            <Button variant="secondary" size="icon-sm" onClick={() => bump(step)} aria-label={`Target up ${step} ${unit}`} className="h-9 w-9 shrink-0">+</Button>
-          </span>
-        </label>
-        <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 text-center" style={{ width: 72 }} /></label>
-      </div>
-      {barOverTarget ? (
-        <p className="text-body text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>
-      ) : (
-        <>
-          <BarbellViz plates={plates} unit={unit} bar={Number(bar) || 0} />
-          {/* The sentence to read off at the rack. Keyed so a change re-enters —
-              the number moves with the discs. */}
-          <p key={loadable} className="collapse-in mt-2 text-body text-fg-1">
-            {plates.length === 0
-              ? 'Just the bar, no plates needed.'
-              : <>Per side: <span className="font-medium">{plates.join(' · ')}</span> = {loadable} {unit} loaded</>}
-            {plates.length > 0 && loadable !== Number(target) && <span className="ml-1 text-yellow">(closest loadable to {target})</span>}
-          </p>
-        </>
-      )}
     </Card>
   )
 }

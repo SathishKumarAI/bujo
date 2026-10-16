@@ -14,7 +14,7 @@ import type { Workout } from '../../lib/types'
 import {
   bigThreeTotal, exerciseFrequency, exerciseProgression, e1rmProgression, muscleRecovery,
   neglectedMuscles, personalRecords, relativeStrength, repPRs, stalledLifts, trainRestRatio,
-  volumeByCategory, weeklySetsPerMuscle, weeklyVolumeSeries, sessionSummary,
+  volumeByCategory, weeklyMuscleLoad, weeklyVolumeSeries, sessionSummary,
 } from '../../lib/fitness'
 import { GYM_PANELS } from './panels'
 import { GymHistory } from './History'
@@ -51,7 +51,7 @@ import { EffortTrendCard, VolumeTrendCard, WeightTrendCard } from './Charts'
  * `components/pickleball/Review.tsx` records. The view keeps only what the ACT
  * also needs: the focused lift, the just-finished summary, and the unit.
  */
-export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDismissSummary, unit, tools, onLoadSession }: {
+export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDismissSummary, unit, load, lookup, onLoadSession }: {
   panel: string
   onPanel: (id: string) => void
   /**
@@ -65,16 +65,17 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
   onDismissSummary: () => void
   unit: string
   /**
-   * The Tools row's contents, passed as a SLOT rather than as eleven props.
+   * The Load and Lookup rows, passed as SLOTS rather than as eleven props.
    *
-   * Everything in it (the anatomy map, the plate calculator, saved routines,
-   * the library) reads state the ACT owns — the focused lift, the selected
-   * split, the active muscles, `addRow`. Threading those through here would
-   * make this component know what a set row is, which is exactly the
-   * twenty-prop signature its docstring argues against; a slot keeps the
-   * ownership where it is and still puts the row on the bar.
+   * Everything in them (the anatomy map, saved routines, the library) reads
+   * state the ACT owns — the focused lift, the selected split, the active
+   * muscles, `addRow`. Threading those through here would make this component
+   * know what a set row is, which is exactly the twenty-prop signature its
+   * docstring argues against; a slot keeps the ownership where it is and still
+   * puts the rows on the bar.
    */
-  tools?: ReactNode
+  load?: ReactNode
+  lookup?: ReactNode
   /** Load a logged session's exercises back into the logger. */
   onLoadSession?: (exercises: string[], split: Workout['split']) => void
 }) {
@@ -86,7 +87,10 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
   const prs = personalRecords(data)
   const relStrength = relativeStrength(data)
   const bigThree = bigThreeTotal(data)
-  const muscleSets = weeklySetsPerMuscle(data)
+  /* `weeklyMuscleLoad`, not `weeklySetsPerMuscle`: the card grades against a
+     landmark stated in direct sets, and the old count gave every muscle a
+     lift touches a whole set each — see COD-330 and the card's docstring. */
+  const muscle = weeklyMuscleLoad(data, today)
   const volumeSeries = weeklyVolumeSeries(data)
   const categoryVolume = volumeByCategory(data)
   const recovery = muscleRecovery(data)
@@ -189,7 +193,7 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
                   hypertrophy landmark. The one chart here that says what to do
                   next rather than what happened. */}
               <div className="mt-4">
-                <MuscleVolumeBalance counts={muscleSets} setFocusEx={setFocusEx} />
+                <MuscleVolumeBalance load={muscle.rows} sets={muscle.sets} unroled={muscle.unroled} setFocusEx={setFocusEx} />
               </div>
               <div className="mt-4">
                 <VolumeTrendCard
@@ -236,7 +240,8 @@ export function GymReview({ panel, onPanel, focusEx, setFocusEx, summary, onDism
               </StatGrid>
             )}
 
-            {panel === 'tools' && tools}
+            {panel === 'load' && load}
+            {panel === 'lookup' && lookup}
 
             {panel === 'body' && (<>
               <WeightEntry unit={unit} onLog={(kg) => setBodyMetric(today, { weight: kg })} />
