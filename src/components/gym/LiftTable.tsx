@@ -32,6 +32,12 @@ const BAND_COLOR: Record<string, string> = {
  * So: one row per lift, four numbers across. The join is on exercise name,
  * which is what both helpers key on.
  *
+ * **`pl-2` on every numeric column, measured at 390px.** Right-aligned cells
+ * with no gutter butt straight into each other — the phone rendered
+ * `146lb1.61×` as one token, which is two facts reading as one wrong number.
+ * Nothing is clipped and the accessibility tree is sound, so neither rendering
+ * gate can see it; it was caught on a screenshot.
+ *
  * A real `<table>` rather than a flex list, because it is one: five columns
  * with headers, which is what lets a screen reader read "Deadlift, ×
  * bodyweight, 1.6" instead of four unlabelled numbers. Rows are buttons for
@@ -78,10 +84,10 @@ export function LiftTable({
           <thead>
             <tr className="border-b border-line text-label text-fg-2">
               <th scope="col" className="pb-1 text-left font-normal">Lift</th>
-              <th scope="col" className="pb-1 text-right font-normal">Best</th>
-              <th scope="col" className="pb-1 text-right font-normal">1RM</th>
-              <th scope="col" className="pb-1 text-right font-normal">÷ BW</th>
-              <th scope="col" className="pb-1 text-right font-normal">Level</th>
+              <th scope="col" className="pb-1 pl-2 text-right font-normal">Best</th>
+              <th scope="col" className="pb-1 pl-2 text-right font-normal">1RM</th>
+              <th scope="col" className="pb-1 pl-2 text-right font-normal">÷ BW</th>
+              <th scope="col" className="pb-1 pl-2 text-right font-normal">Level</th>
             </tr>
           </thead>
           <tbody>
@@ -107,19 +113,19 @@ export function LiftTable({
                       {pr.exercise}
                     </button>
                   </th>
-                  <td className="num py-1 text-right" style={{ color: onRaised('yellow') }}>
+                  <td className="num py-1 pl-2 text-right" style={{ color: onRaised('yellow') }}>
                     {loaded ? `${pr.weight}${unit}` : `bw${pr.reps > 1 ? ` ×${pr.reps}` : ''}`}
                   </td>
                   {/* Em dash, not a blank cell: a 1RM that cannot be estimated
                       from a single-rep or unloaded set is "not applicable",
                       and an empty cell reads as a rendering fault. */}
-                  <td className="num py-1 text-right text-fg-2">
+                  <td className="num py-1 pl-2 text-right text-fg-2">
                     {loaded && pr.reps > 1 ? `${epley1RM(pr.weight, pr.reps)}${unit}` : '—'}
                   </td>
-                  <td className="num py-1 text-right text-fg-1">
+                  <td className="num py-1 pl-2 text-right text-fg-1">
                     {rel ? `${rel.ratio}×` : '—'}
                   </td>
-                  <td className="py-1 text-right">
+                  <td className="py-1 pl-2 text-right">
                     {rel
                       ? <Pill color={BAND_COLOR[rel.band] ?? 'overlay0'} size="micro">{rel.band}</Pill>
                       : <span className="text-fg-3">—</span>}
