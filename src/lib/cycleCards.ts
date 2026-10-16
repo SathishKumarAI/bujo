@@ -38,7 +38,7 @@
  * do not overlap and there is no query to cross them, so "All" would only
  * offer the 10.6-screen page this replaces.
  */
-export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'guide'] as const
+export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'guide', 'manual'] as const
 export type CycleGroup = (typeof CYCLE_GROUPS)[number]
 
 export const GROUP_LABEL: Record<CycleGroup, string> = {
@@ -47,6 +47,7 @@ export const GROUP_LABEL: Record<CycleGroup, string> = {
   fertility: 'Fertility',
   patterns: 'Patterns',
   guide: 'Guide',
+  manual: 'Manual',
 }
 
 /** One line per group, shown under its heading. The rail rows say the same words. */
@@ -55,7 +56,8 @@ export const GROUP_BLURB: Record<CycleGroup, string> = {
   fertility: 'The window, the two signals, and the shift that confirms it',
   feelings: 'Desire, mood, energy and cravings against where you are',
   patterns: 'What tends to happen, and on which cycle day',
-  guide: 'Phases, food, technique, and what each flag buys you',
+  guide: 'Phases, food, what you are tracking for, and your own data',
+  manual: 'How to use this page, and what it can and cannot tell you',
 }
 
 export interface CycleCardMeta {
@@ -119,12 +121,23 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },
-  // Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
-  // `data-card` set equals this list in BOTH directions, so a card that skips
-  // the registry fails the suite rather than quietly becoming unfindable.
-  { id: 'manual', title: 'The manual', group: 'guide', wide: true },
   { id: 'goal', title: 'What you are tracking for', group: 'guide' },
   { id: 'data', title: 'Your cycle data', group: 'guide', wide: true },
+
+  /**
+   * ITS OWN ROW, because it was six phone screens inside somebody else's.
+   *
+   * Measured at `?demo=1`: the manual card was **3,483px at 1440 and 5,435px
+   * on a phone** — the worst panel on the page by a factor of four — and the
+   * Guide row holding it came to **11,050px / 13.09 phone screens** against
+   * 2.9–3.8 for every other row. A rail row that is four times the page is not
+   * a row; it is the wall the rail was built to remove, moved one level down.
+   *
+   * Registered, not just rendered: `views/Cycle.test.tsx` asserts the rendered
+   * `data-card` set equals this list in BOTH directions, so a card that skips
+   * the registry fails the suite rather than quietly becoming unfindable.
+   */
+  { id: 'manual', title: 'The manual', group: 'manual', wide: true },
 ]
 
 /**

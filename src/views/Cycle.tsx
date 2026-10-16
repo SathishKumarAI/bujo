@@ -104,6 +104,18 @@ export function Cycle() {
      redesign — `allowed` is the registry, so a renamed group cannot resurrect
      from a stale localStorage key. */
   const [group, setGroup] = useStickyState<CycleGroup>('cycle.group', DEFAULT_GROUP, CYCLE_GROUPS)
+  /**
+   * Which manual section a ⓘ asked for, and the reason it is here at all.
+   *
+   * `InfoTip` has always taken an `onMore`, `lib/cycleHelp.ts` has always
+   * carried **18** `more:` targets, and **no call site has ever passed one** —
+   * so the "Learn more" link under every tip on this page has never rendered,
+   * on any theme, at any width, since the component was written. Not sticky:
+   * it is one journey's "take me to that section", not a preference.
+   */
+  const [manualSection, setManualSection] = useState<string | null>(null)
+  /** Open the manual on a section. The rail row and the deck move together. */
+  const showManual = (s: string) => { setGroup('manual'); setManualSection(s) }
   const sel = days.includes(selected) ? selected : days[0]
   const selEntry = log.find((x) => x.date === sel)
 
@@ -269,11 +281,9 @@ export function Cycle() {
         <DriveByPhase rows={drive} peak={peak} />
       </Card>
     ),
-    manual: (
-      <Card band title="The manual" subtitle="How to use this page, and what it can and cannot tell you" hideInfo>
-        <Manual />
-      </Card>
-    ),
+    /* No wrapping `Card`: the manual IS nine cards now, in a deck, and a card
+       of cards is the chrome this pass spent 5,435 phone pixels removing. */
+    manual: <Manual section={manualSection} />,
     goal: (
       <Card band title="What you are tracking for" subtitle="Changes what leads, never what is available" hideInfo>
         <CycleGoalCard
@@ -409,14 +419,14 @@ export function Cycle() {
            contract's — one row, at most four facts, spanning both columns. */
         <div className="border-b border-line pb-3">
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-          <Fact label={<>Cycle day<InfoTip tip="cycle-day" /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
+          <Fact label={<>Cycle day<InfoTip tip="cycle-day" onMore={showManual} /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           {/* The pill now says HOW it knows, not just what it thinks.
               "estimate" is the calendar; "likely" means a temperature shift was
               read in this cycle; "confirmed" means a second sign agreed with it.
               A page that says "Luteal" identically whether it measured anything
               or not is a page that cannot be trusted when it did. */}
           <Fact
-            label={<>Phase<InfoTip tip="confidence" /></>}
+            label={<>Phase<InfoTip tip="confidence" onMore={showManual} /></>}
             value={phase
               ? (
                 <Pill color={phase.color} size="micro" className="px-2">
@@ -426,7 +436,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">—</span>}
           />
           <Fact
-            label={<>Next period<InfoTip tip="next-period" /></>}
+            label={<>Next period<InfoTip tip="next-period" onMore={showManual} /></>}
             value={nextPeriod
               ? (
                 <span className="text-body text-fg-1">
@@ -449,7 +459,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">needs two periods</span>}
           />
           <Fact
-            label={<>Your average<InfoTip tip="your-average" /></>}
+            label={<>Your average<InfoTip tip="your-average" onMore={showManual} /></>}
             value={length != null
               ? <span className="text-body text-fg-1"><span className="num font-medium">{length}</span> days</span>
               : <span className="text-body text-fg-2">—</span>}

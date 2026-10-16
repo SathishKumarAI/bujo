@@ -139,6 +139,28 @@ describe('Cycle · the registry is the review zone', () => {
     expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
   })
 
+  /**
+   * THE ⓘ'S "LEARN MORE" HAS A CALL SITE, which it did not for the life of the
+   * component.
+   *
+   * `InfoTip` takes `onMore` and renders the link only when one is passed, and
+   * no caller ever passed one — so all 18 `more:` targets in `lib/cycleHelp.ts`
+   * pointed at sections no link reached. `cycleHelp.test.ts` was green on it
+   * the whole time, and correctly: it asserts every target RESOLVES, which
+   * says nothing about whether anything links. That is why this test is here
+   * and not there — it is the journey, not the data.
+   */
+  it('takes a tip’s "Learn more" to the manual', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(screen.getByRole('button', { name: /What this means: cycle day/i }))
+    await user.click(await screen.findByRole('button', { name: /learn more/i }))
+    const groups = [...container.querySelectorAll('[data-domain]')]
+    expect(groups).toHaveLength(1)
+    expect(groups[0].getAttribute('data-domain')).toBe('manual')
+    expect(container.querySelector('[data-card="manual"]')).not.toBeNull()
+  })
+
   it('keeps the medical disclaimer visible in every group', async () => {
     const user = userEvent.setup()
     mount()
