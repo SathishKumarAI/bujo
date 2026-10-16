@@ -1,19 +1,27 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useJournal } from '../store'
-import { addDays, prettyDay, todayISO } from '../lib/date'
+import { prettyDay, todayISO } from '../lib/date'
 import { uid } from '../lib/storage'
 import { useConfirm } from '../components/ConfirmDialog'
-import { X } from '@/components/icons'
+import { notify } from '../lib/notify'
+import { CaretRight, ForkKnife, Gauge, NotePencil, Plus, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ChipPick } from '../components/ui/quickpick'
-import { EmptyFrame, NumField, PageLayout, SummaryStrip } from '../components/page'
-import { FOODS, KCAL_BANDS, SAMPLE_DAY, kcalBand, sumFoods, withFoodAdded, withFoodRemoved, type Food } from '../lib/foods'
+import { ActStrip, DisclosureRow, EmptyFrame, NumField, PageLayout, useActColumn } from '../components/page'
+import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { cat, onRaised } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
+import { MacroBar } from '../components/nutrition/DayCards'
+import { FoodPicker } from '../components/nutrition/FoodPicker'
+import { DayLog } from '../components/nutrition/DayLog'
+import { CustomFoodForm } from '../components/nutrition/CustomFood'
+import { NutritionReview } from '../components/nutrition/Review'
+import { NUTRITION_PANELS } from '../components/nutrition/panels'
+import { MACROS, inTargetStreak, nextStep, targetsOf, topFoods, type Targets } from '../lib/nutritionReview'
+import { useStickyState } from '../lib/useStickyState'
 
 /**
  * NUTRITION · promoted from an accordion on Fitness to a page of its own.
@@ -34,8 +42,17 @@ import { FoodSearch } from '../components/nutrition/FoodSearch'
  * encodes the ratio, with the target ratio drawn behind it to compare against.
  */
 
-/** A balanced default until targets are user-settable. */
-const TARGET = { calories: 2000, protein: 120, carbs: 200, fat: 60 }
+/**
+ * THE TARGETS ARE SETTABLE NOW, and they were a module constant here with the
+ * comment "a balanced default until targets are user-settable" — which nothing
+ * ever made true. Every ring, tone and over/under verdict on this page judged
+ * the day against a number the person could not change: the `fitnessGoalMin`
+ * defect (three readers, no writer) on a second page.
+ *
+ * `targetsOf(settings)` is the single reader, so a ring and the sentence beside
+ * it cannot disagree about what they measure against — which is the bug
+ * `calorieState` below already records from the other end.
+ */
 
 /**
  * How far over target counts as over. Reported as "the page looks pale and the
@@ -83,17 +100,22 @@ function floorTone(value: number, target: number): string {
   return 'peach'
 }
 
-const MACROS = [
-  { key: 'protein' as const, label: 'Protein', color: 'red' },
-  { key: 'carbs' as const, label: 'Carbs', color: 'yellow' },
-  { key: 'fat' as const, label: 'Fat', color: 'sky' },
-]
-
 export function Nutrition() {
-  const { data, setMetric } = useJournal()
+  const { data, setMetric, setSettings } = useJournal()
   const confirm = useConfirm()
   const today = todayISO()
   const [date, setDate] = useState(today)
+
+  /* One reader for the targets, and the page's own state for the rest. */
+  const targets = targetsOf(data.settings)
+  const setTargets = (patch: Partial<Targets>) =>
+    setSettings({ nutritionTargets: { ...(data.settings.nutritionTargets ?? {}), ...patch } })
+  /* Which review row is open, and the act column's open/shut. Both sticky, and
+     both owned here: the row because zone 1's sentence points into it, the
+     column because `PageLayout` has to know (shut, zone 2 becomes a 40px rail
+     and the review takes its width). */
+  const [panel, setPanel] = useStickyState<string>('nutrition.panel', 'today', NUTRITION_PANELS.map((p) => p.id))
+  const logCol = useActColumn('nutrition')
 
   const m = data.metrics.find((x) => x.date === date)
   const kcal = m?.calories ?? 0
@@ -111,6 +133,28 @@ export function Nutrition() {
 
   async function addFood(food: Food) {
     const next = (m?.calories ?? 0) + food.kcal
+    /*
+      TWO WARNINGS, AND THEY ARE NOT THE SAME WARNING.
+
+      Asked for as "try to give me a warning if I exceed the total number of
+      calories" — which is a different question from the implausible-total
+      guard below. One is "this looks like a mis-tap" (5,000 kcal, a mechanical
+      check); the other is "this takes you past the target you set", which is
+      information about your day and must not be a blocking dialog, because
+      going over a target is a normal thing that happens and a modal in front
+      of it would be nagging. So the ceiling warning is a NOTIFICATION after
+      the fact, with the number in it, and the mis-tap guard stays a
+      confirmation before it.
+
+      `notify.info`, not `warning`: being over a calorie target is not an
+      error, and this app's own copy rule is that a tone carries a judgement.
+    */
+    if (targets.calories > 0 && (m?.calories ?? 0) <= targets.calories && next > targets.calories) {
+      notify.info(
+        `${food.name} takes you past ${targets.calories} kcal`,
+        `${prettyDay(date)} is at ${next} — ${next - targets.calories} over. The fortnight is what counts; tap the row in Today to take it back off.`,
+      )
+    }
     if (next > IMPLAUSIBLE_KCAL && !(await confirm({
       title: `Add ${food.name} on top of ${kcal} kcal?`,
       description: `That takes ${prettyDay(date)} to ${next} kcal. If that is right, go ahead — this only asks because repeated taps are easy to make by accident.`,
@@ -124,77 +168,157 @@ export function Nutrition() {
   /** Take one logged food back off the day, numbers and all. */
   const removeFood = (entry: LoggedFood) => setMetric(date, withFoodRemoved(m, entry))
 
-  const recent = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => {
-      const d = addDays(today, -(13 - i))
-      return { date: d, kcal: data.metrics.find((x) => x.date === d)?.calories ?? 0 }
-    }).filter((d) => d.kcal > 0).reverse()
-  }, [data.metrics, today])
-
-  const logged = recent.length
-  const avg = logged ? Math.round(recent.reduce((a, d) => a + d.kcal, 0) / logged) : 0
   /**
-   * Half-width of the Recent-days bars, in calories either side of target.
-   *
-   * The bars used to run 0 → `max(target, busiest day)`, and the comment above
-   * them claimed that kept the days "distinguishable from each other". Measured
-   * on the demo fortnight it does the opposite: every day falls between 1834
-   * and 2411, so every bar renders at 76–100% of the row and fourteen of them
-   * read as alternating stripes rather than as a chart. All the variation was
-   * squeezed into the last quarter of the width because the FLOOR was zero —
-   * and zero calories is not a day anyone has, so three quarters of the bar was
-   * spent drawing a fact that is never in question.
-   *
-   * These are diverging bars now, measured from the target rather than from
-   * nothing, which is also the question the card is actually asking: over or
-   * under, and by how much. The scale is the largest deviation in the window,
-   * floored at 200 kcal so a fortnight of near-perfect days does not amplify a
-   * 12-calorie miss into a full-width bar.
+   * Correct a logged food — and apply the same implausible-total guard an ADD
+   * has, because an edit can push a day over it just as easily and the guard
+   * was only ever on one of the two doors.
    */
-  const recentScale = Math.max(200, ...recent.map((d) => Math.abs(d.kcal - TARGET.calories)))
-  const avgOver = avg - TARGET.calories
+  async function editFood(entry: LoggedFood, patch: Pick<LoggedFood, 'name' | 'kcal' | 'protein' | 'carbs' | 'fat'>) {
+    const next = (m?.calories ?? 0) - entry.kcal + patch.kcal
+    if (next > IMPLAUSIBLE_KCAL && !(await confirm({
+      title: `Set ${patch.name} to ${patch.kcal} kcal?`,
+      description: `That takes ${prettyDay(date)} to ${next} kcal. If that is right, go ahead — this only asks because a mistyped zero is easy to make.`,
+      confirmLabel: 'Yes, save it',
+    }))) return false
+    setMetric(date, withFoodEdited(m, entry, patch))
+    return true
+  }
+
+  /** More of the same thing, or less of it. */
+  const setServings = (entry: LoggedFood, servings: number) => setMetric(date, withFoodServings(m, entry, servings))
+
+  /** A food of your own: logged on the day AND kept for next time. */
+  function addCustomFood(food: CustomFood) {
+    setSettings({ customFoods: [...(data.settings.customFoods ?? []), food] })
+    setMetric(date, withFoodAdded(m, food, uid('food')))
+  }
+
+  /* The custom chips, newest first — the ones you added are the ones you eat. */
+  const mine: Food[] = [...(data.settings.customFoods ?? [])].reverse().map((f) => ({ ...f, cuisine: 'yours' as const }))
+  /**
+   * YOUR USUAL · the foods you actually log, as the first row of the picker.
+   *
+   * "Eggs are my most favourite" needs no setting: `topFoods` already knows
+   * what the fortnight was made of, and the row is built from the journal
+   * rather than from an opinion about what is popular. Matched back to the
+   * library (or to your own foods) by name, because the log stores the numbers
+   * it was logged with and the chip has to carry a servable `Food`.
+   */
+  const usual: Food[] = topFoods(data, 14, today, 8)
+    .map((t) => FOODS.concat(mine).find((f) => f.name.toLowerCase() === t.name.toLowerCase()))
+    .filter((f): f is Food => !!f)
+
+  /* The one sentence at the top, and the streak under the rings. */
+  const step = nextStep(data, { date, targets, today })
+  const streak = inTargetStreak(data, targets, today)
 
   return (
     <PageLayout
       tier={1180}
       zone1={
-        // Two rings and a sentence, where this was three text facts. Calories
-        // is the number the page exists to show, so it gets the larger ring and
-        // the leading position; protein is the one target worth hitting rather
-        // than staying under, so it sits beside it at a smaller size. The
-        // remaining budget is spelled out in words underneath because "1,996 of
-        // 2,000" answers "how am I doing" and "4 left" answers "can I eat this",
-        // which is the question asked at the moment someone opens this page.
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Ring
-            value={Math.min(kcal, TARGET.calories)}
-            max={TARGET.calories}
-            display={kcal}
-            size={104}
-            stroke={9}
-            color={calorieState(kcal, TARGET.calories).color}
-            label={`of ${TARGET.calories} kcal`}
-          />
-          <Ring
-            value={Math.min(protein, TARGET.protein)}
-            max={TARGET.protein}
-            display={protein}
-            size={78}
-            stroke={7}
-            color={floorTone(protein, TARGET.protein)}
-            label={`of ${TARGET.protein} g protein`}
-          />
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-body text-fg-1">
-              {date === today ? 'Today' : prettyDay(date)}
-            </p>
-            <p className="text-label text-fg-2">{calorieState(kcal, TARGET.calories).line}</p>
+        /* ONE BLOCK, with the sentence above the rings.
+
+           Two rings and a remainder line answer "how am I doing"; nothing on
+           this page answered "what now", which `docs/PAGE-ROLLOUT.md` named as
+           its first missing piece ("no sentence at all, not even a StatBar").
+           `nextStep` is the priority list in `lib/nutritionReview.ts` and it is
+           total, so this never renders as a hole.
+
+           COLOUR MEANS URGENCY HERE AND NOTHING ELSE — in the left edge and the
+           icon, with `fg-1` text. An accent as text on a wash of itself is the
+           calibration trap in CLAUDE.md.
+
+           A BUTTON when a row holds the detail, a paragraph when none does. */
+        <div className="@container/orient rounded-card border border-line bg-ink-0 p-3">
+          {(() => {
+            const tone = { first: 'mauve', untracked: 'yellow', over: 'peach', protein: 'teal', left: 'green', done: 'green' }[step.id]
+            const StepIcon = { first: Plus, untracked: NotePencil, over: Gauge, protein: Target, left: ForkKnife, done: Trophy }[step.id]
+            const body = (
+              <>
+                <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
+                <span className="min-w-0 text-body text-fg-1">{step.text}</span>
+                {step.group && (
+                  <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
+                    {NUTRITION_PANELS.find((g) => g.id === step.group)?.label} →
+                  </span>
+                )}
+              </>
+            )
+            const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
+            return step.group ? (
+              <button type="button" onClick={() => setPanel(step.group!)} className={`${shell} transition-colors hover:bg-ink-2`} style={{ borderLeftColor: cat(tone) }}>
+                {body}
+              </button>
+            ) : (
+              <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+            )
+          })()}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Ring
+              value={Math.min(kcal, targets.calories)}
+              max={targets.calories}
+              display={kcal}
+              size={104}
+              stroke={9}
+              color={calorieState(kcal, targets.calories).color}
+              label={`of ${targets.calories} kcal`}
+            />
+            <Ring
+              value={Math.min(protein, targets.protein)}
+              max={targets.protein}
+              display={protein}
+              size={78}
+              stroke={7}
+              color={floorTone(protein, targets.protein)}
+              label={`of ${targets.protein} g protein`}
+            />
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-body text-fg-1">{date === today ? 'Today' : prettyDay(date)}</p>
+              <p className="text-label text-fg-2">{calorieState(kcal, targets.calories).line}</p>
+              {streak > 1 && (
+                <p className="text-label" style={{ color: onRaised('green') }}>
+                  {streak} days in a row inside target
+                </p>
+              )}
+            </div>
           </div>
         </div>
       }
-      zone2={
+      actTop
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
+      zone2={logCol.shut ? (
+        /* THE ACT COLUMN, PUT AWAY. Measured before: **868px** at 1440 and
+           **2258px on a phone**, of which the two food chip rows were most —
+           forty-nine chips above a 889px record. `useActColumn` also carries
+           the rule nobody guesses: stacked, it starts SHUT, so a phone opens on
+           the day rather than a screen and a half of chips. */
+        <ActStrip
+          label="Log what you ate"
+          summary={kcal > 0 ? `${kcal} kcal logged · ${m?.foodLog?.length ?? 0} items` : 'Nothing logged yet'}
+          onOpen={logCol.open}
+        />
+      ) : (
         <section className="flex flex-col gap-3">
-          <h2 className="text-heading font-medium text-fg-1">Log what you ate</h2>
+          {/* THE TITLE IS THE TOGGLE.
+              Asked for as "if I click on Log what you ate, that should hide it
+              and also show me that". The caret alone is a 28px target for a
+              thing the whole header is about, and a heading that looks
+              pressable and is not is worse than one that does nothing — so the
+              heading IS the button, with `aria-expanded` saying which way it
+              goes and the caret kept as the affordance that says so visually. */}
+          <h2 className="text-heading font-medium text-fg-1">
+            <button
+              type="button"
+              onClick={logCol.close}
+              aria-expanded
+              title="Hide the log — the review takes the width"
+              className="flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
+            >
+              Log what you ate
+              <Icon as={CaretRight} size="sm" className="shrink-0" />
+            </button>
+          </h2>
 
           <label className="block text-body text-fg-1">
             Date
@@ -216,316 +340,85 @@ export function Nutrition() {
               The calorie band is drawn *inside* the chip label as a dot, not
               passed as ChipPick's `tone` — that prop is per-group, and a shared
               primitive does not get a new per-option API for one call site. */}
-          <FoodPicker cuisine="indian" onAdd={addFood} />
-          <FoodPicker cuisine="american" onAdd={addFood} />
-
-          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-label text-fg-2">
-            {(Object.keys(KCAL_BANDS) as (keyof typeof KCAL_BANDS)[]).map((b) => (
-              <li key={b} className="inline-flex items-center gap-1.5">
-                <i className="inline-block h-2 w-2 rounded-pill" style={{ background: cat(KCAL_BANDS[b].color) }} />
-                {KCAL_BANDS[b].label} <span className="text-fg-3">· {KCAL_BANDS[b].hint}</span>
-              </li>
-            ))}
-          </ul>
+          {/* One picker: a search over all of them, then Your usual, Yours,
+              and the two cuisines — each capped with an honest affordance. */}
+          <FoodPicker usual={usual} mine={mine} onAdd={addFood} />
 
           {/* Renders nothing until food lookup is switched on in Settings. */}
           <FoodSearch onAdd={addFood} />
 
-          {/* WHAT YOU LOGGED, AND THE WAY BACK OUT.
-              Reported as "how can I undo the food I mis-clicked?" — and the
-              answer was that the app could not, because `addFood` folded the
-              macros into four totals and threw the food away. There was nothing
-              to remove. This list is the receipt that makes the tap reversible,
-              and it earns its space twice: it is also the only place the day
-              says WHAT it was made of rather than just how much it came to. */}
-          {(m?.foodLog?.length ?? 0) > 0 && (
-            <section>
-              <h3 className="mb-1 border-b border-line pb-1 text-label text-fg-2">
-                Logged {date === today ? 'today' : `on ${prettyDay(date)}`} · {m!.foodLog!.length}
-              </h3>
-              <ul>
-                {m!.foodLog!.map((f) => (
-                  <li key={f.id} className="flex items-center justify-between gap-2 border-b border-line py-1 last:border-b-0">
-                    <span className="min-w-0 truncate text-body text-fg-1">{f.name}</span>
-                    <span className="flex shrink-0 items-center gap-2">
-                      <span className="num text-label text-fg-2">{f.kcal} kcal</span>
-                      {/* A real button with a real name. "Remove" alone would
-                          give a screen reader eleven identical controls. */}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Remove ${f.name}`}
-                        title={`Remove ${f.name}`}
-                        onClick={() => removeFood(f)}
-                      >
-                        <Icon as={X} size="sm" />
-                      </Button>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {/* A food the library has never heard of, kept for next time. */}
+          <CustomFoodForm onAdd={addCustomFood} />
 
-          <p className="mt-1 border-t border-line pt-3 text-label text-fg-2">Or set the day’s totals directly</p>
-
-          <NumField
-            label="Calories" suffix="kcal" step="10" placeholder="450"
-            value={m?.calories != null ? String(m.calories) : ''}
-            onChange={(v) => setMetric(date, { calories: v ? Number(v) : undefined })}
-          />
-          {MACROS.map((mac) => (
+          {/* THE TYPED HALF, FOLDED. Five number fields and a demo button are
+              the fallback for a food the library does not have — used once in a
+              while, 280px tall, and they sat between the chips and nothing.
+              `DisclosureRow` rather than `<details>`, because it renders
+              `aria-expanded`, which is what `npm run a11y` clicks before it
+              scans; a raw `<details>` would keep these five controls out of the
+              gate entirely (the COD-93 trap). It is also the page's only
+              disclosure, which is that component's stated rule. */}
+          <DisclosureRow label="Or set the day’s totals directly">
             <NumField
-              key={mac.key}
-              label={mac.label} suffix="g" step="1" placeholder="30"
-              value={m?.[mac.key] != null ? String(m[mac.key]) : ''}
-              onChange={(v) => setMetric(date, { [mac.key]: v ? Number(v) : undefined })}
+              label="Calories" suffix="kcal" step="10" placeholder="450"
+              value={m?.calories != null ? String(m.calories) : ''}
+              onChange={(v) => setMetric(date, { calories: v ? Number(v) : undefined })}
             />
-          ))}
-
-          <Button
-            variant="ghost"
-            className="text-label"
-            onClick={() => setMetric(date, sumFoods(SAMPLE_DAY))}
-          >Fill a typical day</Button>
+            {MACROS.map((mac) => (
+              <NumField
+                key={mac.key}
+                label={mac.label} suffix="g" step="1" placeholder="30"
+                value={m?.[mac.key] != null ? String(m[mac.key]) : ''}
+                onChange={(v) => setMetric(date, { [mac.key]: v ? Number(v) : undefined })}
+              />
+            ))}
+            <Button
+              variant="ghost"
+              className="text-label"
+              onClick={() => setMetric(date, sumFoods(SAMPLE_DAY))}
+            >Fill a typical day</Button>
+          </DisclosureRow>
         </section>
-      }
+      )}
       zone3={
-        <>
-          {/* Calories and protein moved up into zone 1 as rings, and leaving
-              them here too printed each number twice on one screen, 90px
-              apart — the review zone restating the orientation zone instead of
-              reviewing anything. What this strip can say that the rings cannot
-              is the *fortnight*: how many days are on the record and what they
-              average, which is the question the Recent-days list below answers
-              in detail. */}
-          <SummaryStrip items={[
-            { label: 'Days logged', value: logged, suffix: ' of 14', empty: logged === 0 },
-            { label: 'Daily average', value: avg, suffix: ' kcal', empty: logged === 0 },
-            { label: 'Over target', value: recent.filter((d) => d.kcal > TARGET.calories).length, suffix: ` of ${logged}`, empty: logged === 0 },
-          ]} />
+        <NutritionReview
+          panel={panel}
+          onPanel={setPanel}
+          date={date}
+          onDate={setDate}
+          targets={targets}
+          onTargets={setTargets}
+          dayLog={
+            /* THE LOG LIVES IN *TODAY*, NOT IN THE ACT.
+               Asked for as "show me log today, right side or inside today —
+               why do I need to scroll down?… I want to show that in the today,
+               right before the macro split, so that I can edit them based upon
+               my requirements". Correct: it is a read-back of the day with
+               corrections on it, which is review work, and in the act it sat
+               below a picker, a search and a legend — the furthest thing from
+               the chip you just tapped. In the Today row it is the first thing
+               under the heading, and the act gets shorter for it.
 
-          <section>
-            {/* Ruled, like "Recent days" directly below it. These two are the
-                same kind of thing — a zone-3 section with a body — and were a
-                bare heading and a ruled one, eleven lines apart. */}
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Macro split against target</h2>
-            <MacroBar metric={m} totalG={totalG} />
-            {totalG === 0 && <EmptyFrame>Add a food to see the day's ratio.</EmptyFrame>}
-          </section>
-
-          <section>
-            <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Recent days</h2>
-            {/* The average was a `·`-separated afterthought inside the heading,
-                in the tertiary token, at label size — SMALLER and quieter than
-                every row it summarises. It is the one number on this card that
-                answers "how am I actually eating", so it is a fact now, with
-                the comparison that gives it meaning: an average is only
-                readable against the target it is near. */}
-            {logged > 0 && (
-              <p className="mb-2 flex flex-wrap items-baseline gap-x-2 text-body text-fg-2">
-                <span className="num text-title font-medium text-fg-1">{avg}</span>
-                <span>kcal a day over {logged} {logged === 1 ? 'day' : 'days'}</span>
-                <span
-                  className="num"
-                  style={{ color: onRaised(avgOver > 0 ? 'peach' : 'green') }}
-                >
-                  {avgOver === 0 ? 'on target' : `${Math.abs(avgOver)} ${avgOver > 0 ? 'over' : 'under'}`}
-                </span>
-              </p>
-            )}
-            {logged === 0 ? (
-              <EmptyFrame>Nothing logged in the last two weeks.</EmptyFrame>
-            ) : (
-// Fourteen rows of a date and a number, with nothing to read them
-              // against, is a table pretending to be a chart. Each row carries
-              // a bar that grows from a centre line at the target:
-              //
-              //   side   — left of centre is under, right is over
-              //   length — how far from target, against the window's worst day
-              //
-              // The side is the reading, so the colour is reinforcement rather
-              // than the only channel — which is what the old legend existed to
-              // explain and why it is gone. A reader who cannot tell the two
-              // hues apart still sees which way the bar points.
-              <ul>
-                {recent.map((d) => {
-                  const over = d.kcal > TARGET.calories
-                  return (
-                    <li key={d.date} className="relative border-b border-line last:border-b-0">
-                      {/* The target line. Every bar is read against it, so it
-                          is drawn once per row rather than implied. */}
-                      <span aria-hidden className="absolute inset-y-0 left-1/2 w-px" style={{ background: cat('overlay0'), opacity: 0.5 }} />
-                      <span
-                        aria-hidden
-                        className={`absolute inset-y-1 ${over ? 'left-1/2 rounded-r-control' : 'right-1/2 rounded-l-control'}`}
-                        style={{
-                          width: `${Math.min(50, (Math.abs(d.kcal - TARGET.calories) / recentScale) * 50)}%`,
-                          background: cat(over ? 'peach' : 'green'),
-                          opacity: 0.3,
-                        }}
-                      />
-                      <div className="relative flex items-center justify-between py-2">
-                        <button onClick={() => setDate(d.date)} className="text-left text-body text-fg-1 hover:underline">
-                          {prettyDay(d.date)}
-                        </button>
-                        <span className="num text-label text-fg-2">{d.kcal} kcal<span className="sr-only">{over ? ', over target' : ', under target'}</span></span>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </section>
-        </>
+               `DayLog` carries the inline editor, the servings control and the
+               confirmation that names the food. */
+            <DayLog
+              date={date}
+              today={today}
+              foods={m?.foodLog ?? []}
+              onEdit={editFood}
+              onRemove={removeFood}
+              onServings={setServings}
+            />
+          }
+          macroBar={
+            <section>
+              <h3 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Macro split against target</h3>
+              <MacroBar metric={m} totalG={totalG} targets={targets} />
+              {totalG === 0 && <EmptyFrame>Add a food to see the day's ratio.</EmptyFrame>}
+            </section>
+          }
+        />
       }
     />
-  )
-}
-
-const CUISINE_LABEL = { indian: 'Indian', american: 'American' } as const
-
-/**
- * One cuisine's foods as a row of action chips, each carrying its calorie
- * weight as a dot and its number as text.
- *
- * Two channels, deliberately: the dot is what makes "which of these is the
- * expensive one" answerable at a glance, and the kcal is what makes it
- * answerable exactly. Colour alone would fail anyone who cannot separate the
- * three hues — and the band names are spelled out in the legend beneath the
- * rows, so the dot is never the only place a band is stated.
- *
- * `tone` differs per cuisine only to separate the two rows from each other; it
- * carries no meaning about the food. The calorie meaning is the dot.
- */
-function FoodPicker({ cuisine, onAdd }: { cuisine: Food['cuisine']; onAdd: (f: Food) => void }) {
-  const foods = FOODS.filter((f) => f.cuisine === cuisine)
-  return (
-    <ChipPick
-      label={CUISINE_LABEL[cuisine]}
-      action
-      value={null}
-      tone={cuisine === 'indian' ? 'peach' : 'teal'}
-      onChange={(name) => {
-        const f = foods.find((x) => x.name === name)
-        if (f) onAdd(f)
-      }}
-      options={foods.map((f) => ({
-        value: f.name,
-        // The serving is in the tooltip rather than the chip: forty chips each
-        // carrying "1 cup" wraps to a wall, and the serving is what you check
-        // once, not what you scan by.
-        hint: `${f.serving} · ${f.kcal} kcal · ${f.protein} g protein`,
-        label: (
-          <span className="inline-flex items-center gap-1.5">
-            <i
-              aria-hidden
-              className="inline-block h-1.5 w-1.5 shrink-0 rounded-pill"
-              style={{ background: cat(KCAL_BANDS[kcalBand(f.kcal)].color) }}
-            />
-            {f.name}
-            {/* `fg-2`, not `fg-3`. On the chip's own fill the tertiary
-                token measured 4.18:1 at 15px against that fill — axe flagged it on five
-                desktop themes and both phone themes, six shards, the moment this
-                chip row shipped. `npm run contrast` stayed green and was right
-                to: it reads palette TOKENS, and a token is not a pairing. The
-                number is secondary information, so the secondary token is also
-                the correct answer on the merits, not just the passing one. */}
-            <span className="num text-fg-2">{f.kcal}</span>
-            <span className="sr-only">
-              kcal, {KCAL_BANDS[kcalBand(f.kcal)].label.toLowerCase()}, {f.serving}. Adds to today.
-            </span>
-          </span>
-        ),
-      }))}
-    />
-  )
-}
-
-/**
- * Two stacked bars: the day's ratio, and the target ratio beneath it. Reading
- * one against the other is the comparison; a single bar would only say what you
- * ate, which the numbers already do.
- */
-function MacroBar({ metric, totalG }: { metric?: { protein?: number; carbs?: number; fat?: number }; totalG: number }) {
-  const targetTotal = TARGET.protein + TARGET.carbs + TARGET.fat
-  /**
-   * ONE denominator for both bars, or the comparison the card is named for
-   * cannot happen.
-   *
-   * Each bar used to be normalised against its own total, so both were always
-   * exactly full width. Eat a third of your target of everything and the two
-   * bars render *identically* — the card said "against target" and drew a
-   * picture in which hitting the target and missing it by 200g look the same.
-   * Only the split was comparable, and the split is the thing that survives a
-   * bad day unchanged.
-   *
-   * Scaling both to `max(today, target)` makes length mean amount again: short
-   * bar means under, equal-length means on it, and the longer bar is whichever
-   * is bigger. The segment proportions still carry the split, so nothing is
-   * lost — the axis was simply missing.
-   */
-  const scale = Math.max(totalG, targetTotal) || 1
-  const pct = (v: number) => (v / scale) * 100
-  return (
-    <div className="space-y-2">
-      <Bar
-        label="Today"
-        segments={MACROS.map((mac) => ({
-          key: mac.key,
-          label: mac.label,
-          grams: metric?.[mac.key] ?? 0,
-          width: pct(metric?.[mac.key] ?? 0),
-          color: mac.color,
-        }))}
-        empty={totalG === 0}
-      />
-      <Bar
-        label="Target"
-        segments={MACROS.map((mac) => ({
-          key: mac.key,
-          label: mac.label,
-          grams: TARGET[mac.key],
-          width: pct(TARGET[mac.key]),
-          color: mac.color,
-        }))}
-        muted
-      />
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-label text-fg-2">
-        {MACROS.map((mac) => (
-          <li key={mac.key}>
-            <span className="mr-1 inline-block h-2 w-2 rounded-control align-middle" style={{ background: cat(mac.color) }} />
-            {mac.label} {metric?.[mac.key] ?? 0} / {TARGET[mac.key]} g
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function Bar({ label, segments, empty = false, muted = false }: {
-  label: string
-  segments: { key: string; label: string; grams: number; width: number; color: string }[]
-  empty?: boolean
-  muted?: boolean
-}) {
-  return (
-    <div>
-      <p className="mb-0.5 text-micro text-fg-3">{label}</p>
-      {/* The frame draws at zero data — an empty track still says "this is
-          where the ratio goes", where a hidden bar says nothing at all. */}
-      {/* Grams, not the rendered percentage. Now that both bars share one
-          denominator, a segment's width is its share of whichever total is
-          larger — a number that means nothing said out loud. Grams are what the
-          legend below states and what the reader actually wants. */}
-      <div className="flex h-4 overflow-hidden rounded-pill bg-ink-2" role="img" aria-label={
-        empty ? `${label}: nothing logged yet`
-          : `${label}: ${segments.map((s) => `${s.label} ${Math.round(s.grams)} g`).join(', ')}`
-      }>
-        {!empty && segments.map((s) => (
-          <div key={s.key} style={{ width: `${s.width}%`, background: cat(s.color), opacity: muted ? 0.35 : 1 }} />
-        ))}
-      </div>
-    </div>
   )
 }
