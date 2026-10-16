@@ -1,42 +1,58 @@
 # STATUS
 
-**Stopped:** 2026-10-15, on `feat/fitness-pass`, **one PR open** — the Fitness
-pass (COD-329), the second page off `docs/PAGE-ROLLOUT.md`.
+**Stopped:** 2026-10-15, on `feat/strength-pass`, **two PRs in flight** — the
+Fitness pass (#410, COD-329) and the Strength pass stacked on top of it.
 
 ## Where it stands
 
-Five commits on `feat/fitness-pass`, pushed, PR open against `main`. Nothing
-else in flight; `main` is where PR #409 left it.
+| branch | what | state |
+|---|---|---|
+| `feat/fitness-pass` | Fitness: one bar of four rows, `useActColumn`, `nextStep`, cards-with-edit history, pickleball out of the form, sport seeded | **PR #410 open** |
+| `feat/strength-pass` | Strength: one bar of five rows, the logger put away, the history the page never had, the charts | **branched off #410**, not pushed yet |
 
-| commit | what |
-|---|---|
-| `a556d7d` | `lib/fitnessReview.ts` — the aggregates cardio and sport never had, with the floors asserted and armed on planted regressions |
-| `e54b1b7` | the stat-card grid moves to `components/page/StatGrid.tsx` |
-| `d426cf5` | the page: one bar of four rows, `useActColumn` + `ActStrip`, `nextStep` in zone 1 |
-| `3c9b00f` | the demo seeds `sport` workouts; `DEMO_VERSION` 20 → 21 |
-| (next) | `a11y-panels` drives both pages and both Fitness modes; the docs |
+Strength builds on the Fitness branch (it uses `StatGrid`, `BarList`,
+`chartStyle` and the capped-list history pattern), so **#410 merges first** and
+the Strength PR is retargeted onto `main` afterwards — rebase each child with
+`git rebase --onto main <old-base-sha>` and retarget it BEFORE merging the
+parent, or GitHub closes it permanently (CLAUDE.md records that one).
 
-Verified on this branch, against a local preview of its own build:
-**2006 tests / 147 files**, `tsc -b` clean, eslint clean, `vite build` clean,
-`design` 466 files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at
-1440 / 1024 / 390, **`a11y:panels` 91 scans · 0 serious · 0 critical** (armed:
-`BUJO_CANARY=1` on one theme reports 26).
+Verified on `feat/strength-pass`, against a local preview of its own build:
+**2020 tests / 147 files**, `tsc -b` clean, eslint clean (1 pre-existing
+warning in `App.tsx`), `vite build` clean, `smoke` 23/23, `clipped` clean at
+1440 / 1024 / 390, and **`a11y:panels` 126 scans · 0 serious · 0 critical**
+across pickleball (35), fitness (56, both modes) and gym (35) — armed on a
+planted violation, which reports 36 criticals.
 
 ## The next action
 
-`docs/PAGE-ROLLOUT.md` — **Strength (`views/Gym.tsx`, 781 lines) is next, and
-its first step is splitting the file**, not the rail. Then Nutrition,
-Challenges, Recovery, Cycle.
+Push `feat/strength-pass` and open its PR against `feat/fitness-pass`. Then
+`docs/PAGE-ROLLOUT.md` has **four pages left**: Nutrition (no sentence and no
+`StatBar` at all), Challenges, Recovery and Cycle.
 
-Two things to know before starting it:
+Two things to know before starting one:
 
-- **`npm run a11y:panels` is still local-only.** It is 91 scans now; the a11y
-  workflow has been red on `main` since 2026-10-15 09:08 for an unrelated
-  shell-dropdown violation, so adding a second browser gate to it buys nothing
-  until that is fixed. That red is also why every PR shows UNSTABLE.
-- **Measure a rail page per row with a throwaway probe** — `npm run space`
-  grades only the row the rail opens on. Fitness reports 1.0 desktop screens
-  and its worst row is 1.4.
+- **`npm run a11y:panels` is local-only and now 126 scans.** The a11y workflow
+  has been red on `main` since 2026-10-15 09:08 for an unrelated shell-dropdown
+  violation, so adding a browser gate to it buys nothing until that is fixed.
+  That red is why every PR shows UNSTABLE.
+- **Measure a rail page per row with a throwaway probe.** `npm run space`
+  grades only the row the rail opens on.
+
+## The two passes, in one place each
+
+- **Fitness** — `docs/pages/fitness.md`. Sport mode's review zone was **47px**
+  (one empty frame) because no seeded workout derived that mode; two "this
+  week" figures disagreed by 4.7x, both correct, because one counts every
+  activity and the other one mode; `fitnessGoalMin` had three readers and no
+  writer.
+- **Strength** — `docs/pages/gym.md`. **3001px of act column** beside a 678px
+  review, 28 `aria-expanded` controls, and no session history at all — you
+  could not correct a set you mistyped. One bar of five rows, a logger that
+  puts itself away, grouped set lines (`5 × 65lb × 5`, and the set that broke
+  kept separate), and the house axis style for the charts.
+  **COD-330 filed, not fixed**: the muscle-balance card grades against a 10–20
+  landmark while counting a set once per muscle the lift works, so nine of
+  twelve muscles are permanently over 20.
 
 ## The Fitness pass · COD-329
 
