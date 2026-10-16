@@ -46,7 +46,6 @@ import {
   TechniquesBlock,
   LadderBlock,
   ResetHistoryBlock,
-  PairedSparkline,
   SosOverlay,
   type DayTallyRow,
 } from '../components/recovery'
@@ -209,7 +208,7 @@ export function NoFap() {
     lapse: <LapseTruthCard />,
     resetcost: <ResetCostCard current={stats.current} best={stats.best} totalClean={stats.totalClean} />,
 
-    urgetrend: urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} />,
+    urgetrend: urgeTrend.total > 0 && <UrgeTrendCard urgeTrend={urgeTrend} relapses={s.relapses} />,
     intensity: intensity9.rated > 0 && <UrgeIntensityCard intensity9={intensity9} />,
     cleanrollup: rollup.totalWeeks > 0 && <CleanRollupCard rollup={rollup} />,
     riskhours: peakHour && <HighRiskHoursCard hourHist={hourHist} peakHour={peakHour} />,
@@ -443,21 +442,16 @@ export function NoFap() {
             The three facts live in zone 1, beside the ring, where they are the
             context for the number rather than a second copy of it. */}
 
-        {/* SIGNATURE VISUAL · urges resisted against resets, week by week.
-            Above the rail and outside the registry, so it is on screen whichever
-            group is selected — `docs/PAGE-SHAPE.md`: "Summary, the signature
-            visual, then the list".
+        {/* THE SIGNATURE BAND IS GONE, and it went because it was a second
+            drawing of a chart already on the page.
 
-            The brief specified a paired sleep + soreness sparkline here, on the
-            assumption that Recovery meant physical recovery. In this app it is
-            abstinence recovery, and there is no soreness field in the data model
-            at all — so the pairing that would have been invented is replaced by
-            the correlation this page actually exists to reveal: whether
-            resisting urges is holding the resets down. */}
-        <section>
-          <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Urges logged vs resets</h2>
-          <PairedSparkline weeks={urgeTrend.weeks} relapses={s.relapses} />
-        </section>
+            "Urges logged vs resets" sat above the rail on every row, and it
+            drew `urgeTrend.weeks` — the exact series `UrgeTrendCard` draws,
+            over the same eight weeks. Reported as "move it somewhere else,
+            it's a waste of space here"; moving a near-copy would have kept
+            the duplication and just relocated it. Its one extra signal, a
+            marker on weeks containing a reset, is now a `ReferenceDot` on
+            that card, under Patterns › The urges. */}
 
             </>}
           />

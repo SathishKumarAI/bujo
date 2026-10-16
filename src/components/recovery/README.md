@@ -19,7 +19,7 @@ near 300; it is **358** now, and everything that left is below.
 | The reset form | `LogResetCard.tsx` |
 | "How many times today", per tracked thing | `DayTallyCard.tsx` |
 | The in-crisis overlay: timer, breathing pacer, plan lookup | `SosOverlay.tsx` |
-| Urges-vs-resets, the signature visual above the rail | `PairedSparkline.tsx` |
+| Urges per week, with resets marked on the line | `UrgeTrendCard.tsx` |
 | Streak against best, comeback, pace, record-approach copy | `StreakVsBestCard.tsx` |
 | Urges resisted as a rate | `SelfEfficacyCard.tsx` |
 | Streaks saved | `StreaksSavedCard.tsx` |
