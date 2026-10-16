@@ -1,92 +1,197 @@
 # Fitness
 
-`src/views/FitnessHub.tsx` (shell) · `src/views/Fitness.tsx` (Cardio) ·
-`src/views/Gym.tsx` (Strength) · nav: Fitness → Fitness · `?view=fitness`
+`src/views/Fitness.tsx` · nav: Body → Fitness · `?view=fitness`
 
 ## What this page is
 
-Two products behind one nav item. A **Cardio** tab that logs sessions with
-duration/distance/calories/RPE and keeps a history, and a **Strength** tab that
-is a full lifting app — programs, plate maths, muscle map, progress photos.
-A segmented control at the top switches between them.
+Everything you do that is not lifting and not a pickleball match: cardio
+(run, cycle, swim, row, walk, hike, yoga, HIIT, other) and sport (a game of
+anything — the kind chips are Basketball · Cricket · Tennis · Badminton ·
+Football · Soccer · Volleyball · Table tennis). Strength owns lifting
+(`?view=gym`), Pickleball owns pickleball (`?view=pickleball`), Pull-ups and
+Home workout own theirs; this page owns the rest.
 
-## Measured (1440×900, demo data)
+**The form offers nothing that has a logger of its own** (`OWN_PAGE` in
+`domain/activities.ts`), and a `?activity=` link for one of those goes to its
+page. Pickleball used to LEAD the Sport segment — a duration-and-notes form
+for a sport whose own page records the format, the score, the partner, the
+venue and the points, into a different collection. The activity itself is
+kept: an already-logged one still has its label and is still editable here,
+because `optionsFor` puts the current activity in its own select.
 
-| Tab | Height | Top-level blocks |
+Two modes, one toggle, and **every fact re-reads on the switch** — a mode
+toggle that only moves a highlight was the bug the first pass over this page
+existed to remove.
+
+## What shipped · COD-329, 2026-10-15
+
+It was already on `PageLayout`, which is why it never looked broken, and zone 3
+was a flat stack: a History section, then an "Analytics" heading over three
+tiles and a heatmap. **553px of record under a 705px log form** at 1440 — the
+act column taller than the thing it feeds, at every width — and in sport mode a
+review zone of **47px**, because no workout in the demo had ever derived that
+mode.
+
+### Shape
+
+`PageLayout` tier 1180, `actTop`, the same shell as Pickleball, Pull-ups and
+Home Workout.
+
+| zone | holds |
+|---|---|
+| 1 · orient | **one bordered block**: the `nextStep` sentence, the mode toggle, three facts |
+| 2 · act | Log a session, 38% column, one primary button, **Hide the log** |
+| 3 · review | one bar of four rows |
+
+**The rail reads in order, and the default is not the first row.**
+
+| # | row | the question |
 |---|---|---|
-| Cardio | 1.7 screens | Log a workout (612px) · History (409px) · Nutrition (102px) · Cardio analytics (68px) |
-| Strength | 1.3 screens | Today's session (420px) · Body weight (102px) · Program & progress · Training insights · Deep analytics |
+| 1 | Volume | am I training enough — eight weeks, cadence, the calendar |
+| 2 | Sessions | what did I log, and can I fix that row |
+| 3 | Bests | am I getting fitter — best per activity, next round number |
+| 4 | Mix | what do I actually do — which activities, which days |
 
-The Strength/Cardio switcher is **404px wide per button, 808px total**.
+The page opens on **Sessions**: the order is for finding things, the default is
+for the thirty seconds after pressing Log session.
 
-## UX / IA
+**No sub-section chips.** `REUSABLE-PATTERNS.md` §16 puts the threshold at about
+five cards in a row and the biggest row here holds four.
 
-**P1 · The tab switcher is not a tab switcher to assistive tech.** Both halves
-are plain `<button>`s: `role` is `null`, `aria-pressed` is `null`. A screen
-reader hears "Strength, button. Cardio, button" with nothing to say which view
-you are in. It is the single most important control on the page and it announces
-no state. (`Tabs`/`TabsList` already exist in the codebase and Settings uses
-them.)
+### The orient block
 
-**P1 · Cardio's form shows a Strength example.** The notes textarea placeholder
-reads `Sets, one per line / Bench 5x5 @ 60kg` — on the *cardio* tab, under
-Duration and Distance. The two tabs are sharing a form component and the copy
-did not follow the split.
+One line that says what to do next (`nextStep` in `lib/fitnessReview.ts`), by
+priority: `first` → `lapse` → `goal` → `today` → `milestone`. It is a button
+into the row that answers it and a paragraph when none does. **Lapse outranks
+goal**, which is Pickleball's measurement reused: a target inside a week you
+have already let go is worth less than the fact that you stopped.
 
-**P2 · "NEXT UP · Pull day →" sits on the Cardio tab.** Pull day is a strength
-session. The header cards belong to whichever tab you are *not* looking at.
+There is no `event` rule — nothing in a `Workout` has a date you cannot move —
+and the `goal` rule is cardio-only, because a game has no minutes denominator.
 
-**P2 · Empty by default, four steppers deep.** Logging "I ran 5k" means Date,
-Activity, Duration, Distance, Calories, RPE, notes, feel — eight controls, all
-blank, four of them −/+ steppers. "Repeat last" is the good answer and it is
-tucked in the header as a secondary button; it should probably be the primary
-path for a returning user.
+### The record is cards, three at a time
 
-**P3 · RPE has no scale.** A stepper labelled `RPE` with no range. It is 1–10 to
-someone who lifts and nothing to everyone else.
+A session is a named item with a figure beside the name and a short body, so it
+is a `PanelCard` — the shape Home Workout reached one page earlier. The card
+carries the pace, the effort, the calories and the note; a row could only ever
+hold the activity, the day and two numbers. **Three** (`HISTORY_CAP`), with
+`Show all (7)` carrying the total, because a list collapsed to three with an
+unlabelled button cannot be told from a list that only ever had three.
 
-## UI
+**Edit** is a named control that opens `ActivityForm` inside the card, on the
+*session's* own mode — so a push day stays correctable as a push day. It was a
+modal opened by clicking anywhere on the row. **Delete asks first** and names
+what it removes.
 
-**P1 · An 808px segmented control for a binary choice.** The switcher spans the
-whole column with two 404px halves, making it the largest element on the page
-above the fold — heavier than the ring, the goal, and the log form's first
-field. A binary toggle should be the width of its labels. The same `flex-1`
-stretch problem Settings' tabs had.
+### Figures lead back to your entries
 
-**P2 · The two tabs have different rhythms.** Cardio is one long open form plus
-an open history; Strength is one open card plus four collapsed sections. Same
-page, same chrome, two different densities depending on which half you land on.
+Every activity row and every weekday bar is a button. It opens Sessions
+filtered to exactly those rows, where Edit and × live, and the filter states
+itself as a chip you can take off (`3 of 17 ×`). Not sticky, not in the URL,
+cleared when you change rail row.
 
-**P3 · "Sample day" on the Nutrition card** is a filled button next to a
-chevron, so the card has two competing affordances before you have opened it.
+### The weekly target has a control now
 
-## Copy
+`settings.fitnessGoalMin` had **three readers and no writer**: this page's
+headline fact, `lib/coach.ts` and Goals, all against a 150-minute default that
+nothing in the app could change. The field is under the sessions it counts, the
+way Pickleball's weekly-games field is.
 
-**P2 · Both tabs claim the same title.** The top bar reads `Fitness · Cardio &
-strength` on one tab and `Fitness · Strength` on the other, from two separate
-`VIEW_CHROME` entries (`fitness` and `gym`). The subtitle changes but the tab
-you are on is only visible in the switcher, which (see above) does not say.
+## Measured · `?demo=1`, preview server, mocha
 
-**P3 · "Log a workout"** is right. **"How did it feel?"** is right — a good,
-human prompt. Keep both.
+| | before | after |
+|---|---|---|
+| desktop landing (1440) | 945px · 1.1 screens | 945px · 1.1 |
+| phone landing (390) | 1905px · 2.3 screens | **1279px · 1.5** |
+| stacked (1152) landing | 1402px · 1.6 screens | **972px · 1.1**, strip 41px |
+| review zone, cardio | 553px, two sections | 513px, four rows |
+| review zone, **sport** | **47px** (one empty frame) | **513px** |
+| review width, log open → hidden (1440) | 678 either way | 678 → **1054** |
+| review width, hidden, 1920 / 2560 | — | **1534 / 1870** (no empty track) |
+| cards per row, log hidden (1440 / 1920 / 2560) | — | 2×541 / 2×522 / 2×477 |
+| worst row, desktop | — | **1.4 screens** (Volume) |
+| worst row, phone | — | **2.1 screens** (Volume) |
+| `views/Fitness.tsx` | 388 lines | **338**, plus 638 in `components/fitness/` and 362 in `lib/fitnessReview.ts` |
 
-## Upgrades, ranked
+`npm run space -- fitness` reports **1.0 shipped / 1.0 open** on desktop and
+1.2 / 2.1 on a phone — but it grades only the row the rail opens on, so the
+per-row numbers above come from a throwaway probe. Quote both, and say which.
 
-1. **P1 · Make the switcher a real `Tabs`** — `role="tablist"`, selected state,
-   arrow-key navigation. The primitive is already in the codebase.
-2. **P1 · Shrink it to content width** (`flex-none`, same fix as Settings).
-3. **P1 · Split the placeholder copy** so Cardio stops advertising bench press.
-4. **P2 · Promote "Repeat last"** to the primary action for anyone with history;
-   most sessions repeat.
-5. **P2 · Move "NEXT UP" to the tab it belongs to.**
-6. **P3 · Label the RPE scale** (1–10, with the anchors in the ⓘ).
+**a11y per row**: `npm run a11y:panels` now drives both pages. Fitness is
+**56 scans** — 4 rows × 2 modes × (5 desktop + 2 phone themes) — **0 serious, 0
+critical**, armed on a planted violation first (`BUJO_CANARY=1` → 26 criticals
+on one theme). Fitness is listed twice there because the mode toggle is sticky
+UI state rather than a URL parameter, so a single entry would scan the cardio
+half seven times and never render the sport half.
 
-## Leave alone
+Gates, this branch, against a local preview of its own build: `tsc -b` clean,
+**2006 tests / 147 files**, eslint clean, `vite build` clean, `design` 466
+files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at 1440 / 1024 / 390.
 
-- **The weekly ring + "382 / 150 min · Goal met 🎉"** — the best header on any
-  page in the app. Immediate, specific, celebratory without being loud.
-- **History rows.** Name, date, duration, right-aligned. Nothing wasted.
-- **Strength's collapsed deep-analytics stack** — correct default for a tab that
-  already has a lot going on.
-- **Keeping cardio and strength apart.** They are genuinely different activities
-  with different fields; two tabs is the right call, only the control is wrong.
+## Files
+
+| Change | File |
+|---|---|
+| The shell, zone 1, the next-step row, the log form | `src/views/Fitness.tsx` |
+| The bar and which cards each row holds | `src/components/fitness/Review.tsx` |
+| The four rail rows, and what each says about when to read it | `src/components/fitness/panels.ts` |
+| The session card, its inline editor, the weekly target | `src/components/fitness/History.tsx` |
+| Which activities the form may offer, and where a link for the others goes | `src/domain/activities.ts` → `OWN_PAGE`, `optionsFor` |
+| Every read-only card | `src/components/fitness/Cards.tsx` |
+| Every aggregate, and `nextStep` | `src/lib/fitnessReview.ts` |
+| A comparison drawn as bars | `src/components/page/BarList.tsx` |
+| The container-query card grid | `src/components/page/StatGrid.tsx` |
+| The form, shared with the edit dialog | `src/components/page/ActivityForm.tsx` |
+| Which activities exist, and which mode each is | `src/domain/activities.ts` |
+
+## Traps this page paid for
+
+- **Two "this week" figures can disagree by 4.7x and both be right.**
+  `weeklyActiveMinutes` — the 150-minute target in zone 1, in Goals and in
+  `lib/coach.ts` — counts *every* activity, lifting and pickleball included;
+  the Volume card counts one mode. Toning the weekly bars against that target
+  put **a red bar on a 123-minute week while the bar above it said 578**.
+  Scope is part of a comparison's currency, exactly like a unit. The card
+  compares its blocks with each other and names its scope; the fact is labelled
+  `All training`.
+- **An unseeded mode is a whole half of a page no gate has ever rendered.**
+  `lib/demo.ts` drew from `['run','strength','yoga','walk','cycle']` and
+  pickleball lives in another collection, so `sessionsInMode(data, 'sport')`
+  matched nothing. Third instance after `data.cycle` and `activity: 'pullups'`.
+- **A sticky toggle hides half a page from a gate the same way a tab shell
+  does.** The a11y probe had to be told to set `bujo.ui.fitness.mode`, or it
+  would have reported seven green scans of the same mode.
+- **Four facts beside a mode toggle do not fit `actTop`'s zone 1.** It is 678px
+  wide, not the full 1110, so each fact had ~85px and `578 / 150 min` drew as
+  `578 / 150 …`. Three facts; the dropped one is `StatBar`'s own example of what
+  belongs in zone 3.
+- **jsdom measures a 0px shell, so every component test sees the stacked
+  layout** — and `useActColumn` shuts the act there by design. Four view tests
+  went red on a correct change; they now open the strip and assert
+  `aria-expanded=false` on the way in, which is the only coverage that default
+  has outside a browser.
+- **A card with no `group` hides every `.reveal` control inside it.**
+  `PanelCard` had none, so the × on a history card was `opacity: 0` on any
+  hover-capable device and reachable only by tabbing — visible on a phone,
+  invisible on a desktop, which is the opposite of the intent. Home Workout has
+  shipped that way since its own history landed. Fixed in the shared card.
+- **`prettyDay` in a 56px label column is eight identical ellipses.** "Fri, Aug
+  15" needs ~86px; the seven-day blocks all start on the same weekday anyway,
+  so the weekday carried no information.
+
+## Carried over from the audit this file replaced
+
+`docs/pages/fitness.md` used to hold a browser audit of **`views/FitnessHub.tsx`**
+— the retired shell that put Cardio and Strength behind one 808px segmented
+control. Every P1 in it described UI that no longer exists: the switcher that
+announced no state (Strength is its own tab), the cardio form advertising
+`Bench 5x5 @ 60kg` (per-mode `notesPlaceholder` now), the "NEXT UP · Pull day"
+card on the cardio tab, the Nutrition accordion (its own page), the unlabelled
+RPE stepper (`Effort · RPE 1–10`).
+
+One finding survived and is **still open, deliberately**: *"Repeat last should
+probably be the primary path for a returning user"* — eight controls, all
+blank, is a lot to log a run you have logged forty times. It is a secondary
+button in the form header today. Not done here because the right version of it
+is a measurement (how many sessions ARE repeats of the last one?) rather than a
+preference, and that measurement is not in this pass.

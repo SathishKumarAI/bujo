@@ -20,21 +20,23 @@ finding, not a licence to invent a seventh disclosure implementation.
 | `useActColumn` | `components/page/useActColumn.ts` | That state, plus the rule nobody guesses: **stacked, the act starts shut**. Hand `onSplitChange` to the shell and `shut` to `actShut` |
 | One bar per review zone | `components/page/SectionRail.tsx`, `railAt="never"` | Five short rows, read left to right, in reading order |
 | Sub-section chips | `components/pickleball/Review.tsx` + `Facet.tsx` | A row with 7+ cards narrows to 2–4 without a second navigation |
-| `PanelGrid` | `components/pickleball/PanelGrid.tsx` | Columns that answer to the PANEL's width, solved from a ~450px card floor |
+| `StatGrid` | `components/page/StatGrid.tsx` | Columns that answer to the PANEL's width, solved from a ~450px card floor. **Was `components/pickleball/PanelGrid`**; renamed on the move because `page/Panel.tsx` already exports a `PanelGrid` for reference items |
+| `BarList` | `components/page/BarList.tsx` | A comparison of more than about five things, as one bar per row (§21). Written on its fourth caller |
 | The next-step sentence | `lib/pickleball.ts` → `nextStep` | Zone 1 says what to do, not only what is true |
 | Drill-down to entries | `Review.tsx`'s `focus` + `onPick` | Every figure opens the rows behind it, where Edit and × live |
-| Comparison as bars | `components/pickleball/SignalCards.tsx` → `WeekdayPerformanceCard` | A 7-way comparison that reads at 348px and encodes value in colour |
-| Per-panel a11y | `scripts/a11y-panels.mjs` | A rail hides four rows from `npm run a11y`; this drives them all, armed on a canary |
+| A worked comparison card | `components/pickleball/SignalCards.tsx` → `WeekdayPerformanceCard` | What `BarList` looks like wrapped in a `Card`, with the subtitle saying the finding |
+| Per-panel a11y | `scripts/a11y-panels.mjs` | A rail hides four rows from `npm run a11y`; this drives them all, armed on a canary. One `PAGES` entry per page — **and one per sticky-state variant**, because a mode toggle hides half a page from it the way a tab shell does |
 
 ## Where each page stands
 
-Measured by reading the view, not by guessing: all six are already on
-`PageLayout`, none has the act controls, and only two have a rail.
+Measured by reading the view, not by guessing. All six were already on
+`PageLayout` with no act controls and only two with a rail; Fitness has since
+been done (COD-329) and is kept in the table as the worked example.
 
 | Page | View | Lines | Rail | `actShut` | Sub-sections | The one thing to do first |
 |---|---|---|---|---|---|---|
 | Strength | `views/Gym.tsx` | 781 | — | — | — | **Split the file**, then one bar over the review |
-| Fitness | `views/Fitness.tsx` | 388 | — | — | — | One bar; it is a flat stack today |
+| ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | Nutrition | `views/Nutrition.tsx` | 531 | — | — | — | `nextStep` — the page has no sentence at all, not even a `StatBar` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
 | Recovery | `views/NoFap.tsx` | 416 | ✓ | — | — | `actShut` + arm `a11y-panels` (COD-237 names this page) |
@@ -58,8 +60,9 @@ each one is a commit.
    never `actLast` unless the act is genuinely short. A page whose act is over
    ~500px must be measured stacked: at 1152 and 1024 the zones are a single
    column while every viewport test still says "desktop".
-4. **`PanelGrid`** for the cards, never `CardGrid` — the panel's width is
-   decided by the page split, not the window.
+4. **`StatGrid`** for the cards, never `CardGrid` — the panel's width is
+   decided by the page split, not the window. (`PanelGrid`, the other one, is
+   for reference items: a named thing with a short body.)
 5. **Sub-section chips** on any row with five or more cards, counted from a
    single `has` map so a chip can never select an empty panel.
 6. **The next-step sentence** in zone 1, as a priority list over the page's own
@@ -90,7 +93,13 @@ each one is a commit.
   of any of this work: a shell dropdown trigger fails
   `label-content-name-mismatch` on every view. Every PR shows UNSTABLE because
   of it. Fix it before it becomes the reason nobody reads a red a11y run.
-- **COD-237** still names five rail pages whose other rows no gate reaches.
-  `scripts/a11y-panels.mjs` takes a `GROUPS` entry and a view id per page.
+- **COD-237** still names four rail pages whose other rows no gate reaches —
+  Insights, Coaching, Pull-ups, Help, Recovery and Cycle, less the two now
+  armed. `scripts/a11y-panels.mjs` takes one `PAGES` entry per page, plus one
+  per sticky-state variant the page can be in.
+- **`npm run a11y:panels` is still not in CI**, which is how every "a gate
+  nobody runs" entry in CLAUDE.md started. It is 91 scans and some minutes;
+  the a11y workflow is red on `main` for an unrelated reason, so adding a
+  second browser gate to it buys nothing until that is fixed.
 - With the act open the review is one column, so a short card looks sparse at
   702px. Pairing short cards needs a dense/span rule, not a new grid.

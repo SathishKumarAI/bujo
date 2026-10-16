@@ -2,8 +2,7 @@ import type { ReactNode } from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
 import { Card, Empty } from '../ui'
-import { PanelGrid } from './PanelGrid'
-import { CalendarHeatmap } from '../page'
+import { StatGrid, CalendarHeatmap } from '../page'
 import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 import { todayISO } from '../../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, formatStats, cumulativeGames, gamesByDay, monthlyGames } from '../../lib/pickleball'
@@ -61,7 +60,7 @@ export function TrendCharts({ activeFacet, group }: { activeFacet: string | null
   const heat = [...gamesByDay(data)].map(([date, value]) => ({ date, value }))
 
   return (
-    <PanelGrid>
+    <StatGrid>
       <Chart on="results" group={group} facet="form" active={activeFacet}>
       <Card band title="Win-rate trend" subtitle="Win % per session" enlargeable>
         {trend.length < 2 ? <Empty>Log a couple of sessions to see the trend.</Empty> : (
@@ -185,6 +184,6 @@ export function TrendCharts({ activeFacet, group }: { activeFacet: string | null
         />
       </Card>
       </Chart>
-    </PanelGrid>
+    </StatGrid>
   )
 }

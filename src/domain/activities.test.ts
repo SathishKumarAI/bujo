@@ -1,7 +1,8 @@
+import { VIEW_CHROME } from '../components/shell/viewChrome'
 import { describe, expect, it } from 'vitest'
 import {
   ACTIVITIES, ACTIVITY_KINDS, MODES, activitiesForMode, activityForSplit, asks, bestStat, fullLabelOf, hasKinds, kindsFor,
-  defaultActivityFor, isActivityKey, labelOf, modeOf, normalizeActivity,
+  defaultActivityFor, isActivityKey, labelOf, modeOf, normalizeActivity, OWN_PAGE, loggableActivitiesForMode, optionsFor,
   type ActivityKey,
 } from './activities'
 
@@ -186,5 +187,42 @@ describe('sub-activities', () => {
     expect(fullLabelOf('homeWorkout', 'Upper body')).toBe('Home workout · Upper body')
     // An unknown key still renders its raw value rather than vanishing.
     expect(fullLabelOf('mystery', 'Thing')).toBe('mystery · Thing')
+  })
+})
+
+
+/**
+ * `OWN_PAGE` is a hand-written id list resolved against another source, which
+ * is the shape this repo has been bitten by three times (`BottomNav`'s
+ * `PRIMARY`, `view-ids.mjs`, the a11y `VIEWS`). Both halves are asserted here:
+ * the keys are real activities and the values are real views.
+ */
+describe('activities with a logger of their own', () => {
+  it('names only real activities, pointing at real views', () => {
+    for (const [key, view] of Object.entries(OWN_PAGE)) {
+      expect(isActivityKey(key)).toBe(true)
+      expect(Object.keys(VIEW_CHROME)).toContain(view)
+    }
+  })
+
+  it('never empties a mode — the form must still have something to offer', () => {
+    for (const m of MODES) {
+      if (m === 'strength') continue // not offered at all; `LOGGABLE_MODES` says so
+      expect(loggableActivitiesForMode(m).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('keeps an already-logged one in the select, or the browser hides it', () => {
+    // A controlled <select> whose value is absent from its options renders as
+    // the FIRST option. That is how Fitness once displayed "Pickleball" while
+    // carrying `run`, so the invariant is about the options, not the value.
+    const keys = optionsFor('sport', 'pickleball').map(([k]) => k)
+    expect(keys).toContain('pickleball')
+    expect(optionsFor('sport').map(([k]) => k)).not.toContain('pickleball')
+  })
+
+  it('switches a mode onto something the form can hold', () => {
+    expect(OWN_PAGE[defaultActivityFor('sport')]).toBeUndefined()
+    expect(OWN_PAGE[defaultActivityFor('cardio')]).toBeUndefined()
   })
 })

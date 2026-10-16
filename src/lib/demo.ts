@@ -133,8 +133,14 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
    took it to 18; `?demo=1` re-seeds only when this number moves, and the
    pickleball seed gained a future event, a location, an opponent, a level and
    points. Taking main's 17 here would leave every existing demo journal on the
-   old shape with no way to notice. */
-export const DEMO_VERSION = 20
+   old shape with no way to notice.
+
+   21: the seed writes `sport` workouts. Fitness's Sport toggle had never been
+   rendered with a row in it by anything — see the block near the pull-up one
+   for the 47px measurement. Bump this whenever the seed gains a field or a
+   domain a page renders, or the feature is invisible to every existing demo
+   journal, which reads exactly like the feature being broken. */
+export const DEMO_VERSION = 21
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -201,6 +207,15 @@ export function generateDemoData(today = todayISO()): JournalData {
    * `randSub` would shift every value those blocks pinned.
    */
   const randPull = rng(7311)
+  /**
+   * Sixth stream, for the `sport` sessions. The block runs after the pull-up
+   * one, so drawing from `randPull` would shift every rep scheme it pins —
+   * which is the breakage `rand2`'s docstring describes, and it has already
+   * happened once this month: four extra `rand()` calls inside the pickleball
+   * loop moved a temperature coverline 97.41 → 97.42 and failed
+   * `cycleSnapshot.test.ts` with nothing in the diff to connect them.
+   */
+  const randSport = rng(5150)
   const entries: Entry[] = []
 
   // Lived-in history: backdate the seeded habits and fill 90 days of completions
@@ -694,6 +709,45 @@ export function generateDemoData(today = todayISO()): JournalData {
       // Roughly a third noted, because "nothing written" is the common case
       // and a list where every row has prose never renders the bare one.
       notes: randPull() > 0.68 ? PULL_NOTES[Math.floor(randPull() * PULL_NOTES.length)] : '',
+    })
+  }
+
+  /**
+   * SPORT SESSIONS — the mode Fitness offers and the seed had never written.
+   *
+   * `LOGGABLE_MODES` is `['cardio', 'sport']`, so Fitness's toggle has two
+   * positions; `sessionsInMode(data, 'sport')` reads `workouts` whose activity
+   * derives that mode, and the generic block above draws only from
+   * `['run','strength','yoga','walk','cycle']`. Pickleball sessions live in
+   * `data.pickleball`, which is a different collection entirely. So the Sport
+   * half of this page had **no rows at all**.
+   *
+   * Measured on the shipped build at `?demo=1`, 1440×900: cardio's review zone
+   * was 553px and **sport's was 47px** — a single empty frame under a 612px
+   * form — at every theme and both viewports, on every gate run, for the life
+   * of the page. Third instance of the unseeded-domain trap in CLAUDE.md after
+   * `data.cycle` and `activity: 'pullups'`, and the cheapest to have caught:
+   * the toggle is right there in zone 1.
+   *
+   * `sport` rather than `pickleball`: logging a pickleball session here as well
+   * as on its own page would seed the same game into two collections and make
+   * every total disagree with itself.
+   */
+  const SPORT_KINDS = kindsFor('sport')
+  for (let i = 70; i >= 0; i--) {
+    const dow = fromISODay(addDays(today, -i)).getDay()
+    // Tuesday and Sunday, missed about one week in six — a seed that never
+    // misses cannot show what a gap looks like, and the cadence card and the
+    // lapse sentence are both about gaps.
+    if (![2, 0].includes(dow)) continue
+    if (randSport() > 0.84) continue
+    j.workouts.push({
+      id: uid('w'), date: addDays(today, -i), activity: 'sport',
+      subActivity: SPORT_KINDS[Math.floor(randSport() * SPORT_KINDS.length)],
+      durationMin: 45 + Math.floor(randSport() * 46),
+      sets: [],
+      rpe: 5 + Math.floor(randSport() * 5),
+      notes: '',
     })
   }
 

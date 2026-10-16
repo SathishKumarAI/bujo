@@ -1,82 +1,88 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowsClockwise, Trash } from '@/components/icons'
+import { useEffect, useState } from 'react'
+import { ArrowsClockwise, CaretRight, Gauge, Plus, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
-import { ShowMore } from '../components/ShowMore'
-import { useCappedList } from '../lib/useCappedList'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { useConfirm } from '../components/ConfirmDialog'
 import {
-  ActivityForm, CalendarHeatmap, EmptyFrame, PageLayout, StatBar, SummaryStrip,
+  ActStrip, ActivityForm, PageLayout, StatBar, useActColumn,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
-import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, type Mode } from '../domain/activities'
+import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, OWN_PAGE, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
 import { useNav } from '../components/shell/nav'
-import { bestOf, sessionsInMode, totalTime } from '../domain/sessions'
-import { displayDistance } from '../lib/units'
-import { nextSplit, splitMeta, weeklyActiveMinutes } from '../lib/fitness'
+import { VIEW_CHROME, type ViewId } from '../components/shell/viewChrome'
+import { sessionsInMode } from '../domain/sessions'
+import { weeklyActiveMinutes } from '../lib/fitness'
+import { cadence, nextStep } from '../lib/fitnessReview'
+import { FITNESS_PANELS } from '../components/fitness/panels'
+import { FitnessReview } from '../components/fitness/Review'
+import { cat, onRaised } from '../lib/colors'
 import { useStickyState } from '../lib/useStickyState'
-import type { Workout } from '../lib/types'
-import { justCapturedProps, useJustCaptured } from '../components/CaptureReceipt'
-import { WORKOUT_KEY } from '../lib/recordKeys'
 
 /**
- * FITNESS · the reference implementation of the page contract.
+ * FITNESS · log a cardio session or a game, then read what they add up to.
  *
- * Zone 1  orient — mode toggle, this week against the target, what's next.
- * Zone 2  act    — the log form, and the page's only primary button.
- * Zone 3  review — the session list, then the analytics under it.
+ * On the three-zone contract (`docs/PAGE-SHAPE.md`), and on the same shell as
+ * Pickleball, Pull-ups and Home Workout, because a person who has learnt one of
+ * them has learnt all four:
  *
- * Every fact in zone 1 re-reads on mode change: cardio shows minutes against
- * the weekly minutes target, sport counts games. A mode switch that only moved
- * a highlight was the bug this whole pass exists to remove.
+ * - ORIENT — one bordered block: the sentence saying what to do next, and four
+ *   facts about this week. Everything all-time is in zone 3.
+ * - ACT    — the log form, the page's only primary button, in a column you can
+ *   put away.
+ * - REVIEW — `components/fitness/Review.tsx`: one bar, four rows.
+ *
+ * **Every fact re-reads on mode change.** Cardio measures minutes against the
+ * weekly target; sport counts games, because a game is bounded by a scoreboard
+ * and a "you owe 40 minutes" nag about one would be nonsense. A mode switch
+ * that only moved a highlight was the bug the first pass over this page
+ * existed to remove, and the keyed records below are what keep a third mode
+ * from being a ternary at every fact.
  *
  * **Two modes, not three.** `strength` was a segment here and is a Body tab —
  * the same record, logged twice, and the one logged here could not hold what
- * the Strength page's own logger produces (per-set rows, a split, PR detection,
- * a rest timer). `LOGGABLE_MODES` in the registry is the list this page offers;
+ * the Strength page's own logger produces (per-set rows, a split, PR
+ * detection, a rest timer). `LOGGABLE_MODES` is the list this page offers;
  * `MODES` is still every shape a `Workout` can have, which is why the edit
- * dialog below opens a push day with its sets field intact and why a
- * `?activity=pullups` link redirects to Strength rather than landing on a
- * toggle that cannot represent it.
+ * dialog opens a push day with its sets field intact and why `?activity=pullups`
+ * redirects to Strength rather than landing on a toggle that cannot hold it.
  *
- * What used to be here and is gone:
- *
- * - the six-tile "At a glance" card, in six different hues — one insight and
- *   five distractions competing for the same glance;
- * - the "Cardio analytics" accordion, which hid the training calendar (the
- *   single most useful thing on the page) behind a fold;
- * - the Nutrition accordion, which was a whole other subject wearing a
- *   collapsed section, and now has its own page;
- * - the 2×2 stepper grid, which rendered duration, distance, calories and RPE
- *   for every activity regardless of whether the activity had any use for them;
- * - the cardio-bests badge card, which returned `null` until you had earned a
- *   badge, so it was invisible to exactly the people it was meant to motivate.
- *
- * The weekly-target ring is gone rather than recoloured. The contract allows
- * one accent-filled control per page and spends it on "Log session"; a ring is
- * a fifth appearance even in neutral, and the ratio it drew ("90 / 150 min")
- * says the same thing in less space and more precisely.
+ * What used to be in zone 3 and is not any more: a flat stack of a History
+ * section and an "Analytics" heading over three tiles and a heatmap — **553px
+ * of record under a 705px form**, with no way to ask the record a question.
+ * The four rows are in `components/fitness/panels.ts`; the aggregates behind
+ * them are `lib/fitnessReview.ts`, which did not exist because every one of
+ * `lib/fitness.ts`'s 900 lines is about lifting.
  */
 export function Fitness() {
-  const { data, addWorkout, removeWorkout } = useJournal()
-  const justCaptured = useJustCaptured()
+  const { data, addWorkout } = useJournal()
   // Arriving with `?activity=` (including via a retired /pullups-style link)
   // preselects that activity and takes the mode from it — never the other way
   // round, because the activity is the fact and the mode is derived from it.
   const nav = useNav()
   const linked = readDeepLink().activity
-  // A strength activity arriving by link belongs on the Strength tab, which is
-  // where strength is logged now — landing here would drop the reader on a page
-  // whose toggle cannot even represent the mode the link asked for.
+  /* A LINK FOR AN ACTIVITY THAT HAS ITS OWN LOGGER GOES THERE.
+     Two cases, one rule. A strength activity would land on a toggle that
+     cannot represent its mode at all; a pickleball link would land on a
+     duration-and-notes form while the page that records a score is one tab
+     away (`OWN_PAGE`). Both are "this page cannot hold what the link asked
+     for", so both redirect rather than silently preselecting something else —
+     and `OWN_PAGE` is the list, not a growing chain of activity literals. */
   const linkedKey = linked && isActivityKey(linked) ? linked : null
-  const strengthLink = linkedKey != null && modeOf(linkedKey) === 'strength'
-  useEffect(() => { if (strengthLink) nav('gym') }, [strengthLink, nav])
-  const initialActivity = strengthLink ? null : linkedKey
+  const dest = linkedKey == null ? null
+    : OWN_PAGE[linkedKey] ?? (modeOf(linkedKey) === 'strength' ? 'gym' : null)
+  /* Resolved against `VIEW_CHROME`, which is the one list of real view ids,
+     rather than cast. `OWN_PAGE` lives in `domain/` and cannot import a UI
+     type without pointing the imports upward, so the narrowing happens here —
+     and a typo in it then redirects NOWHERE instead of to a dead view.
+     `activities.test.ts` asserts every value is a real id for the same reason:
+     this repo has been bitten three times by a hand-written id list resolved
+     against another source. */
+  const elsewhere = dest && dest in VIEW_CHROME ? (dest as ViewId) : null
+  useEffect(() => { if (elsewhere) nav(elsewhere) }, [elsewhere, nav])
+  const initialActivity = elsewhere ? null : linkedKey
   // `useStickyState` reads localStorage FIRST, so passing the linked mode as its
   // default did nothing once a mode had ever been chosen: arriving on
   // `?view=fitness&activity=run` left the toggle on the stored `sport` while the
@@ -91,7 +97,6 @@ export function Fitness() {
     const base = emptyDraft(initialActivity ? modeOf(initialActivity) : mode)
     return initialActivity ? { ...base, activity: initialActivity } : base
   })
-  const [editing, setEditing] = useState<Workout | null>(null)
 
   const unit = data.settings.distanceUnit
   const today = todayISO()
@@ -105,48 +110,43 @@ export function Fitness() {
     setDraft(emptyDraft(next))
   }
 
-  const sessions = useMemo(
-    () => sessionsInMode(data, mode).sort((a, b) => (a.date < b.date ? 1 : -1)),
-    [data, mode],
+  const sessions = sessionsInMode(data, mode).sort((a, b) => (a.date < b.date ? 1 : -1))
+
+  /* Which review row is open. Sticky, and owned HERE rather than in the review,
+     so the sentence above can open the row that answers it. */
+  const [panel, setPanel] = useStickyState<string>(
+    'fitness.group', 'sessions', FITNESS_PANELS.map((p) => p.id),
   )
+  /* The act column's open/shut, including the stacked default — see
+     `useActColumn` for the three measurements that decided it. */
+  const logCol = useActColumn('fitness')
 
   // ── Zone 1 facts, all of which re-read on mode change ─────────────────────
   const goal = data.settings.fitnessGoalMin ?? 150
-  const minutes = useMemo(() => weeklyActiveMinutes(data), [data])
-  const split = useMemo(() => splitMeta(nextSplit(data)), [data])
+  const minutes = weeklyActiveMinutes(data)
   const thisWeekSessions = sessions.filter((s) => {
     const d = dayDiff(s.date, today)
     return d >= 0 && d < 7
   }).length
   const last = sessions[0]
+  const pace = cadence(sessions, 8, today)
+  const step = nextStep(sessions, { mode, goalMin: goal, weekMinutes: minutes, today })
 
   // Keyed off the mode rather than branched on it, so the two are impossible to
   // let drift apart and a third mode would be one more entry, not one more
   // ternary at every fact.
-  const sessionCount = `${thisWeekSessions} ${thisWeekSessions === 1 ? 'session' : 'sessions'}`
   const WEEK: Record<Mode, string> = {
     cardio: `${minutes} / ${goal} min`,
-    strength: sessionCount,
+    strength: `${thisWeekSessions} ${thisWeekSessions === 1 ? 'session' : 'sessions'}`,
     // A game is counted, not measured against a minutes target — you play when
     // there is a game, and a "you owe 40 minutes" nag would be nonsense.
     sport: thisWeekSessions === 1 ? '1 game' : `${thisWeekSessions} games`,
   }
-  const NEXT: Record<Mode, string> = {
-    cardio: minutes >= goal ? 'Target met — anything you like' : `${Math.max(0, goal - minutes)} min to go`,
-    strength: `${split.label} day`,
-    sport: 'Whenever the court is free',
-  }
-  // `prose` on the two facts that are sentences. Zone 1 rendered every value in
-  // the mono face, so "Whenever the court is free" and "Target met — anything
-  // you like" came out in the typewriter — mono is this app's signature on
-  // numerals, and spending it on prose spends it on nothing.
   // ── The one fact on this page that has a target ──────────────────────────
   //
   // Only cardio measures against a goal. Strength counts sessions and sport
   // counts games — neither has a denominator, so neither gets a track, and
-  // inventing one would draw a scale that does not exist. The audit measured
-  // this view printing 249 numbers and drawing zero shapes; the fix is not to
-  // give all 249 a bar, it is to give the ones with a range their range.
+  // inventing one would draw a scale that does not exist.
   //
   // `amount`/`of` rather than parsing `WEEK[mode]`: the string is already a
   // formatted answer and re-deriving numbers out of it would be a second
@@ -155,9 +155,32 @@ export function Fitness() {
     cardio: { amount: minutes, of: goal },
   }
 
+  /**
+   * THE LABEL SAYS WHOSE MINUTES THESE ARE.
+   *
+   * `weeklyActiveMinutes` counts EVERY activity — lifting and pickleball
+   * included — because that is what `fitnessGoalMin` means in Goals and in
+   * `lib/coach.ts`, and a 150-minute week is not a cardio-only idea. Labelled
+   * "This week" beside a Cardio/Sport toggle it reads as this mode's minutes,
+   * and the Volume card one zone down was then drawing **123m** for the same
+   * seven days the bar called **578**. Keyed like `WEEK` rather than
+   * ternaried, so a third mode is one more entry.
+   */
+  const WEEK_LABEL: Record<Mode, string> = {
+    cardio: 'All training',
+    strength: MODE_COPY.strength.weekLabel,
+    sport: MODE_COPY.sport.weekLabel,
+  }
+
+  /* THREE FACTS, NOT FOUR — and the dropped one is `StatBar`'s own example of
+     what does not belong here ("sessions all-time does not [change the next
+     thirty seconds]"). Measured: zone 1 is 678px wide under `actTop`, and four
+     facts beside the mode toggle gave each ~85px, so "578 / 150 min" rendered
+     as "578 / 150 …". The count is in the sentence above and in the Volume
+     strip, both of which say it in full. */
   const facts = [
     {
-      label: MODE_COPY[mode].weekLabel,
+      label: WEEK_LABEL[mode],
       value: WEEK[mode],
       ...weekRange[mode],
       // Green once the target is met, so beating it reads as beating it. Below
@@ -165,17 +188,13 @@ export function Fitness() {
       // mid-week, not failing.
       tone: mode === 'cardio' && minutes >= goal ? ('green' as const) : ('mauve' as const),
     },
-    { label: 'Next up', value: NEXT[mode], prose: true },
-    { label: 'Last session', value: last ? `${fullLabelOf(last.activity, last.subActivity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
+    /* The cadence, or an honest dash. `cadence` returns null under four
+       training days, because three gaps is the fewest that has a middle — and
+       a figure that compares two windows with no coverage floor is how a lapse
+       got reported as three green improvements (CLAUDE.md). */
+    { label: 'Cadence', value: pace.avgGap != null ? `every ${pace.avgGap}d` : '—', onClick: () => setPanel('volume') },
+    { label: 'Last', value: last ? `${fullLabelOf(last.activity, last.subActivity)} · ${prettyDay(last.date)}` : 'None yet', prose: true },
   ]
-
-  // ── Zone 3 summary, keyed off the registry's `best` for this activity ─────
-  const best = bestOf(sessions, draft.activity, unit)
-  const time = totalTime(sessions)
-  const heat = useMemo(
-    () => sessions.map((s) => ({ date: s.date, value: s.durationMin ?? 0 })),
-    [sessions],
-  )
 
   function submit() {
     // Was unguarded, so an untouched form wrote an empty workout that then
@@ -195,115 +214,118 @@ export function Fitness() {
     setDraft({ ...draftOf(last, unit), date: today, rpe: '', notes: '' })
   }
 
-  // Was 8 rows with its own `showAll` — the right shape and the wrong number.
-  // Four other history lists each had a different rule, and two of them sliced
-  // at 12 with no way to reach row 13 (COD-303).
-  const history = useCappedList(sessions)
+  const orient = (
+    /* ONE BLOCK, NOT A BAR WITH THINGS ABOVE AND BELOW IT.
+
+       The sentence, the toggle and the four facts are one question — what about
+       this week — and `@container/orient` lets anything inside ask how wide
+       THIS block is rather than how wide the window is. Same shape as
+       Pickleball's, which is the page this one is being brought level with. */
+    <div className="@container/orient rounded-card border border-line bg-ink-0 p-3">
+      {/* THE SENTENCE, ABOVE THE NUMBERS.
+          Four true facts change nothing about today; the thing that does — a
+          target four minutes short, eleven days of silence — was nowhere on
+          this page at all. `nextStep` is the priority list
+          (`lib/fitnessReview.ts`) and it is total, so this never renders as a
+          hole.
+
+          COLOUR MEANS URGENCY HERE AND NOTHING ELSE, in the left edge and the
+          icon, with `fg-1` text. An accent as text on a wash of itself is the
+          calibration trap in CLAUDE.md.
+
+          A BUTTON when a row holds the detail, a paragraph when none does: a
+          row that looks pressable and does nothing is worse than a row that
+          does not. */}
+      {(() => {
+        const tone = { first: 'mauve', lapse: 'yellow', goal: 'teal', today: 'green', milestone: 'mauve' }[step.id]
+        const StepIcon = { first: Plus, lapse: Gauge, goal: Target, today: Trophy, milestone: Trophy }[step.id]
+        const body = (
+          <>
+            <Icon as={StepIcon} size="md" style={{ color: onRaised(tone) }} className="shrink-0" />
+            <span className="min-w-0 text-body text-fg-1">{step.text}</span>
+            {/* The destination is named on a desktop and dropped on a phone —
+                the sentence names what to do in its own words, the whole row is
+                the button, and a phone has no hover to need the hint. */}
+            {step.group && (
+              <span className="ml-auto hidden shrink-0 text-label text-fg-2 sm:inline">
+                {FITNESS_PANELS.find((g) => g.id === step.group)?.label} →
+              </span>
+            )}
+          </>
+        )
+        const shell = 'mb-3 flex w-full items-center gap-2.5 rounded-control border-l-2 bg-ink-1 px-3 py-2 text-left'
+        return step.group ? (
+          <button
+            type="button"
+            onClick={() => setPanel(step.group!)}
+            className={`${shell} transition-colors hover:bg-ink-2`}
+            style={{ borderLeftColor: cat(tone) }}
+          >
+            {body}
+          </button>
+        ) : (
+          <p className={shell} style={{ borderLeftColor: cat(tone) }}>{body}</p>
+        )
+      })()}
+      <StatBar
+        mode={mode}
+        onModeChange={switchMode}
+        segments={modeSegments()}
+        facts={facts}
+      />
+    </div>
+  )
 
   return (
     <PageLayout
       tier={1180}
-      zone1={
-        <StatBar
-          mode={mode}
-          onModeChange={switchMode}
-          segments={modeSegments()}
-          facts={facts}
+      zone1={orient}
+      /* `actTop`, because zone 1 is a BLOCK rather than four numbers: at full
+         width it is a wide shallow band with the thing you came to do pushed
+         below it. Read on the left, act on the right, both from the top. */
+      actTop
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
+      zone2={logCol.shut ? (
+        <ActStrip
+          label={mode === 'sport' ? 'Log a game' : 'Log a session'}
+          summary={sessions.length ? `${sessions.length} logged · last ${prettyDay(sessions[0].date)}` : 'Nothing logged yet'}
+          onOpen={logCol.open}
         />
-      }
-      zone2={
-        <>
+      ) : (
         <ActivityForm
           mode={mode}
           draft={draft}
           onChange={patch}
           onSubmit={submit}
           unit={unit}
-          submitLabel="Log session"
-          right={last ? (
-            <Button variant="ghost" onClick={repeatLast} className="inline-flex items-center gap-1 text-label">
-              <Icon as={ArrowsClockwise} size="sm" /> Repeat last
-            </Button>
-          ) : undefined}
+          submitLabel={mode === 'sport' ? 'Log game' : 'Log session'}
+          right={
+            <span className="flex items-center gap-1.5">
+              {last && (
+                <Button variant="ghost" onClick={repeatLast} className="inline-flex items-center gap-1 text-label">
+                  <Icon as={ArrowsClockwise} size="sm" /> Repeat last
+                </Button>
+              )}
+              {/* Shutting it lives on the form's own header, which is where
+                  Pickleball, Home Workout and Pull-ups put theirs — the strip
+                  that comes back is the way in, so the way out belongs on the
+                  thing itself. */}
+              <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the log" title="Hide the log — the review takes the width">
+                <Icon as={CaretRight} size="sm" />
+              </Button>
+            </span>
+          }
         />
-        </>
-      }
+      )}
       zone3={
-        <>
-          {/* History first, analytics under it. The list is what someone came
-              to look at — "did I train on Tuesday" is answered by a row, not by
-              a twelve-week heatmap — so the summary and the calendar read as
-              the commentary they are rather than the headline. */}
-          <section>
-            <div className="mb-1 flex items-baseline justify-between gap-2 border-b border-line pb-1">
-              <h2 className="text-label text-fg-2">History</h2>
-              <ShowMore list={history} />
-            </div>
-            {sessions.length === 0 ? (
-              <EmptyFrame>Log a session to start your history.</EmptyFrame>
-            ) : (
-              <ul>
-                {history.shown.map((w) => (
-                  <li
-                    key={w.id}
-                    {...justCapturedProps(justCaptured.has(WORKOUT_KEY(w.id)))}
-                    className={`group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0 ${justCaptured.has(WORKOUT_KEY(w.id)) ? 'just-captured' : ''}`}
-                  >
-                    <button onClick={() => setEditing(w)} className="flex min-w-0 flex-1 items-baseline gap-2 text-left">
-                      <span className="truncate font-medium text-fg-1">{fullLabelOf(w.activity, w.subActivity)}</span>
-                      <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
-                    </button>
-                    <div className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
-                      {w.durationMin != null && <span>{w.durationMin}m</span>}
-                      {w.distanceKm != null && <span>{displayDistance(w.distanceKm, unit)}{unit}</span>}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => removeWorkout(w.id)}
-                        aria-label={`Delete ${fullLabelOf(w.activity, w.subActivity)} on ${prettyDay(w.date)}`}
-                        className="text-fg-2 reveal hover:text-red"
-                      >×</Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Analytics · expanded, never a fold. The training calendar spent a
-              release behind a collapsed "Cardio analytics" accordion, which is
-              how the most useful thing on the page went unseen. */}
-          {/* Hidden entirely with no sessions in this mode, rather than drawn
-              as three "—" tiles over twelve blank weeks. That much furniture
-              around no data does not read as "nothing logged yet", it reads as
-              a page that failed to load — and the History section directly
-              above already says the true thing in one line. */}
-          {sessions.length > 0 && (
-            <section>
-              {/* The same hairline header as History above it. The two were a
-                  bare `h2` and a ruled one, so zone 3 read as one section and
-                  one loose afterthought rather than two of the same kind. */}
-              <h2 className="mb-1 border-b border-line pb-1 text-label text-fg-2">Analytics</h2>
-              <SummaryStrip items={[
-                { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-                { label: 'Total time', value: time.value, empty: time.empty },
-                { label: best.label, value: best.value, empty: best.empty },
-              ]} />
-              {/* `fluid`, and half a year rather than twelve weeks.
-                  Measured before: a 188×107px table in a 708px column, with
-                  ~520px of dead space beside it and ~300px below — the page's
-                  signature visual reading as a postage stamp. Fluid cells
-                  divide the column at any width, so 26 columns land at ~23px
-                  here and ~10px on a phone with no breakpoint, and the window
-                  doubles because the space was already paid for. */}
-              <div className="mt-3">
-                <CalendarHeatmap ranges storageKey="fitness" fluid data={heat} unit="min" />
-              </div>
-            </section>
-          )}
-
-          <EditDialog workout={editing} onClose={() => setEditing(null)} />
-        </>
+        <FitnessReview
+          sessions={sessions}
+          mode={mode}
+          unit={unit}
+          panel={panel}
+          onPanel={setPanel}
+        />
       }
     />
   )
@@ -329,60 +351,3 @@ export function Fitness() {
  * The lesson worth keeping: a link gated on state another module owns needs a
  * test that it can still *render*, not only that it is not redundant.
  */
-
-/** In-place edit for a logged session, so correcting one costs no scrolling. */
-function EditDialog({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
-  const { updateWorkout, removeWorkout } = useJournal()
-  return (
-    <Dialog open={!!workout} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit session</DialogTitle></DialogHeader>
-        {workout && (
-          <EditFields
-            workout={workout}
-            onSave={(p) => { updateWorkout(workout.id, p); onClose() }}
-            onDelete={() => { removeWorkout(workout.id); onClose() }}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function EditFields({ workout, onSave, onDelete }: {
-  workout: Workout
-  onSave: (p: Omit<Workout, 'id'>) => void
-  onDelete: () => void
-}) {
-  const confirm = useConfirm()
-  const { data } = useJournal()
-  const unit = data.settings.distanceUnit
-  const [draft, setDraft] = useState(() => draftOf(workout, unit))
-  const patch = (p: Partial<ActivityDraft>) => setDraft((cur) => ({ ...cur, ...p }))
-  // The session's own mode, not the page's: editing a push day should let you
-  // correct it to a pull day, never silently reclassify it as a Run.
-  return (
-    <div className="space-y-3">
-      <ActivityForm
-        mode={modeOf(draft.activity)}
-        draft={draft}
-        onChange={patch}
-        onSubmit={() => onSave(workoutOf(draft, unit))}
-        unit={unit}
-        submitLabel="Save session"
-      />
-      <Button
-        variant="ghost"
-        onClick={async () => {
-          if (await confirm({
-            title: 'Delete this session?',
-            description: 'The session and its sets are removed from your history. This cannot be undone.',
-            confirmLabel: 'Delete session',
-            destructive: true,
-          })) onDelete()
-        }}
-        className="inline-flex items-center gap-1.5 text-red hover:text-red"
-      ><Icon as={Trash} size="sm" /> Delete</Button>
-    </div>
-  )
-}

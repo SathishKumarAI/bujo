@@ -70,7 +70,13 @@ export const ACTIVITIES = {
   hiit:        { label: 'HIIT',         mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
   other:       { label: 'Other',        mode: 'cardio',   required: ['durationMin'],               best: 'duration' },
   pickleball:  { label: 'Pickleball',   mode: 'sport',    required: ['durationMin'],               best: 'duration' },
-  sport:       { label: 'Other sport',  mode: 'sport',    required: ['durationMin'],               best: 'duration' },
+  // `Sport`, not `Other sport`. It was relabelled when Pickleball sat beside
+  // it in the same `<select>` and "Other" was what distinguished them; the
+  // Fitness form does not offer Pickleball any more (`OWN_PAGE`), so the word
+  // now distinguishes it from nothing and "Other sport · Tennis" reads worse
+  // than "Sport · Tennis" on every history card. `normalizeActivity` still
+  // maps the legacy `'Sport'` string, which is what journals hold.
+  sport:       { label: 'Sport',        mode: 'sport',    required: ['durationMin'],               best: 'duration' },
   push:        { label: 'Push day',     mode: 'strength', required: ['sets'],                      best: 'volume' },
   pull:        { label: 'Pull day',     mode: 'strength', required: ['sets'],                      best: 'volume' },
   legs:        { label: 'Leg day',      mode: 'strength', required: ['sets'],                      best: 'volume' },
@@ -165,6 +171,41 @@ export const MODES: Mode[] = ['cardio', 'strength', 'sport']
 export const LOGGABLE_MODES: Mode[] = ['cardio', 'sport']
 
 /**
+ * ACTIVITIES WITH A LOGGER OF THEIR OWN · offered by their page, not by the
+ * Fitness form.
+ *
+ * `LOGGABLE_MODES` says the same thing one level up and for the same reason:
+ * Strength is a Body tab, so Fitness does not offer the mode. The per-ACTIVITY
+ * version was missing, and Pickleball fell through the gap — it led the Sport
+ * segment, so switching to Sport landed on a duration-and-notes form for a
+ * sport whose own page records the format, the score, the partner, the venue,
+ * the level and the points. Two front doors to one room, and the smaller one
+ * silently wrote sessions the Pickleball page's own analytics cannot read,
+ * into a different collection (`data.workouts`, not `data.pickleball`), so
+ * every total disagreed with itself.
+ *
+ * Reported as: *"if I play any other sports, if it's like pickleball, why do I
+ * need to enter from here? I have another option for pickleball."*
+ *
+ * **The activity is NOT deleted, and that is the whole design.** Journals hold
+ * pickleball workouts; `normalizeActivity` maps the legacy strings onto this
+ * key; `modeOf`, `labelOf` and `bestStat` still answer for it, so an existing
+ * row keeps its label and its history card. What changes is only what the FORM
+ * offers — and `optionsFor` keeps the current activity in its own list, so
+ * editing one of those rows still renders a select whose value is among its
+ * options. A controlled `<select>` whose value is absent renders as the FIRST
+ * option, which is exactly how this page once showed "Pickleball" while
+ * carrying `run`.
+ *
+ * The value is the view id to send a `?activity=` deep link to.
+ */
+export const OWN_PAGE: Partial<Record<ActivityKey, string>> = {
+  pickleball: 'pickleball',
+  pullups: 'pullups',
+  homeWorkout: 'homeworkout',
+}
+
+/**
  * Everything that changes with the mode, in one place.
  *
  * The contract requires the copy and the orientation facts to follow the mode —
@@ -220,8 +261,38 @@ export const isActivityKey = (k: string): k is ActivityKey => k in ACTIVITIES
 export const activitiesForMode = (mode: Mode): [ActivityKey, Activity][] =>
   KEYS.filter((k) => ACTIVITIES[k].mode === mode).map((k) => [k, ACTIVITIES[k]])
 
-/** The first activity of a mode · what a mode switch resets the selection to. */
-export const defaultActivityFor = (mode: Mode): ActivityKey => activitiesForMode(mode)[0][0]
+/** Everything of this mode that the Fitness form is allowed to OFFER. */
+export const loggableActivitiesForMode = (mode: Mode): [ActivityKey, Activity][] =>
+  activitiesForMode(mode).filter(([k]) => !OWN_PAGE[k])
+
+/**
+ * What a `<select>` of activities should hold, given what is selected now.
+ *
+ * The offered list, plus `current` if that is not in it. The second half is
+ * load-bearing: a stored session whose activity has a page of its own is still
+ * editable here, and a controlled select whose value is missing from its
+ * options renders as the first option instead of failing — the browser hides
+ * the bug, which is why `Fitness.test.tsx` asserts the value is AMONG the
+ * options rather than that it equals a string.
+ */
+export const optionsFor = (mode: Mode, current?: ActivityKey): [ActivityKey, Activity][] => {
+  const rows = loggableActivitiesForMode(mode)
+  if (current && isActivityKey(current) && !rows.some(([k]) => k === current)) {
+    return [...rows, [current, ACTIVITIES[current]]]
+  }
+  return rows
+}
+
+/**
+ * The first activity of a mode · what a mode switch resets the selection to.
+ *
+ * The first OFFERED one, so switching to Sport lands on something the form can
+ * hold. The fallback to the full list keeps the function total for a mode
+ * whose activities all have pages of their own — today that is none, and a
+ * `[0][0]` on an empty array is a crash rather than a wrong answer.
+ */
+export const defaultActivityFor = (mode: Mode): ActivityKey =>
+  (loggableActivitiesForMode(mode)[0] ?? activitiesForMode(mode)[0])[0]
 
 /**
  * Mode of an activity. Unknown keys fall back to cardio: a session that somehow
