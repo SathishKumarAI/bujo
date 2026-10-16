@@ -26,7 +26,7 @@ finding, not a licence to invent a seventh disclosure implementation.
 | A session history card | `components/fitness/History.tsx` · `components/gym/History.tsx` | Three `PanelCard`s, `ShowMore` carrying the total, a named **Edit** that opens the real form in the card, and a delete that asks |
 | The next-step sentence | `lib/pickleball.ts` → `nextStep` | Zone 1 says what to do, not only what is true |
 | Drill-down to entries | `Review.tsx`'s `focus` + `onPick` | Every figure opens the rows behind it, where Edit and × live |
-| A worked comparison card | `components/pickleball/SignalCards.tsx` → `WeekdayPerformanceCard` | What `BarList` looks like wrapped in a `Card`, with the subtitle saying the finding |
+| A worked comparison card | `components/pickleball/SignalCards.tsx` → `WeekdayPerformanceCard` | What `BarList` looks like wrapped in a `Card`, with the subtitle saying the finding. **It now actually calls it** — this line described the intent while the card held forty retyped lines of that markup, and the copy was the one place a shared a11y fix could not reach (32 violations, four pages, found only by `a11y:panels`) |
 | Per-panel a11y | `scripts/a11y-panels.mjs` | A rail hides four rows from `npm run a11y`; this drives them all, armed on a canary. One `PAGES` entry per page — **and one per sticky-state variant**, because a mode toggle hides half a page from it the way a tab shell does |
 
 ## Where each page stands
