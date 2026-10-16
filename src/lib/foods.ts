@@ -390,3 +390,22 @@ export function foodMatches(food: Food, query: string): boolean {
   if (!q) return true
   return food.name.toLowerCase().includes(q) || food.serving.toLowerCase().includes(q)
 }
+
+/**
+ * `Rajma (kidney bean curry)` → `Rajma`.
+ *
+ * The library names a food so the PICKER is unambiguous — there are two rices
+ * and three egg dishes, and a parenthetical is what separates them in a search
+ * box. A bar list is the opposite problem: eight names down a `w-36` column,
+ * where the parenthetical is the half that gets eaten by the ellipsis and
+ * `Grilled chicken br…` says less than `Grilled chicken` does.
+ *
+ * Draw short, announce long (§3) — the full name stays in `announce` and in
+ * the card's own subtitle, so nothing is lost, and the row is not a button so
+ * there is no visible-text-in-the-name rule to satisfy here.
+ */
+export const shortFood = (name: string): string =>
+  // A SPACED slash only. `Curd / dahi` is an alias and drops; `Ground beef
+  // 85/15` is a ratio and must not — the first draft took it to "Ground beef
+  // 85", which is a different claim about the food.
+  name.replace(/\s+\(.*$/, '').replace(/\s+\/\s.*$/, '').trim() || name

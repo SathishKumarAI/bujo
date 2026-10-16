@@ -1,5 +1,6 @@
 import { CalendarBlank, ChartBar, ForkKnife, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { shortFood } from '../../lib/foods'
 import { Card, Empty, Input } from '../ui'
 import { BarList, ResetField, type BarRow } from '../page'
 import { cat, onRaised } from '../../lib/colors'
@@ -235,7 +236,7 @@ export function WeekdayCard({ rows, targets }: { rows: WeekdayIntake[]; targets:
 export function TopFoodsCard({ foods }: { foods: FoodTally[] }) {
   const top = foods[0]
   const bars: BarRow[] = foods.map((f) => ({
-    label: f.name,
+    label: shortFood(f.name),
     pct: f.share,
     value: `${f.share}%`,
     note: `${f.times}×`,
@@ -253,7 +254,11 @@ export function TopFoodsCard({ foods }: { foods: FoodTally[] }) {
         <Empty>Tap foods rather than typing totals and this fills in.</Empty>
       ) : (
         <>
-          <BarList rows={bars} labelWidth="w-28" />
+          {/* `w-36`, not `w-28`: the library's longest drawn name after
+              `shortFood` is "Grilled chicken" at ~104px, and 112px left it one
+              character short at the exact moment the list became worth
+              reading. The bar keeps 500px of a 678px card. */}
+          <BarList rows={bars} labelWidth="w-36" />
           <p className="mt-2 text-micro text-fg-2">
             Share of logged calories, by food, with how many servings. Ranked by calories rather than by taps: one biryani outweighs three coffees.
           </p>
