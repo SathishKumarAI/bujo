@@ -80,7 +80,11 @@ export function FitnessHistory({ list, unit }: {
                       size="sm"
                       onClick={() => setEditing(editing === w.id ? null : w.id)}
                       aria-expanded={editing === w.id}
-                      aria-label={`Edit ${name} on ${prettyDay(w.date)}`}
+                      /* The name follows the WORD ON THE BUTTON. It says
+                         "Close" once the editor is open, and a name still
+                         saying "Edit…" then fails WCAG 2.5.3 — which only ever
+                         shows up in a gate that opens folds before it scans. */
+                      aria-label={editing === w.id ? `Close the editor for ${name} on ${prettyDay(w.date)}` : `Edit ${name} on ${prettyDay(w.date)}`}
                       className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
                     >{editing === w.id ? 'Close' : 'Edit'}</Button>
                     <Button

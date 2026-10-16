@@ -125,7 +125,9 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
                                 size="sm"
                                 onClick={() => setEditing(editing === w.id ? null : w.id)}
                                 aria-expanded={editing === w.id}
-                                aria-label={`Edit home workout on ${prettyDay(w.date)}`}
+                                /* Follows the word on the button — see
+                                   `fitness/History`. */
+                                aria-label={editing === w.id ? `Close the editor for the home workout on ${prettyDay(w.date)}` : `Edit home workout on ${prettyDay(w.date)}`}
                                 className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
                               >{editing === w.id ? 'Close' : 'Edit'}</Button>
                               <Button

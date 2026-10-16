@@ -47,7 +47,7 @@ afterEach(() => localStorage.clear())
 /** The rail names itself "Overview — 6 panels"; match on the label half. */
 const railRow = (label: string) =>
   screen.getByRole('button', {
-    name: (accessibleName) => accessibleName.startsWith(`${label} — `),
+    name: (accessibleName) => accessibleName.startsWith(`${label} `),
   })
 
 describe('Insights · the registry is the page', () => {

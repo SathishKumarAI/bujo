@@ -40,7 +40,13 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
           style={isSel ? { background: cat('mauve') + '22' } : isPeriod ? { background: cat('red') + '22' } : undefined}
         >
           <span className={`w-6 num ${isToday ? 'font-medium text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
-          <span className="num w-10 text-fg-3" title={cd != null ? `Cycle day ${cd}` : undefined}>
+          {/* `fg-2`, not `fg-3`. This row takes a 13% wash of mauve when it is
+              selected and of red on a period day, and the wash lifts the ground
+              toward the text: `fg-3` measured **4.16:1** on the period tint and
+              **4.01** on the selected one. The quietest neutral is the one that
+              cannot survive a tinted ground — the width columns and the `d`
+              prefix carry the hierarchy here, not a third step of fade. */}
+          <span className="num w-10 text-fg-2" title={cd != null ? `Cycle day ${cd}` : undefined}>
             {cd != null ? `d${cd}` : ''}
           </span>
           <span className="num w-14 text-fg-1">{c?.temp != null ? `${c.temp}°` : ''}</span>

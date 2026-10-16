@@ -119,7 +119,17 @@ export function LibraryList({
                     <button
                       onClick={() => onToggle(p.id)}
                       aria-pressed={on}
-                      aria-label={on ? `Remove ${p.title} from your focus` : `Add ${p.title} to your focus`}
+                      /*
+                        NO `aria-label`. The card paints a title, a state badge
+                        and a reason, and `label-content-name-mismatch` (WCAG
+                        2.5.3) requires the name to contain what is painted — a
+                        name of "Add X to your focus" cannot contain a sentence
+                        of `why`, and no rewording of it ever will. The content
+                        is the name here, with `aria-pressed` carrying the
+                        add/remove half that the label used to state. That is
+                        also why the badge below is no longer `aria-hidden`:
+                        "Add" is painted, so it belongs in the name.
+                      */
                       className={`flex h-full w-full flex-col rounded-card border p-3 text-left transition-colors ${
                         on
                           ? 'border-brand bg-brand-wash'
@@ -131,7 +141,6 @@ export function LibraryList({
                           {p.title}
                         </span>
                         <span
-                          aria-hidden
                           className={`mt-0.5 shrink-0 rounded-pill border px-2 py-0.5 text-micro ${
                             on
                               ? 'border-brand text-brand-text'

@@ -46,7 +46,7 @@ afterEach(() => localStorage.clear())
 
 /** The rail names itself "Progress — 7 panels"; match on the label half. */
 const railRow = (label: string) =>
-  screen.getByRole('button', { name: (name) => name.startsWith(`${label} — `) })
+  screen.getByRole('button', { name: (name) => name.startsWith(`${label} `) })
 
 /**
  * Panels the demo seed structurally cannot produce, with the reason.
@@ -146,7 +146,11 @@ describe('Recovery · the registry is the page', () => {
   it('offers exactly the registry groups in the rail', () => {
     mount()
     const rail = screen.getByRole('navigation', { name: 'Recovery groups' })
-    const labels = [...rail.querySelectorAll('button')].map((b) => (b.getAttribute('aria-label') || '').split(' — ')[0])
+    // The row's DRAWN label, not its accessible name parsed back apart. The
+    // name now reads "Progress 6 panels" (WCAG 2.5.3 wants it to contain what
+    // is painted), and a test that splits a name on its separator breaks every
+    // time that separator moves while asserting nothing about the rail.
+    const labels = [...rail.querySelectorAll('button')].map((b) => b.querySelector('span')?.textContent ?? '')
     expect(labels).toEqual(GROUPS.map((g) => GROUP_LABEL[g]))
   })
 

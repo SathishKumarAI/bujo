@@ -681,7 +681,12 @@ async function goOrDie(w, name, why) {
  * repo have had that single cause.
  */
 async function scanInsightsAll(w) {
-  const sel = 'nav[aria-label="Insight domains"] button[aria-label^="All — "]';
+  // `All 28 panels`, with a SPACE. It used to be `All — 28 panels`, and the em
+  // dash was the bug: `label-content-name-mismatch` compares a name against the
+  // painted text, and the rail paints `All28` with no text node between its two
+  // spans. Matching the prefix is what keeps this honest — a bare `All` would
+  // also match a future `All-time` row.
+  const sel = 'nav[aria-label="Insight domains"] button[aria-label^="All "]';
   await w.page.locator(sel).first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {})
   const clicked = await w.page.evaluate((s) => {
     const b = document.querySelector(s)

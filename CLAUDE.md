@@ -194,6 +194,32 @@ violation: four busy pages make every wait in that file tighter, and the table
 in the "every browser-gate assertion needs a wait in front of it" trap below is
 what that looks like when it goes wrong.
 
+Trap: **an unpinned gate changes its own rules without a commit.** `a11y.yml`
+installed `playwright` and `@axe-core/playwright` per job with no version, so
+axe went 4.13 → 4.14 on its own, 4.14 turned `label-content-name-mismatch`
+(WCAG 2.5.3) on, and the gate went red **on `main` and on every open branch at
+once** — days before anyone read the log, because a red on your own branch
+reads as "something I did". Three page passes shipped under it. The findings
+were real (137 controls over nine components: a pill drawing `migrated 4×` and
+named `Migration history for "…"`, a rail painting `All24`), which is the point
+— the gate was right and nothing in any diff said why it had started failing.
+**Pin the gate's own dependencies**, so a new rule set arrives as a commit with
+its findings attached. And when a gate goes red across every branch including
+`main`, suspect the gate's environment before suspecting the branch: `git log`
+on the workflow is the first thing to read, and a version that is not in it is
+the answer.
+
+Two corollaries, both from the same hunt. **`label-content-name-mismatch`
+compares the name against the PAINTED text, and `aria-hidden` does not exempt a
+string from it** — correctly, since a speech-input user says what they can see.
+So the repo's draw-short/announce-long rule (`REUSABLE-PATTERNS.md` §3) only
+holds while the long name CONTAINS the short label; announcing more is fine,
+announcing something else is not. And **two adjacent spans with no text node
+between them paint one word**: `<span>All</span><span>24</span>` is `All24`, so
+a name of `All — 24 panels` cannot contain it. The rail's own comment described
+that exact concatenation and fixed the *reading* with an em dash, which is what
+created the mismatch.
+
 Trap: **`npx tsc --noEmit` typechecks nothing here** — the root `tsconfig.json`
 is solution-style (`"files": []` + project references), so it has no root files
 and always exits 0. Always use `npx tsc -b`.

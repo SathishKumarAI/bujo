@@ -120,11 +120,20 @@ function DayCell({ s, week, day, focus }: { s: ProgramState; week: number; day: 
   const fg = selected ? onAccent(cat('blue')) : complete ? cat('green') : cat('subtext1')
 
   const state = complete ? ', complete' : next ? ', next up' : ''
+  /*
+    THE NAME LEADS WITH WHAT THE CELL DRAWS.
+    `label-content-name-mismatch` (WCAG 2.5.3) compares the accessible name
+    against the PAINTED text — `aria-hidden` does not exempt a string from it,
+    and it should not: a speech-input user says what they can see. This cell
+    paints the day number and, from `sm` up, the focus, so the name has to
+    start with "1 Strength" before it says which week it is in. Reordering
+    costs nothing: a screen reader still hears the week, one clause later.
+  */
   return (
     <button
       onClick={() => s.goTo(week, day)}
       aria-pressed={selected}
-      aria-label={`${s.unit} ${week}, day ${day}, ${focus}${state}`}
+      aria-label={`${day} ${focus}, ${s.unit} ${week}${state}`}
       // No width of its own any more: the grid track above sizes it, which is
       // what keeps the columns aligned across weeks. `min-w-0` so a long focus
       // name cannot push the track wider than its `6.5rem` cap.
@@ -142,7 +151,13 @@ function DayCell({ s, week, day, focus }: { s: ProgramState; week: number; day: 
           one line. */}
       <span className="num block text-label">
         <span aria-hidden>{complete ? '✓ ' : next ? '▸ ' : ''}</span>
-        <span aria-hidden>{day}</span>
+        {/* The trailing space is load-bearing: the focus name below is a
+            sibling block, and with no text node between them the PAINTED text
+            of this button is "3Conditioning" — which no accessible name
+            containing "3 Conditioning" can satisfy. Same shape as the rail's
+            "All24", and invisible on screen because the two spans are blocks
+            and break anyway. */}
+        <span aria-hidden>{day}{' '}</span>
       </span>
       {/*
         The focus name from `sm` up only.

@@ -99,7 +99,11 @@ export function DayTallyCard({ rows, onStep }: {
                     variant="secondary"
                     size="lg"
                     onClick={() => onStep(r.id, q)}
-                    aria-label={`Add ${formatAmount(q, r.unit)} to ${r.name} today`}
+                    /* Leads with the painted short form ("15m"), then says
+                       what it means — WCAG 2.5.3 wants the name to contain
+                       what the button shows, and "Add 15 min" does not
+                       contain "15m". */
+                    aria-label={`${quickLabel(q, r.unit)} — add ${formatAmount(q, r.unit)} to ${r.name} today`}
                     className="min-w-11 px-2.5"
                   >
                     {r.count === 0 && q === unitOf(r.unit).quick[0]
