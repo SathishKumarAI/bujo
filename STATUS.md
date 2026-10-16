@@ -1,21 +1,57 @@
 # STATUS
 
-**Stopped:** 2026-10-15, **on `main`, everything merged, nothing in flight.**
+**Stopped:** 2026-10-15, on `feat/fitness-pass`, **one PR open** — the Fitness
+pass (COD-329), the second page off `docs/PAGE-ROLLOUT.md`.
 
-| PR | what | on main |
-|---|---|---|
-| #405 | Home workout + Pull-ups — cards, chips, `SessionEditor`, `ActStrip` | `d875d2a` |
-| #407 | Coaching — one bar, the spine, scenarios, the practice tick | `06d3505` |
-| #408 | Pickleball — three zones, the record behind one bar, `nextStep` | `738982d` |
-| #409 | The act column starts shut where the page stacks | `1cf7b3e` |
+## Where it stands
 
-Branches deleted, no open PRs. `main` verified after the last merge:
-**1990 tests / 146 files**, `design` 460 files, `contrast` 5 themes,
-`smoke` 23/23 views, `a11y:panels` 35 scans, `clipped` clean at three widths.
+Five commits on `feat/fitness-pass`, pushed, PR open against `main`. Nothing
+else in flight; `main` is where PR #409 left it.
 
-**Next session starts at `docs/PAGE-ROLLOUT.md`** — the work list for Strength,
-Fitness, Nutrition, Challenges, Recovery and Cycle, with where each one stands
-today and the ten steps in order.
+| commit | what |
+|---|---|
+| `a556d7d` | `lib/fitnessReview.ts` — the aggregates cardio and sport never had, with the floors asserted and armed on planted regressions |
+| `e54b1b7` | the stat-card grid moves to `components/page/StatGrid.tsx` |
+| `d426cf5` | the page: one bar of four rows, `useActColumn` + `ActStrip`, `nextStep` in zone 1 |
+| `3c9b00f` | the demo seeds `sport` workouts; `DEMO_VERSION` 20 → 21 |
+| (next) | `a11y-panels` drives both pages and both Fitness modes; the docs |
+
+Verified on this branch, against a local preview of its own build:
+**2006 tests / 147 files**, `tsc -b` clean, eslint clean, `vite build` clean,
+`design` 466 files, `contrast` 5 themes, `smoke` 23/23, `clipped` clean at
+1440 / 1024 / 390, **`a11y:panels` 91 scans · 0 serious · 0 critical** (armed:
+`BUJO_CANARY=1` on one theme reports 26).
+
+## The next action
+
+`docs/PAGE-ROLLOUT.md` — **Strength (`views/Gym.tsx`, 781 lines) is next, and
+its first step is splitting the file**, not the rail. Then Nutrition,
+Challenges, Recovery, Cycle.
+
+Two things to know before starting it:
+
+- **`npm run a11y:panels` is still local-only.** It is 91 scans now; the a11y
+  workflow has been red on `main` since 2026-10-15 09:08 for an unrelated
+  shell-dropdown violation, so adding a second browser gate to it buys nothing
+  until that is fixed. That red is also why every PR shows UNSTABLE.
+- **Measure a rail page per row with a throwaway probe** — `npm run space`
+  grades only the row the rail opens on. Fitness reports 1.0 desktop screens
+  and its worst row is 1.4.
+
+## The Fitness pass · COD-329
+
+Full write-up, with the before/after table and the six traps it paid for:
+**`docs/pages/fitness.md`**. The three worth carrying forward:
+
+- **Sport mode's review zone was 47px** — one empty frame — because no seeded
+  workout derived that mode. Third unseeded-domain instance.
+- **Two "this week" figures disagreed by 4.7x**, both correct: zone 1 counts
+  every activity (`weeklyActiveMinutes`, which is what the 150-minute target
+  means in Goals and `lib/coach.ts`), the card counts one mode. Scope is part
+  of a comparison's currency.
+- **jsdom measures a 0px shell**, so component tests always see the stacked
+  layout and the act therefore starts shut. Four Fitness tests went red on a
+  correct change; they open the strip now.
 
 ## The Pickleball pass · COD-328
 

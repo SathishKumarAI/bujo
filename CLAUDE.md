@@ -657,6 +657,17 @@ same as one cigarette is. The amount stays, for saying what it cost. Whenever a
 quantity gains a unit, grep every place it is divided by or compared against
 something else.
 
+**And SCOPE is part of the currency, not only the unit.** Fitness toned its
+weekly bars against `fitnessGoalMin` — a target `weeklyActiveMinutes` computes
+over *every* activity, lifting and pickleball included — while the card itself
+counts the sessions of one mode. On the demo journal that is **578 minutes in
+zone 1 against a 123-minute bar two inches below it**: a 4.7x disagreement in
+which both figures are correct and only the rows behind them differ, and a red
+bar on a perfectly good week. Before judging a figure against a target, check
+the target was computed over the same ROWS. The fix has the same shape as the
+unit one — the card compares its blocks with each other and names what it
+counts, and the target stays beside the number it was set for.
+
 Trap: **hand-rolling a control the app already has is how a new panel ships
 looking unstyled.** Three new panels used inline `cat('surface0')` /
 `cat('surface2')` backgrounds for their chips instead of `ChipPick`, which
@@ -805,6 +816,27 @@ throwaway probe and say what you measured.** Recovery's four groups were probed 
 five desktop and two phone themes — 28 scans, 0 serious or critical — so arming it
 there is free; that is not known for the other five. A rail is still the right
 instrument; what is not allowed is letting the fold count read as coverage.
+
+Trap (COD-329): **a sticky toggle hides half a page from a gate exactly the way
+a tab shell does.** Fitness's Cardio/Sport switch is `useStickyState`, not a URL
+parameter, so a probe that clears `bujo.ui.*` and scans seven themes scans the
+CARDIO half seven times. The sport half was worse than unscanned: `lib/demo.ts`
+seeded no workout whose activity derives mode `sport` (pickleball lives in
+`data.pickleball`), so its entire review zone measured **47px — one empty
+frame** at every theme and both viewports, for the life of the page. Two
+lessons, both already in this file in other clothes: when a gate walks the DOM
+ask what is NOT in it (COD-232), and an unseeded domain is a subject no gate is
+checking (`data.cycle`, `activity: 'pullups'`). `scripts/a11y-panels.mjs` takes
+one `PAGES` entry per sticky-state variant for this reason.
+
+Trap: **jsdom reports a 0px shell, so every component test sees the STACKED
+layout.** `PageLayout` decides the split by measuring `.page-shell`'s
+`clientWidth`, and `useActColumn` shuts the act when stacked — which is the
+measured default, not a bug. So adding the act collapse to a page turns its
+existing view tests red on a correct change, and the fix is for the test to
+open the strip (and assert `aria-expanded="false"` on the way in, which is the
+only coverage that default has outside a browser probe). Reaching for a jsdom
+width shim instead would be contorting the app to make a test pass.
 
 Trap (retired): `BottomNav`'s `PRIMARY` list used to be silently filtered
 against the sidebar items, so retiring a nav id dropped its phone tab with no

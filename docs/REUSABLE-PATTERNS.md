@@ -616,7 +616,11 @@ the list from **5 rows to 1**.
 ## 21 · A comparison of seven things is bars, not tiles
 
 **What it is.** One row per item: label, a track, the figure, the sample. Not a
-grid of cells.
+grid of cells. **`components/page/BarList.tsx`** since Fitness (COD-329) — it
+was written as a component on its FOURTH caller, after Pickleball hand-rolled
+the same row three times and Fitness needed three more. Pickleball's three are
+deliberately left alone: they render identically today and migrating them is a
+diff with no measurement behind it.
 
 **Measured on "Performance by weekday".** Seven 44px cells inside a 353px card,
 each holding a weekday, a percentage and a games count: `100%` needs 38px, so
