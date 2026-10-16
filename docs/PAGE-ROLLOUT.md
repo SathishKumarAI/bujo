@@ -39,7 +39,7 @@ been done (COD-329) and is kept in the table as the worked example.
 |---|---|---|---|---|---|---|
 | ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (7 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
-| Nutrition | `views/Nutrition.tsx` | 531 | — | — | — | `nextStep` — the page has no sentence at all, not even a `StatBar` |
+| ~~Nutrition~~ | `views/Nutrition.tsx` | 424 | ✓ | ✓ | n/a (3 rows) | **Done, 2026-10-16** — see `docs/pages/nutrition.md` |
 | Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
 | Recovery | `views/NoFap.tsx` | 416 | ✓ | — | — | `actShut` + arm `a11y-panels` (COD-237 names this page) |
 | Cycle | `views/Cycle.tsx` | 593 | ✓ | — | — | Arm `a11y-panels`; then sub-sections on the long row |
@@ -125,6 +125,10 @@ each one is a commit.
   a 10–20 landmark while counting a set once per muscle the lift works, so
   nine of twelve muscles are permanently "over 20". Filed during the Strength
   pass, not fixed in it.
-- **Nutrition, Challenges, Recovery and Cycle** are the four left. Nutrition
-  still has no sentence and no `StatBar`; Recovery and Cycle have rails that
-  `a11y-panels` does not drive yet.
+- **Challenges, Recovery and Cycle** are the three left. Recovery and Cycle
+  have rails that `a11y-panels` does not drive yet.
+- Nutrition's pass added four patterns rather than only consuming them —
+  `ResetField` (§26), the title-as-toggle (§27), a library behind a search with
+  its groups as a filter (§28), and the record living beside the figure it
+  explains (§29). The last of those is the one to carry into Recovery: its urge
+  log is in the act, under the form, for the same reason Nutrition's was.

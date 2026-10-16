@@ -34,7 +34,7 @@ user · **P3** = polish, worth doing when nearby.
 | Cluster | Pages |
 |---|---|
 | Journal | [Today](today.md) · [Plan](plan.md) · [Monthly](monthly.md) |
-| Fitness | [Fitness](fitness.md) · [Strength](gym.md) · [Pull-ups](pullups.md) · [Home Workout](home-workout.md) |
+| Fitness | [Fitness](fitness.md) · [Strength](gym.md) · [Pull-ups](pullups.md) · [Home Workout](home-workout.md) · [Nutrition](nutrition.md) |
 | Sports | [Pickleball](pickleball.md) · [Coaching](coaching.md) |
 | Habits | [Trackers](trackers.md) · [Challenges](challenges.md) · [Focus](focus.md) |
 | Wellbeing | [Mindset](mindset.md) · Cycle¹ · [Recovery](recovery.md) |
