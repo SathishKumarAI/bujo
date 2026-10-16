@@ -9,7 +9,7 @@ import { Icon } from '@/components/Icon'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ActStrip, DisclosureRow, EmptyFrame, NumField, PageLayout, useActColumn } from '../components/page'
+import { ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { cat, onRaised } from '../lib/colors'
@@ -299,7 +299,7 @@ export function Nutrition() {
           onOpen={logCol.open}
         />
       ) : (
-        <section className="flex flex-col gap-3">
+        <section className="@container/act flex flex-col gap-3">
           {/* THE TITLE IS THE TOGGLE.
               Asked for as "if I click on Log what you ate, that should hide it
               and also show me that". The caret alone is a 28px target for a
@@ -307,16 +307,29 @@ export function Nutrition() {
               pressable and is not is worse than one that does nothing — so the
               heading IS the button, with `aria-expanded` saying which way it
               goes and the caret kept as the affordance that says so visually. */}
+          {/* AND IT SAYS SO. Asked for as "for the side, a log what you ate,
+              you can mention that — you can tap it to hide it". A heading that
+              is secretly a button is a feature nobody finds: the hint is drawn
+              beside the caret, quietly, rather than left in a `title` nobody
+              hovers and a phone cannot show at all. */}
           <h2 className="text-heading font-medium text-fg-1">
             <button
               type="button"
               onClick={logCol.close}
               aria-expanded
               title="Hide the log — the review takes the width"
-              className="flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
+              className="group flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
             >
-              Log what you ate
-              <Icon as={CaretRight} size="sm" className="shrink-0" />
+              Log what you ate{' '}
+              {/* The space is load-bearing. Without a text node between them
+                  these two spans paint — and are ANNOUNCED as — "Log what you
+                  ateTap to hide", one token. Same defect as the rail's "All24",
+                  found by measuring `textContent` rather than by reading the
+                  JSX, which is the only way it is ever visible. */}
+              <span className="inline-flex shrink-0 items-center gap-1 text-label font-normal text-fg-2 group-hover:text-fg-1">
+                Tap to hide
+                <Icon as={CaretRight} size="sm" />
+              </span>
             </button>
           </h2>
 
@@ -359,19 +372,48 @@ export function Nutrition() {
               gate entirely (the COD-93 trap). It is also the page's only
               disclosure, which is that component's stated rule. */}
           <DisclosureRow label="Or set the day’s totals directly">
-            <NumField
-              label="Calories" suffix="kcal" step="10" placeholder="450"
-              value={m?.calories != null ? String(m.calories) : ''}
-              onChange={(v) => setMetric(date, { calories: v ? Number(v) : undefined })}
-            />
-            {MACROS.map((mac) => (
-              <NumField
-                key={mac.key}
-                label={mac.label} suffix="g" step="1" placeholder="30"
-                value={m?.[mac.key] != null ? String(m[mac.key]) : ''}
-                onChange={(v) => setMetric(date, { [mac.key]: v ? Number(v) : undefined })}
-              />
-            ))}
+            {/*
+              FOUR FIELDS SIDE BY SIDE, with the unit OUTSIDE the box.
+
+              Reported as "this total formatted well, it's going out of the
+              screen size and it's overflowing … keep everything side by side,
+              all in four, and show the calories outside of it, taking only
+              input — like you did in add a food of your own". Measured before:
+              four `NumField`s, each a full-width 416px row holding a 144px
+              input with its unit laid INSIDE the box on a `pr-12` — 272px of
+              that row empty, four times, and the number typed into whatever
+              was left of a padded field.
+
+              `@min-[24rem]/act`, NOT `sm:`. The act column is **424px at a
+              1440 viewport**, where `sm` has been true for 200px — the exact
+              trap CLAUDE.md records from Strength's set row, and the one the
+              custom-food form below had too (five columns at 77px each on a
+              desktop, two at 158px on a phone, i.e. worse the bigger the
+              screen). The container is declared on this `<section>`.
+            */}
+            <div className="grid grid-cols-2 gap-2 @min-[24rem]/act:grid-cols-4">
+              {([
+                { key: 'calories' as const, label: 'Calories', unit: 'kcal', step: '10', hint: '450' },
+                ...MACROS.map((mac) => ({ key: mac.key, label: mac.label, unit: 'g', step: '1', hint: '30' })),
+              ]).map((f) => (
+                <label key={f.key} className="block min-w-0 text-micro text-fg-2">
+                  {/* The unit lives HERE, in the label, where it is read once
+                      and costs the input nothing. */}
+                  {f.label} <span className="text-fg-3">{f.unit}</span>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step={f.step}
+                    value={m?.[f.key] != null ? String(m[f.key]) : ''}
+                    placeholder={f.hint}
+                    aria-label={`${f.label} for this day, in ${f.unit === 'g' ? 'grams' : 'kcal'}`}
+                    onChange={(e) => setMetric(date, { [f.key]: e.target.value ? Number(e.target.value) : undefined })}
+                    className="num mt-0.5 w-full py-1 text-right"
+                  />
+                </label>
+              ))}
+            </div>
             <Button
               variant="ghost"
               className="text-label"

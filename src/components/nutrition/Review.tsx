@@ -6,9 +6,11 @@ import { todayISO } from '../../lib/date'
 import {
   averages, loggedDays, topFoods, trainingBalance, weekdayIntake, type Targets,
 } from '../../lib/nutritionReview'
+import { dailySeries, heatDays } from '../../lib/nutritionSeries'
 import { useJournal } from '../../store'
 import { NUTRITION_PANELS } from './panels'
 import { BalanceCard, FortnightCard, RemainingCard, TargetsCard, TopFoodsCard, WeekdayCard } from './Cards'
+import { CalorieCalendarCard, CalorieWaveCard } from './Charts'
 
 /**
  * ZONE 3 · the day and the fortnight, behind ONE bar.
@@ -68,6 +70,17 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
   const foods = topFoods(data, 14, today)
   const balance = trainingBalance(data, targets, 14, today)
   const m = data.metrics.find((x) => x.date === date)
+  /*
+    THREE WINDOWS, each as long as its question and no longer.
+
+    | window | for | why not longer, why not shorter |
+    |---|---|---|
+    | 14 days | the cards that judge | long enough to mean something, short enough to still be about this week |
+    | 28 days | the wave | a wave needs points, and at EIGHT weeks the demo drew thirty of fifty-six — two thirds of the chart was the time before you started logging, which is not a gap in your history, it is not your history. Measured on the first screenshot |
+    | 20 weeks | the calendar | `DayGrid` clamps a fluid cell at ~32px and centres what is left, so twelve weeks is 13 columns of 32px **centred in a 678px card**. Twenty-one columns fill it, and "a lot of empty space, why are you not scaling it to the sides" is a report this repo has already had once |
+  */
+  const series = dailySeries(data, 28, today, targets)
+  const cells = heatDays(data, 140, today)
 
   const current = NUTRITION_PANELS.find((p) => p.id === panel) ?? NUTRITION_PANELS[0]
 
@@ -116,9 +129,13 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
               ]} />
               <div className="mt-4">
                 <StatGrid>
+                  {/* THE SHAPE FIRST, then the ledger behind it. The wave says
+                      whether the fortnight was steady; `FortnightCard` says
+                      which day to open. A reader who only looks at the top of
+                      this row still leaves with the finding. */}
+                  <CalorieWaveCard series={series} targets={targets} />
+                  <CalorieCalendarCard cells={cells} targets={targets} weeks={20} />
                   <FortnightCard days={days} averages={avg} targets={targets} onPick={onDate} />
-                  {/* The cross-page card: what the training days ate. */}
-                  <BalanceCard balance={balance} />
                   <TargetsCard targets={targets} onChange={onTargets} />
                 </StatGrid>
               </div>
@@ -128,6 +145,14 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
               <StatGrid>
                 <WeekdayCard rows={weekdays} targets={targets} />
                 <TopFoodsCard foods={foods} />
+                {/* MOVED OFF TREND. "Are trends and patterns the same? If so
+                    combine them" — they are not, and this card is why the line
+                    had blurred. What the training days ate is not a movement
+                    over time; it is a split of the same fortnight by something
+                    about the day, which is exactly what `WeekdayCard` does and
+                    exactly what this row is for. Trend is now WHEN, Patterns
+                    is WHY. */}
+                <BalanceCard balance={balance} />
               </StatGrid>
             )}
           </div>

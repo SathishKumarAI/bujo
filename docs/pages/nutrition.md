@@ -45,8 +45,49 @@ the thirty seconds after tapping a food.
 | # | row | the question |
 |---|---|---|
 | 1 | Today | what is this day made of, and what is missing from it |
-| 2 | Trend | how is the fortnight going — and where are the targets set |
-| 3 | Patterns | which days and which foods are doing it |
+| 2 | Trend | **when** — the shape of the last four weeks against target |
+| 3 | Patterns | **why** — which weekday, which foods, which kind of day |
+
+### Trend and Patterns were starting to be the same row
+
+A fair reading, and it was reported as one: *"the trends and patterns are the
+same — if so, please combine them"*. They are not the same question, but the
+cards had drifted. Trend held the fortnight ledger, the targets **and** the
+training/rest split — and that last one is not a movement over time at all. It
+is the same fortnight cut by something about the day, which is exactly what the
+weekday card does.
+
+So the split is now one question each: **Trend is WHEN, Patterns is WHY.**
+
+| row | holds |
+|---|---|
+| Trend | the wave · the calendar · the fortnight ledger · your targets |
+| Patterns | by weekday · what it was made of · protein and training |
+
+### Two pictures, three windows
+
+| window | for | why not longer, why not shorter |
+|---|---|---|
+| 14 days | the cards that judge | long enough to mean something, short enough to still be about this week |
+| **4 weeks** | the wave | at eight weeks the demo drew thirty points of fifty-six and two thirds of the chart was the time *before* you started logging — which is not a gap in your history, it is not your history |
+| **20 weeks** | the calendar | `DayGrid` clamps a fluid cell at ~32px and centres the rest, so twelve weeks is 13 columns centred in a 678px card. Twenty-one columns fill it |
+
+**The wave** (`Day by day`) is an area chart of calories per day with the
+target drawn as a **band**, not a line — the five per cent slack the whole page
+judges by, so a day one kcal over does not read as a miss. Its subtitle is the
+finding: *"613 kcal between your biggest and smallest day · best run inside
+target: 7 days"*, and under three logged days it says what is missing instead
+of computing a spread from two.
+
+**A break in the line is a day you did not log.** `connectNulls={false}`, and
+the series carries `null` rather than `0` for an unlogged day — joining across
+it would draw a straight line through a hole and call it a steady week.
+
+**The calendar** (`Calories by day`) is the same `CalendarHeatmap` the training
+pages use, with one difference stated in words under it: every other calendar
+in this app fills a cell because you showed up, so darker is better. Here
+darker is only **bigger**, and a 3,000 kcal day is not an achievement. The
+component cannot know that; the caller has to say it.
 
 ### The day's log lives in Today, not in the act
 
@@ -60,6 +101,29 @@ separately what the day holds is how they come to disagree.
 
 The macro split renders **after** it, deliberately: the split is the
 consequence, and you cannot judge a ratio you cannot correct.
+
+### The act: four fields side by side, units outside the box
+
+Reported as *"this total formatted well, it's going out of the screen size and
+it's overflowing — keep everything side by side, all in four, and show the
+calories outside of it, taking only input"*. Measured, both halves were the
+same defect in two shapes:
+
+| | before | after |
+|---|---|---|
+| "Or set the day's totals directly" | four full-width 416px rows, each a 144px input with its unit laid **inside** on a `pr-12` | **four 98px columns in one row** (2 × 158px on a phone), unit in the label |
+| "Add a food of your own" | **five 77px columns** on a 1440 desktop, two at 158px on a phone | two at 204px, five only when the column is genuinely wide |
+
+The custom-food grid is the sharper one: it broke on `sm:`, a **viewport**
+query, inside an act column that is **424px at a 1440 viewport** — so it got
+*worse the bigger the screen*, which is why the report said "going out of the
+screen". Both now ask `@min-[24rem]/act` and `@min-[30rem]/act`, with the
+container declared on the act `<section>`. This is the trap CLAUDE.md records
+from Strength's set row, third instance.
+
+**The title says it is a button.** `Log what you ate · Tap to hide` — a heading
+that is secretly a toggle is a feature nobody finds, and a `title` attribute is
+invisible on a phone.
 
 ### The picker
 
@@ -153,7 +217,7 @@ twelve-day one is the fabricated-improvement bug from the same file.
 | `npm run verify` | tsc, 2051 tests, eslint, build |
 | `npm run design` / `contrast` | both green; neither can see a wash under an accent |
 | `npm run clipped` / `smoke` | 23 views at 1440, 1024, 390 |
-| `npm run a11y:panels` | **all three rows**, added in this pass — a rail row has no `aria-expanded`, so `openFolds` cannot reach the other two |
+| `npm run a11y:panels` | **all three rows** — a rail row has no `aria-expanded`, so `openFolds` cannot reach the other two, and `clipped-text` cannot either: the truncated food names on Patterns were found by hand, not by a gate |
 
 The last one is COD-237's shape: putting a page on a rail makes the a11y gate
 cover *less*, and the fold count reads it as an improvement. Arm the panel gate
@@ -172,5 +236,7 @@ for a page's rows in the same change that gives it a rail.
 | which row holds which card | `components/nutrition/{panels.ts,Review.tsx}` |
 | a card's internals | `components/nutrition/Cards.tsx` |
 | the macro bar | `components/nutrition/DayCards.tsx` |
+| the wave or the calendar | `components/nutrition/Charts.tsx` |
+| the series behind them, and its windows | `lib/nutritionSeries.ts` |
 | a food of your own | `components/nutrition/CustomFood.tsx` |
 | the barcode / external lookup | `components/nutrition/FoodSearch.tsx` |

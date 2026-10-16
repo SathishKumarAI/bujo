@@ -18,8 +18,17 @@ import { ChartBar, ForkKnife, SquaresFour } from '@/components/icons'
  * | # | row | the question |
  * |---|---|---|
  * | 1 | Today | what is this day made of, and what is missing from it |
- * | 2 | Trend | how is the fortnight going — and where the targets are set |
- * | 3 | Patterns | which days and which foods are doing it |
+ * | 2 | Trend | **when** — the shape of the last four weeks against target |
+ * | 3 | Patterns | **why** — which weekday, which foods, which kind of day |
+ *
+ * **Trend and Patterns were starting to be the same row**, which is a fair
+ * reading of an earlier version: Trend held the fortnight ledger, the targets
+ * AND the training/rest split, and that last one is not a movement over time at
+ * all — it is the same fortnight cut by something about the day, which is
+ * precisely what `WeekdayCard` does. Moving it to Patterns gives the two rows
+ * one question each: **Trend is WHEN, Patterns is WHY.** Trend answers it with
+ * a four-week wave and a twenty-week calendar; Patterns answers it with
+ * three splits.
  *
  * **It opens on Today**, which is the row you want in the thirty seconds after
  * tapping a food — the same rule the sport pages follow, where the default is
@@ -27,8 +36,8 @@ import { ChartBar, ForkKnife, SquaresFour } from '@/components/icons'
  */
 export const NUTRITION_PANELS = [
   { id: 'today', label: 'Today', blurb: 'While you are deciding what to eat · the macro split against target, and what is left', icon: ForkKnife, color: 'green' },
-  { id: 'trend', label: 'Trend', blurb: 'On a Sunday · the fortnight against target, and the targets themselves', icon: ChartBar, color: 'teal' },
-  { id: 'patterns', label: 'Patterns', blurb: 'When a week keeps going wrong in the same place · by weekday, and by food', icon: SquaresFour, color: 'sky' },
+  { id: 'trend', label: 'Trend', blurb: 'WHEN · four weeks of days, five months of calendar behind them, and the targets they are judged against', icon: ChartBar, color: 'teal' },
+  { id: 'patterns', label: 'Patterns', blurb: 'WHY · which weekday, which foods, and what the training days ate', icon: SquaresFour, color: 'sky' },
 ] as const
 
 export type NutritionPanelId = typeof NUTRITION_PANELS[number]['id']

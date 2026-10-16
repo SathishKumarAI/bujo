@@ -57,8 +57,23 @@ export function CustomFoodForm({ onAdd }: { onAdd: (food: Custom) => void }) {
         placeholder="Chicken shawarma"
         aria-label="Food name"
       />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <label className="col-span-2 block text-micro text-fg-2 sm:col-span-1">
+      {/*
+        `@min-[30rem]/act`, NOT `sm:`.
+
+        `sm` is a VIEWPORT query and this form lives in the act column, which is
+        **424px at a 1440 viewport** — so `sm:grid-cols-5` was true from 640px
+        of window onward and drew five 77px columns in that 424px box: a
+        "Protein g" label and a number in 77px, getting worse the bigger the
+        screen, while a 390px phone correctly showed two at 158px. The trap
+        CLAUDE.md records from Strength's set row, in the form the report called
+        "going out of the screen size". The container is `@container/act` on the
+        act `<section>` in `views/Nutrition.tsx`.
+
+        Serving keeps the full row until there is real room: it is free text
+        ("1 wrap", "2 slices") and the only field here that is not three digits.
+      */}
+      <div className="grid grid-cols-2 gap-2 @min-[30rem]/act:grid-cols-5">
+        <label className="col-span-2 block text-micro text-fg-2 @min-[30rem]/act:col-span-1">
           Serving
           <Input
             value={d.serving}

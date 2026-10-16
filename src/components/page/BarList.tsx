@@ -73,18 +73,60 @@ export function BarList({ rows, labelWidth = 'w-10' }: {
                 <span className="block h-full rounded-pill" style={{ width: `${Math.max(3, Math.min(100, r.pct))}%`, background: cat(tone) }} />
               )}
             </span>
+            {/*
+              THE LEADING SPACES ARE LOAD-BEARING, and they are inside the
+              spans rather than between them.
+
+              `gap-2` is layout, not text: with nothing between these three
+              spans the row PAINTS as "Oct 16+232023", and no accessible name
+              reading "Oct 16 +23 2023 — Fri, Oct 16: 2023 kcal…" can contain
+              that. A `{' '}` between the spans would fix the text and add a
+              fourth flex item to a row whose columns are measured; a leading
+              space inside a `text-right` span is absorbed at the left edge and
+              moves nothing.
+
+              Third instance in one day, after the rail's "All24" and a
+              heading's "Log what you ateTap to hide". Two adjacent spans paint
+              one word — it is invisible in the JSX and obvious the moment you
+              read `textContent`.
+            */}
             <span
               className="num w-14 shrink-0 text-right text-label font-medium"
               style={{ color: has ? onRaised(tone) : cat('overlay0') }}
             >
-              {r.value ?? '—'}
+              {' '}{r.value ?? '—'}
             </span>
             {/* `subtext0`, not `overlay0` at 10px: the quiet-neutral pairing is
                 2.57:1 and is one of the sixteen violations the armed a11y gate
                 found. `text-fg-2` resolves to the solved token. */}
-            <span className="num w-16 shrink-0 text-right text-micro text-fg-2">{r.note ?? ''}</span>
+            <span className="num w-16 shrink-0 text-right text-micro text-fg-2">{' '}{r.note ?? ''}</span>
           </>
         )
+        /*
+          THE NAME HAS TO CONTAIN WHAT THE ROW DRAWS.
+
+          A pickable row is a BUTTON, and `label-content-name-mismatch` (WCAG
+          2.5.3) compares its accessible name against the painted text — which
+          here is three spans with no text node between them: `Oct 16`, `+23`
+          and `2023` paint as **"Oct 16 +23 2023"** once the browser has laid
+          them out. A hand-written `announce` ("Thu, Oct 16: 2023 kcal, 23 over
+          the 2000 target — open this day") says MORE and says it better, and
+          contains none of it.
+
+          So the drawn text leads and the sentence follows. Announcing more is
+          fine; announcing something else is not — a speech-input user says
+          what they can see.
+
+          Found by `npm run a11y:panels` and by nothing else: these rows live
+          on rail rows (`nutrition/Trend`, `fitness/Mix`, `pickleball/Results`)
+          that the main a11y gate never opens, so **32 violations across four
+          pages** survived the sweep that fixed 137 of them this morning. The
+          COD-237 blind spot, demonstrated.
+        */
+        const drawn = [r.label, r.value ?? '—', r.note].filter(Boolean).join(' ')
+        const spoken = r.announce
+          ? (r.announce.toLowerCase().includes(drawn.toLowerCase()) ? r.announce : `${drawn} — ${r.announce}`)
+          : r.label
         return (
           <li key={r.label}>
             {r.onPick && has ? (
@@ -92,7 +134,7 @@ export function BarList({ rows, labelWidth = 'w-10' }: {
                 type="button"
                 onClick={r.onPick}
                 className="flex w-full items-center gap-2 rounded-control px-1 py-0.5 text-left transition-colors hover:bg-ink-2"
-                aria-label={r.announce ?? r.label}
+                aria-label={spoken}
                 title={r.announce}
               >
                 {body}

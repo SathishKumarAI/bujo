@@ -140,7 +140,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
    for the 47px measurement. Bump this whenever the seed gains a field or a
    domain a page renders, or the feature is invisible to every existing demo
    journal, which reads exactly like the feature being broken. */
-export const DEMO_VERSION = 21
+export const DEMO_VERSION = 22
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -151,13 +151,37 @@ const PULL_NOTES = [
 ]
 
 /**
+ * The names a demo day is built from.
+ *
+ * **Every one of these must exist in `FOODS`, and a test asserts it** —
+ * `demo.foods.test.ts`. Three of the original six (`Chicken breast`, `Dal`,
+ * `Roti`) stopped existing the day the library was rewritten from 48 foods to
+ * 103, and the `.filter(x => x !== null)` below swallowed it: the seed went on
+ * running, the demo quietly dropped to one or two foods a day, and Patterns'
+ * "What it was made of" card rendered **two rows** on a page whose whole point
+ * is what the fortnight was made of. Nothing failed. Same family as the
+ * tripwire whose regex stopped matching — a lookup that silently finds nothing
+ * passes.
+ *
+ * Breakfast, lunch and dinner in rotation, so a day reads as a day rather than
+ * as three arbitrary chips.
+ */
+const DEMO_FOODS = [
+  ['Poha', 'Dal (lentil curry)', 'Basmati rice (cooked)', 'Curd / dahi'],
+  ['Masala omelette', 'Roti / chapati', 'Chicken curry', 'Banana'],
+  ['Greek yogurt', 'Grilled chicken breast', 'Brown rice (cooked)', 'Almonds'],
+  ['Idli', 'Sambar', 'Rajma (kidney bean curry)', 'Masala chai (with milk)'],
+  ['Oats (dry)', 'Whey protein', 'Paneer (cubed)', 'Apple'],
+] as const
+
+/**
  * A plausible day of chip-logged food, drawn from the real `FOODS` table so the
  * names and macros are the ones the app would actually have written.
  */
 function demoFoodLog(seed: number): LoggedFood[] {
-  const picks = ['Poha', 'Chicken breast', 'Dal', 'Greek yogurt', 'Roti', 'Banana']
+  const picks = DEMO_FOODS[seed % DEMO_FOODS.length]
   return picks
-    .slice(0, 3 + (seed % 3))
+    .slice(0, 3 + (seed % 2))
     .map((name, k) => {
       const f = FOODS.find((x) => x.name === name)
       return f
@@ -275,12 +299,17 @@ export function generateDemoData(today = todayISO()): JournalData {
       protein: 110 + Math.floor(rand() * 60),
       carbs: 150 + Math.floor(rand() * 120),
       fat: 50 + Math.floor(rand() * 40),
-      /* The receipt for what made up the day, on the most recent four. Without
-         it the "Logged today" list renders for nobody and the remove button is
-         a control no gate has ever drawn — the empty-journal trap, one field
-         over. Only four days: this is the chip path, and a seed that put a
-         receipt on all ninety would imply every day was logged that way. */
-      ...(i < 4 ? { foodLog: demoFoodLog(i) } : {}),
+      /* The receipt for what made up the day. Without it the "Logged today"
+         list renders for nobody and the remove button is a control no gate has
+         ever drawn — the empty-journal trap, one field over.
+
+         **A FORTNIGHT, not four days.** Four was chosen so the seed would not
+         imply every one of ninety days was chip-logged, and it is still not
+         ninety — but `topFoods` reads FOURTEEN days, so a four-day receipt gave
+         Patterns' best card a third of its window and it rendered as a stub.
+         The window a card reads is the window the seed has to cover; "only the
+         most recent few" is how a feature ends up demonstrated by nothing. */
+      ...(i < 14 ? { foodLog: demoFoodLog(i) } : {}),
       // The three fields only a device can fill — an Apple Health import, or a
       // voice capture. They have been on `DailyMetric` since the ingest
       // pipeline landed and the seed never wrote one, so nothing in the app had
