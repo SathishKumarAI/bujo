@@ -183,16 +183,29 @@ for: 2,000 calories at 30% protein and 2,000 at 10% are the same number and
 completely different days. Recent logged days are listed beneath; tap one to
 jump to it.
 
-### 3.5 Gym
-Structured strength training. Log sessions with a **searchable exercise picker**,
-per-set **weight/reps/RPE/type** (warm-up/working/drop), with **previous-session
-and live-1RM hints**. The right rail pins an **anatomy lookup** (muscle map +
-**form-cue and injury-watch guidance** per exercise), a **rest timer**, a
-**unit-aware plate calculator**, **personal records**, and saved routines. The
-main area carries PPL split selection + next-day suggestion, the **12-week
-hypertrophy program tracker**, **training-volume + progression charts**, a
-**body-weight chart with a 7-day moving average**, an **RPE effort trend**, and
-**progress photos**.
+### 3.5 Strength
+Structured strength training, on the three-zone contract (COD-329).
+
+**The act** is the set logger: a searchable exercise picker, per-set
+**weight/reps/RPE/type** (warm-up/working/drop), **previous-session and live-1RM
+hints**, a warm-up ramp, and **a rest the exercise remembers** — tap a set's rest
+to start it, and the timer's `+30s` is also how you tell the app that deadlifts
+need three minutes (`lib/rest.ts`, `settings.restByExercise`). Beside the volume
+it prints **≈ N min** for the session you are building, which is the answer to
+"will this fit in the hour I have". A **unit-aware plate calculator** sits under
+the timer and follows the heaviest weight in the open session. The whole column
+can be put away, and it starts away when the page is narrow enough to stack.
+
+**The review** is one bar of seven rows: **Week** (volume against your own
+eight-week average, and hard sets per muscle against the 10–20 band, counting an
+assist as half a set), **Sessions** (every session, newest first, with its sets
+grouped the way a lifter says them, each one editable and loadable), **Strength**
+(records, big-three standards, effort trend), **Balance** (push/pull/legs,
+recovery readiness, frequency, stalled lifts), **Body** (a weight trend with a
+7-day average, and progress photos), **Load** (your saved routines and the
+coach's 29 sessions), **Lookup** (the muscle map with form-cue and injury-watch
+guidance, plus wger's library). The **12-week hypertrophy tracker** has its own
+tab.
 
 ### 3.6 Progress photos (inside Gym)
 Private physique tracking. Add a dated photo (auto-downscaled to a small JPEG so

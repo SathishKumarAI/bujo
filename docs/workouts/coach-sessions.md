@@ -10,9 +10,16 @@ module carries a `raw` field holding the coach's own words, so each reading of
 the ambiguous notation below can be checked against the original without
 leaving the code.
 
-**On screen:** Gym → *Look up & tools* → **Coach sessions**. Filter by tag,
-expand a session to read the prescription, press *Load N* to put its movements
-into today's logger. It sits beside *Saved routines* — same verb, same object.
+**On screen:** Strength → **Load** → *Coach sessions*. Filter by tag, expand a
+session to read the prescription, press *Load N* to put its movements into
+today's logger. It sits beside *Saved routines* — same verb, same object, which
+is why the row is named for the verb.
+
+It was a card inside a *Look up & tools* fold in the act column until COD-329,
+where that fold measured 3,001px of act beside a 678px review and was reported
+as "wasting scrolling". The fold's five panels were sorted by the question each
+answers: these two went to **Load**, the anatomy map and the wger library to
+**Lookup**, and the plate calculator stayed in the act because it is neither.
 
 Warm-ups and cardio finishers are shown but **not loaded**: a set row asking
 for reps and a weight is the wrong shape for "Legs warmup cheyu" or "Treadmill

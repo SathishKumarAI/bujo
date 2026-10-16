@@ -386,7 +386,19 @@ measures **870px at a 1440 viewport** — a 1180px shell minus a 13rem rail and 
 `@min-[64rem]:columns-2` and looking correct. It only ever worked at 1920, where
 that panel is 1350px. Use `CardGrid` when the column width is decided by the
 page split rather than by the card; it asks about the viewport, and a rail takes
-its 13rem whatever the window does. Measured on the swap: Performance's review
+its 13rem whatever the window does.
+
+**And it is not only grids — a `sm:` on a FORM ROW is the same bug.** Strength's
+set row broke on `sm:`, a viewport query, inside an act column that is **416px**
+at a 1440 viewport: `sm` was true, so it drew its seven desktop tracks in 416px
+— 308px of fixed track left the picker 108px and each number input a 32px box
+for a 30px placeholder, rendering `lb`, `re`, `RP`. The comment above it
+asserted the slack "comes out of the picker's 1fr, which has hundreds to spare
+at sm", which is the misreading itself: at `sm` the COLUMN is 416px, not the
+window. Reported as "reps, RPE, they are not quite visible". The rule: **any
+breakpoint inside zone 2 or zone 3 is a container query** — both columns are
+sized by the page split and by whether the act is open — and the container goes
+on a WRAPPER, because an element cannot query itself. Measured on the swap: Performance's review
 zone **1561px → 1022px**, the landing **2.84 → 2.24 desktop screens**, at the
 cost of the row pocket masonry exists to avoid (~200px beside the shortest
 card). Third page this has bitten, after Stats' habit masonry in a 580px cell,
@@ -562,6 +574,19 @@ one. Caught only on a screenshot. **A fallback that returns a plausible value
 hides its own misuse**; prefer one that throws in development, and when writing
 an inline colour check the name against the palette rather than against the
 Tailwind class you were thinking of.
+
+**The same mistake one argument over: `onAccent(color)` where `color` is a
+TOKEN NAME.** `onAccent` takes a HEX — it parses the colour to pick the better
+neutral and pushes it to 4.6 — so `onAccent('mauve')` parses garbage and returns
+`#000000` for every fill in every theme. `CalendarSpan` did exactly that on its
+date numbers, a paragraph under the comment above, which is the same family:
+**3.92:1 on latte's #6c4cf0, 3.19:1 on dawn's #974608**, on every filled heatmap
+cell. It went red the day the demo seed first produced a full-strength cell in
+the rendered window — "a branch the seed never takes cannot fail", third
+instance. When one module exports a helper taking a token and another taking a
+hex, the call sites are a typo apart and neither `tsc` nor a static gate can
+tell them apart: only a screenshot or an armed per-panel scan can. `npm run
+a11y:panels` caught it, which is the argument for arming it.
 
 Trap: **a floor of two is not a floor.** `momentumIndicator` guarded on
 `recentVals.length < 2` and then compared that 2-day sample against a 7-day one,
