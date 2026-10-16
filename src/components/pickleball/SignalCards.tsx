@@ -1,6 +1,7 @@
 import { CalendarBlank, CalendarCheck, Clock, Hash, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, StatTile } from '../ui'
+import { BarList } from '../page'
 import { cat, onRaised } from '../../lib/colors'
 import type { PointDiff, PickleHours, ScoringStat, PlayConsistency } from '../../lib/pickleball'
 
@@ -49,44 +50,38 @@ export function WeekdayPerformanceCard({ weekdays, onPick }: {
       subtitle={best ? `Best on ${best.day} · ${best.winPct}% of ${best.games} games` : 'Win % and games played by day of week'}
       collapsible
     >
-      <ul className="space-y-1">
-        {weekdays.map((w) => {
+      {/*
+        `BarList`, not forty lines of its markup retyped.
+
+        This card WAS the hand-rolled copy — same flex row, same track, same
+        two right-aligned columns, written before the primitive was lifted out
+        and never migrated, while `PAGE-ROLLOUT.md` already described it as
+        "what `BarList` looks like wrapped in a `Card`". It cost exactly what
+        a duplicate costs: `npm run a11y:panels` found five
+        `label-content-name-mismatch` violations here that the same fix in
+        `BarList` had already cleared everywhere else, because the copy does
+        not get the fix.
+
+        The reason it was invisible is the COD-237 blind spot — these rows live
+        on the `Results` rail row, which the main a11y gate never opens.
+      */}
+      <BarList
+        labelWidth="w-9"
+        rows={weekdays.map((w) => {
           const has = w.games > 0
-          const tone = winTone(w.winPct)
-          const row = (
-            <>
-              <span className="w-9 shrink-0 text-label text-fg-2">{w.day}</span>
-              {/* The track is always drawn, so a rest day is a visible gap in
-                  the week rather than a missing row. */}
-              <span aria-hidden className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-pill bg-ink-2">
-                {has && <span className="block h-full rounded-pill" style={{ width: `${Math.max(3, w.winPct)}%`, background: cat(tone) }} />}
-              </span>
-              <span className="w-11 shrink-0 text-right text-label font-medium" style={{ color: has ? onRaised(tone) : cat('overlay0') }}>
-                {has ? `${w.winPct}%` : '—'}
-              </span>
-              <span className="w-12 shrink-0 text-right text-micro text-fg-2">{has ? `${w.gamesWon}/${w.games}` : ''}</span>
-            </>
-          )
-          return (
-            <li key={w.day}>
-              {onPick && has ? (
-                <button
-                  type="button"
-                  onClick={() => onPick(w.day)}
-                  className="flex w-full items-center gap-2 rounded-control px-1 py-0.5 text-left transition-colors hover:bg-ink-2"
-                  aria-label={`${w.day}: ${w.gamesWon} of ${w.games} games won, ${w.winPct}% — show these sessions`}
-                >
-                  {row}
-                </button>
-              ) : (
-                <span className="flex w-full items-center gap-2 px-1 py-0.5" title={has ? `${w.day}: ${w.gamesWon}/${w.games} games won` : `${w.day}: no games`}>
-                  {row}
-                </span>
-              )}
-            </li>
-          )
+          return {
+            label: w.day,
+            pct: w.winPct,
+            value: has ? `${w.winPct}%` : null,
+            note: has ? `${w.gamesWon}/${w.games}` : '',
+            tone: winTone(w.winPct),
+            onPick: onPick && has ? () => onPick(w.day) : undefined,
+            announce: has
+              ? `${w.day}: ${w.gamesWon} of ${w.games} games won, ${w.winPct}% — show these sessions`
+              : `${w.day}: no games`,
+          }
         })}
-      </ul>
+      />
     </Card>
   )
 }
