@@ -161,6 +161,36 @@
      stick within. Measured on Pickleball at 1440: orient 1110 → 830px with the
      log beside it, and the page's first screen holds the sentence, the totals,
      the drill AND the form instead of three of the four. */
+  /*
+    ROW 1 IS THE ORIENT BLOCK'S HEIGHT, NOT A SHARE OF THE ACT'S.
+
+    The act spans rows 1-2 below, and a spanning item's height is distributed
+    across every row it spans — so an act TALLER than orient + review grew both
+    tracks to fit itself. Measured on Nutrition at 1440: the orient block is
+    204px and its row was **283px**, leaving ~96px of dead space between the
+    block and the review's bar, which reads as a layout mistake because it is
+    one. The act there is 868px against a 489px review.
+
+    **`auto 1fr`, measured against four alternatives.** A `fr` track is
+    FLEXIBLE rather than intrinsic, so the spanning act's surplus lands there
+    instead of being shared out; row 1 then sizes to the orient block alone.
+    Tried in the browser rather than reasoned about, because the spec's
+    distribution rules are not something to guess at:
+
+    | `grid-template-rows` | row 1 | gap under the orient |
+    |---|---|---|
+    | `auto auto` (what it was) | 283px | **96px** |
+    | `min-content auto` | 363px | 175px — worse |
+    | **`auto 1fr`** | **204px** | **16px**, the row gap itself |
+
+    Affects every `actTop` page — Pickleball and Fitness have the same shape
+    whenever the form is the tallest thing on the page, which on a logging page
+    it usually is.
+  */
+  .page-zones.page-zones-act-top:not(.page-zones-single) {
+    grid-template-rows: auto 1fr;
+  }
+
   .page-zones.page-zones-act-top:not(.page-zones-single) .zone-orient {
     grid-column: 1;
     grid-row: 1;

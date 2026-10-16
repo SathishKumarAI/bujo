@@ -4,7 +4,8 @@
  *   BUJO_URL=http://localhost:4173 npm run a11y:panels
  *   BUJO_CANARY=1 ... — plant a violation and prove the run can go red
  *
- * **Pickleball, Fitness and Strength today, and the list is meant to grow.** COD-237
+ * **Pickleball, Fitness, Strength and Nutrition today, and the list is meant to
+ * grow.** COD-237
  * names six pages whose rails make `npm run a11y` cover less than it did as
  * folds: Insights, Coaching, Pickleball, Pull-ups, Help and Recovery. Adding
  * one is a `PAGES` entry — do it in the same change as the rail, or the page's
@@ -53,6 +54,7 @@ const PAGES = [
   { view: 'fitness', label: 'fitness·cardio', rows: ['Volume', 'Sessions', 'Bests', 'Mix'], ui: { 'fitness.mode': 'cardio' } },
   { view: 'fitness', label: 'fitness·sport', rows: ['Volume', 'Sessions', 'Bests', 'Mix'], ui: { 'fitness.mode': 'sport' } },
   { view: 'gym', rows: ['Week', 'Sessions', 'Strength', 'Balance', 'Body', 'Load', 'Lookup'] },
+  { view: 'nutrition', rows: ['Today', 'Trend', 'Patterns'] },
 ]
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

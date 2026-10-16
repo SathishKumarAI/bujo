@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card, Input } from '../ui'
+import { ResetField } from '../page'
 import { Button } from '../ui/button'
 import { platesPerSide, barExceedsTarget } from '../../lib/fitness'
 import { Barbell as BarbellViz } from '../PlateStack'
@@ -45,7 +46,9 @@ export function PlateCalculator({ unit, sessionTarget }: {
   const [typed, setTyped] = useState<string | null>(null)
   const target = typed ?? String(sessionTarget ?? 100)
   const retarget = (v: string) => setTyped(v)
-  const [bar, setBar] = useState(unit === 'lb' ? '45' : '20')
+  /* The bar's own default, named once so the reset can say where it goes. */
+  const defaultBar = unit === 'lb' ? '45' : '20'
+  const [bar, setBar] = useState(defaultBar)
   // Plate denominations differ by unit (kg gym plates vs lb).
   const denoms = unit === 'lb' ? [45, 35, 25, 10, 5, 2.5] : [25, 20, 15, 10, 5, 2.5, 1.25]
   // One stepper click = the smallest plate on each side, the smallest change a
@@ -79,6 +82,27 @@ export function PlateCalculator({ unit, sessionTarget }: {
           </span>
         </label>
         <label className="block text-body text-fg-1">Bar ({unit})<Input type="number" value={bar} onChange={(e) => setBar(e.target.value)} className="mt-1 text-center" style={{ width: 72 }} /></label>
+      </div>
+      {/* THE WAY BACK FROM A STEPPED NUMBER. Asked for by name: "if I'm
+          entering or increasing the values, give me an option for reset as
+          well — like in the plate calculator". A stepper with no way back is a
+          stepper you are afraid to press, and the only exit was to select the
+          field and retype a number you had to remember. It goes back to the
+          session's top set when there is one, and renders nothing while the
+          value is already there. */}
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <ResetField
+          changed={typed != null}
+          to={sessionTarget != null ? `${sessionTarget}${unit}` : '100'}
+          what="the target"
+          onReset={() => setTyped(null)}
+        />
+        <ResetField
+          changed={bar !== defaultBar}
+          to={`${defaultBar}${unit}`}
+          what="the bar"
+          onReset={() => setBar(defaultBar)}
+        />
       </div>
       {barOverTarget ? (
         <p className="text-body text-yellow">Bar alone ({bar} {unit}) already exceeds target ({target} {unit}) — use a lighter bar.</p>

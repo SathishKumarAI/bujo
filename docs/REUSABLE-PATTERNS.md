@@ -764,3 +764,127 @@ tap the strip open you are logging, so the form at the top is the point.
 Verified across all five Pickleball panels at 1152, 1024 and 390: the rail
 sits at the same y on every one of them, and nothing moves when you switch
 panels.
+
+---
+
+## 26 · The way back from a number you changed — `components/page/ResetField.tsx`
+
+**What it is.** A one-line affordance beside any stepped or typed value that
+puts it back where it started. `<ResetField changed={…} to="2,000"
+onReset={…} what="the calorie target" />`.
+
+**Why.** Asked for directly: *"if sometimes I'm entering or increasing the
+values, give me an option for reset as well — like in the plate calculator and
+food and some other places"*. It is `USER-CONTROL.md`'s rule 1 one level down —
+`add` without `edit` is a bug, and **a stepper without a way back is a stepper
+you are afraid to press.** Tapping `+` eleven times to see what it does is the
+first thing anybody does with a new control, and the only way out used to be
+selecting the field and retyping the original, which you have to remember.
+
+**Three rules, and they are what make it honest:**
+
+1. **It renders nothing while the value is already the default.** A reset button
+   that is always there is furniture, and a *disabled* one teaches people the
+   control does not work — the same reasoning `ShowMore` uses for hiding itself
+   when nothing is hidden.
+2. **The label says where it goes**, not just "reset". `Back to 2,000` tells you
+   what will happen; a bare ↺ glyph does not. The drawn text can be shortened
+   because `aria-label` carries the full sentence — §3's draw-short /
+   announce-long rule.
+3. **It is not a delete.** Reset restores a KNOWN value; clearing a record is a
+   different verb with a different confirmation (`useConfirm`, naming what it
+   removes). A control that says "reset" and empties a day is the kind of thing
+   this repo has shipped once already.
+
+**Where it goes.** Anywhere a number has an origin the app knows: the plate
+calculator's target, each of Nutrition's four targets. Not next to a field whose
+"default" is empty — that is a clear, and `SearchField`'s `×` is the shape for
+it.
+
+---
+
+## 27 · The title is the toggle
+
+**What it is.** When a zone can be put away, the heading itself is the button,
+with `aria-expanded` on it and the caret kept as the visual affordance.
+
+**Why.** Asked for as *"if I click on Log what you ate, that should hide it and
+also show me that"*. §18's `collapsibleAct` shipped the caret as a 28px icon
+button beside a 200px heading the whole thing is about — so the obvious target
+was the inert one, and **a heading that looks pressable and is not is worse than
+one that does nothing.**
+
+```tsx
+<h2 className="text-heading font-medium text-fg-1">
+  <button type="button" onClick={logCol.close} aria-expanded
+          title="Hide the log — the review takes the width">
+    Log what you ate <Icon as={CaretRight} size="sm" />
+  </button>
+</h2>
+```
+
+**The heading stays a heading.** The button goes *inside* the `<h2>`, not
+instead of it: a page whose zones are unnamed in the outline is a page a screen
+reader cannot skim, and `aria-expanded` on a heading element itself is not a
+pattern assistive tech reads.
+
+**It is a hide, not a disclosure.** `aria-expanded` is hard `true` because the
+zone it collapses is the one being read — the strip that brings it back is
+elsewhere (`ActStrip`), which is why this is not a `DisclosureRow`. Keep the
+caret: it is the only thing on screen that says which direction the press goes.
+
+---
+
+## 28 · A library too big for a chip row — search above, groups as a filter
+
+**What it is.** When a pick-list outgrows one capped row, the answer is a search
+box above it and the groups as **buttons that filter**, not as more rows.
+
+**Why.** Nutrition's library went 48 → 103 foods. Two uncapped cuisine rows
+measured **2,258px of act column on a phone**; capping them at ten put the food
+you wanted behind a `Show all` that re-created the problem. Asked for as *"if I
+click on American, show all the American; if I click on Indian, show me all
+Indian; if not, I'll search for it"*.
+
+| piece | rule |
+|---|---|
+| search | above everything, `SearchField`, matching more than the name — Nutrition searches the **serving** too, so "cup" finds everything measured in cups |
+| your usual | the first row, built from what was actually logged (`topFoods`) — not from what the library thinks is popular |
+| the groups | two buttons side by side carrying their **counts**, `aria-expanded`, picking one again closes it |
+| the open group | **uncapped** — you asked for this group, so this is the group. The cap exists for rows you did not ask for |
+| the state | not sticky. It is a narrowing you do while logging lunch, not a place you return to — the same rule §16's sub-section chips follow |
+
+**Two columns at any width**, with no container query: they are two buttons, and
+the narrowest act column in the app is 324px.
+
+**A chip in a long list needs a second channel.** At ten chips the weight could
+be a coloured dot; at a hundred it cannot, because colour was carrying three
+states at 6px. Nutrition draws three vertical bars filled one/two/three, in the
+band's colour, with the band named in `sr-only` text — height *and* hue *and*
+text, so it survives both a small screen and a reader who cannot separate the
+hues. And put the number in **its own column** past a hairline rule, in the mono
+face: a row of chips is then scanned down the number instead of read word by
+word.
+
+---
+
+## 29 · The record of a thing lives with what it explains
+
+**What it is.** A list you read back and correct belongs in the review zone,
+beside the figure it explains — not under the form that wrote it.
+
+**Why.** Nutrition's logged-foods list shipped at the bottom of the act: under a
+picker, a search box, a custom-food form and a legend, which is **the furthest
+possible point from the chip that put it there**. Reported as *"show me log
+today, right side or inside today — why do I need to scroll down?"*. The same
+arithmetic as §22: the act column is the narrow one, and anything that is read
+rather than filled in has more room in the review.
+
+**It goes before the figure, not after.** The macro split is the *consequence*
+of the log, and you cannot judge a ratio you cannot correct — so the rows come
+first and the chart reads as their result.
+
+**Pass it as a slot.** The state it edits belongs to the act (the date, the
+day's metric, the confirm dialog), so the view owns the component and the review
+borrows it as a `ReactNode`. Rebuilding it from props is a second opinion about
+what the day holds, and two opinions is how §25's duplicate timers happened.

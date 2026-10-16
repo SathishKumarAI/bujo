@@ -40,6 +40,19 @@ fix: editing one exercise from `3×12` to `9×99` moved `setRows` from 12 to 18,
 and a version that only rewrote the string would have looked identical on screen
 and been wrong in every chart.
 
+**The worst case is where nothing was stored to correct.** Nutrition's food log
+folded a tapped food's four macros into four running totals and **threw the food
+away** — so there was no entry to edit, no entry to delete, and no way to undo a
+mis-tap at any price. Reported as *"if I enter a food item, I'm unable to edit it
+or delete it"*, and the fix was a storage change (`LoggedFood[]` on the day)
+before it could be a UI one. When rule 1 has no edit path, check whether the
+record exists at all; an `add` that keeps only a sum is a write-only log.
+
+And an edit moves the totals **by the delta, never by a recount** — the day's
+numbers can also be typed by hand, and re-summing the log silently throws that
+away. Same shape as the `setRows` case above, from the other end: there, one
+stored shape was left stale; here, a recount would have destroyed the other one.
+
 ### 2 · Anything destructive asks first, and says what it is destroying
 
 Not a generic "Are you sure?". Name the thing and its size: *"The 4 exercises
