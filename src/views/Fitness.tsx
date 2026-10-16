@@ -9,9 +9,10 @@ import {
   ActStrip, ActivityForm, PageLayout, StatBar, useActColumn,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
-import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, type Mode } from '../domain/activities'
+import { fullLabelOf, isActivityKey, LOGGABLE_MODES, MODE_COPY, modeOf, modeSegments, OWN_PAGE, type Mode } from '../domain/activities'
 import { readDeepLink } from '../lib/deepLink'
 import { useNav } from '../components/shell/nav'
+import { VIEW_CHROME, type ViewId } from '../components/shell/viewChrome'
 import { sessionsInMode } from '../domain/sessions'
 import { weeklyActiveMinutes } from '../lib/fitness'
 import { cadence, nextStep } from '../lib/fitnessReview'
@@ -62,13 +63,26 @@ export function Fitness() {
   // round, because the activity is the fact and the mode is derived from it.
   const nav = useNav()
   const linked = readDeepLink().activity
-  // A strength activity arriving by link belongs on the Strength tab, which is
-  // where strength is logged now — landing here would drop the reader on a page
-  // whose toggle cannot even represent the mode the link asked for.
+  /* A LINK FOR AN ACTIVITY THAT HAS ITS OWN LOGGER GOES THERE.
+     Two cases, one rule. A strength activity would land on a toggle that
+     cannot represent its mode at all; a pickleball link would land on a
+     duration-and-notes form while the page that records a score is one tab
+     away (`OWN_PAGE`). Both are "this page cannot hold what the link asked
+     for", so both redirect rather than silently preselecting something else —
+     and `OWN_PAGE` is the list, not a growing chain of activity literals. */
   const linkedKey = linked && isActivityKey(linked) ? linked : null
-  const strengthLink = linkedKey != null && modeOf(linkedKey) === 'strength'
-  useEffect(() => { if (strengthLink) nav('gym') }, [strengthLink, nav])
-  const initialActivity = strengthLink ? null : linkedKey
+  const dest = linkedKey == null ? null
+    : OWN_PAGE[linkedKey] ?? (modeOf(linkedKey) === 'strength' ? 'gym' : null)
+  /* Resolved against `VIEW_CHROME`, which is the one list of real view ids,
+     rather than cast. `OWN_PAGE` lives in `domain/` and cannot import a UI
+     type without pointing the imports upward, so the narrowing happens here —
+     and a typo in it then redirects NOWHERE instead of to a dead view.
+     `activities.test.ts` asserts every value is a real id for the same reason:
+     this repo has been bitten three times by a hand-written id list resolved
+     against another source. */
+  const elsewhere = dest && dest in VIEW_CHROME ? (dest as ViewId) : null
+  useEffect(() => { if (elsewhere) nav(elsewhere) }, [elsewhere, nav])
+  const initialActivity = elsewhere ? null : linkedKey
   // `useStickyState` reads localStorage FIRST, so passing the linked mode as its
   // default did nothing once a mode had ever been chosen: arriving on
   // `?view=fitness&activity=run` left the toggle on the stored `sport` while the

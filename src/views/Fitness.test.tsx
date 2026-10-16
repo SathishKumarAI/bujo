@@ -6,7 +6,7 @@ import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
 import { Fitness } from './Fitness'
 import { SECTIONS } from '../components/shell/sections'
-import { LOGGABLE_MODES, MODES, activitiesForMode, modeSegments } from '../domain/activities'
+import { LOGGABLE_MODES, MODES, OWN_PAGE, activitiesForMode, loggableActivitiesForMode, modeSegments } from '../domain/activities'
 
 /**
  * The deep-linked activity has to beat the stored mode.
@@ -99,7 +99,10 @@ describe('Fitness · deep-linked activity vs stored mode', () => {
 
     const select = activitySelect()
     expect([...select.options].map((o) => o.value)).toContain(select.value)
-    expect(select.value).toBe('pickleball')
+    // `sport`, not `pickleball`: Pickleball has a logger of its own and this
+    // form does not offer it any more (`OWN_PAGE`).
+    expect(select.value).toBe('sport')
+    expect([...select.options].map((o) => o.value)).not.toContain('pickleball')
   })
 })
 
@@ -151,6 +154,43 @@ describe('Fitness activity reachability', () => {
  * page of its own**, so promoting a mode to a tab fails here rather than
  * quietly doubling the door. Sibling of the companion-link test above.
  */
+describe('Fitness · a link for an activity with no page of its own', () => {
+  afterEach(() => {
+    localStorage.clear()
+    window.history.replaceState({}, '', '/')
+  })
+
+  it('sends a generic lifting link to Strength', () => {
+    const seen: string[] = []
+    window.history.replaceState({}, '', '/?view=fitness&activity=push')
+    render(
+      <NavProvider navigate={(v) => seen.push(v)}>
+        <ConfirmProvider>
+          <JournalProvider>
+            <Fitness />
+          </JournalProvider>
+        </ConfirmProvider>
+      </NavProvider>,
+    )
+    expect(seen).toContain('gym')
+  })
+
+  it('sends a pickleball link to Pickleball', () => {
+    const seen: string[] = []
+    window.history.replaceState({}, '', '/?view=fitness&activity=pickleball')
+    render(
+      <NavProvider navigate={(v) => seen.push(v)}>
+        <ConfirmProvider>
+          <JournalProvider>
+            <Fitness />
+          </JournalProvider>
+        </ConfirmProvider>
+      </NavProvider>,
+    )
+    expect(seen).toContain('pickleball')
+  })
+})
+
 describe('Fitness mode segments', () => {
   it('offers no mode that already has its own Body tab', () => {
     const tabbed: Partial<Record<string, string>> = { strength: 'gym' }
@@ -166,13 +206,43 @@ describe('Fitness mode segments', () => {
   })
 })
 
+/**
+ * One front door per record shape, per ACTIVITY this time.
+ *
+ * `LOGGABLE_MODES` says it for a mode — Strength is a Body tab, so the mode is
+ * not offered. Pickleball fell through the gap one level down: it LED the Sport
+ * segment while its own page recorded the format, the score, the partner, the
+ * venue and the points, into a different collection. Asked for as "if I play
+ * any other sports, if it's like pickleball, why do I need to enter from here?
+ * I have another option for pickleball."
+ */
+describe('Fitness · activities with a logger of their own', () => {
+  it('offers none of them in the form', () => {
+    for (const mode of LOGGABLE_MODES) {
+      for (const [key] of loggableActivitiesForMode(mode)) expect(OWN_PAGE[key]).toBeUndefined()
+    }
+  })
+
+  it('still knows them, so a logged one keeps its label and stays editable', () => {
+    // The activity is not deleted — deleting it would leave every stored
+    // pickleball workout unlabelled and unopenable.
+    for (const key of Object.keys(OWN_PAGE)) {
+      expect(activitiesForMode(MODES.find((m) => activitiesForMode(m).some(([k]) => k === key))!).some(([k]) => k === key)).toBe(true)
+    }
+  })
+
+  it('leaves at least one activity the form can offer, per loggable mode', () => {
+    for (const mode of LOGGABLE_MODES) expect(loggableActivitiesForMode(mode).length).toBeGreaterThan(0)
+  })
+})
+
 describe('Fitness · a strength deep link', () => {
   afterEach(() => {
     localStorage.clear()
     window.history.replaceState({}, '', '/')
   })
 
-  it('redirects to Strength instead of landing on a toggle that cannot hold it', async () => {
+  it('sends a pull-up link to the Pull-ups page, which is where it is logged', async () => {
     const user = userEvent.setup()
     const seen: string[] = []
     window.history.replaceState({}, '', '/?view=fitness&activity=pullups')
@@ -185,7 +255,7 @@ describe('Fitness · a strength deep link', () => {
         </ConfirmProvider>
       </NavProvider>,
     )
-    expect(seen).toContain('gym')
+    expect(seen).toContain('pullups')
     // And it does not silently preselect a strength activity on the way out.
     await openLog(user)
     expect([...activitySelect().options].map((o) => o.value)).toContain(activitySelect().value)
