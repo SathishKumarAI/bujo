@@ -33,10 +33,12 @@ Desktop figures are with the act shut, which is what the act collapse bought:
 | How you feel | 1,749px · 1.94 | **1,696px · 1.88** | 3,192px · 3.78 | **2,626px · 3.11** |
 | Fertility | 1,433px · 1.59 | **1,368px · 1.52** | 2,659px · 3.15 | **2,092px · 2.48** |
 | Patterns | 1,434px · 1.59 | **1,438px · 1.60** | 2,429px · 2.88 | **1,863px · 2.21** |
-| Guide | 6,640px · **7.38** | **2,785px · 3.09** | 11,050px · **13.09** | **5,051px · 5.98** |
+| Guide | 6,640px · **7.38** | **1,037px · 1.15** | 11,050px · **13.09** | **2,004px · 2.37** |
 | Manual | — | 1,073px · 1.19 | — | 1,672px · 1.98 |
 
-Four things changed, and three of them are one measurement each.
+Five things changed, and four of them are one measurement each. The page's
+worst row is now **1.88 desktop screens and 3.11 on a phone**, against 7.38 and
+13.09 before.
 
 ### 1 · The act column can be put away
 
@@ -76,6 +78,17 @@ and the deck's count, arrows and dots **are** the contents list, so the `<nav>`
 went with the grid rather than surviving as a second way to do the same thing.
 
 Worst card on the page, phone: **5,435px → 827px**.
+
+What was left behind in `Guide` was still 4,158px on a phone, because `phases`
+and `food` are catalogues too — four and five phases of prose each. That row
+is a deck as well (`DECK_GROUPS` in `lib/cycleCards.ts`, with the per-row
+measurement that chose it), and it is now the page's *shortest* desktop row:
+**1,037px · 1.15 screens**, phone **2,004px · 2.37**.
+
+The other four rows stay grids. Their cards are instruments you compare — the
+wheel against the phase, the symptom grid against the heatmap — and a deck
+showing one at a time is the wrong shape for a comparison. None is over 3.2
+phone screens, which is the number that would change that.
 
 ### 3 · The review grid asks the panel, not the window
 
@@ -150,7 +163,7 @@ exists because a rail makes a lost card *quieter*, not louder.
 | How you feel | feelings · drivephase · moodphase | is this me, or is this my cycle |
 | Fertility | fertile · luteal · bbt | when is the window, and did the temperature confirm it |
 | Patterns | symptoms · grid | what tends to happen, and on which cycle day |
-| Guide | phases · food · goal · data | reference, settings, and your own data |
+| Guide | phases · food · goal · data (a deck) | reference, settings, and your own data |
 | Manual | manual (a 9-card deck) | how to use this page, and what it cannot tell you |
 
 The flag legend is in **zone 2, not the guide**: "which colour is which" is
@@ -177,7 +190,17 @@ what is DRAWN — a speech-input user says what they can see — so announcing
 *more* is fine and announcing something *else* is not. The name now contains
 the painted words.
 
-Canaried (`BUJO_CANARY=1`) before its green was quoted, as every gate here is.
+Canaried (`BUJO_CANARY=1`) before its green was quoted, as every gate here is:
+all twelve rows went red on the planted `select-name`.
+
+Result after the fix: **ALL CLEAN across every panel** — the full run, five
+desktop themes and two phone themes, 133 rows, of which Cycle is 42. The decks
+report `9/9` and `4/4`.
+
+Known gap: `nextStep` lands on `steady` for the demo journal, so the other six
+tones and glyphs are unit-tested but have never been *rendered* by a gate. A
+branch the seed never takes cannot fail — the same shape as latte's yellow at
+2.02:1 behind a count the seed never produced.
 
 ## Where to look
 
@@ -220,5 +243,10 @@ Canaried (`BUJO_CANARY=1`) before its green was quoted, as every gate here is.
 - **COD-247's other half.** At 2560 with the act shut the panel is 1,662px and
   the two narrow cards are 821px each. A third column is not the answer, for
   the reason measured above; capping the card is, and it is a separate change.
-- **`food` is the Guide row's worst panel** at 2,509px on a phone — the second
-  catalogue in that row, and not the manual's problem to solve.
+- **`food` is still 2,509px on a phone**, now one card of a deck rather than
+  half a row. It is a catalogue of five phases and would be shorter as five
+  rows than as five blocks of prose, which is a content change rather than a
+  layout one.
+- **`nextStep`'s six other branches are never rendered by a gate**, because
+  the demo journal lands on `steady`. Seeding a journal per branch is the only
+  thing that would cover their tones.

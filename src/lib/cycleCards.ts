@@ -150,3 +150,24 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
  * be landing on the manual.
  */
 export const DEFAULT_GROUP: CycleGroup = 'cycle'
+
+/**
+ * THE ROWS THAT RENDER AS A DECK RATHER THAN A GRID.
+ *
+ * A per-row decision, and a measured one. With the act shut at `?demo=1`, by
+ * phone screens: `This cycle` 2.23 · `Patterns` 2.21 · `Fertility` 2.48 ·
+ * `How you feel` 3.11 · **`Guide` 5.98**. One row is twice the next, and it is
+ * twice it for a reason that has nothing to do with card count: `phases` and
+ * `food` are catalogues — four and five phases of prose each — so the row is
+ * 4,158px of reading stacked under a heading.
+ *
+ * `CardDeck` (REUSABLE-PATTERNS §30) shows one and keeps the rest a swipe
+ * away, which is the same reduction as sub-section chips without the hiding.
+ * Its floor is two cards; `guide` has four.
+ *
+ * The other four rows stay grids. Their cards are instruments you compare —
+ * the wheel against the phase, the symptom grid against the heatmap — and a
+ * deck that shows one at a time is the wrong shape for a comparison. None of
+ * them is over 3.2 phone screens, which is the number that would change that.
+ */
+export const DECK_GROUPS: CycleGroup[] = ['guide']

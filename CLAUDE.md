@@ -624,6 +624,28 @@ what to have in the room and how to run the session, and the page rendered
 neither. `chapterFor()` was the same, with `Manual.tsx` having retyped its one
 line. A module's import does not vouch for its exports: grep each field.
 
+**And the test that proves a link's TARGET exists cannot see that nothing
+links.** `InfoTip` takes an `onMore` and renders its "Learn more" only when a
+caller passes one; **no caller ever did**, so all 18 `more:` targets in
+`lib/cycleHelp.ts` pointed at manual sections nothing reached, for the life of
+the component. `cycleHelp.test.ts` was green throughout and was *right* to be —
+it asserts every target RESOLVES, which is a statement about the data file and
+says nothing about the journey. Same family as "a scan that silently matches
+nothing passes", one level up: here the scan matched everything and the thing
+being scanned was never used. When a field exists to be passed, test the
+**call**, in the view's own test, not the lookup.
+
+Trap: **a grid step above the number of cards in the row makes every card
+narrower for nothing.** Cycle's review was moved to a container-queried
+`StatGrid` and given the usual 2/3/4 ladder; at a 1,326px panel the third step
+fired and `This cycle` went **1,107px → 1,169px**, cards 653px → 429px, for an
+empty third track — because no group on that page has more than **two** cards
+that are not full-width. A column count is a promise about how many cards
+there are, not about how wide the panel is. Count the row's non-wide cards
+before adding a step, and cap the ladder there. Same arithmetic that moved
+`moodphase` out of that page's `patterns` group when it left `drivephase`
+alone beside 381px of dead space.
+
 Trap: **`space-audit` and `a11y` measure only the group a rail opens on.** A
 `SectionRail` renders one group at a time, so every space number quoted for a rail
 page is *that group*: Recovery reports 1.7 screens while its `patterns` group is

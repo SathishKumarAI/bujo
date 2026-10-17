@@ -6,7 +6,7 @@ import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '.
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { ActStrip, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
+import { ActStrip, CardDeck, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
@@ -21,7 +21,7 @@ import type { CycleGoal } from '../lib/cycleHelp'
 import { feelingNotes, feelingsByPhase } from '../lib/cycleFeelings'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
-  CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
+  CYCLE_CARDS, CYCLE_GROUPS, DECK_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
 } from '../lib/cycleCards'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
@@ -672,11 +672,26 @@ export function Cycle() {
                       made the 846px panel a single column — and two is the
                       ceiling because no group here has more than two cards
                       that are not full-width. */}
-                  <StatGrid steps="pair">
-                    {shown.map((c) => (
-                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_PANEL}` : 'min-w-0'}>{cards[c.id]}</div>
-                    ))}
-                  </StatGrid>
+                  {DECK_GROUPS.includes(group) ? (
+                    <CardDeck
+                      label={`${GROUP_LABEL[group]} cards`}
+                      items={shown.map((c) => ({
+                        key: c.id,
+                        title: c.title,
+                        // Still a `data-card`, because the registry contract
+                        // test reads that set back in both directions and a
+                        // card that changes how it is laid out must not
+                        // change whether it can be found.
+                        node: <div data-card={c.id} className="min-w-0">{cards[c.id]}</div>,
+                      }))}
+                    />
+                  ) : (
+                    <StatGrid steps="pair">
+                      {shown.map((c) => (
+                        <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_PANEL}` : 'min-w-0'}>{cards[c.id]}</div>
+                      ))}
+                    </StatGrid>
+                  )}
                 </section>
               </div>
             </div>
