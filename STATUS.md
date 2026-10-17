@@ -1,67 +1,65 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/cycle-act-clarity`, **one PR to open**.
-The page rollout is finished. This branch is the second round of reported
-changes on Cycle's act column.
+**Stopped:** 2026-10-17, on `feat/cycle-guide-points`, **one PR to open**.
+Cycle's content pass — points, and the "how do I mark it" question answered
+on its second asking.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | #418 Cycle · #419 Challenges · #420 follow-ups · #421 modernisation, all merged | up to date |
-| `feat/cycle-act-clarity` | **not opened yet** | COD-337 round two — two commits | pushed |
+| `main` | — | #418 · #419 · #420 · #421 · #422 all merged | up to date |
+| `feat/cycle-guide-points` | **not opened yet** | COD-337 round three — two commits | local |
 
 ## The next action
 
-1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,163
-   tests), `clipped`, `contrast`, and `a11y:panels` over Cycle's seven rows at
-   mocha, latte and phone.
-2. **Answer `docs/QUESTIONS.md`** — what "it still needs to be saved for every
-   month" meant. Two readings shipped; the third (a per-month summary card) is
-   unbuilt on purpose.
+1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,166
+   tests), `clipped`, `design`, `a11y:panels`.
+2. **Answer `docs/QUESTIONS.md`** — what "saved for every month" meant.
 3. **COD-336** — `maxBarSize` on the nine remaining bar charts.
+4. **The rest of the prose sweep.** `lib/cycleHelp.ts` (the ⓘ tooltips, 2–3
+   sentences each) and `lib/cycleManual.ts` (point texts running 130–161
+   chars) are the 27 multi-sentence strings still standing. Same treatment,
+   their own change — `CYCLE_HELP.text` feeds popovers and the Help page, so
+   it needs its consumers checked first.
 
 ## What landed on this branch
 
-The act column, read back by pasting it in. Four findings, three of them the
-same fault: a thing that works with nothing saying where it is.
+**The guide is points.** Swept first: 91 strings over 120 characters, 36 of
+them two or more sentences; the worst a 456-character luteal `eat`. All five
+`CyclePhase` fields are `string[]`, both renderers updated — `{ph.what}` on a
+list compiles and paints the lines concatenated, so the data change alone
+would have made it worse.
 
-| | before | after |
+| card | before | after |
 |---|---|---|
-| flag legend | **214px** of an 807px act column | **23px** |
-| day-list glyphs | `∴−`, decoded nowhere a sighted reader looks | a key under the legend |
-| day-list header | none — a `title` tooltip was the only key | `Date · Cycle · Temp` |
-| optional fields | named only on an empty day | named always |
+| `food`, 1440 | 1,434px | **1,428px** |
+| `food`, phone | 2,509px | **3,044px** |
+| `phases`, phone | 1,089px | 1,392px |
 
-The glyph key is the sharpest: the marks were `aria-hidden` with an `sr-only`
-phrase, so a screen-reader user was told what they meant and a sighted one was
-not. And the optional-fields hint was self-erasing — logging a mood replaced
-"flow · mucus · LH · cravings · a note" with "mood 3", permanently.
+Desktop level, **phone +535px for scannability** — the honest cost of bullets.
 
-The act now points at `Your log` and the manual, which were rail rows away
-from the card you stand in while logging.
+**"How can I mark it?" asked twice.** The first fix put the field names in the
+grey hint; the title still said "Mood, energy & symptoms". It is `Mood,
+energy, mucus, LH & more` now, in the panel's own order, and the mark key says
+where the marks are set.
 
-## What went wrong, so the next session does not repeat it
+## What went wrong
 
-- **A commit landed on `main`** — moved to a branch, `main` reset to the merge
-  commit. Branch first, every time.
-- **A canary that could not fail**: the mark key's test read the glyph from the
-  map the key is built from. A derived key is pinned by breaking its filter,
-  not its data.
-- **A commit shipped over a red test** because an `&&` chain ran `grep` before
-  `git commit`. Amended. A grep's exit code is not a test result.
+- **`git checkout <file>` wiped uncommitted work twice** while reverting a
+  canary. Copy the file first, or stash — the canary is worth running and the
+  undo is what bites.
+- **A canary that could not fail**, again: the first version asserted a glyph
+  read from the map the key is built from.
 
 ## Open
 
-- `docs/QUESTIONS.md` · what "saved for every month" meant — third reading
-  unbuilt.
-- **COD-336** — `maxBarSize` on nine bar charts.
-- **A seeded journal per `nextStep` branch**, so six of seven tones are drawn
-  by a gate rather than only asserted.
-- **Home Workout drives its act from a bare `useState`**, which
-  `PAGE-ROLLOUT.md` says never to do.
-- **COD-247 is reopened for Recovery** — Cycle's half is done, `NoFap.tsx`
-  still carries the `2xl:grid-cols-2` pin and the `SPAN_2` coupling.
+- `docs/QUESTIONS.md` · what "saved for every month" meant.
+- **COD-336** · `maxBarSize` on nine bar charts.
+- **`cycleHelp` and `cycleManual` prose** — 27 multi-sentence strings.
+- **A seeded journal per `nextStep` branch.**
+- **Home Workout's act is a bare `useState`.**
+- **COD-247 reopened for Recovery.**
 
 ## Environment
 

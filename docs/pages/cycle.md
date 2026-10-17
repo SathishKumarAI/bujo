@@ -404,6 +404,57 @@ overflows its *parent* rather than itself. Three labels now, measured at 180
 in 180. The two dropped labels have their own keys eight lines above, so
 naming them here was the third naming of the same thing.
 
+## Points, not paragraphs · COD-337 round three
+
+Asked for as *"make all the content in the guide into parts and points so
+that it's easy to read"*, then widened to all of Cycle's content. Swept
+rather than guessed at: **91 strings over 120 characters, 36 of them holding
+two or more sentences.** The worst was a **456-character** luteal `eat`
+carrying four pieces of advice and two citations in one paragraph.
+
+All five `CyclePhase` fields — `what`, `feel`, `tip`, `cravings`, `eat` — are
+`string[]` now, which is the rule CLAUDE.md already stated and this file was
+the largest violation of. The type is the rule: a `string` invites the next
+sentence to be appended, which is how that field grew.
+
+**The renderer had to change with the data and `tsc` would not have said so.**
+`{ph.what}` on a `string[]` compiles and paints the lines concatenated with no
+separator — the same defect as two adjacent spans painting one word.
+
+| card | before | after points | after tightening |
+|---|---|---|---|
+| `food`, 1440 | 1,434px | 1,509px | **1,428px** |
+| `food`, phone | 2,509px | 3,202px | **3,044px** |
+| `phases`, 1440 | 601px | — | 659px |
+| `phases`, phone | 1,089px | — | 1,392px |
+
+Desktop comes out level; **the phone pays 535px for scannability.** That is
+the trade, and it is stated rather than buried — bulleted points are taller
+than wrapped prose because each point starts its own line.
+
+The tightening is a CSS rule beside the one it corrects: `.prose-doc` spaces
+`p` and `ul` at 0.75em each, right for a column of paragraphs and wrong for a
+heading that belongs to the list under it, paid twelve times over in that
+card. Tailwind utilities cannot fix it — `.prose-doc li` is unlayered and
+beats the utility layer.
+
+`cycleGuide.test.ts` follows `pickleballAcademy.test.ts`: point count, a
+**12-character floor per point** so a sentence split on its full stops fails,
+no duplicates, no point carrying three sentences, and every phase still
+crediting a source after a rewrite of its words. Canaried by planting `'and
+stays up'` as a point.
+
+### "How can I mark it?" — asked twice
+
+The first fix put the optional fields' names in the grey hint beside the
+fold's title. The question came back unchanged, because the title still read
+"Mood, energy & symptoms" and that is what the eye reads. It is **`Mood,
+energy, mucus, LH & more`** now, with the rest in the hint — and the heading's
+order is the panel's order, because writing mucus first would have promised a
+first control that is not there. `MarkKey` carries one line naming that
+control in its own words, since a key that advertises `∴ creamy` with no
+visible way to record it is what sent the question back.
+
 ## Open
 
 - **COD-336** — the `maxBarSize` sweep over the other nine bar charts.

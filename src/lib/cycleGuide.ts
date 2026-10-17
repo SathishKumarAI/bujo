@@ -28,18 +28,63 @@
  */
 import type { GlossarySource } from './glossary'
 
+/**
+ * THE FOUR PHASES, AS POINTS.
+ *
+ * WHAT THIS FILE OWNS: the educational content for each phase.
+ * WHAT IT DOES NOT OWN: how it is drawn (`components/cycle/Guide.tsx`,
+ * `PhaseNutrition.tsx`), or the phase a reader is in (`lib/cycleInsights.ts`).
+ *
+ * ── Why every field is a list ────────────────────────────────────────────
+ *
+ * Asked for directly: *"make all the content in the guide into parts and
+ * points so that it's easy to read."* It is also the rule CLAUDE.md already
+ * states — **a field people read is `string[]`, not `string`, the moment it
+ * holds more than one idea** — and this file was the largest violation of it
+ * in the app. Measured before the split: **twelve strings over 120
+ * characters**, the worst a **456-character** luteal `eat` carrying four
+ * separate pieces of advice and two citations in one paragraph.
+ *
+ * The type is the rule. A `string` invites the next sentence to be appended,
+ * which is exactly how that 456-character field grew.
+ *
+ * ── The rules the points keep ────────────────────────────────────────────
+ *
+ * - **One idea per line**, and a real line — not a fragment left behind by
+ *   splitting a sentence on its full stops. `cycleGuide.test.ts` asserts a
+ *   floor of 12 characters per point for that reason, and the canary that
+ *   proved it plants `'and stays up'`.
+ * - **Two points minimum, or it stays one line.** A one-item list is a bullet
+ *   pretending to be structure.
+ * - **The heading says what the list is; the points do not repeat it.**
+ *
+ * ── The two rules that predate the split, and still hold ─────────────────
+ *
+ * 1. **Every dietary claim is one a published health body makes**, and it
+ *    says which, with a link. `sources` is a list because the luteal advice
+ *    comes from two pages and a single credit would have to pick a winner.
+ * 2. **Where the evidence is thin, it says so.** Ovulation has no established
+ *    craving pattern and the entry says that rather than inventing a food for
+ *    symmetry. A guide confident in four places out of four is not a guide.
+ *
+ * Day ranges assume the 28-day textbook cycle; the page's own estimate scales
+ * to the logged personal average, and 21–35 days is a normal range.
+ */
 export interface CyclePhase {
   id: 'menstrual' | 'follicular' | 'ovulation' | 'luteal'
   name: string
   days: string
   color: string
-  what: string
-  feel: string
-  tip: string
-  /** What the cravings tend to be here. A tendency, never a prediction. */
-  cravings: string
+  /** What is physically happening. */
+  what: string[]
+  /** How it commonly feels. A tendency, never a prediction. */
+  feel: string[]
+  /** What helps, including the one training opinion per phase. */
+  tip: string[]
+  /** What the cravings tend to be here. */
+  cravings: string[]
   /** What is worth eating and why. Orientation, not a prescription. */
-  eat: string
+  eat: string[]
   /** Where the `cravings`/`eat` claims come from. At least one, linked. */
   sources: GlossarySource[]
 }
@@ -50,11 +95,29 @@ export const CYCLE_PHASES: CyclePhase[] = [
     name: 'Menstrual',
     days: 'Days 1–5',
     color: 'red',
-    what: 'The uterine lining sheds; day 1 is the first day of full flow. Hormones (estrogen and progesterone) are at their lowest.',
-    feel: 'Cramps, fatigue and headaches are common; energy is often lowest in the first days.',
-    tip: 'Iron-rich food helps replace what bleeding costs. Gentle movement — walking, stretching — can ease cramps.',
-    cravings: 'Appetite tends to swing rather than climb: sugar and salt are the usual pull, while cramps, fatigue and a headache compete for attention. This is also the only stretch of the cycle with a measurable nutritional cost attached to it.',
-    eat: 'Iron is the one to be deliberate about — red meat or liver, beans and lentils, nuts, dried apricots, fortified breakfast cereal. The NHS notes that people who lose a lot of blood in a period are at higher risk of iron-deficiency anaemia, which is often what "the first two days wipe me out" actually is. Warm food and steady fluids go down easier than a large plate.',
+    what: [
+      'The uterine lining sheds. Day 1 is the first day of full flow.',
+      'Estrogen and progesterone are both at their lowest.',
+    ],
+    feel: [
+      'Cramps, fatigue and headaches are common.',
+      'Energy is often lowest in the first two days.',
+    ],
+    tip: [
+      'Iron-rich food helps replace what bleeding costs.',
+      'Gentle movement — walking, stretching — can ease cramps.',
+    ],
+    cravings: [
+      'Appetite tends to swing rather than climb.',
+      'Sugar and salt are the usual pull.',
+      'The only stretch of the cycle with a measurable nutritional cost attached.',
+    ],
+    eat: [
+      'Iron is the one to be deliberate about.',
+      'Red meat or liver, beans and lentils, nuts, dried apricots, fortified cereal.',
+      'The NHS notes that heavy periods raise the risk of iron-deficiency anaemia — often what "the first two days wipe me out" actually is.',
+      'Warm food and steady fluids go down easier than a large plate.',
+    ],
     sources: [{ label: 'NHS · Iron', url: 'https://www.nhs.uk/conditions/vitamins-and-minerals/iron/' }],
   },
   {
@@ -62,11 +125,28 @@ export const CYCLE_PHASES: CyclePhase[] = [
     name: 'Follicular',
     days: 'Days 1–13 (overlaps the period)',
     color: 'teal',
-    what: 'Rising estrogen matures a follicle and rebuilds the uterine lining. Basal temperature sits in its lower range.',
-    feel: 'Energy and mood typically climb after the period ends — many people feel their sharpest and strongest here.',
-    tip: 'A good window for harder training and demanding work; recovery tends to be fastest in this phase.',
-    cravings: 'The steadiest stretch for most people — cravings are usually least noticeable here, and appetite often sits at its lowest in the days just after the period ends.',
-    eat: 'Fuel the training this phase is good for rather than chasing a cycle-specific diet: base meals on higher-fibre starchy carbohydrates (potatoes, wholegrain bread, rice, pasta) and keep protein in every one. That is the whole of the NHS balanced-diet guidance, and nothing phase-specific beats it — the phase decides how hard you train, not what a plate looks like.',
+    what: [
+      'Rising estrogen matures a follicle and rebuilds the uterine lining.',
+      'Basal temperature sits in its lower range.',
+    ],
+    feel: [
+      'Energy and mood typically climb once the period ends.',
+      'Many people feel their sharpest and strongest here.',
+    ],
+    tip: [
+      'A good window for harder training and demanding work.',
+      'Recovery tends to be fastest in this phase.',
+    ],
+    cravings: [
+      'The steadiest stretch for most people — cravings are least noticeable here.',
+      'Appetite often sits at its lowest in the days just after the period ends.',
+    ],
+    eat: [
+      'Fuel the training this phase is good for, rather than chasing a cycle-specific diet.',
+      'Base meals on higher-fibre starchy carbohydrates — potatoes, wholegrain bread, rice, pasta.',
+      'Keep protein in every meal.',
+      'That is the whole of the NHS balanced-diet guidance, and nothing phase-specific beats it: the phase decides how hard you train, not what a plate looks like.',
+    ],
     sources: [{ label: 'NHS · Eating a balanced diet', url: 'https://www.nhs.uk/live-well/eat-well/how-to-eat-a-balanced-diet/eating-a-balanced-diet/' }],
   },
   {
@@ -74,11 +154,29 @@ export const CYCLE_PHASES: CyclePhase[] = [
     name: 'Ovulation',
     days: 'Around day 14 (≈14 days before the next period)',
     color: 'green',
-    what: 'The egg is released. Cervical mucus turns clear and stretchy; basal temperature rises ~0.3–0.5 °F (0.2–0.3 °C) just after and stays up.',
-    feel: 'Some feel a one-sided twinge (mittelschmerz); energy and sociability often peak.',
-    tip: 'The fertile window is roughly the five days before ovulation through the day after — the reason the temperature chart matters.',
-    cravings: 'No distinctive craving pattern is well established around ovulation. Some people notice appetite dipping for a day or two; the phase is defined by fertility signs, not by appetite, and an app that named a food here would be ahead of the evidence.',
-    eat: 'Nothing special, which is worth saying plainly — eat as you do in the follicular phase. The useful habit in these few days is a note rather than a food: cervical mucus turning clear and stretchy, which the NHS describes as the visible sign, and the temperature step that confirms the day afterwards.',
+    what: [
+      'The egg is released.',
+      'Cervical mucus turns clear and stretchy.',
+      'Basal temperature rises ~0.3–0.5 °F (0.2–0.3 °C) just after, and stays up.',
+    ],
+    feel: [
+      'Some feel a one-sided twinge (mittelschmerz).',
+      'Energy and sociability often peak.',
+    ],
+    tip: [
+      'The fertile window is roughly the five days before ovulation through the day after.',
+      'That window is the reason the temperature chart matters.',
+    ],
+    cravings: [
+      'No distinctive craving pattern is well established around ovulation.',
+      'Some people notice appetite dipping for a day or two.',
+      'This phase is defined by fertility signs, not by appetite — naming a food here would be ahead of the evidence.',
+    ],
+    eat: [
+      'Nothing special, which is worth saying plainly: eat as you do in the follicular phase.',
+      'The useful habit here is a note rather than a food.',
+      'Mucus turning clear and stretchy is the visible sign the NHS describes; the temperature step confirms the day afterwards.',
+    ],
     sources: [{ label: 'NHS · Periods and fertility in the menstrual cycle', url: 'https://www.nhs.uk/conditions/periods/fertility-in-the-menstrual-cycle/' }],
   },
   {
@@ -91,11 +189,29 @@ export const CYCLE_PHASES: CyclePhase[] = [
     // two colours on the same screen. Moved off `mauve` with the ring: see the
     // note there for the measurement.
     color: 'blue',
-    what: 'Progesterone dominates and holds temperature in its higher range. If no pregnancy starts, hormones fall and the cycle restarts.',
-    feel: 'PMS lives here — bloating, breast tenderness, mood dips and cravings, usually in the last week.',
-    tip: 'Sleep and steady meals blunt PMS; scale training by feel rather than forcing peak sessions.',
-    cravings: 'This is the phase cravings are actually documented in: the NHS lists "changes in appetite or food cravings" among the commonest PMS symptoms, and the pull in the last week is typically toward carbohydrate, sugar and salt.',
-    eat: 'Smaller meals every two to three hours steady the swing better than three large ones. Calcium-rich food — milk, yoghurt, cheese or a fortified alternative — is the one specific the Office on Women\'s Health names for cravings, fatigue and low mood, and the same page suggests easing off caffeine, salt and sugar in the fortnight before a period. Regular aerobic activity is on that list too, which is why the training note above says scale rather than stop.',
+    what: [
+      'Progesterone dominates and holds temperature in its higher range.',
+      'If no pregnancy starts, hormones fall and the cycle restarts.',
+    ],
+    feel: [
+      'PMS lives here — bloating, breast tenderness, mood dips and cravings.',
+      'Usually in the last week before the period.',
+    ],
+    tip: [
+      'Sleep and steady meals blunt PMS.',
+      'Scale training by feel rather than forcing peak sessions.',
+    ],
+    cravings: [
+      'This is the phase cravings are actually documented in.',
+      'The NHS lists "changes in appetite or food cravings" among the commonest PMS symptoms.',
+      'The pull in the last week is typically toward carbohydrate, sugar and salt.',
+    ],
+    eat: [
+      'Smaller meals every two to three hours steady the swing better than three large ones.',
+      'Calcium-rich food — milk, yoghurt, cheese or a fortified alternative — is the one specific the Office on Women\'s Health names for cravings, fatigue and low mood.',
+      'The same page suggests easing off caffeine, salt and sugar in the fortnight before a period.',
+      'Regular aerobic activity is on that list too, which is why the training note above says scale rather than stop.',
+    ],
     sources: [
       { label: 'NHS · Premenstrual syndrome (PMS)', url: 'https://www.nhs.uk/conditions/pre-menstrual-syndrome/' },
       { label: 'Office on Women\'s Health · Premenstrual syndrome', url: 'https://www.womenshealth.gov/menstrual-cycle/premenstrual-syndrome' },

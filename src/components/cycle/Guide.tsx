@@ -41,14 +41,55 @@ export function PhasesCard() {
               <span className="text-body font-medium" style={{ color: onRaised(ph.color) }}>{ph.name}</span>
               <Pill color={ph.color} size="micro" className="px-2">{ph.days}</Pill>
             </div>
-            <p className="text-label text-fg-2">{ph.what}</p>
-            <p className="mt-1 text-label text-fg-2"><span className="font-medium text-fg-1">How it can feel:</span> {ph.feel}</p>
-            <p className="mt-1 text-label text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Helps:</span> {ph.tip}</p>
+            {/* POINTS, NOT PARAGRAPHS, and the renderer has to agree with the
+                data or nothing changes: `{ph.what}` on a `string[]` compiles
+                and paints the lines CONCATENATED, with no separator — the
+                same defect as two adjacent spans painting one word. The type
+                moving to a list is half the change; this is the other half. */}
+            <Points items={ph.what} />
+            <Points items={ph.feel} label="How it can feel" />
+            <Points items={ph.tip} label="Helps" tone="green" />
           </div>
         ))}
       </div>
       <p className="mt-3 text-label text-fg-2">Day ranges assume the textbook 28 days — 21–35 is a normal range, and the wheel above uses your logged average once two periods anchor it.</p>
     </Card>
+  )
+}
+
+/**
+ * One labelled list of points, the shape every phase field now has.
+ *
+ * The label is a heading for the list and the points do not repeat it — the
+ * rule CLAUDE.md states for exactly this content. A single-item list renders
+ * as one line with no bullet, because a one-item bullet list is a bullet
+ * pretending to be structure.
+ */
+function Points({ items, label, tone }: { items: string[]; label?: string; tone?: string }) {
+  if (items.length === 0) return null
+  return (
+    <div className="mt-1 first:mt-0">
+      {label && (
+        <span className="text-label font-medium" style={tone ? { color: onRaised(tone) } : undefined}>
+          {label}
+        </span>
+      )}
+      {items.length === 1 ? (
+        <span className="text-label text-fg-2">{label ? ' ' : ''}{items[0]}</span>
+      ) : (
+        <ul className={`space-y-0.5 text-label text-fg-2 ${label ? 'mt-0.5' : ''}`}>
+          {items.map((t) => (
+            <li key={t} className="flex gap-1.5">
+              {/* A real bullet, `aria-hidden`: the `<li>` is what announces
+                  the item, and a painted "·" read out before every line is
+                  noise in a screen reader. */}
+              <span aria-hidden className="shrink-0 text-fg-3">·</span>
+              <span className="min-w-0">{t}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
