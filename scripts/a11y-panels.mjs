@@ -71,7 +71,7 @@ const PAGES = [
    * `stepDecks` below is doing real work here — without it the gate would see
    * one of nine and call the row covered.
    */
-  { view: 'cycle', rows: ['This cycle', 'How you feel', 'Fertility', 'Patterns', 'Guide', 'Manual'] },
+  { view: 'cycle', rows: ['This cycle', 'How you feel', 'Fertility', 'Patterns', 'Your log', 'Guide', 'Manual'] },
 ]
 const DESKTOP_THEMES = (process.env.BUJO_THEMES ?? 'mocha,latte,neon,vscode,dawn').split(',')
 const PHONE_THEMES = (process.env.BUJO_PHONE_THEMES ?? 'mocha,latte').split(',')

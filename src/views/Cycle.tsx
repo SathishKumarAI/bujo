@@ -26,7 +26,7 @@ import {
 } from '../lib/cycleCards'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import {
-  BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
+  BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
   CycleGoalCard, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
@@ -415,6 +415,33 @@ export function Cycle() {
 
     /* ── Guide · the same shelf the training pages keep. Static reference from
        lib/cycleGuide; titles, bodies and widths all in cycle/Guide.tsx. ── */
+    /* Tapping a row selects that day in the editor — the only way to correct
+       a field once the day has passed, and the pattern Challenges' day grid
+       and REUSABLE-PATTERNS §20 both arrive at: every figure leads back to
+       the entries behind it. */
+    log: (
+      /* NO TITLE. The rail heading six pixels above already says "Your log"
+         and names what is in it; printing it again is the same sentence
+         twice, which is the fault this page's own history is made of. A
+         `Card` with no title renders no header at all. */
+      <Card band hideInfo>
+        <DayLog
+          entries={log}
+          unit={unit}
+          cycleDayOf={cycleDayOf}
+          today={today}
+          selected={sel}
+          /* The month moves too. `sel` is clamped to the cursor month, so
+             picking a September row while browsing October would otherwise
+             select nothing at all — the editor would stay on whatever October
+             day it had. Safe to pass `d` into `setMonth`: it is a parameter,
+             not one of this component's memo-derived consts, which is what
+             the React Compiler objects to. */
+          onPick={(d) => { setMonth(d.slice(0, 7)); setSelected(d); logCol.open() }}
+        />
+      </Card>
+    ),
+
     phases: <PhasesCard />,
     food: <FoodCard />,
   }

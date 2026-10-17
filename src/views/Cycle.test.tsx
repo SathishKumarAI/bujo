@@ -212,3 +212,42 @@ describe('Cycle · every next-step rule has a tone that exists', () => {
     }
   })
 })
+
+/**
+ * THE LOG ROW · the record, not a reading taken from it.
+ *
+ * `CyclePoint` carries fourteen fields and the month list drew four, so ten
+ * of them could be filled in and never seen again. The averaging cards read
+ * them — mood by phase, drive by phase, the symptom grid — but an average is
+ * not the record.
+ */
+describe('Cycle · your log shows what the averages are made of', () => {
+  it('draws a row per logged day, each one a way back into the editor', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.log))
+    const card = container.querySelector('[data-card="log"]')!
+    expect(card, 'the log row renders its card').toBeTruthy()
+    const rows = card.querySelectorAll('button[aria-pressed]')
+    expect(rows.length).toBeGreaterThan(0)
+    // The row's own text IS its accessible name — no `aria-label`, because a
+    // tidier one names less than the row paints and axe calls that a
+    // `label-content-name-mismatch`. So the assertion is that the name is the
+    // content, and that the content carries the date.
+    for (const r of rows) {
+      expect(r.getAttribute('aria-label'), 'a label here would under-name the row').toBeNull()
+      expect(r.textContent).toMatch(/\w{3}, \w{3} \d+/)
+    }
+  })
+
+  it('shows the fields the month list never drew', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.log))
+    const text = container.querySelector('[data-card="log"]')!.textContent ?? ''
+    // The demo seeds mood, energy and drive on its cycle days; none of the
+    // three has ever been readable back out of a past day.
+    expect(text).toMatch(/mood \d\/5/)
+    expect(text).toMatch(/energy \d\/5/)
+  })
+})
