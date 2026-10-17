@@ -238,15 +238,58 @@ branch the seed never takes cannot fail — the same shape as latte's yellow at
   nothing for an existing journal; bump `DEMO_VERSION` or re-seed from
   Settings → Data.
 
+## The follow-ups · 2026-10-17
+
+The four things COD-334 left open, taken in order. Three were real; one was
+not, and saying so is the result.
+
+**COD-247's other half is closed, and it was the MARK, not the card.** At 2560
+with the act shut the panel is 1,662px and the `length` chart takes the whole
+row — correctly, because it is a time series and the axis should span the
+panel. What had no ceiling was the bar: Recharts divides the plot by the
+number of bars, and three completed cycles gave
+
+| | bar width before | after |
+|---|---|---|
+| 1440 | 212px | **180px** |
+| 1920 | 340px | **180px** |
+| 2560 | **430px** | **180px** |
+
+`MAX_BAR` in `components/page/chartStyle.ts` carries the reasoning: past about
+180px a bar stops reading as a measurement and starts reading as a panel. The
+cap only ever shrinks a bar and only above that width, so a dense chart is
+unaffected. **Nine other files render a `<Bar>` and none passes it** —
+COD-336, filed rather than swept, because changing nine charts without
+measuring any of them is the inference this repo keeps paying for.
+
+**The rail count is true now.** `Manual` is one registered card holding a
+nine-card deck, so the row said **1** above a deck saying **1 of 9** — two
+figures each correct under its own definition, naming neither, which is this
+page's oldest fault in miniature. `CycleCardMeta.panels` is derived from
+`CYCLE_MANUAL.length`, `panelsIn` is the one place the difference is written
+down, and the contract test asserts both halves: the row renders exactly the
+registry's cards, and the rail counts exactly the panels the reader meets.
+
+**The six undrawn `nextStep` branches have the check that was possible.**
+Seeding a journal per branch is the complete answer and is not this change.
+What was silent and is now not: `STEP_TONE` and `STEP_ICON` moved out of the
+JSX into `components/cycle/stepStyle.ts` as `Record<CycleStep['id'], …>`, so
+`tsc` proves every rule has both — an inline object indexed by `step.id`
+returns `undefined` for a rule added later, and `cat(undefined)` paints
+**mauve**, which on this page means "you ovulated". A test asserts every tone
+is a real palette key; canaried by misspelling one.
+
+**`food` was not a fault.** It is 2,509px on a phone and the reader does not
+meet 2,509px: the Guide row is a `CardDeck`, its track is the height of the
+ACTIVE card, and the row lands on `phases` at 1,089px. The page measures
+**2.37 phone screens** there. The card is four phases of cited NHS/ACOG
+reference with a body each, which is what a card is for — "a card is for a
+named item with a body" — and it is reached by a deliberate swipe. Quoting a
+card's own height against a page budget manufactures a fault; the entry is
+retired rather than actioned.
+
 ## Open
 
-- **COD-247's other half.** At 2560 with the act shut the panel is 1,662px and
-  the two narrow cards are 821px each. A third column is not the answer, for
-  the reason measured above; capping the card is, and it is a separate change.
-- **`food` is still 2,509px on a phone**, now one card of a deck rather than
-  half a row. It is a catalogue of five phases and would be shorter as five
-  rows than as five blocks of prose, which is a content change rather than a
-  layout one.
-- **`nextStep`'s six other branches are never rendered by a gate**, because
-  the demo journal lands on `steady`. Seeding a journal per branch is the only
-  thing that would cover their tones.
+- **COD-336** — the `maxBarSize` sweep over the other nine bar charts.
+- **Seeding a journal per `nextStep` branch**, so the other six tones are
+  rendered by a gate rather than only asserted.

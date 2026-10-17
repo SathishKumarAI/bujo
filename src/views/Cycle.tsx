@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, CaretRight, CheckCircle, Drop, ShieldWarning, Sparkle, Target, Thermometer, Warning } from '@/components/icons'
+import { CalendarBlank, CaretRight, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
@@ -21,8 +21,10 @@ import type { CycleGoal } from '../lib/cycleHelp'
 import { feelingNotes, feelingsByPhase } from '../lib/cycleFeelings'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
-  CYCLE_CARDS, CYCLE_GROUPS, DECK_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
+  CYCLE_CARDS, CYCLE_GROUPS, DECK_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL,
+  panelsIn, type CycleGroup,
 } from '../lib/cycleCards'
+import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
@@ -450,8 +452,8 @@ export function Cycle() {
             looking. */}
         <NextStepBlock
           text={step.text}
-          tone={{ first: 'mauve', late: 'peach', due: 'peach', stale: 'yellow', fertile: 'teal', young: 'teal', steady: 'green' }[step.id]}
-          icon={{ first: Sparkle, late: Warning, due: Drop, stale: Thermometer, fertile: Target, young: CalendarBlank, steady: CheckCircle }[step.id]}
+          tone={STEP_TONE[step.id]}
+          icon={STEP_ICON[step.id]}
           destination={GROUP_LABEL[step.group]}
           onPick={() => setGroup(step.group)}
         />
@@ -639,7 +641,15 @@ export function Cycle() {
                   it for the same reason. */}
               <SectionRail
                 label="Cycle sections"
-                groups={CYCLE_GROUPS.map((g) => ({ id: g, label: GROUP_LABEL[g], count: idsIn(g).length }))}
+                /* The count is what the READER meets, not how many entries
+                   the registry has: `manual` is one card holding a nine-card
+                   deck, and a row saying "1" above a deck saying "1 of 9" is
+                   two true figures reading as a contradiction. */
+                groups={CYCLE_GROUPS.map((g) => ({
+                  id: g,
+                  label: GROUP_LABEL[g],
+                  count: idsIn(g).reduce((n, c) => n + panelsIn(c), 0),
+                }))}
                 value={group}
                 onChange={(id) => setGroup((id as CycleGroup | null) ?? DEFAULT_GROUP)}
               />

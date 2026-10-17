@@ -1,3 +1,4 @@
+import { CYCLE_MANUAL } from './cycleManual'
 /**
  * WHAT THE CYCLE PAGE'S REVIEW ZONE HOLDS, AND UNDER WHICH NAME.
  *
@@ -78,7 +79,23 @@ export interface CycleCardMeta {
    * two-column grid and a block of prose.
    */
   wide?: true
+  /**
+   * How many panels the reader meets inside this card, when it is not one.
+   *
+   * The rail's count is a promise about what the row holds, and `manual` is
+   * one registered card containing a nine-card `CardDeck` — so the rail said
+   * **1** while the deck under it said **1 of 9**. Both were true (one counts
+   * registered cards, the other counts sections) and they read as a
+   * contradiction, which is this page's oldest fault in miniature: figures
+   * that are each correct under their own definition and name neither.
+   *
+   * Derived from the content rather than typed, so it cannot drift from it.
+   */
+  panels?: number
 }
+
+/** What the rail should count for a card — its panels, or itself. */
+export const panelsIn = (c: CycleCardMeta): number => c.panels ?? 1
 
 /**
  * The review zone, in render order within each group.
@@ -137,7 +154,7 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
    * `data-card` set equals this list in BOTH directions, so a card that skips
    * the registry fails the suite rather than quietly becoming unfindable.
    */
-  { id: 'manual', title: 'The manual', group: 'manual', wide: true },
+  { id: 'manual', title: 'The manual', group: 'manual', wide: true, panels: CYCLE_MANUAL.length },
 ]
 
 /**

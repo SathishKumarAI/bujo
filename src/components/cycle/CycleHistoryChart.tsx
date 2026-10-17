@@ -1,3 +1,4 @@
+import { MAX_BAR } from '../page/chartStyle'
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { cat, rechartsTooltip } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
@@ -85,7 +86,9 @@ export function CycleHistoryChart({ history, average, unitLabel = 'days' }: {
                 nothing the axis does not. `peach` stays on the out-of-range
                 ones, where it carries meaning — that is what the shaded 21-35
                 band is for. The accent is now on the average line alone. */}
-            <Bar dataKey="length" radius={[3, 3, 0, 0]}>
+            {/* `MAX_BAR`: three completed cycles in a 1,662px panel drew a
+                430px bar, which reads as a block rather than a measurement. */}
+            <Bar dataKey="length" radius={[3, 3, 0, 0]} maxBarSize={MAX_BAR}>
               {rows.map((r, i) => (
                 <Cell key={i} fill={cat(r.outside ? 'peach' : 'surface2')} />
               ))}
