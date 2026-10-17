@@ -72,7 +72,18 @@ const OPEN_STATES = ['1', '0'] as const
  * it is careful not to define the term twice.
  */
 export function FlagLegend() {
-  const [flag, setFlag] = useStickyState<'1' | '0'>('cycle.legend', '1', OPEN_STATES)
+  /* CLOSED BY DEFAULT, and the file's own docstring is the argument for it:
+     "closed, the legend is still a legend: five hues and five words, one or
+     two lines, which is the whole of what the report asked for." Open it was
+     **214px** of the 807px act column — five sentences a reader meets every
+     morning to answer a question they asked once.
+
+     Asked for as "make them clearer or hide them or move them into guides…
+     I will give you a shot, like whenever I hover". The hue key stays drawn,
+     the sentence is one press (or one hover, via the pill's `title`) away,
+     and `openFolds` in the a11y gate still opens it, so nothing stops being
+     scanned. Sticky, so a reader who wants them open keeps them open. */
+  const [flag, setFlag] = useStickyState<'1' | '0'>('cycle.legend', '0', OPEN_STATES)
   const open = flag === '1'
 
   return (

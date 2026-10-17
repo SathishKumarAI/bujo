@@ -131,6 +131,10 @@ describe('Cycle · the registry is the review zone', () => {
     const user = userEvent.setup()
     const { container } = mount()
     await openAct(user)
+    // The legend ships CLOSED (five pills, no sentences), so this test opens
+    // it before reading the definitions — it is about what the sentences say,
+    // not about which state is the default. The test below owns that.
+    await user.click(screen.getByRole('button', { name: /flag colours/i }))
     const rows = [...container.querySelectorAll('#cycle-flag-meanings > div')]
     expect(rows).toHaveLength(FLAGS.length)
     for (const [i, f] of FLAGS.entries()) {
@@ -146,6 +150,26 @@ describe('Cycle · the registry is the review zone', () => {
     const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
     expect(keys.map((li) => li.textContent!.trim())).toEqual([...FLAGS])
     expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
+  })
+
+  /**
+   * The five sentences were 214px of an 807px act column — a paragraph each
+   * for a question asked once. Closed is the shipped state now; the KEY is
+   * what must survive it, because hiding the key is the complaint that
+   * created this component.
+   */
+  it('ships the legend closed, with the hue key still drawn', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const toggle = screen.getByRole('button', { name: /flag colours/i })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText(FLAG_MEANS.period), 'the sentences are away').toBeNull()
+    const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
+    expect(keys.map((li) => li.textContent!.trim()), 'the key is not').toEqual([...FLAGS])
+    // And one press brings the sentences back.
+    await user.click(toggle)
+    expect(screen.getByText(FLAG_MEANS.period)).toBeInTheDocument()
   })
 
   /**

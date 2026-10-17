@@ -106,11 +106,22 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
    */
   const header = (
     <div aria-hidden className="flex w-full items-center gap-3 px-2 pb-1 text-micro uppercase tracking-wide text-fg-2">
+      {/* THREE LABELS, not five. Measured: five needs **211px in a 180px
+          column** and the cells are flex items, so they compress and the
+          words clip — `npm run clipped` caught "Date" at 24px of the 27 it
+          needs, and could not see the last label at all, because that one
+          overflows its PARENT rather than itself. (The repo has a trap about
+          exactly that blind spot.)
+
+          The three that stay are the ambiguous ones: two bare numbers and a
+          temperature. The two that go have their own keys eight lines above —
+          "Marks in the day list" decodes the glyph column and the flag
+          legend decodes the dots — so labelling them here was the third
+          naming of the same thing. 7 + 10 + 14 units and two gaps is 148px in
+          180. */}
       <span className="w-7">Date</span>
       <span className="w-10">Cycle</span>
       <span className="w-14">Temp</span>
-      <span className="w-8 text-center">Signs</span>
-      <span>Flags</span>
     </div>
   )
 

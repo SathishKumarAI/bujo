@@ -53,11 +53,27 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
           {/* The label NAMES the fields, because "More" alone is a fold nobody
               opens — the first version said only "More for today" and the most
               asked-for thing on this page (mood and energy) was behind it with
-              nothing to say so. */}
+              nothing to say so.
+
+              THE NAMES ARE ALWAYS DRAWN, and that is a fix. They used to be
+              `summary(entry) || 'flow · mucus · LH · cravings · a note'` — the
+              hint showed only on a day with NOTHING on it, so the moment you
+              logged a mood it was replaced by "mood 3" and the other eight
+              fields became unfindable again. Asked exactly that way: *"where
+              else can I mark it as sticky, creamy? I'm not able to
+              understand"* — mucus is in here, and on a day with any value the
+              word "mucus" appeared nowhere on the page.
+
+              So: the fields always, and what you filled in underneath. The
+              second line costs ~18px on a day that has values and is the
+              answer to the only question anyone asked about this control. */}
           <span className="text-body font-medium text-fg-1">Mood, energy &amp; symptoms</span>
           <span className="ml-2 text-label text-fg-2">
-            {isOpen ? 'tap to close' : summary(entry) || 'flow · mucus · LH · cravings · a note'}
+            {isOpen ? 'tap to close' : 'flow · mucus · LH · cravings · a note'}
           </span>
+          {!isOpen && summary(entry) && (
+            <span className="mt-0.5 block text-label text-fg-1">{summary(entry)}</span>
+          )}
         </span>
         <span aria-hidden className="shrink-0 text-fg-2">{isOpen ? '▾' : '▸'}</span>
       </button>
