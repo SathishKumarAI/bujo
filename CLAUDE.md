@@ -635,6 +635,19 @@ nothing passes", one level up: here the scan matched everything and the thing
 being scanned was never used. When a field exists to be passed, test the
 **call**, in the view's own test, not the lookup.
 
+**And a field with a reader can still be write-only.** `challengeNotes` had
+one — `RuleNote` — so every grep for a dead field came back clean; what the
+grep could not see is that the view rendered it for `today` and for **no other
+day**, so a note written this morning could never be read back, corrected or
+removed on any of the other seventy-four. `lib/demo.ts` had been seeding
+fourteen of them across nine days that nothing on the page could show. The
+store had always taken a `day` argument, so the capability was there and the
+affordance was not. **Grep the reader's ARGUMENTS, not only the field**: a
+reader pinned to one value of a key is a reader for one row and a blind spot
+for the rest. The symptom to watch for is a grid of N cells where N−1 of them
+are inert — count the controls in a zone (`.zone-review button`) and ask what
+the other cells are for.
+
 Trap: **a grid step above the number of cards in the row makes every card
 narrower for nothing.** Cycle's review was moved to a container-queried
 `StatGrid` and given the usual 2/3/4 ladder; at a 1,326px panel the third step

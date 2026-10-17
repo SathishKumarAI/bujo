@@ -40,7 +40,7 @@ been done (COD-329) and is kept in the table as the worked example.
 | ~~Strength~~ | `views/Gym.tsx` | 367 | ✓ | ✓ | n/a (7 rows) | **Done, COD-329** — see `docs/pages/gym.md` |
 | ~~Fitness~~ | `views/Fitness.tsx` | 338 | ✓ | ✓ | n/a (4 rows) | **Done, COD-329** — see `docs/pages/fitness.md` |
 | ~~Nutrition~~ | `views/Nutrition.tsx` | 424 | ✓ | ✓ | n/a (3 rows) | **Done, 2026-10-16** — see `docs/pages/nutrition.md` |
-| Challenges | `views/Challenges.tsx` | 454 | — | — | — | One bar, then drill-down from a streak to its days |
+| ~~Challenges~~ | `views/Challenges.tsx` | 661 | n/a (3 panels) | n/a (1.00 screens) | n/a | **Done, COD-335** — see `docs/pages/challenges.md` |
 | ~~Recovery~~ | `views/NoFap.tsx` | 433 | ✓ | ✓ | ✓ (9 cards) | **Done, COD-334** — see `docs/pages/recovery.md` |
 | ~~Cycle~~ | `views/Cycle.tsx` | 705 | ✓ | ✓ | n/a (3 rows max) | **Done, COD-334** — see `docs/pages/cycle.md` |
 
@@ -125,7 +125,13 @@ each one is a commit.
   a 10–20 landmark while counting a set once per muscle the lift works, so
   nine of twelve muscles are permanently "over 20". Filed during the Strength
   pass, not fixed in it.
-- **Challenges is the one left.** Cycle is done (COD-334): its six rail rows
+- **Every page on this list is done.** Cycle was COD-334 and Challenges
+  COD-335; the latter is the one whose fault was never length — 1.00 desktop
+  screens, and a review column that was 61–75% empty with a day grid of
+  seventy-five cells that reached nothing. The parts it took were the
+  next-step sentence and the drill-down; it took neither a rail nor an act
+  collapse, and the measurements for *not* taking them are in its page doc.
+  Cycle is done (COD-334): its six rail rows
   are armed in `a11y-panels`, and arming it found a `label-content-name-mismatch`
   on all twelve of them at once — the same lesson Recovery's arming taught with
   32 violations. Every rail page on the rollout is now driven per row.
