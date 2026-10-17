@@ -4,6 +4,7 @@ import { Abbr } from '../Abbr'
 import { Pill } from '../ui'
 import { useStickyState } from '../../lib/useStickyState'
 import { FLAGS, FLAG_COLOR, FLAG_MEANS, type Flag } from './flags'
+import { LH_GLYPH, MUCUS_GLYPH } from './dayFields'
 
 const OPEN_STATES = ['1', '0'] as const
 
@@ -146,6 +147,56 @@ export function FlagLegend() {
           ))}
         </ul>
       )}
+
+      <MarkKey />
+    </div>
+  )
+}
+
+/**
+ * THE OTHER KEY · what `∴`, `≈`, `◇`, `:`, `−`, `+` and `✦` mean.
+ *
+ * `MonthList` draws a mucus glyph and an LH glyph in a shared column, with
+ * `aria-hidden` on the glyphs and an `sr-only` "mucus creamy, LH negative"
+ * beside them. So a **screen-reader user was told what the marks mean and a
+ * sighted one was not** — the exact inverse of the report that created the
+ * flag legend ("those are there, but unable to see which colour represents
+ * what"), one field over, and shipped in the same card as the fix for it.
+ *
+ * Reported by pasting the rendered column back: `5 d9 97.19° ∴− mucus creamy,
+ * LH negative`. The sighted reader sees `∴−`; nothing on the page decoded it.
+ *
+ * **Built from the glyph maps, never a second list** — the rule the flag
+ * legend already states one function up. Adding a mucus stage to
+ * `dayFields.ts` adds a mark here with no edit, and a key that has drifted is
+ * worse than none because it is confidently wrong.
+ *
+ * **Not behind a fold.** The word IS the meaning here — "creamy" needs no
+ * sentence — so there is nothing to hide, and hiding a key is how the first
+ * complaint happened.
+ *
+ * `dry` and `not-taken` are deliberately absent from what is drawn: `dry`
+ * renders `·`, which at 13px is indistinguishable from punctuation, and
+ * `not-taken` renders nothing at all. Both stay in the map; neither is a mark
+ * a reader has to decode.
+ */
+function MarkKey() {
+  const marks = [
+    ...Object.entries(MUCUS_GLYPH).filter(([k]) => k !== 'dry').map(([k, g]) => [g, k.replace('-', ' ')]),
+    ...Object.entries(LH_GLYPH).filter(([k]) => k !== 'not-taken').map(([k, g]) => [g, `LH ${k}`]),
+  ]
+  return (
+    <div className="mt-2 border-t border-line pt-2">
+      <p className="text-caption uppercase tracking-wide text-fg-2">Marks in the day list</p>
+      <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-label text-fg-2">
+        {marks.map(([glyph, word]) => (
+          <li key={word}>
+            {/* The glyph in `fg-1` and the word in `fg-2`: the mark is the
+                thing being looked up, so it is the half that carries weight. */}
+            <span className="num mr-1 text-fg-1">{glyph}</span>{word}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

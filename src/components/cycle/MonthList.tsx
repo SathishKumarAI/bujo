@@ -39,7 +39,12 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
           className="flex w-full items-center gap-3 border-b border-line px-2 py-1.5 text-left text-label hover:bg-ink-2"
           style={isSel ? { background: cat('mauve') + '22' } : isPeriod ? { background: cat('red') + '22' } : undefined}
         >
-          <span className={`w-6 num ${isToday ? 'font-medium text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
+          {/* `w-7`, not `w-6`. The header above says "Date", which needs 27px
+              and had 24 — `npm run clipped` caught it on the run that added
+              the header, in both sub-columns. The cell holds at most two
+              digits either way, so the 4px buys the label and costs the rows
+              nothing. */}
+          <span className={`w-7 num ${isToday ? 'font-medium text-fg-1' : 'text-fg-2'}`}>{Number(d.slice(8))}</span>
           {/* `fg-2`, not `fg-3`. This row takes a 13% wash of mauve when it is
               selected and of red on a period day, and the wash lifts the ground
               toward the text: `fg-3` measured **4.16:1** on the period tint and
@@ -58,7 +63,13 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
 
               Glyphs rather than colour: five hues sit to the right already, and
               a sixth would read as a sixth flag. */}
-          <span className="num w-8 shrink-0 text-center text-fg-3" aria-hidden>
+          {/* `fg-2`, not `fg-3`, for the reason the cycle-day column above
+              carries: this row takes a 13% wash when selected or on a period
+              day, and `fg-3` measured 4.01–4.16:1 on those grounds. The glyph
+              column was left at `fg-3` when that was fixed for the others —
+              and it is the column a reader has to decode, so it is the worst
+              one to leave faint. */}
+          <span className="num w-8 shrink-0 text-center text-fg-2" aria-hidden>
             {c?.mucus ? MUCUS_GLYPH[c.mucus] : ''}{c?.lh ? LH_GLYPH[c.lh] : ''}
           </span>
           {(c?.mucus || (c?.lh && c.lh !== 'not-taken')) && (
@@ -79,14 +90,45 @@ export function MonthList({ days, entries, selected, today, cycleDayOf, onSelect
     )
   }
 
+  /**
+   * THE COLUMNS, NAMED WHERE THEY ARE DRAWN.
+   *
+   * A row reads `1 d5 97.39° ∴− ■`: two numbers, a temperature, two glyphs
+   * and some squares, and the only thing that said which number was which was
+   * a `title` on the cycle-day cell — a tooltip, which a phone cannot show
+   * and which this repo has a rule against relying on. Pasted back as the
+   * report, the ambiguity is the first thing in it.
+   *
+   * The header widths are the row's widths, so the labels sit over their own
+   * cells. `aria-hidden`: each row's button already names its own parts
+   * through the `sr-only` spans, and a header row that is not a table header
+   * would otherwise be read as six stray words before the list.
+   */
+  const header = (
+    <div aria-hidden className="flex w-full items-center gap-3 px-2 pb-1 text-micro uppercase tracking-wide text-fg-2">
+      <span className="w-7">Date</span>
+      <span className="w-10">Cycle</span>
+      <span className="w-14">Temp</span>
+      <span className="w-8 text-center">Signs</span>
+      <span>Flags</span>
+    </div>
+  )
+
+  /* "Days 1–15" named the DATES and reads as cycle days on a page whose every
+     other number is a cycle day — and the row beneath it prints both. The
+     month's own name settles it in three characters. */
+  const mon = days[0] ? new Date(`${days[0]}T00:00:00`).toLocaleString(undefined, { month: 'short' }) : ''
+
   return (
     <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
       <div>
-        <p className="mb-1 border-b border-line pb-1 text-micro text-fg-2">Days 1–15</p>
+        <p className="mb-1 border-b border-line pb-1 text-micro text-fg-2">{mon} 1–15</p>
+        {header}
         <ul>{days.slice(0, 15).map(row)}</ul>
       </div>
       <div>
-        <p className="mb-1 border-b border-line pb-1 text-micro text-fg-2">Days 16–{days.length}</p>
+        <p className="mb-1 border-b border-line pb-1 text-micro text-fg-2">{mon} 16–{days.length}</p>
+        {header}
         <ul>{days.slice(15).map(row)}</ul>
       </div>
     </div>

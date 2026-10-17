@@ -9,6 +9,7 @@ import { Cycle } from './Cycle'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL, panelsIn } from '../lib/cycleCards'
 import { FLAGS, FLAG_MEANS } from '../components/cycle'
+import { LH_GLYPH, MUCUS_GLYPH } from '../components/cycle/dayFields'
 import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
 import { CAT } from '../lib/colors'
 import { generateDemoData } from '../lib/demo'
@@ -249,5 +250,43 @@ describe('Cycle · your log shows what the averages are made of', () => {
     // three has ever been readable back out of a past day.
     expect(text).toMatch(/mood \d\/5/)
     expect(text).toMatch(/energy \d\/5/)
+  })
+})
+
+/**
+ * THE MARK KEY · the glyphs the day list draws.
+ *
+ * `MonthList` renders a mucus glyph and an LH glyph with `aria-hidden` and an
+ * `sr-only` phrase beside them, so a screen-reader user was told what `∴−`
+ * means and a sighted one was not — the inverse of the report that created
+ * the flag legend, in the same card.
+ *
+ * Asserted against the glyph maps in BOTH directions, which is the rule the
+ * flag legend's own docstring states: a hand-written key is a copy that
+ * drifts, and a key that has drifted is worse than none because it is
+ * confidently wrong.
+ */
+describe('Cycle · every mark the day list can draw is decoded', () => {
+  it('names each mucus stage and LH result, built from the maps', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const key = [...container.querySelectorAll('ul')]
+      .map((u) => u.textContent ?? '')
+      .find((t) => t.includes('creamy') && t.includes('LH'))
+    expect(key, 'the mark key renders').toBeTruthy()
+
+    // `dry` renders a `·`, which at 13px is punctuation, and `not-taken`
+    // renders nothing — neither is a mark anyone has to decode.
+    for (const stage of Object.keys(MUCUS_GLYPH).filter((k) => k !== 'dry')) {
+      expect(key, `no key row for mucus "${stage}"`).toContain(stage.replace('-', ' '))
+    }
+    for (const result of Object.keys(LH_GLYPH).filter((k) => k !== 'not-taken')) {
+      expect(key, `no key row for LH "${result}"`).toContain(`LH ${result}`)
+    }
+    // And the glyphs themselves, or the key would name words with no marks.
+    for (const g of [MUCUS_GLYPH.creamy, MUCUS_GLYPH['egg-white'], LH_GLYPH.peak]) {
+      expect(key).toContain(g)
+    }
   })
 })
