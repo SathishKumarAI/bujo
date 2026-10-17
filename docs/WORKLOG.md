@@ -26,6 +26,178 @@ Rules the three share:
 
 ---
 
+## 2026-10-17 — The last two pages off the rollout, then Cycle four more times (COD-334 · 335 · 336 · 337, PRs #418–#421 + one open)
+
+Five merges in one session. The rollout list is finished; everything after
+that is Cycle answering what was reported about it. Measured throughout
+against a local preview of each branch's own build at `?demo=1`, mocha, with
+the served bundle hash checked against `dist/index.html` every time.
+
+### Cycle onto the contract · PR #418, COD-334
+
+Per rail row, with the act shut — a rail page's single number is whichever row
+it opens on, which is COD-237:
+
+| row | 1440 before | 1440 after | phone before | phone after |
+|---|---|---|---|---|
+| This cycle | 1.39 screens | 1.40 | 2.90 | **2.23** |
+| How you feel | 1.94 | 1.88 | 3.78 | **3.11** |
+| Fertility | 1.59 | 1.52 | 3.15 | **2.48** |
+| Patterns | 1.59 | 1.60 | 2.88 | **2.21** |
+| Guide | **7.38** | **1.15** | **13.09** | **2.37** |
+| Manual | — | 1.19 | — | 1.98 |
+
+Worst row **7.38 → 1.88 desktop, 13.09 → 3.11 phone**.
+
+- **The act column collapses** (`useActColumn`/`ActStrip`) — the last page on
+  the contract without it. Review 678 → **846px** at 1440 and 854 → **1,326px**
+  at 1920; the act 424/520px → a 40px strip, a 44px bar stacked.
+- **The manual left the Guide row** and became a nine-card `CardDeck`. It was
+  **5,435px on a phone** inside somebody else's row, with its own contents
+  `<nav>` — three navigations for one subject. Worst card **5,435 → 827px**.
+  The Guide row became a deck too and is now the shortest desktop row.
+- **`StatGrid steps="pair"` replaced `CardGrid`** — a container query instead
+  of a viewport one, with a ~330px card floor and a ceiling of **two** columns.
+  The ceiling is measured, not a preference: no group has more than two
+  non-wide cards, and a third step took `This cycle` 1,107 → 1,169px with
+  cards 653 → 429px, for an empty third track.
+- **Zone 1 gained `nextStep`** — seven rules, two carrying coverage floors.
+
+**Two defects fell out.** `InfoTip`'s `onMore` had **no call site**, so all 18
+`more:` targets in `lib/cycleHelp.ts` pointed at sections nothing linked to,
+for the life of the component — and `cycleHelp.test.ts` was green throughout
+and right to be, because it asserts every target *resolves*, which says
+nothing about whether anything links. And arming `a11y-panels` here went red
+immediately on a `label-content-name-mismatch` across **all twelve rows at
+once**, from a hide button that painted "Tap to hide" and announced something
+else.
+
+### Challenges · PR #419, COD-335
+
+The one page on the list whose fault was never length — **1.00 desktop screens
+before and after**.
+
+| | before | after |
+|---|---|---|
+| clickable controls in the review | **1** | **76** |
+| phone page | 1,347px · 1.60 | 1,714px · 2.03 |
+| zone 1 | 53px of four figures | 105px — a sentence, then the figures |
+
+Three faults, one shape. `challengeNotes` was **write-only**: its one reader
+was bound to `today`, so a note written this morning could never be read back
+on any of the other 74 days, and `lib/demo.ts` had been seeding 14 notes
+across 9 days that nothing could show. Seventy-five day cells were `<li>` and
+reached nothing. The calendar is 262px in a **678px column at 1440 and a
+1,062px one at 1920** — 61% and 75% of the zone was empty.
+
+One change answered all three: a cell is a button, and the day it opens is a
+panel beside the calendar with that day's rules and notes, editable. With no
+day picked the column stands on `ruleCompletion` — rule by rule, the answer to
+"I keep missing a day" the page could not give. **No rail and no act
+collapse**, both refused on measurements rather than inherited from the five
+pages before it.
+
+### Cycle's carried items · PR #420
+
+- **COD-247's other half was the MARK, not the card.** Bar widths **212 / 340
+  / 430px → 180px** at 1440 / 1920 / 2560. `MAX_BAR` in `chartStyle.ts`; the
+  sweep over the nine other bar charts is **COD-336**, filed rather than done,
+  because changing nine charts without measuring any of them is the inference
+  this repo keeps paying for.
+- **The rail said `Manual 1` over a deck saying `1 of 9`** — two figures each
+  correct under its own definition, with the page naming neither, which is
+  this page's oldest fault in miniature. `panels` on the registry entry,
+  derived from `CYCLE_MANUAL.length`.
+- **`food` was never a fault** and the entry was retired: 2,509px is the
+  card's own height, the deck's track is the active card, and the row lands on
+  `phases` at 1,089px.
+
+### The reported-changes pass · PR #421 and `feat/cycle-act-clarity`, COD-337
+
+Twelve things reported across three messages. What they have in common is
+worth more than the list: **the page worked and could not be read.**
+
+- **`actTop`** — the log starts at the top. The note in that slot said actTop
+  "buys nothing" because `This cycle` is 1,306px either way. True, and
+  answering the wrong question: the ask was about where the thing you came to
+  do sits, not how tall the page is.
+- **Every subtitle said why the card existed instead of what was in it.** "The
+  cycle as one shape, not a line that restarts every month" became "Your four
+  phases, sized by your own 29-day average", and five more, plus all six rail
+  blurbs. This was the "vague kind of website" report, and it was exact.
+- **`Your log`, a new rail row.** `CyclePoint` carries **fourteen** fields; the
+  month list drew **four**. Ten could be filled in and never seen again.
+- **The act names the month it writes to**, the **temperature chart follows
+  the month you are browsing**, and the **temperature line breaks at a missed
+  morning** — a reversal of a documented `connectNulls`, on the reporter's
+  call.
+- **The day list's glyphs had no key.** `∴ ≈ ◇ :` and `− + ✦` rendered
+  `aria-hidden` with an `sr-only` phrase beside them, so a screen-reader user
+  was told what they meant and a sighted one was not — the inverse of the
+  report that created the flag legend, in the same card.
+- **The optional-fields hint was replaced by your own values.** `summary(entry)
+  || 'flow · mucus · LH · cravings · a note'` drew the field names only on a
+  day with nothing on it, so logging a mood made the other eight fields
+  unfindable forever after. Asked as "where else can I mark it as sticky,
+  creamy? I'm not able to understand."
+- **The five flag sentences were 214px of an 807px act column.** Closed by
+  default now — **191px back** — with the hue key still drawn, because hiding
+  a key is the complaint that created the component.
+- **Nothing pointed at the history or the manual**, both rail rows away from
+  the card you stand in while logging.
+
+### What this session got wrong
+
+- **I committed to `main`.** One commit, caught immediately, moved onto a
+  branch with `main` reset to the merge commit. The rule exists and I walked
+  past it.
+- **A canary that could not fail.** The mark key's test read the glyph from
+  the same map the key is built from, so changing the glyph changed both sides
+  and the test stayed green. A derived key can only be pinned by breaking its
+  own filter, which is what it pins now.
+- **I shipped a commit while a test was red.** An `&&` chain ran `grep` (which
+  succeeded) and then `git commit`. Found on the next full run and amended. A
+  grep's exit code is not a test result.
+- **A copy error in copy written minutes earlier**: the new pointer line said
+  "tap any day above" and the list is below it.
+- **Per-month selected-day memory: abandoned.** Three lines, and the React
+  Compiler refuses the whole component over it. Written up in
+  `docs/QUESTIONS.md` rather than forced, along with the two other readings of
+  "it still needs to be saved for every month" — one shipped, one unbuilt.
+
+### The hour that is worth the next reader's minute
+
+`phase.label.toLowerCase()` inside a card subtitle made the React Compiler
+treat `length` — an input to `phaseOf` — as possibly-mutated, and refuse to
+preserve the memoisation of **six** `useMemo`s a hundred lines above. Every
+error read "This dependency may be modified later" and pointed at `length`;
+not one pointed at the call. Two other shapes produced it in the same session:
+a `picked[ym] ?? …` read off a state object (twelve errors), and a `.reduce`
+over a memo's array in render (six). `useCallback` and `useMemo` rescue none
+of them.
+
+The rules, now in CLAUDE.md: interpolate plain values rather than method
+calls; do a derived value's formatting in the child component; and when a
+cluster of "existing memoization could not be preserved" appears, **bisect by
+reverting expressions, not by reading the error locations — the locations are
+the victims.**
+
+### Gates
+
+`npm run verify` ended at **158 files, 2,163 tests**. `npm run a11y` 187
+scans, 0 serious or critical. `a11y:panels` grew from six Cycle rows to seven
+and, across the session, found **four real defects in work from this same
+session** — two `label-content-name-mismatch`, one 3.83:1 contrast, one header
+clip. Every one was in something added hours earlier. The argument for arming
+a gate in the same commit as the feature is not theoretical.
+
+`npm run clipped` caught a fifth, and then could not see a sixth: five column
+labels need **211px in a 180px column**, and the last one overflows its PARENT
+rather than itself, which is the blind spot CLAUDE.md already records. Three
+labels now, measured at 180px in 180px.
+
+---
+
 ## 2026-10-16 — Fitness and Strength onto the contract, and four defects the pages were hiding (COD-329, PR #410 · #411)
 
 Two pages off `docs/PAGE-ROLLOUT.md`, in two stacked PRs, driven from the

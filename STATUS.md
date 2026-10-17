@@ -1,64 +1,67 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/cycle-modernize`, **one PR open**.
-The page rollout is finished; this is the reported-changes pass on Cycle.
+**Stopped:** 2026-10-17, on `feat/cycle-act-clarity`, **one PR to open**.
+The page rollout is finished. This branch is the second round of reported
+changes on Cycle's act column.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | Cycle (#418), Challenges (#419), Cycle follow-ups (#420) merged | up to date |
-| `feat/cycle-modernize` | **open** | COD-337 — two commits | pushed |
+| `main` | — | #418 Cycle · #419 Challenges · #420 follow-ups · #421 modernisation, all merged | up to date |
+| `feat/cycle-act-clarity` | **not opened yet** | COD-337 round two — two commits | pushed |
 
 ## The next action
 
-1. **Merge the PR** once CI is green. Green locally: `verify` (158 files,
-   2,161 tests), `design`, `contrast`, `clipped`, and `a11y:panels` over
-   Cycle's **seven** rows.
-2. **Answer the open question in `docs/QUESTIONS.md`** — what "it still needs
-   to be saved for every month" meant. Two of the three readings are shipped;
-   the third (a per-month summary card) is not built, deliberately.
-3. **COD-336** — the `maxBarSize` sweep over the nine remaining bar charts.
+1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,163
+   tests), `clipped`, `contrast`, and `a11y:panels` over Cycle's seven rows at
+   mocha, latte and phone.
+2. **Answer `docs/QUESTIONS.md`** — what "it still needs to be saved for every
+   month" meant. Two readings shipped; the third (a per-month summary card) is
+   unbuilt on purpose.
+3. **COD-336** — `maxBarSize` on the nine remaining bar charts.
 
-## What landed on this branch · COD-337
+## What landed on this branch
 
-Eight things reported in two messages. Six shipped, one answered by
-measurement, one abandoned with its reason:
+The act column, read back by pasting it in. Four findings, three of them the
+same fault: a thing that works with nothing saying where it is.
 
-1. **`actTop`** — the log starts at the top, beside zone 1, which is now one
-   block (§22). The note that said actTop "buys nothing" was measuring height
-   and the ask was about placement.
-2. **Every subtitle says what is in the card**, not why the card exists —
-   "Your four phases, sized by your own 29-day average" for "The cycle as one
-   shape, not a line that restarts every month", and five more. Same for the
-   six rail blurbs.
-3. **`Your log`, a new rail row** — `CyclePoint` carries fourteen fields and
-   the month list drew four, so ten could be filled in and never seen again.
-   Tapping a row opens that day in the editor and moves the month cursor.
-4. **The act names the month it writes to**, with "Back to today".
-5. **The temperature chart follows the month you are browsing.**
-6. **The temperature line breaks at a missed morning** — a reversal, asked
-   for directly.
-7. **"Saved for every month" was not data loss** — verified in a browser,
-   every month renders its own rows. See `docs/QUESTIONS.md`.
-8. **Remembering the selected day per month: abandoned.** Three lines, and
-   the React Compiler refuses the whole component over it.
+| | before | after |
+|---|---|---|
+| flag legend | **214px** of an 807px act column | **23px** |
+| day-list glyphs | `∴−`, decoded nowhere a sighted reader looks | a key under the legend |
+| day-list header | none — a `title` tooltip was the only key | `Date · Cycle · Temp` |
+| optional fields | named only on an empty day | named always |
 
-**Two gates caught two real defects**, both in the new row and both found
-because it was armed in the same commit: a 3.83:1 selected-row contrast and a
-`label-content-name-mismatch` from an `aria-label` that named less than the
-row paints.
+The glyph key is the sharpest: the marks were `aria-hidden` with an `sr-only`
+phrase, so a screen-reader user was told what they meant and a sighted one was
+not. And the optional-fields hint was self-erasing — logging a mood replaced
+"flow · mucus · LH · cravings · a note" with "mood 3", permanently.
+
+The act now points at `Your log` and the manual, which were rail rows away
+from the card you stand in while logging.
+
+## What went wrong, so the next session does not repeat it
+
+- **A commit landed on `main`** — moved to a branch, `main` reset to the merge
+  commit. Branch first, every time.
+- **A canary that could not fail**: the mark key's test read the glyph from the
+  map the key is built from. A derived key is pinned by breaking its filter,
+  not its data.
+- **A commit shipped over a red test** because an `&&` chain ran `grep` before
+  `git commit`. Amended. A grep's exit code is not a test result.
 
 ## Open
 
-- `docs/QUESTIONS.md` · what "saved for every month" meant — the third
-  reading, a per-month summary card, is unbuilt on purpose.
-- **COD-336** — `maxBarSize` on the nine other bar charts.
+- `docs/QUESTIONS.md` · what "saved for every month" meant — third reading
+  unbuilt.
+- **COD-336** — `maxBarSize` on nine bar charts.
 - **A seeded journal per `nextStep` branch**, so six of seven tones are drawn
   by a gate rather than only asserted.
 - **Home Workout drives its act from a bare `useState`**, which
-  `PAGE-ROLLOUT.md` says never to do. Found while checking what the "like
-  home workouts" ask referred to; not fixed.
+  `PAGE-ROLLOUT.md` says never to do.
+- **COD-247 is reopened for Recovery** — Cycle's half is done, `NoFap.tsx`
+  still carries the `2xl:grid-cols-2` pin and the `SPAN_2` coupling.
 
 ## Environment
 
