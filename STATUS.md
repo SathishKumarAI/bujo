@@ -1,79 +1,84 @@
 # STATUS
 
-**Stopped:** 2026-10-16, on `feat/cycle-pass`, **one PR open**.
-Cycle is done. **Challenges is the only page left on the rollout.**
+**Stopped:** 2026-10-17, on `feat/challenges-pass`, **one PR open**.
+**Every page on `docs/PAGE-ROLLOUT.md` is done.**
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | Recovery (#417, COD-334's predecessor) merged | up to date |
-| `feat/cycle-pass` | **open** | COD-334 — the Cycle pass, six commits | pushed |
+| `main` | — | Cycle (#418, COD-334) merged | up to date |
+| `feat/challenges-pass` | **open** | COD-335 — the Challenges pass, three commits | pushed |
 
-Nothing is stacked. The PR merges on its own.
+Nothing is stacked.
 
 ## The next action
 
-1. **Merge the Cycle PR** once CI is green — everything in it is green
-   locally, including `verify`, `design`, `contrast`, `clipped`, `space` and
-   both a11y gates.
-2. Then **Challenges** (`views/Challenges.tsx`), the last page on
-   `docs/PAGE-ROLLOUT.md`. The order per page is in that file; the parts it
-   will want are `useActColumn`/`ActStrip`, `StatGrid`, and an `a11y-panels`
-   entry in the same commit as any rail.
+1. **Merge the Challenges PR** once CI is green. Everything in it is green
+   locally: `verify`, `design`, `contrast`, `clipped`, and `a11y` (187 scans,
+   0 serious/critical).
+2. Then **Cycle's four open items** (below). They are the only measured,
+   ready-to-start work left; the rollout itself is finished.
 
-## What landed on this branch
+## What landed on this branch · COD-335
 
-Measured at `?demo=1`, mocha, **per rail row**, with the served bundle hash
-checked against `dist/index.html` each time. Desktop figures with the act shut:
+The one page on the rollout whose fault was never length — **1.00 desktop
+screens before and after**. Three faults, one shape:
 
-| row | 1440 before | 1440 after | phone before | phone after |
-|---|---|---|---|---|
-| This cycle | 1.39 screens | 1.40 | 2.90 | **2.23** |
-| How you feel | 1.94 | 1.88 | 3.78 | **3.11** |
-| Fertility | 1.59 | 1.52 | 3.15 | **2.48** |
-| Patterns | 1.59 | 1.60 | 2.88 | **2.21** |
-| Guide | **7.38** | **1.15** | **13.09** | **2.37** |
-| Manual | — | 1.19 | — | 1.98 |
+| | before | after |
+|---|---|---|
+| clickable controls in the review | **1** | **76** |
+| 1440 · page | 900px · 1.00 screens | 900px · **1.00** |
+| 1920 · page | 1,080px · 1.00 | 1,080px · **1.00** |
+| phone · page | 1,347px · 1.60 | 1,714px · **2.03** |
+| zone 1 | 53px of four figures | **105px**: a sentence, then the figures |
 
-The page's worst row: **7.38 → 1.88 desktop, 13.09 → 3.11 phone.**
+1. **`challengeNotes` was write-only.** One reader, bound to `today`, so a
+   note written this morning could never be read back on any of the other
+   seventy-four days. 14 seeded notes across 9 days that nothing could show.
+2. **Seventy-five day cells reached nothing.** They were `<li>`.
+3. **The review column was 61–75% empty** — a 262px calendar in a 678px column
+   at 1440 and a 1,062px one at 1920.
 
-1. **The act column collapses** — `useActColumn` + `ActStrip`, the last page on
-   the contract without them. Review 678 → **846px** at 1440, 854 → **1,326px**
-   at 1920; the act 424/520px → a **40px** strip, and a 44px bar stacked.
-2. **The manual is its own rail row, as a `CardDeck`** of its nine sections.
-   It was 5,435px on a phone inside the Guide row, with its own contents `<nav>`
-   — three navigations for one subject. Worst card 5,435 → **827px**.
-3. **The Guide row is a deck too** and is now the shortest desktop row.
-4. **Zone 3 uses `StatGrid steps="pair"`**, a container query, instead of
-   `CardGrid` with a viewport-query cap. COD-247, half fixed — see below.
-5. **Zone 1 says what to do** — `nextStep`, seven rules, two with coverage
-   floors, every one tested.
-6. **`a11y-panels` drives all six rows.** Arming it found a serious
-   `label-content-name-mismatch` on twelve rows at once.
+One change for all three: a cell is a button, and the day it opens is a panel
+beside the calendar with that day's rules and notes, editable. With no day
+picked the column stands on `ruleCompletion` — rule by rule over the elapsed
+window, the answer to "I keep missing a day" the page could not give.
 
-`docs/pages/cycle.md` has the full write-up.
+Zone 1 gained the `nextStep` sentence; `left` **names** the rules rather than
+counting them, because the count was the facts row subtracted eight pixels
+below it.
 
-## Open, found and not fixed
+**No rail and no act collapse**, both as measurements rather than inheritance
+— the review holds three things, and the page had width spare rather than
+width missing. The reasoning is in `docs/pages/challenges.md`.
 
-1. **COD-247's other half.** At 2560 with the act shut the panel is 1,662px and
-   the two narrow cards are 821px each. A third column is *not* the answer (no
-   group has three non-wide cards — measured, it only shrinks the two); capping
-   the card is, and it is a separate change. The ticket is still in Backlog.
+## Open · Cycle, from COD-334
+
+Still the four its own pass left, in the order I would take them:
+
+1. **COD-247's other half.** At 2560 with the act shut the review panel is
+   1,662px and the two narrow cards are **821px each**. A third column is not
+   the answer (no group has three non-wide cards — measured: it only shrinks
+   the two and leaves a dead track); capping the card is. Ticket in Backlog.
 2. **`nextStep` lands on `steady` for the demo journal**, so six of its seven
-   tones and glyphs have never been rendered by a gate. Unit-tested, not
-   *drawn*. Same shape as latte's yellow at 2.02:1 behind a branch the seed
-   never took. Fixing it means a seeded journal per branch.
-3. **`food` is 2,509px on a phone** — one card of a deck now rather than half a
-   row, but still a catalogue of five phases written as five blocks of prose.
-   Shorter as rows; that is a content change, not a layout one.
-4. **The `Manual` rail row says `1` and the deck says `1 of 9`.** The rail
-   counts registered cards and the deck counts sections, so both are true and
-   they read as disagreeing. Recovery's STATUS already proposed dropping the
-   rail counts outright ("they read as notification badges"); that would settle
-   this too.
-5. The demo banner eats the top of a phone screen. App-shell, not this page —
-   carried over from Recovery's STATUS, still true.
+   tones and glyphs have never been *rendered* by a gate — unit-tested only.
+   The "a branch the seed never takes cannot fail" shape. Needs a seeded
+   journal per branch.
+3. **`food` is 2,509px on a phone** — one card of a deck now, but still five
+   phases written as five blocks of prose. Shorter as rows; a content change.
+4. **The `Manual` rail row says `1` and its deck says `1 of 9`.** Both true
+   (the rail counts registered cards, the deck counts sections) and they read
+   as disagreeing. Recovery's STATUS already proposed dropping the rail counts
+   outright, which would settle it.
+
+## Open · Challenges, from this pass
+
+- **A past day's notes are editable with no "edited" trace and no undo** —
+  the same level the rest of the app sits at, noted rather than fixed.
+- **The archive fold is still names and day counts.** Any day of an *active*
+  challenge now opens; a finished one's days do not, because the panel is
+  bound to the focused active challenge.
 
 ## Environment
 
