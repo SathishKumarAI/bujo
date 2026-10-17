@@ -1,5 +1,6 @@
 import type { CyclePoint } from './types'
-import { addDays, dayDiff } from './date'
+import { addDays, dayDiff, todayISO } from './date'
+import type { CycleGroup } from './cycleCards'
 
 /**
  * Derivations over the neutral cycle log (`data.cycle`): where each period
@@ -313,4 +314,130 @@ export function coverline(temps: { day: number; temp?: number }[]): number | nul
     if (after.every((t) => t.temp > high)) return Math.round(high * 100) / 100
   }
   return null
+}
+
+/** A `nextStep` rule's id, its sentence, and the rail row that elaborates it. */
+export interface CycleStep {
+  id: 'first' | 'late' | 'due' | 'stale' | 'fertile' | 'young' | 'steady'
+  text: string
+  group: CycleGroup
+}
+
+/**
+ * THE ONE SENTENCE AT THE TOP OF THIS PAGE · what to do, not only what is true.
+ *
+ * Zone 1 was four facts and a privacy line. `docs/PAGE-ROLLOUT.md` step 6 is
+ * the sentence, and Cycle was the last page without one — so the page said
+ * "Day 23 · Luteal · ~2 Nov ±2d · 29 days" and left the reader to work out
+ * that the thing to do was take tomorrow's temperature.
+ *
+ * Priority is URGENCY, which is also the order a reader would ask in:
+ *
+ * | rule | fires when |
+ * |---|---|
+ * | `first` | nothing logged — a record with no rows cannot say anything else |
+ * | `late` | past the estimate, worded as an estimate running out, never as a result |
+ * | `due` | the estimate lands within two days |
+ * | `stale` | temperatures are being taken and the run has a hole in it |
+ * | `fertile` | today is inside the measured window |
+ * | `young` | fewer than three completed cycles, and it says how many |
+ * | `steady` | the floor to stand on |
+ *
+ * Total, like every other `nextStep` in this app: it always returns a
+ * sentence, so zone 1 renders it without a conditional that would leave a
+ * hole at the top of the page.
+ *
+ * **`stale` has a coverage floor on both sides** — it needs a temperature in
+ * the last 30 days before it can complain about a missing one. Without that
+ * it fires permanently for the reader whose goal is `understand` and who has
+ * never taken a basal temperature in their life, which is a page nagging
+ * someone about a feature they have declined.
+ *
+ * Nothing here predicts and nothing here diagnoses. `late` says the estimate
+ * has run out; it does not say what that means, because this file cannot know
+ * and `CYCLE_DISCLAIMER` says so on every row of the page.
+ */
+export function nextStep(entries: CyclePoint[], opts: {
+  today?: string
+  /** The measured window, as 1-based cycle days — from `analyseCycles`. */
+  fertileFrom?: number | null
+  fertileTo?: number | null
+  /** The prediction's own spread in days, so the sentence can carry it. */
+  spread?: number
+  /** Detected ovulation day, for the phase label. */
+  ovulationDay?: number | null
+} = {}): CycleStep {
+  const today = opts.today ?? todayISO()
+  const day = cycleDay(entries, today)
+  const length = avgCycleLength(entries)
+  const until = daysUntilNextPeriod(entries, today)
+  const finished = cycleHistory(entries, today).filter((c) => !c.current).length
+  const spread = opts.spread ?? 0
+  const plus = spread > 0 ? ` (±${spread}d)` : ''
+
+  if (entries.length === 0 || day == null) {
+    return {
+      id: 'first',
+      text: 'Nothing logged yet — flag the first day of your period and this page starts reading your cycles back.',
+      group: 'cycle',
+    }
+  }
+  if (until != null && until < 0) {
+    return {
+      id: 'late',
+      text: `${-until} ${-until === 1 ? 'day' : 'days'} past the estimate${plus}. Flag day 1 when it starts — an estimate running out is not a result.`,
+      group: 'cycle',
+    }
+  }
+  if (until != null && until <= 2) {
+    return {
+      id: 'due',
+      text: `Period estimated ${until === 0 ? 'today' : `in ${until} ${until === 1 ? 'day' : 'days'}`}${plus}. Flag day 1 when it starts.`,
+      group: 'cycle',
+    }
+  }
+  const gap = morningsSinceTemp(entries, today)
+  if (gap != null && gap >= 3) {
+    return {
+      id: 'stale',
+      text: `No temperature for ${gap} mornings. The shift is read from a run of them, not from one reading.`,
+      group: 'fertility',
+    }
+  }
+  const { fertileFrom: from, fertileTo: to } = opts
+  if (from != null && to != null && day >= from && day <= to) {
+    return {
+      id: 'fertile',
+      text: `Day ${day} of the fertile window, days ${from}–${to}. The temperature confirms it afterwards, never during.`,
+      group: 'fertility',
+    }
+  }
+  if (finished < 3) {
+    return {
+      id: 'young',
+      text: `${finished} complete ${finished === 1 ? 'cycle' : 'cycles'} on the record. Three or four is where the patterns start meaning anything.`,
+      group: 'patterns',
+    }
+  }
+  return {
+    id: 'steady',
+    text: `Day ${day}${length != null ? ` of about ${length}` : ''} · ${phaseOf(day, length, opts.ovulationDay).label}. Nothing due.`,
+    group: 'cycle',
+  }
+}
+
+/**
+ * Mornings since the last temperature, or `null` when none was taken in the
+ * last 30 days.
+ *
+ * The `null` is the whole point — see `nextStep`'s `stale` rule. "No
+ * temperature ever" and "no temperature for three days" are different
+ * sentences, and only one of them is worth saying.
+ */
+export function morningsSinceTemp(entries: CyclePoint[], today: string): number | null {
+  const window = addDays(today, -30)
+  const dates = entries.filter((e) => e.temp != null && e.date >= window && e.date <= today)
+    .map((e) => e.date).sort()
+  const last = dates[dates.length - 1]
+  return last ? dayDiff(last, today) : null
 }

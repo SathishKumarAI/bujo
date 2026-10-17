@@ -1,105 +1,105 @@
 # STATUS
 
-**Stopped:** 2026-10-16, on `feat/recovery-pass`, **one PR open** (#417).
-Recovery is done; Cycle is the last page on the contract.
+**Stopped:** 2026-10-16, on `feat/cycle-pass`, **one PR open**.
+Cycle is done. **Challenges is the only page left on the rollout.**
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | Nutrition (#414), the account-menu name (#413), the a11y gate (#415) and Nutrition's follow-up (#416) all merged | up to date |
-| `feat/recovery-pass` | **#417** | COD-334 — the whole Recovery pass, nine rounds of it | pushed, CI green on the earlier commits, **not merged** |
+| `main` | — | Recovery (#417, COD-334's predecessor) merged | up to date |
+| `feat/cycle-pass` | **open** | COD-334 — the Cycle pass, six commits | pushed |
 
-Nothing is stacked. #417 merges on its own.
+Nothing is stacked. The PR merges on its own.
 
 ## The next action
 
-1. **Merge #417.** The last commits were still building at the stop — check
-   `gh pr checks 417` once and merge on green. Everything in it is green
-   locally, including both a11y gates.
-2. Then **Cycle** (`views/Cycle.tsx`, 593 lines), the last page.
-   `docs/PAGE-ROLLOUT.md` has its first move: arm `a11y-panels` for its rail,
-   then sub-sections on the long row. **Reach for `CardDeck` (§30)** — Cycle's
-   longest row is the same shape as the nine-card `Patterns` row it was built
-   for.
-3. Challenges is the only other page left on the rollout.
+1. **Merge the Cycle PR** once CI is green — everything in it is green
+   locally, including `verify`, `design`, `contrast`, `clipped`, `space` and
+   both a11y gates.
+2. Then **Challenges** (`views/Challenges.tsx`), the last page on
+   `docs/PAGE-ROLLOUT.md`. The order per page is in that file; the parts it
+   will want are `useActColumn`/`ActStrip`, `StatGrid`, and an `a11y-panels`
+   entry in the same commit as any rail.
 
-## What landed in #417
+## What landed on this branch
 
-The three-zone contract pass plus nine rounds of reported changes. Measured at
-`?demo=1` each time, with the served bundle hash checked against
-`dist/index.html`:
+Measured at `?demo=1`, mocha, **per rail row**, with the served bundle hash
+checked against `dist/index.html` each time. Desktop figures with the act shut:
 
-| | before | after |
-|---|---|---|
-| page, desktop | 1,653px · 1.84 screens | **1,129px · 1.25** |
-| page, phone | **5,116px · 6.06 screens** | **1,581px · 1.76** |
-| act column, phone | **2,822px** | **41px** strip |
-| `views/NoFap.tsx` | 416 → 613 mid-pass | **433** |
+| row | 1440 before | 1440 after | phone before | phone after |
+|---|---|---|---|---|
+| This cycle | 1.39 screens | 1.40 | 2.90 | **2.23** |
+| How you feel | 1.94 | 1.88 | 3.78 | **3.11** |
+| Fertility | 1.59 | 1.52 | 3.15 | **2.48** |
+| Patterns | 1.59 | 1.60 | 2.88 | **2.21** |
+| Guide | **7.38** | **1.15** | **13.09** | **2.37** |
+| Manual | — | 1.19 | — | 1.98 |
 
-- **`actTop`** — one prop answering both "shrink it to the left side" and
-  "move the log to the top": zone 1 takes the review column's width, the act
-  runs from y87.
-- **One card for three acts** (`LogCard`), one picker instead of two that
-  overlapped, intensity as five buttons rather than a slider.
-- **`CardDeck`** — one card at a time, and `a11y-panels` now steps every card
-  of every deck (`9/9` in its table).
-- **Discreet mode** — a display-only label swap that says on the toggle that
-  it is not security.
-- **Sourced coping content** — urge surfing, cyclic sighing, movement, HALT,
-  the abstinence violation effect, and what a reset costs today in the
-  reader's own numbers.
+The page's worst row: **7.38 → 1.88 desktop, 13.09 → 3.11 phone.**
 
-**Six pre-existing defects fell out**, all fixed and tested: `best` rendering
-as NaN, a permanent-and-false "past your old record", a chart drawing bars
-only where there was *no* data, a ring measuring against something other than
-the sentence beside it, a tie reported as a winner, and a read-only history on
-the page's most consequential record.
+1. **The act column collapses** — `useActColumn` + `ActStrip`, the last page on
+   the contract without them. Review 678 → **846px** at 1440, 854 → **1,326px**
+   at 1920; the act 424/520px → a **40px** strip, and a 44px bar stacked.
+2. **The manual is its own rail row, as a `CardDeck`** of its nine sections.
+   It was 5,435px on a phone inside the Guide row, with its own contents `<nav>`
+   — three navigations for one subject. Worst card 5,435 → **827px**.
+3. **The Guide row is a deck too** and is now the shortest desktop row.
+4. **Zone 3 uses `StatGrid steps="pair"`**, a container query, instead of
+   `CardGrid` with a viewport-query cap. COD-247, half fixed — see below.
+5. **Zone 1 says what to do** — `nextStep`, seven rules, two with coverage
+   floors, every one tested.
+6. **`a11y-panels` drives all six rows.** Arming it found a serious
+   `label-content-name-mismatch` on twelve rows at once.
 
-## Open, from an outside review of this page
+`docs/pages/cycle.md` has the full write-up.
 
-Not done, in the order I would take them:
+## Open, found and not fixed
 
-1. **Branch the form on outcome** — "I gave in" should ask what was different
-   and hide "What helped?". Deliberately not done: the two outcome buttons sit
-   above the fields by a measured, test-pinned decision (that submit used to be
-   1,130px down the column), and branching means choosing the outcome first,
-   which reverses it. Worth doing as its own change with its own measurement.
-2. **A "Held / Slipped" tag on every urge row** — the outcome is carried by
-   icon colour alone, which is the one accessibility point in that review the
-   gates cannot see.
-3. **Rename "Win or loss"** — a judgemental frame on a recovery tool, working
-   against the page's own "both count" message.
-4. **Drop the counts from the rail rows** — they read as notification badges.
-5. The demo banner and the sidebar's top gap are **app-shell, not this page**.
-
-## Traps that cost time, now written down
-
-All six are in CLAUDE.md with their measurements. The two most reusable:
-
-- **A test keyed to copy breaks every time the copy moves.**
-  `NoFap.test.tsx` broke three times inside one change, never about the
-  behaviour under test. Anchor on a `role` or an `aria-label` instead.
-- **A percentage height on a flex child with no height resolves to nothing.**
-  It drew a chart's bars only where there was no data, and a screenshot cannot
-  show that — count the DOM.
+1. **COD-247's other half.** At 2560 with the act shut the panel is 1,662px and
+   the two narrow cards are 821px each. A third column is *not* the answer (no
+   group has three non-wide cards — measured, it only shrinks the two); capping
+   the card is, and it is a separate change. The ticket is still in Backlog.
+2. **`nextStep` lands on `steady` for the demo journal**, so six of its seven
+   tones and glyphs have never been rendered by a gate. Unit-tested, not
+   *drawn*. Same shape as latte's yellow at 2.02:1 behind a branch the seed
+   never took. Fixing it means a seeded journal per branch.
+3. **`food` is 2,509px on a phone** — one card of a deck now rather than half a
+   row, but still a catalogue of five phases written as five blocks of prose.
+   Shorter as rows; that is a content change, not a layout one.
+4. **The `Manual` rail row says `1` and the deck says `1 of 9`.** The rail
+   counts registered cards and the deck counts sections, so both are true and
+   they read as disagreeing. Recovery's STATUS already proposed dropping the
+   rail counts outright ("they read as notification badges"); that would settle
+   this too.
+5. The demo banner eats the top of a phone screen. App-shell, not this page —
+   carried over from Recovery's STATUS, still true.
 
 ## Environment
 
-Two preview servers were up at the stop: **4173** (the repo default, what CI
-uses) and **4299**. Start one with `npx vite preview --port 4173 --strictPort`,
-and always pass `BUJO_URL` — a gate without it grades whichever app started on
-the default port first.
+One preview server was up at the stop: **4310**, started from this worktree.
+4173 and 4299 belong to other worktrees — **compare the served
+`assets/index-*.js` against your own `dist/index.html`** before believing any
+measurement, because every worktree here serves an identical `<title>`.
 
-`playwright` and `@axe-core/playwright` are still not in `package.json`
-(COD-273). Install them at the versions the workflow now pins:
+```
+npx vite preview --port 4310 --strictPort &
+BUJO_URL=http://localhost:4310 node scripts/a11y-panels.mjs
+```
+
+`playwright` and `@axe-core/playwright` are installed on this machine but are
+still not in `package.json` (COD-273):
 
 ```
 npm i -D --no-save playwright@1.64.1 @axe-core/playwright@4.14.0
 npx playwright install chromium
 ```
 
-A throwaway probe must live in the **repo root**, not the scratchpad: ESM
-resolves `playwright` relative to the script, not the working directory. Delete
-them before committing — three slipped into commits this session and had to be
-reset back out.
+A throwaway probe must live in the **repo root**, not the scratchpad — ESM
+resolves `playwright` relative to the script. Five were written for this pass
+and all five are deleted; `git status` was clean before the push.
+
+**`npm run a11y:panels` is 133 rows and some minutes**, and it is still not in
+CI. Start it in the background and keep working — and do not `vite build`
+while it runs, or it serves a half-written `dist` and reports a view that
+"did not load".

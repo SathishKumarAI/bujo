@@ -27,7 +27,7 @@ export { EmptyFrame } from './EmptyFrame'
  * columns in a 678px panel, which is the measurement in `StatGrid`'s docstring.
  */
 export { PanelGrid, PanelCard, DefList, Tag } from './Panel'
-export { StatGrid } from './StatGrid'
+export { StatGrid, SPAN_PANEL } from './StatGrid'
 export { BarList, type BarRow } from './BarList'
 export { ResetField } from './ResetField'
 export { SearchField } from './SearchField'

@@ -54,9 +54,61 @@ import type { ReactNode } from 'react'
  * right when the page split decides the width, and wrong the moment the column
  * can change width without the window moving.
  */
-export function StatGrid({ children }: { children: ReactNode }) {
+/**
+ * THE TWO STEP SETS, and why the second one stops at two columns.
+ *
+ * `stat` is the original: a ~450px card floor, solved from a card holding four
+ * stat tiles and a sentence, which reads as a column below that. Every step
+ * comes from `n * 450 + gaps` — 58 / 88 / 116rem.
+ *
+ * `pair` is for a panel whose cards are rings, diagrams and short legends
+ * rather than stat tiles, and it is **two columns at most**. Both halves of
+ * that were measured on Cycle at `?demo=1`:
+ *
+ * - The floor is ~330px, not 450, because that page already draws those cards
+ *   at **329px with the act open and 413px with it shut** and has for its
+ *   whole life. Holding them to 450 would have made 846px — 1440 with the act
+ *   shut, the width that matters most — a single column.
+ * - It stops at two because **no group on that page has more than two cards
+ *   that are not full-width**. A third track cannot hold a third card; it can
+ *   only make the two narrower and leave a dead column beside them. Measured
+ *   at 1920 with the act shut, a 1,326px panel: three steps took `This cycle`
+ *   from **1,107px to 1,169px** and the cards from 653px to 429px, for an
+ *   empty third track. Same arithmetic that moved `moodphase` out of Cycle's
+ *   `patterns` group, one level up.
+ *
+ * The step sets are literal strings, not interpolated, because Tailwind reads
+ * the source: a class built from a prop emits no CSS, exits 0, and the element
+ * silently inherits. That is the stale-utility trap in CLAUDE.md, and a grid
+ * that quietly has no columns is how `CardGrid` drew a 1,926px panel in three
+ * tracks with no error anywhere.
+ */
+const STEPS = {
+  /** ~450px per card, up to four. Stat tiles and a sentence. */
+  stat: '@min-[58rem]/page:grid-cols-2 @min-[88rem]/page:grid-cols-3 @min-[116rem]/page:grid-cols-4',
+  /** ~330px per card, two at most. Rings, diagrams, short legends. */
+  pair: '@min-[42rem]/page:grid-cols-2',
+} as const
+
+/**
+ * A card that takes the whole panel whatever the step — a chart with thirty
+ * cycle days on its x-axis, a grid with a computed `minWidth`.
+ *
+ * NOT `SPAN_2`. That is `md:col-span-2 2xl:col-span-2`, two VIEWPORT queries,
+ * and this grid's columns answer to the container: at 1920 with the act shut
+ * the panel is 1,326px and `2xl` is true, so a card asking for "two of three"
+ * would get two of a grid that has four. `col-span-full` is the only spelling
+ * that means the same thing at every step.
+ */
+export const SPAN_PANEL = 'col-span-full'
+
+export function StatGrid({ children, steps = 'stat' }: {
+  children: ReactNode
+  /** Which column ladder to use. See `STEPS`. */
+  steps?: keyof typeof STEPS
+}) {
   return (
-    <div data-card-grid className="page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 @min-[58rem]/page:grid-cols-2 @min-[88rem]/page:grid-cols-3 @min-[116rem]/page:grid-cols-4">
+    <div data-card-grid className={`page-enter grid grid-cols-[minmax(0,1fr)] items-start gap-4 sm:gap-5 ${STEPS[steps]}`}>
       {children}
     </div>
   )

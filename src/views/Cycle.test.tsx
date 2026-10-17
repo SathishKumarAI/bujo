@@ -47,6 +47,24 @@ afterEach(() => localStorage.clear())
 const railRow = (label: string) =>
   screen.getByRole('button', { name: (name) => name.startsWith(`${label} `) })
 
+/**
+ * OPEN THE ACT COLUMN, because jsdom reports a 0px shell.
+ *
+ * `PageLayout` decides the split by measuring `.page-shell`, and `useActColumn`
+ * starts SHUT when stacked — so every component test on this page meets the
+ * `ActStrip` where a browser at 1440 meets the day editor. That is the measured
+ * default, not a bug, and the right fix is for the test to press the strip
+ * rather than to shim a width into jsdom.
+ *
+ * The `aria-expanded="false"` assertion on the way in is the only coverage that
+ * default has outside a browser probe.
+ */
+async function openAct(user: ReturnType<typeof userEvent.setup>) {
+  const strip = screen.getByRole('button', { name: /^Log a day/ })
+  expect(strip).toHaveAttribute('aria-expanded', 'false')
+  await user.click(strip)
+}
+
 describe('Cycle · the registry is the review zone', () => {
   it('reaches every registered card through the rail, and no unregistered one', async () => {
     const user = userEvent.setup()
@@ -103,6 +121,7 @@ describe('Cycle · the registry is the review zone', () => {
   it('decodes every flag, with the meaning exactly as `flags.ts` writes it', async () => {
     const user = userEvent.setup()
     const { container } = mount()
+    await openAct(user)
     const rows = [...container.querySelectorAll('#cycle-flag-meanings > div')]
     expect(rows).toHaveLength(FLAGS.length)
     for (const [i, f] of FLAGS.entries()) {
@@ -118,6 +137,28 @@ describe('Cycle · the registry is the review zone', () => {
     const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
     expect(keys.map((li) => li.textContent!.trim())).toEqual([...FLAGS])
     expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
+  })
+
+  /**
+   * THE ⓘ'S "LEARN MORE" HAS A CALL SITE, which it did not for the life of the
+   * component.
+   *
+   * `InfoTip` takes `onMore` and renders the link only when one is passed, and
+   * no caller ever passed one — so all 18 `more:` targets in `lib/cycleHelp.ts`
+   * pointed at sections no link reached. `cycleHelp.test.ts` was green on it
+   * the whole time, and correctly: it asserts every target RESOLVES, which
+   * says nothing about whether anything links. That is why this test is here
+   * and not there — it is the journey, not the data.
+   */
+  it('takes a tip’s "Learn more" to the manual', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(screen.getByRole('button', { name: /What this means: cycle day/i }))
+    await user.click(await screen.findByRole('button', { name: /learn more/i }))
+    const groups = [...container.querySelectorAll('[data-domain]')]
+    expect(groups).toHaveLength(1)
+    expect(groups[0].getAttribute('data-domain')).toBe('manual')
+    expect(container.querySelector('[data-card="manual"]')).not.toBeNull()
   })
 
   it('keeps the medical disclaimer visible in every group', async () => {

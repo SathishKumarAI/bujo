@@ -1,19 +1,18 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, ShieldWarning } from '@/components/icons'
+import { CalendarBlank, CaretRight, CheckCircle, Drop, ShieldWarning, Sparkle, Target, Thermometer, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
-import { PageLayout, SectionRail, SummaryStrip } from '../components/page'
-import { CardGrid, SPAN_2 } from '../components/shell/CardGrid'
+import { ActStrip, CardDeck, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
 import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
 import {
   avgCycleLength, avgPeriodLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
-  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, periodStarts,
+  driveByPhase, drivePeak, flagPatternByDay, nextPeriodEstimate, nextStep, periodStarts,
   phaseBands, phaseOf,
 } from '../lib/cycleInsights'
 import { analyseCycles, detectOvulation, predict } from '../lib/ovulation'
@@ -22,7 +21,7 @@ import type { CycleGoal } from '../lib/cycleHelp'
 import { feelingNotes, feelingsByPhase } from '../lib/cycleFeelings'
 import { CYCLE_DISCLAIMER, CYCLE_DISCLAIMER_VERSION } from '../lib/cycleGuide'
 import {
-  CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
+  CYCLE_CARDS, CYCLE_GROUPS, DECK_GROUPS, DEFAULT_GROUP, GROUP_BLURB, GROUP_LABEL, type CycleGroup,
 } from '../lib/cycleCards'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
@@ -92,11 +91,30 @@ export function Cycle() {
   const log = data.cycle
 
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]))
+  /* The act column, which this page was the last on the contract not to have.
+     Measured before: the review panel was **678px at 1440 and 854px at 1920**
+     with the day editor holding 424/520px of the shell on every visit, and no
+     way to give it back. Stacked it is worse than that — the editor, the
+     legend and the month fold are 682px of phone above a review the page
+     exists to show, which is why `useActColumn` starts shut when stacked. */
+  const logCol = useActColumn('cycle')
   /* Which zone-3 group is on screen. Sticky, because the four folds it replaces
      each had a `stickyKey` and losing that is a regression dressed as a
      redesign — `allowed` is the registry, so a renamed group cannot resurrect
      from a stale localStorage key. */
   const [group, setGroup] = useStickyState<CycleGroup>('cycle.group', DEFAULT_GROUP, CYCLE_GROUPS)
+  /**
+   * Which manual section a ⓘ asked for, and the reason it is here at all.
+   *
+   * `InfoTip` has always taken an `onMore`, `lib/cycleHelp.ts` has always
+   * carried **18** `more:` targets, and **no call site has ever passed one** —
+   * so the "Learn more" link under every tip on this page has never rendered,
+   * on any theme, at any width, since the component was written. Not sticky:
+   * it is one journey's "take me to that section", not a preference.
+   */
+  const [manualSection, setManualSection] = useState<string | null>(null)
+  /** Open the manual on a section. The rail row and the deck move together. */
+  const showManual = (s: string) => { setGroup('manual'); setManualSection(s) }
   const sel = days.includes(selected) ? selected : days[0]
   const selEntry = log.find((x) => x.date === sel)
 
@@ -121,6 +139,25 @@ export function Cycle() {
   const phase = day != null ? phaseOf(day, length, analysis.current.day) : null
   const nextPeriod = nextPeriodEstimate(log, today)
   const untilNext = daysUntilNextPeriod(log, today)
+
+  /**
+   * WHAT TO DO, which this page did not say.
+   *
+   * Zone 1 was four facts and the privacy line — "Day 23 · Luteal · ~2 Nov
+   * ±2d · 29 days" — and left the reader to work out that the thing to do was
+   * take tomorrow's temperature. `docs/PAGE-ROLLOUT.md` step 6, and Cycle was
+   * the last page on the contract without it.
+   *
+   * It reads the SAME detection engine the pill and the chart read, rather
+   * than a second copy of "when did she ovulate".
+   */
+  const step = nextStep(log, {
+    today,
+    fertileFrom: analysis.current.fertileFrom,
+    fertileTo: analysis.current.fertileTo,
+    ovulationDay: analysis.current.day,
+    spread: prediction.spread,
+  })
 
   const goal: CycleGoal = data.settings.cycleGoal ?? 'understand'
   const detectedDay = analysis.current.day
@@ -262,11 +299,9 @@ export function Cycle() {
         <DriveByPhase rows={drive} peak={peak} />
       </Card>
     ),
-    manual: (
-      <Card band title="The manual" subtitle="How to use this page, and what it can and cannot tell you" hideInfo>
-        <Manual />
-      </Card>
-    ),
+    /* No wrapping `Card`: the manual IS nine cards now, in a deck, and a card
+       of cards is the chrome this pass spent 5,435 phone pixels removing. */
+    manual: <Manual section={manualSection} />,
     goal: (
       <Card band title="What you are tracking for" subtitle="Changes what leads, never what is available" hideInfo>
         <CycleGoalCard
@@ -393,21 +428,42 @@ export function Cycle() {
   return (
     <PageLayout
       tier={1180}
+      /* NOT `actTop`. It is what Recovery needed, and it buys nothing here:
+         measured at 1440 with the act open, `This cycle` is **1,306px either
+         way** — the act column is 807px and zone 1 is ~120px, so moving the
+         orient block into the left column does not shorten the taller column.
+         Zone 1 here is still a BAR (a sentence and four facts), which is the
+         shape the contract gives both columns by default. */
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
       zone1={
         /* Not `StatBar`: three of these four are estimates and the phase is a
            coloured pill, and a bar that renders every value in the mono face
            would spell "Luteal · estimate" in the typewriter. The shape is the
            contract's — one row, at most four facts, spanning both columns. */
         <div className="border-b border-line pb-3">
+        {/* COLOUR IS URGENCY and nothing else — the edge and the glyph, with
+            `fg-1` text, because an accent as text on a wash of itself is the
+            calibration trap in CLAUDE.md. And it is a BUTTON into the row
+            that elaborates it: a sentence about the fertile window with no
+            way to reach the fertile-window card is a sentence that sends you
+            looking. */}
+        <NextStepBlock
+          text={step.text}
+          tone={{ first: 'mauve', late: 'peach', due: 'peach', stale: 'yellow', fertile: 'teal', young: 'teal', steady: 'green' }[step.id]}
+          icon={{ first: Sparkle, late: Warning, due: Drop, stale: Thermometer, fertile: Target, young: CalendarBlank, steady: CheckCircle }[step.id]}
+          destination={GROUP_LABEL[step.group]}
+          onPick={() => setGroup(step.group)}
+        />
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-          <Fact label={<>Cycle day<InfoTip tip="cycle-day" /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
+          <Fact label={<>Cycle day<InfoTip tip="cycle-day" onMore={showManual} /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           {/* The pill now says HOW it knows, not just what it thinks.
               "estimate" is the calendar; "likely" means a temperature shift was
               read in this cycle; "confirmed" means a second sign agreed with it.
               A page that says "Luteal" identically whether it measured anything
               or not is a page that cannot be trusted when it did. */}
           <Fact
-            label={<>Phase<InfoTip tip="confidence" /></>}
+            label={<>Phase<InfoTip tip="confidence" onMore={showManual} /></>}
             value={phase
               ? (
                 <Pill color={phase.color} size="micro" className="px-2">
@@ -417,7 +473,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">—</span>}
           />
           <Fact
-            label={<>Next period<InfoTip tip="next-period" /></>}
+            label={<>Next period<InfoTip tip="next-period" onMore={showManual} /></>}
             value={nextPeriod
               ? (
                 <span className="text-body text-fg-1">
@@ -440,7 +496,7 @@ export function Cycle() {
               : <span className="text-body text-fg-2">needs two periods</span>}
           />
           <Fact
-            label={<>Your average<InfoTip tip="your-average" /></>}
+            label={<>Your average<InfoTip tip="your-average" onMore={showManual} /></>}
             value={length != null
               ? <span className="text-body text-fg-1"><span className="num font-medium">{length}</span> days</span>
               : <span className="text-body text-fg-2">—</span>}
@@ -451,8 +507,50 @@ export function Cycle() {
         <CyclePrivacyLine />
         </div>
       }
-      zone2={
-        <Card band title="Log a day" subtitle="Tap a day, set a temperature, flag what happened, rate the drive" hideInfo>
+      zone2={logCol.shut ? (
+        /* Shut, the act is a 40px rail and the review takes the width back —
+           and stacked, `layout.css` lays the same button down into a 44px bar
+           rather than a tower of rotated text. The summary names the day it
+           would open on, because a shut panel with no summary is a mystery. */
+        <ActStrip
+          label="Log a day"
+          summary={selEntry?.temp != null ? `${prettyDay(sel)} · logged` : prettyDay(sel)}
+          onOpen={logCol.open}
+        />
+      ) : (
+        <Card
+          band
+          title="Log a day"
+          subtitle="Tap a day, set a temperature, flag what happened, rate the drive"
+          hideInfo
+          /* THE HINT IS DRAWN, not left in a `title` (§27). A phone cannot
+             hover, and an affordance nobody finds is an affordance nobody
+             uses — which is how this page shipped with no way to put the
+             editor away at all. In `right` rather than wrapped around the
+             heading because `Card` already owns the header row and already
+             names its own controls after the card. */
+          right={
+            <button
+              type="button"
+              onClick={logCol.close}
+              aria-expanded
+              /* THE NAME CONTAINS THE PAINTED TEXT, which is not a style
+                 preference: `label-content-name-mismatch` (WCAG 2.5.3)
+                 compares the accessible name against what is DRAWN, because a
+                 speech-input user says what they can see. Announcing more is
+                 fine; announcing something else is a serious violation, and
+                 the first version of this button said "Hide the log — …"
+                 while painting "Tap to hide". Caught by `a11y:panels` on the
+                 run that armed this page — on all twelve of its rows at once,
+                 since the button is in zone 2 and every row renders it. */
+              aria-label="Tap to hide the log — the review takes the width"
+              className="group inline-flex shrink-0 items-center gap-1 text-label text-fg-2 transition-colors hover:text-fg-1"
+            >
+              Tap to hide
+              <Icon as={CaretRight} size="sm" />
+            </button>
+          }
+        >
           <DayEditor
             date={sel}
             entry={selEntry}
@@ -516,7 +614,7 @@ export function Cycle() {
             </div>
           )}
         </Card>
-      }
+      )}
       zone3={
         <>
           <SummaryStrip items={[
@@ -545,26 +643,55 @@ export function Cycle() {
                 value={group}
                 onChange={(id) => setGroup((id as CycleGroup | null) ?? DEFAULT_GROUP)}
               />
-              <div className="min-w-0">
+              {/* A SECOND `@container/page`, on the panel rather than on the
+                  zone. The outer one is what the rail's own
+                  `@4xl/page:grid-cols-[11rem_…]` asks, and it is the width of
+                  zone 3 INCLUDING the 11rem rail and the 2rem gap — so a
+                  `StatGrid` step resolved against it is asking about a box
+                  208px wider than the grid it sizes. Nested containers of the
+                  same name resolve to the nearest ancestor, so the steps now
+                  measure the panel they are actually laying out. */}
+              <div className="@container/page min-w-0">
                 <section data-domain={group}>
                   <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
                     <h2 className="text-heading font-medium text-fg-1">{GROUP_LABEL[group]}</h2>
                     <p className="text-label text-fg-2">{GROUP_BLURB[group]}</p>
                     <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
                   </div>
-                  {/* Two columns is the ceiling here, and it is a correction
-                      rather than a preference. `CardGrid` asks the *viewport*,
-                      so at 1600 its `2xl:grid-cols-3` fired inside this 722px
-                      split column and resolved to three tracks of **227px** —
-                      the "cards a third of the size" half of the report. Two
-                      tracks of 350 is what 1440 already did. `MasonryGrid` is
-                      not the answer either: it breaks on its container at
-                      768px, so at 722 it would silently draw one column. */}
-                  <CardGrid className="2xl:grid-cols-2">
-                    {shown.map((c) => (
-                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>{cards[c.id]}</div>
-                    ))}
-                  </CardGrid>
+                  {/* `StatGrid`, because this column's width is decided by
+                      the page split and by whether the act is open — never by
+                      the window. `CardGrid` asks the viewport, which was wrong
+                      twice over: at 1600 its `2xl:grid-cols-3` fired inside a
+                      722px split column and resolved to three tracks of
+                      **227px**, and the `2xl:grid-cols-2` pinned here to stop
+                      that then capped the panel at two tracks forever — so
+                      putting the act away bought width nothing spent. COD-247.
+
+                      `steps="pair"`: these are rings, diagrams and short
+                      legends, not stat tiles, so the 450px floor would have
+                      made the 846px panel a single column — and two is the
+                      ceiling because no group here has more than two cards
+                      that are not full-width. */}
+                  {DECK_GROUPS.includes(group) ? (
+                    <CardDeck
+                      label={`${GROUP_LABEL[group]} cards`}
+                      items={shown.map((c) => ({
+                        key: c.id,
+                        title: c.title,
+                        // Still a `data-card`, because the registry contract
+                        // test reads that set back in both directions and a
+                        // card that changes how it is laid out must not
+                        // change whether it can be found.
+                        node: <div data-card={c.id} className="min-w-0">{cards[c.id]}</div>,
+                      }))}
+                    />
+                  ) : (
+                    <StatGrid steps="pair">
+                      {shown.map((c) => (
+                        <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_PANEL}` : 'min-w-0'}>{cards[c.id]}</div>
+                      ))}
+                    </StatGrid>
+                  )}
                 </section>
               </div>
             </div>
