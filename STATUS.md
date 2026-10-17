@@ -1,24 +1,28 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/challenges-pass`, **one PR open**.
-**Every page on `docs/PAGE-ROLLOUT.md` is done.**
+**Stopped:** 2026-10-17, on `feat/cycle-followups`, **one PR open**.
+**Every page on `docs/PAGE-ROLLOUT.md` is done**, and three of Cycle's four
+carried-over items with them.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | Cycle (#418, COD-334) merged | up to date |
-| `feat/challenges-pass` | **open** | COD-335 — the Challenges pass, three commits | pushed |
+| `main` | — | Cycle (#418) and Challenges (#419) merged | up to date |
+| `feat/cycle-followups` | **open** | COD-334's follow-ups — one commit | pushed |
 
 Nothing is stacked.
 
 ## The next action
 
-1. **Merge the Challenges PR** once CI is green. Everything in it is green
-   locally: `verify`, `design`, `contrast`, `clipped`, and `a11y` (187 scans,
-   0 serious/critical).
-2. Then **Cycle's four open items** (below). They are the only measured,
-   ready-to-start work left; the rollout itself is finished.
+1. **Merge the follow-ups PR** once CI is green. Green locally: `verify`
+   (158 files, 2,159 tests), `design`, `contrast`, `clipped`, and
+   `a11y:panels` over Cycle's six rows at three theme/viewport pairs.
+2. Then **COD-336** — the `maxBarSize` sweep over the nine remaining bar
+   charts. It is one prop per `<Bar>`, bounded (the cap only shrinks a bar,
+   and only above 180px), and the ticket says to measure a before/after bar
+   width per page rather than sweep blind.
+3. The rollout itself is finished; there is no page list left.
 
 ## What landed on this branch · COD-335
 
@@ -53,24 +57,31 @@ below it.
 — the review holds three things, and the page had width spare rather than
 width missing. The reasoning is in `docs/pages/challenges.md`.
 
-## Open · Cycle, from COD-334
+## Done since · Cycle's carried items, COD-334
 
-Still the four its own pass left, in the order I would take them:
+Three of the four are closed, and the fourth was retired as not a fault:
 
-1. **COD-247's other half.** At 2560 with the act shut the review panel is
-   1,662px and the two narrow cards are **821px each**. A third column is not
-   the answer (no group has three non-wide cards — measured: it only shrinks
-   the two and leaves a dead track); capping the card is. Ticket in Backlog.
-2. **`nextStep` lands on `steady` for the demo journal**, so six of its seven
-   tones and glyphs have never been *rendered* by a gate — unit-tested only.
-   The "a branch the seed never takes cannot fail" shape. Needs a seeded
-   journal per branch.
-3. **`food` is 2,509px on a phone** — one card of a deck now, but still five
-   phases written as five blocks of prose. Shorter as rows; a content change.
-4. **The `Manual` rail row says `1` and its deck says `1 of 9`.** Both true
-   (the rail counts registered cards, the deck counts sections) and they read
-   as disagreeing. Recovery's STATUS already proposed dropping the rail counts
-   outright, which would settle it.
+1. **COD-247's other half — closed.** It was the MARK, not the card: a bar with
+   no ceiling in a 1,662px panel. **212 / 340 / 430px → 180px** at 1440 / 1920
+   / 2560. `MAX_BAR` in `chartStyle.ts`.
+2. **The `Manual` rail count — closed.** `panels` on the registry entry,
+   derived from `CYCLE_MANUAL.length`; the row now says **9** and the deck
+   says 1 of 9.
+3. **The six undrawn `nextStep` tones — partly closed.** `STEP_TONE` /
+   `STEP_ICON` are a typed `Record` in `components/cycle/stepStyle.ts`, so
+   `tsc` proves each rule has both, and a canaried test proves each tone is a
+   real palette key rather than `cat()`'s mauve fallback. **Still open:**
+   seeding a journal per branch so a gate actually renders them.
+4. **`food` — retired, not a fault.** 2,509px is the card's own height and no
+   reader meets it: the Guide deck's track is the ACTIVE card and the row
+   lands on `phases` at 1,089px, 2.37 phone screens. Quoting a card's height
+   against a page budget manufactures a fault.
+
+## Open
+
+- **COD-336** — `maxBarSize` on the nine other bar charts.
+- **A seeded journal per `nextStep` branch**, Cycle, so six of seven tones are
+  rendered by a gate rather than only asserted.
 
 ## Open · Challenges, from this pass
 
