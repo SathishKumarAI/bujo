@@ -35,9 +35,20 @@ export interface BbtPoint {
  *   consecutive higher ones exist, so a flat or sparse chart draws no line
  *   rather than a confident one.
  *
- * `connectNulls` is deliberate: a missed morning is a gap in the record, not a
- * temperature of zero, and the line drawn across it is the honest reading of
- * two points either side.
+ * **The line BREAKS at a missed morning, and that is a reversal.** It used to
+ * carry `connectNulls` with this reasoning: "a missed morning is a gap in the
+ * record, not a temperature of zero, and the line drawn across it is the
+ * honest reading of two points either side." The counter-argument is the one
+ * that decided it, asked for directly as *"temperatures need to break"* — a
+ * BBT chart is read for the SHAPE of a rise over three or four mornings, and
+ * a segment drawn across a day nobody measured is a shape the reader did not
+ * record. Joining them says "it went up steadily"; breaking says "it was here,
+ * then it was there, and I do not know about the middle", which is the
+ * truthful claim and the one fertility-awareness charting makes.
+ *
+ * The dots stay, so a sparse chart still shows every reading it has — the
+ * failure mode of breaking a line is a chart that looks empty, and dots are
+ * what stop that.
  */
 export function BbtChart({ points, unit, label, ovulationDay, fertileFrom, fertileTo, confidence }: {
   points: BbtPoint[]
@@ -120,7 +131,6 @@ export function BbtChart({ points, unit, label, ovulationDay, fertileFrom, ferti
               type="monotone"
               dataKey="temp"
               stroke={cat('maroon')}
-              connectNulls
               strokeWidth={2}
               dot={(props) => {
                 const { cx, cy, payload, index } = props as { cx?: number; cy?: number; payload?: BbtPoint; index?: number }
