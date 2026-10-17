@@ -6,9 +6,11 @@ import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
 import { CursorProvider } from '../components/shell/cursor'
 import { Cycle } from './Cycle'
-import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL } from '../lib/cycleCards'
+import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
+import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL, panelsIn } from '../lib/cycleCards'
 import { FLAGS, FLAG_MEANS } from '../components/cycle'
 import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
+import { CAT } from '../lib/colors'
 import { generateDemoData } from '../lib/demo'
 
 /**
@@ -92,10 +94,16 @@ describe('Cycle · the registry is the review zone', () => {
       // A heading over an empty grid is the failure mode of grouping.
       const cards = groups[0].querySelectorAll('[data-card]')
       expect(cards.length).toBeGreaterThan(0)
-      // The rail's count is a promise about what the row holds. Computed from a
-      // different predicate than the render, it can lie in either direction.
+      // The row renders exactly the cards the registry files under it.
+      expect(cards).toHaveLength(CYCLE_CARDS.filter((c) => c.group === g).length)
+      // And the rail's count is a promise about what the READER meets, which
+      // is not the same number: `manual` is one registered card holding a
+      // nine-card deck, and a row saying "1" over a deck saying "1 of 9" is
+      // two true figures reading as a contradiction. `panelsIn` is the one
+      // place that difference is written down.
+      const panels = CYCLE_CARDS.filter((c) => c.group === g).reduce((n, c) => n + panelsIn(c), 0)
       expect(railRow(GROUP_LABEL[g]).getAttribute('aria-label'))
-        .toBe(`${GROUP_LABEL[g]} ${cards.length} ${cards.length === 1 ? 'panel' : 'panels'}`)
+        .toBe(`${GROUP_LABEL[g]} ${panels} ${panels === 1 ? 'panel' : 'panels'}`)
     }
   })
 
@@ -169,6 +177,38 @@ describe('Cycle · the registry is the review zone', () => {
       // It sits outside the rail on purpose: a disclaimer behind a row you have
       // to select is one most readers never meet.
       expect(screen.getByText(CYCLE_DISCLAIMER)).toBeInTheDocument()
+    }
+  })
+})
+
+/**
+ * THE SIX NEXT-STEP BRANCHES NO GATE DRAWS.
+ *
+ * The demo journal lands on `steady`, so `npm run a11y` and `a11y:panels`
+ * render that one tone at five themes and two viewports and the other six at
+ * none — the "a branch the seed never takes cannot fail" shape, which this
+ * repo has already paid for once with latte's yellow at 2.02:1 behind a count
+ * the seed never produced.
+ *
+ * Seeding a journal per branch is the complete answer and is not this change.
+ * What IS checkable without a browser is the part that would be silent: a
+ * tone name that is not a palette key. `cat()` falls back to **mauve** for any
+ * name it does not know, so a typo paints a plausible colour instead of
+ * failing, and mauve on this page means "you ovulated".
+ */
+describe('Cycle · every next-step rule has a tone that exists', () => {
+  it('names a real palette colour for all seven', () => {
+    // `Record<CycleStep['id'], …>` already makes `tsc` prove each rule has an
+    // entry; this is the half the type cannot see — that the string resolves.
+    for (const [id, tone] of Object.entries(STEP_TONE) as [string, string][]) {
+      expect(CAT[tone], `${id} → "${tone}" is not a palette key, so cat() would paint mauve`).toBeTruthy()
+    }
+  })
+
+  it('has a glyph for all seven, and seven distinct rules', () => {
+    expect(Object.keys(STEP_ICON).sort()).toEqual(Object.keys(STEP_TONE).sort())
+    for (const [id, glyph] of Object.entries(STEP_ICON)) {
+      expect(glyph, `${id} has no icon`).toBeTruthy()
     }
   })
 })

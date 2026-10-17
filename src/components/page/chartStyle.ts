@@ -58,6 +58,28 @@ export const chartAxis = () => ({
 })
 
 /**
+ * THE WIDEST A BAR MAY GET, whatever the panel does.
+ *
+ * Recharts divides the plot area by the number of bars, so a chart with few
+ * rows grows them without bound. Measured on Cycle at 2560 with the act shut:
+ * the cycle-length chart is a `wide` card in a **1,662px** panel with **three**
+ * completed cycles in it, so each bar came out **~330px** — a block diagram of
+ * three slabs, where the same three bars at 1440 read as a chart. That is the
+ * half of COD-247 the grid fix could not reach: the columns were pinned, and
+ * what remained was a *mark* with no ceiling.
+ *
+ * 180px is the point past which a bar stops reading as a measurement and
+ * starts reading as a panel. The cap only ever shrinks a bar, and only above
+ * that width, so a dense chart is unaffected — `maxBarSize` on a chart whose
+ * bars are already 24px emits nothing.
+ *
+ * A ceiling on the MARK rather than on the card, because the axis is still
+ * right to span the panel: a time series squeezed into 540px to suit three
+ * bars would be a chart that changes shape with its own sample size.
+ */
+export const MAX_BAR = 180
+
+/**
  * `12,480` → `12.5k`, `980` → `980`.
  *
  * Axis gutters are paid for in panel width: the left margin on these charts is
