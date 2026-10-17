@@ -186,3 +186,99 @@ export function ruleCompletion(data: JournalData, c: Challenge, today: string): 
     return { index, rule, done, of: upto }
   })
 }
+
+/** A `nextStep` rule's id and its sentence. `weak` is the only one with a destination. */
+export interface ChallengeStep {
+  id: 'not-started' | 'finished' | 'reset' | 'left' | 'weak' | 'done'
+  text: string
+  /** True when the sentence is about the rule-by-rule panel. */
+  toRules?: true
+}
+
+/**
+ * THE ONE SENTENCE AT THE TOP OF THIS PAGE · what to do, not only what is true.
+ *
+ * `docs/PAGE-ROLLOUT.md` step 6. Zone 1 was four facts — `Today 3 of 5 rules`
+ * · `Day 9 of 75` · `Streak 2` · `Complete 8%` — all true, none of them
+ * telling you that the rule you keep dropping is the water one.
+ *
+ * Priority is urgency, which is also the order a reader asks in:
+ *
+ * | rule | fires when |
+ * |---|---|
+ * | `not-started` | day 1 has not arrived; there is nothing to tick |
+ * | `finished` | the last day is behind you and the thing to do is close it |
+ * | `reset` | a strict challenge lost its streak to yesterday |
+ * | `left` | today is open, and it names the rule when exactly one remains |
+ * | `weak` | today is done and one rule trails the rest — the answer to "I keep missing a day" |
+ * | `done` | the floor to stand on |
+ *
+ * Total, like every other `nextStep` in this app, so zone 1 renders it with no
+ * conditional that would leave a hole at the top of the page.
+ *
+ * **`weak` needs a window before it may name a rule.** Under four elapsed days
+ * a single miss makes a rule "the worst" by a margin of one, which is a
+ * headline over a sample of three — the floor every two-window figure in this
+ * app carries, for the reason `momentumIndicator` is in CLAUDE.md. It also
+ * requires a real gap (the rule must trail the best by more than one day), or
+ * it reports noise as a finding.
+ */
+export function nextStep(data: JournalData, c: Challenge, today = todayISO()): ChallengeStep {
+  const day = elapsedDay(c, today)
+  if (dayDiff(c.startDate, today) < 0) {
+    const away = -dayDiff(c.startDate, today)
+    return { id: 'not-started', text: `Day 1 is ${c.startDate}, ${away} ${away === 1 ? 'day' : 'days'} away. Nothing to tick yet.` }
+  }
+  if (isFinished(data, c, today)) {
+    return { id: 'finished', text: `All ${c.durationDays} days are behind you. Archive it to close it out.` }
+  }
+
+  const doneToday = rulesDoneOn(data, c.id, today)
+  const left = c.rules.filter((_, i) => !doneToday.includes(i))
+
+  if (c.strict && streakBeforeToday(data, c, today) === 0 && missedDays(data, c, today) > 0) {
+    // Said as what happened, not as a verdict. A strict challenge resetting is
+    // the rule working, and the page's job is to say the streak starts again
+    // rather than to grade the person.
+    //
+    // It carries the action too, because it outranks `left` and a sentence
+    // that takes the top of the page from the one that says what to tick owes
+    // the reader that half as well.
+    const tail = left.length === 0
+      ? `Today is done, so it starts at one.`
+      : `${left.length} of ${c.rules.length} rules to tick today.`
+    return { id: 'reset', text: `A missed day reset the streak — strict starts again from here. ${tail}` }
+  }
+  if (left.length > 0) {
+    /* NAME THEM while naming them is short.
+     *
+     * The count alone was the facts row said twice: `Today · 3 of 5 rules` is
+     * eight pixels below, and "2 of 5 rules left today" is the same sentence
+     * subtracted — this page's own history is five statements of progress
+     * with four denominators, and a sixth would be the same mistake. Which
+     * rules are left is the half the facts cannot carry.
+     *
+     * Two is the ceiling: three rule names is a sentence nobody reads at the
+     * top of a page, and at that point the count IS the useful shape. */
+    return {
+      id: 'left',
+      text: left.length <= 2
+        ? `Left today: ${left.join(' and ')}.`
+        : `${left.length} of ${c.rules.length} rules left today.`,
+    }
+  }
+
+  const rows = ruleCompletion(data, c, today)
+  if (day >= 4 && rows.length > 1) {
+    const worst = rows.reduce((a, b) => (b.done < a.done ? b : a))
+    const best = rows.reduce((a, b) => (b.done > a.done ? b : a))
+    if (best.done - worst.done > 1) {
+      return {
+        id: 'weak',
+        text: `Today is done. ${worst.rule} is the one slipping — ${worst.done} of ${worst.of} days.`,
+        toRules: true,
+      }
+    }
+  }
+  return { id: 'done', text: `Today is done. Day ${day} of ${c.durationDays}, and every rule is keeping pace.` }
+}

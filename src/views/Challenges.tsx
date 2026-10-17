@@ -1,4 +1,4 @@
-import { Archive, CaretLeft, Plus, Trash, Trophy, X } from '@/components/icons'
+import { Archive, CaretLeft, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -6,7 +6,7 @@ import { Card, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Checkbox } from '../components/ui/checkbox'
-import { PageLayout, StatBar, SummaryStrip, EmptyFrame } from '../components/page'
+import { EmptyFrame, NextStepBlock, PageLayout, StatBar, SummaryStrip } from '../components/page'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
@@ -18,7 +18,7 @@ import { notify } from '../lib/notify'
 import {
   CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
-  ruleCompletion,
+  ruleCompletion, nextStep,
 } from '../lib/challenges'
 
 /**
@@ -83,12 +83,42 @@ export function Challenges() {
   return (
     <PageLayout
       tier={1180}
-      zone1={focused && <StatBar
-        mode={active.length > 1 ? focused.id : undefined}
-        onModeChange={active.length > 1 ? setFocusId : undefined}
-        segments={active.length > 1 ? active.map((c) => ({ value: c.id, label: c.name })) : undefined}
-        facts={orientFacts(data, focused, today)}
-      />}
+      zone1={focused && (() => {
+        /* THE SENTENCE, then the facts. `docs/PAGE-ROLLOUT.md` step 6, and
+           this was the last page without one: zone 1 said `Today 3 of 5
+           rules · Day 9 of 75 · Streak 2 · Complete 8%` — four true figures,
+           none of which tells you that the rule you keep dropping is the
+           water one.
+
+           COLOUR IS URGENCY and nothing else, in the edge and the glyph, with
+           `fg-1` text — the accent-on-wash calibration trap in CLAUDE.md.
+
+           Only `weak` is a button, because only `weak` has somewhere to go:
+           it is about the rule-by-rule panel, and clearing the picked day is
+           what shows it. The rest are paragraphs, which is what
+           `NextStepBlock` renders without an `onPick` — a sentence that looks
+           pressable and is not is worse than one that does nothing. */
+        const step = nextStep(data, focused, today)
+        const tone = { 'not-started': 'teal', finished: 'green', reset: 'peach', left: 'mauve', weak: 'yellow', done: 'green' }[step.id]
+        const StepIcon = { 'not-started': Clock, finished: Trophy, reset: Warning, left: Target, weak: Warning, done: CheckCircle }[step.id]
+        return (
+          <div>
+            <NextStepBlock
+              text={step.text}
+              tone={tone}
+              icon={StepIcon}
+              destination={step.toRules ? 'Rule by rule' : undefined}
+              onPick={step.toRules ? () => setPicked(null) : undefined}
+            />
+            <StatBar
+              mode={active.length > 1 ? focused.id : undefined}
+              onModeChange={active.length > 1 ? setFocusId : undefined}
+              segments={active.length > 1 ? active.map((c) => ({ value: c.id, label: c.name })) : undefined}
+              facts={orientFacts(data, focused, today)}
+            />
+          </div>
+        )
+      })()}
       zone2={
         creating ? (
           <Card band hideInfo title="New challenge" right={

@@ -3,7 +3,7 @@ import { emptyJournal } from './storage'
 import type { Challenge, JournalData } from './types'
 import {
   CHALLENGE_PRESETS, isDayComplete, elapsedDay, completedDays, missedDays,
-  streakBeforeToday, percentComplete, isFinished, longestStreak, ruleCompletion,
+  streakBeforeToday, percentComplete, isFinished, longestStreak, ruleCompletion, nextStep,
 } from './challenges'
 
 function withChallenge(c: Challenge, log: Record<string, number[]>): JournalData {
@@ -172,5 +172,83 @@ describe('ruleCompletion names the rule that is costing the days', () => {
   it('is all zeroes before the challenge starts, never a divide by nothing', () => {
     const rows = ruleCompletion(data, C, '2026-05-30')
     expect(rows.map((r) => [r.done, r.of])).toEqual([[0, 0], [0, 0]])
+  })
+})
+
+describe('nextStep says what to do, in order of urgency', () => {
+  /** Five days from 2026-06-01, two rules: `a` and `b`. */
+  const full = (days: string[]) => Object.fromEntries(days.map((d) => [d, [0, 1]]))
+
+  it('says nothing to tick before day 1', () => {
+    const step = nextStep(withChallenge(C, {}), C, '2026-05-30')
+    expect(step.id).toBe('not-started')
+    expect(step.text).toContain('2 days away')
+  })
+
+  it('asks for the archive once every day is behind you', () => {
+    const data = withChallenge(C, full(['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05']))
+    const step = nextStep(data, C, '2026-06-06')
+    expect(step.id).toBe('finished')
+  })
+
+  it('reports a strict reset as what happened, not as a verdict', () => {
+    const strict: Challenge = { ...C, strict: true }
+    // Day 1 complete, day 2 missed: on day 3 the streak before today is 0.
+    const data = withChallenge(strict, { '2026-06-01': [0, 1] })
+    const step = nextStep(data, strict, '2026-06-03')
+    expect(step.id).toBe('reset')
+    expect(step.text).not.toMatch(/failed|blew|ruined|lost it/i)
+    // It outranks `left`, so it owes the reader what `left` would have said.
+    expect(step.text).toContain('2 of 2 rules to tick today')
+  })
+
+  it('names the rules left today rather than counting them again', () => {
+    const data = withChallenge(C, { '2026-06-03': [0] })
+    const step = nextStep(data, C, '2026-06-03')
+    expect(step.id).toBe('left')
+    // The count alone is the facts row subtracted — `Today · 1 of 2 rules`
+    // sits eight pixels below it. Which rule is the half the facts cannot
+    // carry.
+    expect(step.text).toBe('Left today: b.')
+  })
+
+  it('falls back to a count once naming them would be a paragraph', () => {
+    const five: Challenge = { ...C, rules: ['a', 'b', 'c', 'd', 'e'] }
+    const step = nextStep(withChallenge(five, { '2026-06-03': [0, 1] }), five, '2026-06-03')
+    expect(step.id).toBe('left')
+    expect(step.text).toBe('3 of 5 rules left today.')
+  })
+
+  /**
+   * The floor that stops a single miss being promoted to a finding. Under four
+   * elapsed days "the worst rule" is decided by a margin of one over a sample
+   * of three, which is the overstatement CLAUDE.md keeps a list of.
+   */
+  it('will not name a slipping rule before there is a window to judge it on', () => {
+    // Day 1: both. Day 2: only `a`. Day 3 (today): both — so today is done and
+    // `b` trails by one, on three elapsed days.
+    const data = withChallenge(C, { '2026-06-01': [0, 1], '2026-06-02': [0], '2026-06-03': [0, 1] })
+    expect(nextStep(data, C, '2026-06-03').id).toBe('done')
+  })
+
+  it('names the slipping rule once the gap is more than one day', () => {
+    const data = withChallenge(C, {
+      '2026-06-01': [0, 1], '2026-06-02': [0], '2026-06-03': [0], '2026-06-04': [0, 1],
+    })
+    const step = nextStep(data, C, '2026-06-04')
+    expect(step.id).toBe('weak')
+    expect(step.text).toContain('b is the one slipping')
+    expect(step.text).toContain('2 of 4 days')
+    expect(step.toRules).toBe(true)
+  })
+
+  it('always returns a sentence, so zone 1 never renders a hole', () => {
+    // A real sentence, asserted as one: not empty, not a fragment, ends in a
+    // full stop. A character floor would only be measuring this fixture's
+    // one-letter rule names.
+    for (const today of ['2026-05-20', '2026-06-01', '2026-06-03', '2026-06-09']) {
+      const { text } = nextStep(withChallenge(C, {}), C, today)
+      expect(text, today).toMatch(/^[A-Z0-9].*\.$/)
+    }
   })
 })
