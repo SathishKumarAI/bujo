@@ -47,9 +47,15 @@ export function PhaseNutrition() {
             <span style={{ color: onRaised(ph.color) }}>{ph.name}</span>
             <Pill color={ph.color} size="micro" className="px-2">{ph.days}</Pill>
           </h3>
-          <p><strong className="font-medium text-fg-1">Cravings.</strong> {ph.cravings}</p>
-          <p><strong className="font-medium text-fg-1">Worth eating.</strong> {ph.eat}</p>
-          <p><strong className="font-medium text-fg-1">Training.</strong> {ph.tip}</p>
+          {/* Three labelled lists, not three paragraphs. Before the split
+              the luteal `eat` was a **456-character** paragraph carrying four
+              pieces of advice and two citations; `.prose-doc`'s 56ch measure
+              made it eight lines of unbroken text in a reference card nobody
+              reads twice. Rendering the array directly would have painted the
+              points concatenated, which is why this changed with the data. */}
+          <Block label="Cravings" items={ph.cravings} />
+          <Block label="Worth eating" items={ph.eat} />
+          <Block label="Training" items={ph.tip} />
           <p className="text-label">
             {ph.sources.length === 1 ? 'Source: ' : 'Sources: '}
             {ph.sources.map((s, i) => (
@@ -62,5 +68,26 @@ export function PhaseNutrition() {
         </section>
       ))}
     </div>
+  )
+}
+
+/**
+ * One heading and its points, inside `.prose-doc`.
+ *
+ * `<ul>` rather than a run of `<p>`: the heading says what the list is and
+ * the points are peers of each other, which is a list — and `.prose-doc`
+ * already styles one. The label is a `<strong>` on its own line so the eye
+ * can skip a whole block it does not want, which is the thing a paragraph
+ * makes impossible.
+ */
+function Block({ label, items }: { label: string; items: string[] }) {
+  if (items.length === 0) return null
+  return (
+    <>
+      <p className="points-label"><strong className="font-medium text-fg-1">{label}</strong></p>
+      <ul className="points-list">
+        {items.map((t) => <li key={t}>{t}</li>)}
+      </ul>
+    </>
   )
 }
