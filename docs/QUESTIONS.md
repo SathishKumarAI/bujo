@@ -1,9 +1,51 @@
 # Open questions — answer inline, then start a new session
 
-**This file carries two runs.** Everything from Q1 down is **2026-08-24**, the
+**This file carries three runs.** Everything from Q1 down is **2026-08-24**, the
 fitness-consolidation run, and `docs/NEXT-SESSION.md` is right that it is
-history rather than a queue. The 2026-10-15 section immediately below is live
-and is waiting on an answer.
+history rather than a queue. The two sections below it, 2026-10-17 and
+2026-10-15, are live and waiting on an answer.
+
+---
+
+## 2026-10-17 · What does "it still needs to be saved for every month" mean?
+
+Asked during the Cycle pass (COD-337), and only half-answerable from the code,
+so the other half is here rather than guessed at in a diff.
+
+**What was checked.** Nothing is lost. The log is keyed by ISO date and every
+month renders its own rows — verified in a browser by paging back twice:
+September shows September's temperatures and flags, August shows August's.
+There is no data loss to fix.
+
+**What was shipped on the strength of it.** Two things that were plainly
+wrong and are now right:
+
+1. The act card says which month it is writing to, with a "Back to today"
+   when that is not this one. The month cursor lives in the app header, far
+   from the card, so a reader who paged back was editing August with nothing
+   on the card saying so.
+2. The temperature chart follows the month you are browsing instead of always
+   plotting the running cycle. Paging back used to leave the editor in August
+   and the whole review in October.
+
+**What was tried and abandoned.** Remembering the selected day per month, so
+paging away and back returns you to the day you were reading rather than to
+the 1st. It is three lines and the React Compiler refuses the whole component
+over it (twelve "existing memoization could not be preserved" errors) because
+`selected` stops being state and becomes a read off a state object. It is
+doable with a render-time sync of the kind `RuleNote` already uses, at the
+cost of real complexity in the page's busiest render path.
+
+**The question.** Was any of this the report? Three readings fit the words:
+
+- *the page should follow the month I am looking at* — shipped;
+- *it should remember where I was in each month* — abandoned, see above;
+- *there should be a per-month summary* — a monthly roll-up card (days
+  logged, period days, average temperature, symptoms seen) which does not
+  exist on any reading of the current page.
+
+The third is the most work and the most plausibly useful. It is not built,
+because building a card nobody asked for is how a page gets long.
 
 ---
 

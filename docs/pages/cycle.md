@@ -143,13 +143,14 @@ because its zone 1 is a ring and a block; this one is still a bar.
 
 ## Shape
 
-`PageLayout` tier 1180, zone 1 spanning both columns.
+`PageLayout` tier 1180, **`actTop`** — zone 1 takes the review column's width
+and the act runs from the top of the page.
 
 | zone | holds |
 |---|---|
 | 1 · orient | the `nextStep` sentence, then cycle day · phase+confidence · next period · your average, then the privacy line |
 | 2 · act | the day editor, the optional fold, the flag legend, the month list — collapsible to a 40px strip |
-| 3 · review | one bar: This cycle · How you feel · Fertility · Patterns · Guide · Manual |
+| 3 · review | one bar: This cycle · How you feel · Fertility · Patterns · Your log · Guide · Manual |
 
 ### The rail
 
@@ -163,6 +164,7 @@ exists because a rail makes a lost card *quieter*, not louder.
 | How you feel | feelings · drivephase · moodphase | is this me, or is this my cycle |
 | Fertility | fertile · luteal · bbt | when is the window, and did the temperature confirm it |
 | Patterns | symptoms · grid | what tends to happen, and on which cycle day |
+| Your log | log | every day you logged, with everything you put on it |
 | Guide | phases · food · goal · data (a deck) | reference, settings, and your own data |
 | Manual | manual (a 9-card deck) | how to use this page, and what it cannot tell you |
 
@@ -287,6 +289,79 @@ reference with a body each, which is what a card is for — "a card is for a
 named item with a body" — and it is reached by a deliberate swipe. Quoting a
 card's own height against a page budget manufactures a fault; the entry is
 retired rather than actioned.
+
+## The modernisation pass · COD-337, 2026-10-17
+
+Eight things reported in two messages, the headline being *"it doesn't look
+good… the descriptions are there, but it looks like a vague kind of website"*.
+
+**1 · The log starts at the top (`actTop`).** Asked for directly. The note in
+that slot said actTop "buys nothing here" because `This cycle` measures
+1,306px either way — true, and answering the wrong question: the ask is about
+where the thing you came to do sits, not how tall the page is. Zone 1 is one
+block now (§22) rather than a row with a rule under it, which is what actTop
+makes possible — it is a 678px column instead of the full shell.
+
+Home Workout, which the ask named, does **not** use actTop: it drives its act
+from a bare `useState`, which `PAGE-ROLLOUT.md` says never to do. Filed.
+
+**2 · The descriptions say what is in the card.** Every subtitle was an
+argument for the card rather than its contents, which is exactly what makes a
+page read as a brochure:
+
+| was | now |
+|---|---|
+| The cycle as one shape, not a line that restarts every month | Your four phases, sized by your own 29-day average |
+| Regular is a range, not a number | Your last 3 finished cycles, against the 21–35 day normal range |
+| General wellness, not a plan | What tends to help in each phase, and which one you are in |
+| Is this me, or is this my cycle? | Your logged mood, energy, drive and cravings, averaged by phase |
+| Read for the shift, not the number | Every morning reading of this cycle, with the shift marked |
+
+The six rail blurbs went the same way: they described subjects in the
+abstract and now name the cards in the row.
+
+**3 · `Your log` — the record, as its own rail row.** `CyclePoint` carries
+**fourteen** fields and the month list drew **four**, so ten could be filled
+in and never seen again. Every averaging card reads them; an average is not
+the record. The top row on the demo now reads *"Sat, Oct 17 · day 20 · today ·
+97.95°F disturbed · mucus sticky · drive 3/5 · mood 3/5 · energy 3/5 · craving
+carbs"*. Tapping a row selects that day in the editor **and moves the month
+cursor to it** — `sel` is clamped to the cursor month, so without that a
+September row tapped from October would select nothing.
+
+Its own row, not a card on an existing one: it is the only thing here that is
+the log rather than a reading taken from it, and the same report asked to keep
+the opening row simple.
+
+**4 · The act says which month it is writing to**, with a "Back to today" when
+that is not this one. **5 · The temperature chart follows the month you are
+browsing** instead of always plotting the running cycle. Together these are
+what "it still needs to be saved for every month" was pointing at — the
+entries were always saved, and nothing but the day editor followed the reader.
+What that phrase might ALSO have meant is in `docs/QUESTIONS.md`, unanswered
+rather than guessed at.
+
+**6 · The temperature line breaks at a missed morning** — a reversal of a
+documented decision, asked for as "temperatures need to break". A BBT chart is
+read for the shape of a rise over three or four mornings, and a segment drawn
+across a day nobody measured is a shape the reader did not record. The dots
+stay, so a sparse chart still shows every reading it has.
+
+### What arming the gate caught
+
+`a11y-panels` gained the `Your log` row in the same commit as the row, which
+is the rule that file states about itself, and **it went red twice**:
+`color-contrast` ×8 (the selected row's `bg-ink-3` under `fg-2` is **3.83:1**
+in mocha — selection is a border now, not a lighter fill) and
+`label-content-name-mismatch` ×10 in latte (a tidy `aria-label` that named
+less than the row paints; the row's own text is its name now).
+
+### The hour this cost
+
+`phase.label.toLowerCase()` in a card subtitle made the React Compiler treat
+`length` as possibly-mutated and refuse to preserve **six** `useMemo`s a
+hundred lines above. Every error pointed at `length`; none pointed at the
+call. Written up in CLAUDE.md, with the two other shapes that produced it.
 
 ## Open
 
