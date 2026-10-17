@@ -26,7 +26,7 @@ import {
 } from '../lib/cycleCards'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import {
-  BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome,
+  BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
   CycleGoalCard, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
@@ -85,7 +85,7 @@ import {
  */
 export function Cycle() {
   const { data, setCycle, setSettings } = useJournal()
-  const { month: ym } = useCursor()
+  const { month: ym, setMonth } = useCursor()
   const isPhone = useDevice() === 'mobile'
   const unit = data.settings.tempUnit
   const days = monthDays(ym)
@@ -93,6 +93,8 @@ export function Cycle() {
   const log = data.cycle
 
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]))
+  /** True when the month cursor is on the month we are actually living in. */
+  const thisMonth = ym === today.slice(0, 7)
   /* The act column, which this page was the last on the contract not to have.
      Measured before: the review panel was **678px at 1440 and 854px at 1920**
      with the day editor holding 424/520px of the shell on every visit, and no
@@ -225,7 +227,21 @@ export function Cycle() {
    * would hide readings someone actually took.
    */
   const { bbt, bbtLabel } = useMemo((): { bbt: BbtPoint[]; bbtLabel: string } => {
-    const running = history[history.length - 1]
+    /* THE CHART FOLLOWS THE MONTH YOU ARE BROWSING.
+     *
+     * It used to plot the RUNNING cycle and nothing else, so paging back to
+     * August left zone 2 showing August while the whole review — ring, phase,
+     * chart — still showed October. That is the other half of "it still needs
+     * to be saved for every month": the record was always there (August and
+     * September both render their own rows), and what was missing is that
+     * nothing except the day editor followed the reader.
+     *
+     * The cycle plotted is the one containing the selected day, which is the
+     * cursor month's day. `bbtLabel` says which cycle it is, because a chart
+     * that silently changed which cycle it drew would be worse than one that
+     * never moved. */
+    const running = history.find((c) => sel >= c.start && sel < addDays(c.start, c.length))
+      ?? history[history.length - 1]
     if (running) {
       const span = Math.max(running.length, length ?? 28)
       return {
@@ -244,7 +260,7 @@ export function Cycle() {
       }),
       bbtLabel: `day of ${prettyMonth(ym)}`,
     }
-  }, [history, log, days, length, ym])
+  }, [history, log, days, length, ym, sel])
 
   // Completed cycles only, for both stats: the one in progress has no length
   // yet, and counting it would make "cycles logged" tick up mid-cycle.
@@ -272,7 +288,7 @@ export function Cycle() {
   const cards: Record<string, React.ReactNode> = {
     data: <CycleDataCard />,
     luteal: (
-      <Card band enlargeable title="Your luteal length" subtitle="The steady half, and the number a chart is best at" hideInfo>
+      <Card band enlargeable title="Your luteal length" subtitle="Shift to period, cycle by cycle — the steadiest number you have" hideInfo>
         <LutealCard lengths={analysis.lutealLengths} />
       </Card>
     ),
@@ -281,7 +297,7 @@ export function Cycle() {
         band
         enlargeable
         title="Desire, mood, energy & cravings"
-        subtitle="Is this me, or is this my cycle?"
+        subtitle="Your logged mood, energy, drive and cravings, averaged by phase"
         hideInfo
       >
         {/* The sentences lead, the grid is the evidence. Someone who wants only
@@ -297,7 +313,7 @@ export function Cycle() {
       </Card>
     ),
     drivephase: (
-      <Card band enlargeable title="Drive through the cycle" subtitle="Your own answer to the textbook claim" hideInfo>
+      <Card band enlargeable title="Drive through the cycle" subtitle="Your drive ratings, averaged over each phase of every cycle" hideInfo>
         <DriveByPhase rows={drive} peak={peak} />
       </Card>
     ),
@@ -305,7 +321,7 @@ export function Cycle() {
        of cards is the chrome this pass spent 5,435 phone pixels removing. */
     manual: <Manual section={manualSection} />,
     goal: (
-      <Card band title="What you are tracking for" subtitle="Changes what leads, never what is available" hideInfo>
+      <Card band title="What you are tracking for" subtitle="Picks what this page leads with — nothing is hidden either way" hideInfo>
         <CycleGoalCard
           goal={goal}
           cycles={history.filter((c) => !c.current).length}
@@ -314,7 +330,13 @@ export function Cycle() {
       </Card>
     ),
     phasefood: (
-      <Card band title="This phase" subtitle="General wellness, not a plan" hideInfo>
+      <Card band title="This phase" /* The phase name is NOT interpolated here, and that is a trap worth the
+             comment: `phase.label.toLowerCase()` in this slot made the React
+             Compiler treat `length` — an input to `phaseOf` — as
+             possibly-mutated, and refuse to preserve the memoisation of six
+             `useMemo`s a hundred lines above. The errors all pointed at
+             `length`; none pointed here. The card's body names the phase. */
+          subtitle="What tends to help in each phase, and which one you are in" hideInfo>
         <PhaseFoodCard phase={phase?.label ?? null} goal={goal} />
       </Card>
     ),
@@ -334,12 +356,12 @@ export function Cycle() {
       </Card>
     ),
     moodphase: (
-      <Card band enlargeable title="Mood & energy by phase" subtitle="Whether how you feel tracks where you are" hideInfo>
+      <Card band enlargeable title="Mood & energy by phase" subtitle="Mood and energy you logged, averaged over each phase" hideInfo>
         <MoodByPhase rows={phaseRows} />
       </Card>
     ),
     wheel: (
-      <Card band enlargeable title="Where you are" subtitle="The cycle as one shape, not a line that restarts every month" hideInfo>
+      <Card band enlargeable title="Where you are" subtitle={`Your four phases, sized by your own ${length ?? 28}-day average`} hideInfo>
         <CycleWheel day={day} length={length ?? 28} bands={bands} />
         {/* Two lines, not four: where ovulation is placed and why is the
             fertile-window card's whole subject, one row down. */}
@@ -352,7 +374,7 @@ export function Cycle() {
     ),
 
     length: (
-      <Card band enlargeable title="Cycle length" subtitle="Regular is a range, not a number" hideInfo>
+      <Card band enlargeable title="Cycle length" subtitle={`Your last ${finished.length} finished ${finished.length === 1 ? "cycle" : "cycles"}, against the 21–35 day normal range`} hideInfo>
         <CycleHistoryChart history={history} average={length} />
       </Card>
     ),
@@ -363,7 +385,7 @@ export function Cycle() {
        the narrow green band actually is and why two different signals point at
        it from opposite sides. */
     fertile: (
-      <Card band title="Ovulation & the fertile window" subtitle="One day, two signals, and a window wider than both" hideInfo>
+      <Card band title="Ovulation & the fertile window" subtitle="Where the window sits, and what each of the two signs tells you" hideInfo>
         <FertileWindow bands={bands} length={length ?? 28} />
       </Card>
     ),
@@ -372,7 +394,7 @@ export function Cycle() {
        why a reading taken after you are up is not one. That distinction is the
        difference between a chart with a visible shift and a chart of noise. */
     bbt: (
-      <Card band enlargeable title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle="Read for the shift, not the number" hideInfo>
+      <Card band enlargeable title={<Abbr term="BBT">Basal temperature</Abbr>} subtitle={`Every morning reading ${bbtLabel.startsWith("cycle day") ? "of this cycle" : "this month"}, with the shift marked`} hideInfo>
         <BbtChart
           points={bbt}
           unit={unit}
@@ -393,6 +415,33 @@ export function Cycle() {
 
     /* ── Guide · the same shelf the training pages keep. Static reference from
        lib/cycleGuide; titles, bodies and widths all in cycle/Guide.tsx. ── */
+    /* Tapping a row selects that day in the editor — the only way to correct
+       a field once the day has passed, and the pattern Challenges' day grid
+       and REUSABLE-PATTERNS §20 both arrive at: every figure leads back to
+       the entries behind it. */
+    log: (
+      /* NO TITLE. The rail heading six pixels above already says "Your log"
+         and names what is in it; printing it again is the same sentence
+         twice, which is the fault this page's own history is made of. A
+         `Card` with no title renders no header at all. */
+      <Card band hideInfo>
+        <DayLog
+          entries={log}
+          unit={unit}
+          cycleDayOf={cycleDayOf}
+          today={today}
+          selected={sel}
+          /* The month moves too. `sel` is clamped to the cursor month, so
+             picking a September row while browsing October would otherwise
+             select nothing at all — the editor would stay on whatever October
+             day it had. Safe to pass `d` into `setMonth`: it is a parameter,
+             not one of this component's memo-derived consts, which is what
+             the React Compiler objects to. */
+          onPick={(d) => { setMonth(d.slice(0, 7)); setSelected(d); logCol.open() }}
+        />
+      </Card>
+    ),
+
     phases: <PhasesCard />,
     food: <FoodCard />,
   }
@@ -430,12 +479,20 @@ export function Cycle() {
   return (
     <PageLayout
       tier={1180}
-      /* NOT `actTop`. It is what Recovery needed, and it buys nothing here:
-         measured at 1440 with the act open, `This cycle` is **1,306px either
-         way** — the act column is 807px and zone 1 is ~120px, so moving the
-         orient block into the left column does not shorten the taller column.
-         Zone 1 here is still a BAR (a sentence and four facts), which is the
-         shape the contract gives both columns by default. */
+      /* `actTop` · THE LOG STARTS AT THE TOP, beside zone 1.
+         Asked for directly, and it is the layout Nutrition, Fitness, Strength
+         and Recovery already use. (Home Workout, which the ask named, is not
+         one of them — it drives its act from a bare `useState`, which
+         `PAGE-ROLLOUT.md` says never to do. Filed, not fixed here.)
+
+         The note that stood here said actTop "buys nothing", on the grounds
+         that `This cycle` measures 1,306px either way. That was true and it
+         answered the wrong question: the ask is about WHERE the thing you
+         came to do sits, not how tall the page is. With zone 1 spanning both
+         columns the editor starts below a full-width band on every visit.
+         It is also what turns zone 1 from a wide shallow bar into a block
+         (REUSABLE-PATTERNS §22). */
+      actTop
       onSplitChange={logCol.onSplitChange}
       actShut={logCol.shut}
       zone1={
@@ -443,7 +500,11 @@ export function Cycle() {
            coloured pill, and a bar that renders every value in the mono face
            would spell "Luteal · estimate" in the typewriter. The shape is the
            contract's — one row, at most four facts, spanning both columns. */
-        <div className="border-b border-line pb-3">
+        /* ONE BLOCK (§22): the sentence, the four facts and the promise are
+           one bordered unit rather than a row with a rule under it — which is
+           what `actTop` makes possible, since zone 1 is now a 678px column
+           instead of the full 1,180px shell. */
+        <div className="rounded-card border border-line bg-ink-0 p-3">
         {/* COLOUR IS URGENCY and nothing else — the edge and the glyph, with
             `fg-1` text, because an accent as text on a wash of itself is the
             calibration trap in CLAUDE.md. And it is a BUTTON into the row
@@ -523,7 +584,17 @@ export function Cycle() {
         <Card
           band
           title="Log a day"
-          subtitle="Tap a day, set a temperature, flag what happened, rate the drive"
+          /* IT SAYS WHICH MONTH IT IS WRITING TO.
+             The month cursor lives in the app header, far from this card, so
+             a reader who paged back to August was editing August with nothing
+             here saying so — while zone 1 still read "Cycle day 20", because
+             that fact is about today and should not move. Naming the month
+             here is what makes the two honest together, and it is half of the
+             "it still needs to be saved for every month" report: the entries
+             were always saved, and nothing said which month you were in. */
+          subtitle={thisMonth
+            ? 'Tap a day, set a temperature, flag what happened, rate the drive'
+            : `Writing to ${prettyMonth(ym)} — not this month`}
           hideInfo
           /* THE HINT IS DRAWN, not left in a `title` (§27). A phone cannot
              hover, and an affordance nobody finds is an affordance nobody
@@ -532,6 +603,16 @@ export function Cycle() {
              heading because `Card` already owns the header row and already
              names its own controls after the card. */
           right={
+            <div className="flex items-center gap-3">
+            {!thisMonth && (
+              <button
+                type="button"
+                onClick={() => setMonth(todayISO().slice(0, 7))}
+                className="shrink-0 text-label text-mauve underline underline-offset-2 hover:text-fg-1"
+              >
+                Back to today
+              </button>
+            )}
             <button
               type="button"
               onClick={logCol.close}
@@ -551,6 +632,7 @@ export function Cycle() {
               Tap to hide
               <Icon as={CaretRight} size="sm" />
             </button>
+            </div>
           }
         >
           <DayEditor

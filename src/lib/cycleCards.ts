@@ -39,7 +39,7 @@ import { CYCLE_MANUAL } from './cycleManual'
  * do not overlap and there is no query to cross them, so "All" would only
  * offer the 10.6-screen page this replaces.
  */
-export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'guide', 'manual'] as const
+export const CYCLE_GROUPS = ['cycle', 'feelings', 'fertility', 'patterns', 'log', 'guide', 'manual'] as const
 export type CycleGroup = (typeof CYCLE_GROUPS)[number]
 
 export const GROUP_LABEL: Record<CycleGroup, string> = {
@@ -47,18 +47,28 @@ export const GROUP_LABEL: Record<CycleGroup, string> = {
   feelings: 'How you feel',
   fertility: 'Fertility',
   patterns: 'Patterns',
+  log: 'Your log',
   guide: 'Guide',
   manual: 'Manual',
 }
 
-/** One line per group, shown under its heading. The rail rows say the same words. */
+/**
+ * One line per group, shown under its heading. The rail rows say the label;
+ * this says what is in the row.
+ *
+ * Rewritten with the subtitles (COD-337). The old set described the SUBJECT
+ * in the abstract — "Where you are, and how this cycle compares to the last
+ * few" — which is a table of contents entry for a book rather than a list of
+ * what three cards hold. Each one now names the cards.
+ */
 export const GROUP_BLURB: Record<CycleGroup, string> = {
-  cycle: 'Where you are, and how this cycle compares to the last few',
-  fertility: 'The window, the two signals, and the shift that confirms it',
-  feelings: 'Desire, mood, energy and cravings against where you are',
-  patterns: 'What tends to happen, and on which cycle day',
-  guide: 'Phases, food, what you are tracking for, and your own data',
-  manual: 'How to use this page, and what it can and cannot tell you',
+  cycle: 'The phase ring, this phase’s food focus, and your cycle lengths',
+  fertility: 'The window explained, your luteal lengths, and the temperature chart',
+  feelings: 'Mood, energy, drive and cravings, each averaged by phase',
+  patterns: 'Every cycle folded onto one axis — which day each symptom lands on',
+  log: 'Every day you logged, with everything you put on it — tap one to correct it',
+  guide: 'The four phases, food by phase, what you track for, and your data',
+  manual: 'Nine short sections: how to log, how to read a chart, what this cannot tell you',
 }
 
 export interface CycleCardMeta {
@@ -135,6 +145,23 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
   { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
+
+  /**
+   * THE RECORD ITSELF, which the page did not have.
+   *
+   * `CyclePoint` carries fourteen things a day can hold and the month list
+   * drew four of them, so ten fields could be filled in and never seen again.
+   * Every averaging card reads them — mood by phase, drive by phase, the
+   * symptom grid — but an average is not the record, and the day itself was
+   * unreachable once it left the month view. Reported as "other details, same
+   * like logs, need to be maintained".
+   *
+   * Its own row rather than a card on an existing one: it is the only thing
+   * on this page that is the LOG rather than a reading taken from it, and
+   * `cycle` is the row the page opens on, which the same report asked to keep
+   * simple.
+   */
+  { id: 'log', title: 'Your log', group: 'log', wide: true },
 
   { id: 'phases', title: 'The four phases', group: 'guide', wide: true },
   { id: 'food', title: 'Cravings & food, phase by phase', group: 'guide', wide: true },

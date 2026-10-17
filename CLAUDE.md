@@ -648,6 +648,26 @@ for the rest. The symptom to watch for is a grid of N cells where N−1 of them
 are inert — count the controls in a zone (`.zone-review button`) and ask what
 the other cells are for.
 
+Trap: **a method call on a derived value makes the React Compiler treat that
+value's INPUTS as mutable, and the error points anywhere but at your line.**
+`phase.label.toLowerCase()` inside a card subtitle — where `phase` is
+`phaseOf(day, length, …)` — made the compiler mark **`length`** as
+possibly-mutated and refuse to preserve the memoisation of **six** `useMemo`s
+a hundred lines ABOVE it. Every message read `This dependency may be modified
+later` and pointed at `length` in a dep array; not one pointed at the call.
+The same shape killed a three-line attempt to remember the selected day per
+month (`picked[ym] ?? …` reads off a state object, twelve errors), and a
+`.reduce` over `analysis.lutealLengths` in render (six more). `useCallback`
+and `useMemo` do **not** rescue it — memoising the reduce changed nothing.
+
+The rules that come out of it: **interpolate plain values, not method calls**
+(`${length ?? 28}` is fine, `${x.label.toLowerCase()}` is not); **do a derived
+value's formatting in the child component**, where the parent's memo graph
+cannot be tainted; and when `npm run eslint` reports a cluster of "existing
+memoization could not be preserved", **bisect by reverting candidate
+expressions, not by reading the error locations** — the locations are the
+victims. Cost an hour on COD-337.
+
 Trap: **a grid step above the number of cards in the row makes every card
 narrower for nothing.** Cycle's review was moved to a container-queried
 `StatGrid` and given the usual 2/3/4 ladder; at a 1,326px panel the third step
