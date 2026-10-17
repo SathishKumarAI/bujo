@@ -147,3 +147,42 @@ export function isFinished(data: JournalData, c: Challenge, today: string): bool
   if (c.strict) return streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0) >= c.durationDays
   return completedDays(data, c, today) >= c.durationDays
 }
+
+/** One rule's record across the elapsed window. */
+export interface RuleRecord {
+  index: number
+  rule: string
+  /** Elapsed days on which this rule was ticked. */
+  done: number
+  /** Elapsed days it could have been ticked on — today included, as it is open. */
+  of: number
+}
+
+/**
+ * WHICH RULE IS ACTUALLY BEING MISSED.
+ *
+ * The page could say how many days were complete and never which rule broke
+ * them, so "I keep missing a day" had no answer on the screen — a 75-day
+ * challenge with five rules has one rule costing you the day, and the whole
+ * log knows which.
+ *
+ * Counted over the ELAPSED window, the same origin as `completedDays` and
+ * `missedDays`, so `done` can be read against `elapsedDay` without a second
+ * arithmetic. Today is included in `of` because it is a day you can still
+ * tick — the same rule `missedDays` applies from the other side, where today
+ * is not yet a miss.
+ *
+ * Order is the rule order, which is the order they are drawn and ticked in.
+ * Not sorted by worst: a list that reorders itself as you tick is a list you
+ * cannot build a habit against.
+ */
+export function ruleCompletion(data: JournalData, c: Challenge, today: string): RuleRecord[] {
+  const upto = elapsedDay(c, today)
+  return c.rules.map((rule, index) => {
+    let done = 0
+    for (let i = 0; i < upto; i++) {
+      if (rulesDoneOn(data, c.id, addDays(c.startDate, i)).includes(index)) done += 1
+    }
+    return { index, rule, done, of: upto }
+  })
+}

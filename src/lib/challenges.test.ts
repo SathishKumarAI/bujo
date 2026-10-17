@@ -3,7 +3,7 @@ import { emptyJournal } from './storage'
 import type { Challenge, JournalData } from './types'
 import {
   CHALLENGE_PRESETS, isDayComplete, elapsedDay, completedDays, missedDays,
-  streakBeforeToday, percentComplete, isFinished, longestStreak,
+  streakBeforeToday, percentComplete, isFinished, longestStreak, ruleCompletion,
 } from './challenges'
 
 function withChallenge(c: Challenge, log: Record<string, number[]>): JournalData {
@@ -134,5 +134,43 @@ describe('BUJO-209: zero-rule custom challenge', () => {
     expect(percentComplete(d, Z, '2026-06-03')).toBe(60) // 3/5
     expect(percentComplete(d, Z, '2026-06-30')).toBe(100) // clamped duration
     expect(isFinished(d, Z, '2026-06-30')).toBe(true)
+  })
+})
+
+describe('ruleCompletion names the rule that is costing the days', () => {
+  // Day 1 both, day 2 only rule a, day 3 only rule a. Today is day 3, still open.
+  const data = withChallenge(C, {
+    '2026-06-01': [0, 1],
+    '2026-06-02': [0],
+    '2026-06-03': [0],
+  })
+
+  it('counts each rule over the elapsed window, not the whole duration', () => {
+    const rows = ruleCompletion(data, C, '2026-06-03')
+    expect(rows).toHaveLength(2)
+    // Three days elapsed of a five-day challenge: the denominator is 3.
+    expect(rows[0]).toEqual({ index: 0, rule: 'a', done: 3, of: 3 })
+    expect(rows[1]).toEqual({ index: 1, rule: 'b', done: 1, of: 3 })
+  })
+
+  it('shares its origin with completedDays and missedDays', () => {
+    const rows = ruleCompletion(data, C, '2026-06-03')
+    // The weakest rule bounds the complete days — a day is complete only when
+    // every rule is ticked, so no rule can be done fewer times than the days
+    // that were complete.
+    const weakest = Math.min(...rows.map((r) => r.done))
+    expect(weakest).toBe(completedDays(data, C, '2026-06-03'))
+    expect(rows[0].of).toBe(elapsedDay(C, '2026-06-03'))
+  })
+
+  it('keeps rule order rather than sorting by worst', () => {
+    // A list that reorders itself as you tick is one you cannot build a habit
+    // against, so the order is the order they are drawn and ticked in.
+    expect(ruleCompletion(data, C, '2026-06-03').map((r) => r.rule)).toEqual(C.rules)
+  })
+
+  it('is all zeroes before the challenge starts, never a divide by nothing', () => {
+    const rows = ruleCompletion(data, C, '2026-05-30')
+    expect(rows.map((r) => [r.done, r.of])).toEqual([[0, 0], [0, 0]])
   })
 })

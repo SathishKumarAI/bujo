@@ -1,4 +1,4 @@
-import { Archive, Plus, Trash, Trophy, X } from '@/components/icons'
+import { Archive, CaretLeft, Plus, Trash, Trophy, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Checkbox } from '../components/ui/checkbox'
 import { PageLayout, StatBar, SummaryStrip, EmptyFrame } from '../components/page'
-import { addDays, dayDiff, todayISO } from '../lib/date'
+import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
 import { fullLabelOf } from '../domain/activities'
@@ -18,6 +18,7 @@ import { notify } from '../lib/notify'
 import {
   CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
+  ruleCompletion,
 } from '../lib/challenges'
 
 /**
@@ -56,6 +57,19 @@ export function Challenges() {
   const { data, addChallenge } = useJournal()
   const [creating, setCreating] = useState(false)
   const [focusId, setFocusId] = useState<string | null>(null)
+  /**
+   * WHICH DAY THE CALENDAR IS SHOWING, and the bug it closes.
+   *
+   * `challengeNotes` had exactly one reader — `RuleNote`, rendered for `today`
+   * and for no other day — so a note written this morning ("Ran 5k with Sam")
+   * could never be read back, corrected or removed. That is
+   * `docs/USER-CONTROL.md`'s rule that add without edit is a bug, in the same
+   * shape as Home Workout's history, and `lib/demo.ts` had been seeding 14
+   * notes across 7 days that nothing on the page could show.
+   *
+   * Not sticky: it is one visit's "what did I do on day 43", not a preference.
+   */
+  const [picked, setPicked] = useState<string | null>(null)
   const all = data.challenges ?? []
   const active = all.filter((c) => !c.archived)
   const archived = all.filter((c) => c.archived)
@@ -100,9 +114,27 @@ export function Challenges() {
       zone3={<>
         <SummaryStrip items={reviewTiles(data, focused, today)} />
 
-        {focused
-          ? <ChallengeCalendar challenge={focused} today={today} />
-          : <EmptyFrame>Your day grid fills in here once a challenge is running.</EmptyFrame>}
+        {focused ? (
+          /* THE REVIEW IS TWO COLUMNS, because it was one 262px calendar in a
+             678px column at 1440 and in a **1,062px** column at 1920 — 61% and
+             75% of the zone was nothing at all, and the only interactive thing
+             in it was the New-challenge button.
+
+             `@container/review` on a WRAPPER, and the split queried against it:
+             an element cannot query itself, and the zone's width is decided by
+             the page split rather than by the window, so a `lg:` here would be
+             the wrong question twice over. 38rem is the real threshold — a
+             262px calendar, a 16px gap and a panel with ~320px to be readable
+             in. */
+          <div className="@container/review">
+            <div className="grid items-start gap-4 @min-[38rem]/review:grid-cols-[auto_minmax(0,1fr)]">
+              <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />
+              <DayPanel challenge={focused} today={today} picked={picked} onClear={() => setPicked(null)} />
+            </div>
+          </div>
+        ) : (
+          <EmptyFrame>Your day grid fills in here once a challenge is running.</EmptyFrame>
+        )}
 
         {focused && !creating && (
           <div className="border-t border-line pt-3">
@@ -176,7 +208,7 @@ function orientFacts(data: JournalData, c: Challenge, today: string) {
 /** Zone 2 · the act. Tick today's rules; nothing else. */
 function TodayCard({ challenge: c }: { challenge: Challenge }) {
   const confirm = useConfirm()
-  const { data, toggleChallengeRule, updateChallenge, removeChallenge } = useJournal()
+  const { data, updateChallenge, removeChallenge } = useJournal()
   const today = todayISO()
   const done = rulesDoneOn(data, c.id, today)
   const finished = isFinished(data, c, today)
@@ -226,38 +258,155 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
       ) : c.rules.length === 0 ? (
         <p className="text-body text-fg-2">This challenge has no rules, so every day counts as done.</p>
       ) : (
-        <ul className="space-y-1.5">
-          {c.rules.map((rule, i) => {
-            const ruleDone = done.includes(i)
-            return (
-              <li key={i}>
-                {/* A checkbox, not a switch. Ticking a rule for today records
-                    that a thing happened on a date; a switch says a setting is
-                    on from now until you change it. `min-h-11` because the
-                    whole row is the target (WCAG 2.5.5) — the 20px box is the
-                    mark, not the hit area. */}
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">
-                  <Checkbox checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, today, i)} />
-                  <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
-                </label>
-                {/* A rule used to be a string and a tick, which says a day
-                    counted and nothing about what happened. 75 Hard asks for
-                    "Two 45-min workouts (1 outdoor)" — you could mark it done
-                    and never record WHICH two, or which was the outdoor one.
-                    Reported exactly that way: "what kind of workout should I
-                    enter in here?"
-
-                    Only on a ticked rule. An empty box under every unticked
-                    rule is four fields of clutter on a card whose job is a
-                    four-second daily tick, and there is nothing to describe
-                    until the thing has happened. */}
-                {ruleDone && <RuleNote challengeId={c.id} day={today} index={i} />}
-              </li>
-            )
-          })}
-        </ul>
+        <RuleChecklist challenge={c} day={today} />
       )}
     </Card>
+  )
+}
+
+/**
+ * A DAY'S RULES, TICKABLE, FOR ANY DAY — not only today.
+ *
+ * It was inside `TodayCard` and hard-wired to `today`, which is the whole
+ * reason a past day's notes could not be read: `toggleChallengeRule` and
+ * `setChallengeRuleNote` have always taken a `day` argument, and the store has
+ * always been able to correct any of the seventy-five. The capability was
+ * there and the affordance was not — the same finding `docs/USER-CONTROL.md`
+ * was written after Home Workout shipped a history whose only control deleted
+ * on the first click.
+ */
+function RuleChecklist({ challenge: c, day }: { challenge: Challenge; day: string }) {
+  const { data, toggleChallengeRule } = useJournal()
+  const done = rulesDoneOn(data, c.id, day)
+  return (
+    <ul className="space-y-1.5">
+      {c.rules.map((rule, i) => {
+        const ruleDone = done.includes(i)
+        return (
+          <li key={i}>
+            {/* A checkbox, not a switch. Ticking a rule records that a thing
+                happened on a date; a switch says a setting is on from now
+                until you change it. `min-h-11` because the whole row is the
+                target (WCAG 2.5.5) — the 20px box is the mark, not the hit
+                area. */}
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-card bg-ink-2 px-3 py-2 text-body">
+              <Checkbox checked={ruleDone} onCheckedChange={() => toggleChallengeRule(c.id, day, i)} />
+              <span className={ruleDone ? 'text-fg-2 line-through' : 'text-fg-1'}>{rule}</span>
+            </label>
+            {/* A rule used to be a string and a tick, which says a day counted
+                and nothing about what happened. 75 Hard asks for "Two 45-min
+                workouts (1 outdoor)" — you could mark it done and never record
+                WHICH two, or which was the outdoor one. Reported exactly that
+                way: "what kind of workout should I enter in here?"
+
+                Only on a ticked rule. An empty box under every unticked rule
+                is four fields of clutter on a card whose job is a four-second
+                daily tick, and there is nothing to describe until the thing
+                has happened. */}
+            {ruleDone && <RuleNote challengeId={c.id} day={day} index={i} />}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+/**
+ * ZONE 3's SECOND COLUMN · what the calendar is pointing at.
+ *
+ * WHAT THIS OWNS: the answer to "what did I do on day 43", and the standing
+ * answer when no day is picked.
+ * WHAT IT DOES NOT OWN: ticking today — that is zone 2, the act.
+ *
+ * ── With no day picked ───────────────────────────────────────────────────
+ *
+ * Rule by rule, over the elapsed window. The page could say how many days
+ * were complete and never WHICH rule broke them, so "I keep missing a day"
+ * had no answer on the screen — and on a 75-day challenge there is almost
+ * always one rule costing the rest. It shares its origin with `completedDays`
+ * and `missedDays`, so the figures here can be read against `Day n of N`
+ * without a second arithmetic; `lib/challenges.test.ts` pins that.
+ *
+ * This is the standing content rather than a "pick a day" placeholder on
+ * purpose: a column that is empty until you interact with something else is
+ * the 75% of dead width this split was opened to spend.
+ *
+ * ── With a day picked ────────────────────────────────────────────────────
+ *
+ * That day's rules, tickable, with their notes — the same `RuleChecklist` the
+ * act renders, because correcting day 43 and ticking today are one operation
+ * with a different argument.
+ *
+ * A future day gets a sentence instead of checkboxes. "You have not done it
+ * yet" and "you missed it" are different claims, and a tickable box on a day
+ * that has not happened invites the first to be recorded as the second.
+ */
+function DayPanel({ challenge: c, today, picked, onClear }: {
+  challenge: Challenge
+  today: string
+  picked: string | null
+  onClear: () => void
+}) {
+  const { data } = useJournal()
+
+  if (!picked) {
+    const rows = ruleCompletion(data, c, today)
+    return (
+      /* `data-day-panel` names what the column is showing — "rules" or the
+         ISO day. A test that merely looked for a rule's text would match the
+         act column's copy of it and pass with this panel missing entirely,
+         which is the scan-that-matches-the-wrong-thing trap. */
+      <div data-day-panel="rules">
+      <Card band hideInfo title="Rule by rule" subtitle="Across the days so far — tap any day for what you did">
+        {rows.length === 0 ? (
+          <p className="text-body text-fg-2">This challenge has no rules, so every day counts as done.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {rows.map((r) => (
+              <li key={r.index} className="flex items-baseline justify-between gap-3 rounded-card bg-ink-2 px-3 py-2">
+                <span className="min-w-0 text-body text-fg-1">{r.rule}</span>
+                {/* The count, not a percentage: on a 9-day window "67%" is
+                    three significant figures over a sample of nine, and the
+                    denominator is the thing that makes it honest. */}
+                <span className="shrink-0 text-label text-fg-2">
+                  <span className="num text-fg-1">{r.done}</span> of {r.of}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+      </div>
+    )
+  }
+
+  const n = dayDiff(c.startDate, picked) + 1
+  const ahead = dayDiff(picked, today) < 0
+  const complete = isDayComplete(data, c, picked)
+  const state = complete ? 'every rule ticked' : ahead ? 'still to come' : picked === today ? 'open — today' : 'not completed'
+
+  return (
+    <div data-day-panel={picked}>
+    <Card
+      band
+      hideInfo
+      title={`Day ${n} · ${prettyDay(picked)}`}
+      subtitle={state}
+      right={
+        <Button variant="ghost" size="sm" onClick={onClear} aria-label="Back to rule by rule">
+          <Icon as={CaretLeft} size="sm" /> Back
+        </Button>
+      }
+    >
+      {ahead ? (
+        <p className="text-body text-fg-2">Day {n} has not happened yet.</p>
+      ) : c.rules.length === 0 ? (
+        <p className="text-body text-fg-2">This challenge has no rules, so every day counts as done.</p>
+      ) : (
+        <RuleChecklist challenge={c} day={picked} />
+      )}
+    </Card>
+    </div>
   )
 }
 
@@ -299,7 +448,11 @@ function RuleNote({ challengeId, day, index }: { challengeId: string; day: strin
       </label>
       {todaysWorkouts.length > 0 && text.trim() === '' && (
         <div className="flex flex-wrap items-center gap-1">
-          <span className="text-micro text-fg-2">Logged today:</span>
+          {/* "today" only when it IS today. The note editor now opens on any
+              of the seventy-five days, and a Day-6 panel offering "Logged
+              today" above two sessions from October 13th is a label making a
+              claim about a date it is not on. */}
+          <span className="text-micro text-fg-2">{day === todayISO() ? 'Logged today:' : 'Logged that day:'}</span>
           {todaysWorkouts.map((w) => {
             // `fullLabelOf`, so the chip carries the sub-activity too — "Run ·
             // Intervals" rather than "Run", which is exactly the detail this
@@ -339,7 +492,12 @@ function RuleNote({ challengeId, day, index }: { challengeId: string; day: strin
  * Always renders, including before the start date: an empty grid says "this is
  * where your 75 days will be", which is worth more than the space it costs.
  */
-function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; today: string }) {
+function ChallengeCalendar({ challenge: c, today, picked, onPick }: {
+  challenge: Challenge
+  today: string
+  picked: string | null
+  onPick: (day: string) => void
+}) {
   const { data } = useJournal()
   return (
     // `w-fit`, so the heading and the legend sit over the grid rather than at
@@ -368,22 +526,41 @@ function ChallengeCalendar({ challenge: c, today }: { challenge: Challenge; toda
           // the app's calibrated accent-on-wash idiom (see CLAUDE.md: '22',
           // never '33'), with the day number in the accent itself.
           const bg = complete ? cat('mauve') : isToday ? 'transparent' : past ? cat('red') + '22' : cat('mantle')
+          const isPicked = d === picked
           return (
-            <li
-              key={d}
-              // 34px, not the old 28px: seven of these plus gaps is 286px, which
-              // still fits a 390px phone, and the day number is the thing people
-              // count in — "I'm on day 43" — so it should be readable at a
-              // glance rather than a 10px tick.
-              className="grid h-[34px] w-[34px] place-items-center rounded-[2px] text-label"
-              style={{
-                background: bg,
-                border: isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`,
-                color: complete ? onAccent(cat('mauve')) : !isToday && past ? cat('red') : cat('subtext0'),
-              }}
-            >
-              {i + 1}
-              <span className="sr-only">{` · day ${i + 1}, ${d}, ${state}`}</span>
+            <li key={d}>
+              {/* A BUTTON, not a cell. Seventy-five of these reached nothing —
+                  `docs/PAGE-ROLLOUT.md` step 7 is that every grouped figure
+                  opens the rows behind it, and this grid had no implementation
+                  of it at all, which is also why the day's notes were
+                  unreadable.
+
+                  No `aria-label`: the painted number plus the `sr-only` state
+                  already name it, and a label that replaced them would have to
+                  contain the drawn text anyway (`label-content-name-mismatch`).
+                  `aria-pressed` carries the selection, because the ring around
+                  a picked day is colour alone.
+
+                  34px, not the old 28px: seven of these plus gaps is 286px,
+                  which still fits a 390px phone, and the day number is the
+                  thing people count in — "I'm on day 43" — so it should be
+                  readable at a glance rather than a 10px tick. */}
+              <button
+                type="button"
+                onClick={() => onPick(d)}
+                aria-pressed={isPicked}
+                className="grid h-[34px] w-[34px] place-items-center rounded-[2px] text-label transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring active:scale-95"
+                style={{
+                  background: bg,
+                  border: isPicked
+                    ? `2px solid ${cat('text')}`
+                    : isToday ? `1.5px solid ${cat('mauve')}` : `1px solid ${cat('surface0')}`,
+                  color: complete ? onAccent(cat('mauve')) : !isToday && past ? cat('red') : cat('subtext0'),
+                }}
+              >
+                {i + 1}
+                <span className="sr-only">{` · day ${i + 1}, ${d}, ${state}`}</span>
+              </button>
             </li>
           )
         })}
