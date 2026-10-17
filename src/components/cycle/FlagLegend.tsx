@@ -199,6 +199,12 @@ function MarkKey() {
   return (
     <div className="mt-2 border-t border-line pt-2">
       <p className="text-caption uppercase tracking-wide text-fg-2">Marks in the day list</p>
+      {/* WHERE THEY ARE SET. A key that decodes `∴ creamy` and does not say
+          where `creamy` is recorded sends the reader looking — which is the
+          question that came back twice. The words match the control's own
+          heading exactly, so the sentence and the thing it points at are
+          findable by the same search. */}
+      <p className="text-label text-fg-2">Set these on a day under <span className="text-fg-1">Mood, energy, mucus, LH &amp; more</span>, above.</p>
       <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-label text-fg-2">
         {marks.map(([glyph, word]) => (
           <li key={word}>

@@ -67,9 +67,31 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
               So: the fields always, and what you filled in underneath. The
               second line costs ~18px on a day that has values and is the
               answer to the only question anyone asked about this control. */}
-          <span className="text-body font-medium text-fg-1">Mood, energy &amp; symptoms</span>
+          {/* THE TITLE NAMES THE FIELDS, and that is the second fix here.
+              The first put the field names in the small grey hint beside the
+              title and the question came back unchanged — *"how can I mark
+              it? I'm unable to see it"* — because "Mood, energy & symptoms"
+              is what the eye reads, and mucus is not in it. A hint under a
+              heading that does not mention the thing is a hint nobody
+              connects to the thing.
+
+              So mucus and LH are IN the heading, and the rest is the hint.
+              `MarkKey` in `FlagLegend` names this control by the same words,
+              because the key that advertises `∴ creamy` has to say where
+              `creamy` is set.
+
+              THE HEADING'S ORDER IS THE PANEL'S ORDER. Writing mucus first
+              read better and would have been a lie: the groups render mood,
+              energy, tags, cravings, symptoms, mucus, LH, intimacy — mood
+              and energy lead on an earlier measured decision ("burying them
+              under four fertility fields is what made them unfindable"), and
+              a heading that promises a different order sends the reader to
+              the top of a panel whose first control is not the one named. Two
+              readers wanted opposite things first; naming both in the heading
+              is what serves them, not reordering for the louder one. */}
+          <span className="text-body font-medium text-fg-1">Mood, energy, mucus, LH &amp; more</span>
           <span className="ml-2 text-label text-fg-2">
-            {isOpen ? 'tap to close' : 'flow · mucus · LH · cravings · a note'}
+            {isOpen ? 'tap to close' : 'tap to add · flow · cravings · symptoms · a note'}
           </span>
           {!isOpen && summary(entry) && (
             <span className="mt-0.5 block text-label text-fg-1">{summary(entry)}</span>
