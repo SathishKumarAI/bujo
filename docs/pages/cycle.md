@@ -363,6 +363,47 @@ less than the row paints; the row's own text is its name now).
 hundred lines above. Every error pointed at `length`; none pointed at the
 call. Written up in CLAUDE.md, with the two other shapes that produced it.
 
+## The act column, read back · COD-337 round two
+
+Reported by pasting the rendered act column in. Four findings, three of them
+the same fault — a thing that works with nothing on screen saying where it is.
+
+| | before | after |
+|---|---|---|
+| flag legend | **214px** of an 807px act column | **23px** — the hue key, sentences one press away |
+| day-list glyphs | `∴−` with no key anywhere a sighted reader could find | `: sticky · ∴ creamy · ≈ watery · ◇ egg white · − LH negative · + LH positive · ✦ LH peak` |
+| day-list header | none; `1 d5 97.39°` with a `title` tooltip as the only key | `Date · Cycle · Temp`, on the rows' own track widths |
+| the optional fields | named only on a day with nothing on it | named always, values on a second line |
+
+**The glyph key is the sharpest of them.** `MonthList` draws mucus and LH
+glyphs `aria-hidden` with an `sr-only` phrase beside them, so a screen-reader
+user was told what `∴−` means and a sighted one was not — the exact inverse of
+the report that created the flag legend, one field over, in the same card.
+`MarkKey` is built from `MUCUS_GLYPH`/`LH_GLYPH` and never a second list,
+which is the rule the flag legend's own docstring states.
+
+**The optional-fields hint was self-erasing.** `summary(entry) || 'flow ·
+mucus · LH · cravings · a note'` — the field names showed *only* when the day
+was empty, so logging a mood replaced them with "mood 3" and the other eight
+fields became unfindable for good. Asked as *"where else can I mark it as
+sticky, creamy? I'm not able to understand."*
+
+**The legend ships closed**, which its own docstring already argued was
+sufficient: the hue key is five pills and the sentence is one press or one
+hover away. Sticky, and `openFolds` still opens it, so the a11y gate loses
+nothing.
+
+**The act points at the other two rows.** `Your log` and `Manual` are in the
+review, and a reader logging a temperature has no reason to look there.
+
+### What the gates caught in this round
+
+`npm run clipped` found "Date" at 24px of the 27 it needs — and could **not**
+see the bigger one: five labels need **211px in a 180px column**, and the last
+overflows its *parent* rather than itself. Three labels now, measured at 180
+in 180. The two dropped labels have their own keys eight lines above, so
+naming them here was the third naming of the same thing.
+
 ## Open
 
 - **COD-336** — the `maxBarSize` sweep over the other nine bar charts.

@@ -667,6 +667,35 @@ export function Cycle() {
               because there is nothing to win there — the column is dead space
               either way. `useDevice` rather than a CSS-hidden second copy: two
               copies of a thirty-row list is how the two come to disagree. */}
+          {/* WHERE THE OTHER TWO THINGS ARE.
+              Asked directly: "where is the history and how can I edit it? How
+              it works?" Both exist and neither is reachable from the card you
+              are standing in — `Your log` and `Manual` are rail rows in the
+              review, and a reader logging a temperature has no reason to look
+              there. Two buttons, in the act, where the question is asked.
+
+              Real buttons and not links: they move the rail, which is state
+              on this page rather than a destination. */}
+          <p className="mt-3 border-t border-line pt-2 text-label text-fg-2">
+            Tap any day below to edit it.{' '}
+            <button
+              type="button"
+              onClick={() => setGroup('log')}
+              className="text-mauve underline underline-offset-2 hover:text-fg-1"
+            >
+              Your log
+            </button>{' '}
+            has every day with everything on it, and{' '}
+            <button
+              type="button"
+              onClick={() => setGroup('manual')}
+              className="text-mauve underline underline-offset-2 hover:text-fg-1"
+            >
+              the manual
+            </button>{' '}
+            says how the page works.
+          </p>
+
           {isPhone ? (
             <div className="mt-3">
               <CollapsibleSection
