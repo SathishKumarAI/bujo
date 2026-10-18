@@ -1,7 +1,7 @@
 # STATUS
 
 **Stopped:** 2026-10-18, on `fix/cycle-month-calendar`, **one PR open** —
-COD-357, two commits, every gate run and green.
+COD-357, four commits, every gate run and green.
 
 ## Where it stands
 
@@ -29,27 +29,54 @@ Sep 7**, with `day` still reading 6 because it is measured from the bad origin
 and cannot report it. That feeds `alignedCycles` → `patternGrid`, i.e. the
 whole Patterns group.
 
+**Then the calendar moved again, on a second report.** *"What is the use of
+that staying in this low place? If I click on it I need to scroll up and again
+make the changes. Move it to the side of Your log."* Correct: it was the last
+thing in the act column and a tap set a value read by a form ~900px above it.
+It is beside `DayLog` now, both halves sharing one `pickDay`, so a tap opens
+`DayWindow` — a dialog. The act card went **938px → 667px** and stopped
+scrolling inside a scrolling page at every width.
+
+**And the chips were measured rather than restyled.** *"Could you please
+modernize this?"* against the optional-fields panel. The untoned resting chip
+had a **1.02–1.64** border and a **1.11–1.36** fill against its card across
+five themes — a control with neither a visible edge nor a visible fill, on
+every logging form in the app. `REST_TONE.brand` held the right idea and was
+**dead**: the ternary beside it hardcoded the same string, so editing the map
+changed the emitted CSS and not one pixel.
+
 | commit | what |
 |---|---|
 | `aeabef3` | `detectOvulation` sorts; `setCycle` keeps the log in date order; `avgCycleLength` ignores period starts after today |
 | `004910c` | `CycleMonth` replaces `MonthList`; the cycle day moves into the editor header; the phone fold goes |
+| `9d4985b` | the calendar moves beside `Your log`; `DayWindow` stops naming the day twice |
+| (this one) | the resting chip gets a boundary (2.51–3.20); the group legend stops outweighing its own controls |
 
 ## The next action
 
 Push is done, PR is open. Nothing is half-built. Known and unbuilt:
 
-1. **COD-360 · `intimacy` is write-only.** Found auditing the optional day
+1. **COD-364 · `--ctl-ring` is 1.37–1.72 against the card**, so every input,
+   select and search field still has the invisible edge the chip just lost.
+   Same defect, second primitive — left because that token is ALSO the
+   hairline inside `--shadow-raise`, so raising it changes the edge of every
+   raised surface in the app. Visible today on any form that mixes the two:
+   Cycle's day editor, Pull-ups' log row.
+2. **COD-360 · `intimacy` is write-only.** Found auditing the optional day
    fields: every other one has an aggregator (mucus/LH feed `detectOvulation`,
    symptoms/cravings/moodTags feed `patternGrid`, cravings feed
    `cycleFeelings`), and `intimacy` has exactly one reader — `DayLog`'s row.
    On the `conceive` goal that is the question the page exists to answer, and
    `FertileWindow` and the log never meet. Filed, not built: it is a new card,
    not a correction.
-2. **The act column is still 70px over its 868px sticky cap** (938 vs 868), so
-   the last week of the month sits behind a short inner scroll at 1440. It was
-   340px over. Not chased further — the "third tweak to the same number" trap
-   says the next lever is the card's contents, not the grid's geometry.
-3. Everything carried in from the previous session's list is unchanged:
+3. **The optional panel is 2,187px open inside an 868px sticky column.** The
+   calendar move and the legend trim took it from 2,499; what is left is ten
+   `ChipPick` groups — 53 controls offered on every day — and no amount of
+   restyling changes that. The structural answer, if it is wanted, is the one
+   the calendar just took: the slow path belongs in `DayWindow`, which is a
+   dialog built for a long form, leaving the act column the fast path it is
+   named for. Not done without asking, because it changes a gesture.
+4. Everything carried in from the previous session's list is unchanged:
    `docs/QUESTIONS.md`, a seeded journal per `nextStep` branch, Home Workout's
    bare `useState` act, COD-247 for Recovery, Challenges' day panel.
 

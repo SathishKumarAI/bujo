@@ -86,9 +86,31 @@ const ON_TONE = {
   light theme without the arithmetic in `ON_TONE` above. Measured against the
   chip's own `bg-ink-2`, unselected, across the five themes: see the probe
   table in the PR.
+
+  ── AND THE UNTONED ONE IS THE DEFAULT, so it has to be visible ──────────
+
+  `brand` is what a row with no per-option tone falls back to — which is most
+  rows in the app — and it was `border-line-strong`, measured at **1.02–1.64**
+  against the card across the five themes. The fill does not rescue it:
+  `bg-ink-2` is **1.11–1.36** against the same ground. So the resting chip was
+  a control with neither a visible edge nor a visible fill, carried entirely
+  by its text — which is what the report *"these are looking quite bad… like a
+  mere pair made by an undergrad"* was about, one card over from the flag row
+  that passes tones per option and measures **2.61**.
+
+  `fg-3/60` rather than another surface step, because a surface is by
+  construction within a step or two of the fill — `line-strong` IS
+  `surface2`, which is how it ended up at 1.02. The quietest *foreground*,
+  held back to 60%, is the first neutral above that family. The target is not
+  a floor but the row six inches away: a boundary answers to the 3:1 graphic
+  floor rather than 4.5, and the toned chips that look right measure
+  **2.61–3.11**. After: **2.51 (latte) · 2.77 (dawn) · 3.05 (neon) · 3.12
+  (vscode) · 3.20 (mocha)** — the same band, which is the whole claim. 60%
+  was the first value tried and it landed there; a sweep of the alternatives
+  was not run.
 */
 const REST_TONE = {
-  brand: 'border-line-strong',
+  brand: 'border-fg-3/60',
   teal: 'border-teal/50',
   peach: 'border-peach/50',
   green: 'border-green/50',
@@ -210,7 +232,16 @@ export function ChipPick<T extends string | number>({
     const chosenWord = picked >= 0 ? scale.words?.[picked] : undefined
     return (
       <fieldset className={cn('min-w-0', className)}>
-        <legend className="mb-1.5 flex w-full items-baseline gap-2 text-body text-fg-1">
+        {/* THE LABEL IS A CAPTION, NOT A HEADING.
+            It was `text-body text-fg-1` — **15px at full strength over chips
+            that are 13px at `fg-2`** — so in every logging form in the app the
+            question outweighed the controls that answer it. Stacked ten deep
+            in Cycle's optional panel that is a column of headings with
+            something quiet underneath each, which is what reads as a form from
+            fifteen years ago. `text-label font-medium` keeps it unmistakably a
+            label and stops it being the loudest thing in its own group: in a
+            form the CONTROL is the content. */}
+        <legend className="mb-1.5 flex w-full items-baseline gap-2 text-label font-medium text-fg-1">
           <span>{label}</span>
           {/* THE WORD FOR THE VALUE YOU PICKED. A rank means nothing on its
               own, and the endpoints define only the ends — "3" on a 1–5 is
@@ -287,7 +318,8 @@ export function ChipPick<T extends string | number>({
 
   return (
     <fieldset className={cn('min-w-0', className)}>
-      <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
+      {/* A caption, not a heading — see the scale variant's legend above. */}
+      <legend className="mb-1.5 text-label font-medium text-fg-1">{label}</legend>
       <div className={cn('flex flex-wrap items-center', dense ? 'gap-1' : 'gap-1.5')}>
         {options.map((o) => {
           const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
@@ -359,7 +391,16 @@ export function ChipPick<T extends string | number>({
                   ? ON_TONE[t]
                   // The rest border is the OPTION's tone only — a group tone
                   // colours the selection, not every chip in the row.
-                  : `${o.tone ? REST_TONE[o.tone] : 'border-line-strong'} bg-ink-2 text-fg-2 hover:text-fg-1 ${HOVER_TONE[t]}`,
+                  //
+                  // `REST_TONE[o.tone ?? 'brand']`, not a literal beside the
+                  // map. It WAS `o.tone ? REST_TONE[o.tone] : 'border-line-strong'`
+                  // — so `REST_TONE.brand` sat in the table, read by nothing,
+                  // holding the same string the ternary hardcoded. Editing the
+                  // map to fix the untoned chip's invisible boundary therefore
+                  // changed the emitted CSS and not one pixel on screen, which
+                  // is the quietest possible version of a dead field: the
+                  // value is right there, one line above its own duplicate.
+                  : `${REST_TONE[o.tone ?? 'brand']} bg-ink-2 text-fg-2 hover:text-fg-1 ${HOVER_TONE[t]}`,
               )}
             >
               {o.label}
