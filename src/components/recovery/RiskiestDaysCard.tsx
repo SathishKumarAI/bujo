@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card } from '../ui'
 import { cat, onRaised } from '../../lib/colors'
 import type { relapseWeekdayPattern, peakRelapseWeekday } from '../../lib/urge'
+import { MAX_BAR } from '../page/chartStyle'
 
 type WeekdayPattern = ReturnType<typeof relapseWeekdayPattern>
 type PeakWeekday = NonNullable<ReturnType<typeof peakRelapseWeekday>>
@@ -20,7 +21,7 @@ export function RiskiestDaysCard({ weekdayPattern, peakWeekday }: { weekdayPatte
             <YAxis allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
             <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: onRaised('text') }} cursor={{ fill: cat('surface0') }}
               formatter={(v) => [`${v} reset${v === 1 ? '' : 's'}`, 'Resets'] as [string, string]} />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            <Bar maxBarSize={MAX_BAR} dataKey="count" radius={[4, 4, 0, 0]}>
               {weekdayPattern.map((w) => <Cell key={w.day} fill={w.day === peakWeekday.day ? cat('red') : cat('surface1')} />)}
             </Bar>
           </BarChart>

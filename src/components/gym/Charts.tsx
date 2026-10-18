@@ -5,7 +5,7 @@ import {
 import { Icon } from '@/components/Icon'
 import { ChartBar, Gauge, Person } from '@/components/icons'
 import { Card } from '../ui'
-import { chartAxis, chartGrid, compactNum } from '../page/chartStyle'
+import { chartAxis, chartGrid, compactNum, MAX_BAR } from '../page/chartStyle'
 import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 
 /**
@@ -84,7 +84,7 @@ export function VolumeTrendCard({ series, unit, focusEx, progression, e1rm }: {
                 label={{ value: 'avg', position: 'insideTopRight', fill: cat('subtext0'), fontSize: 10 }}
               />
             )}
-            <Bar dataKey="volume" radius={[3, 3, 0, 0]} isAnimationActive={false}>
+            <Bar maxBarSize={MAX_BAR} dataKey="volume" radius={[3, 3, 0, 0]} isAnimationActive={false}>
               {series.map((s, i) => (
                 /* The best week earns the accent; the current one is quieter
                    because it is still being filled in, and every other week is

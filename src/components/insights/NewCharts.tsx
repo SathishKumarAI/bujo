@@ -6,6 +6,7 @@ import { MATRIX_KEYS, MATRIX_LABEL, metricMatrix, habitConsistencyScore, type Ma
 import { entriesPerWeek } from '../../lib/insightsFilter'
 import { taskCompletionByWeek } from '../../lib/viz'
 import { todayISO } from '../../lib/date'
+import { MAX_BAR } from '../page/chartStyle'
 
 /**
  * The charts Insights never had.
@@ -193,7 +194,7 @@ export function JournalVolumeCard() {
             <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v) => [`${v}`, 'entries'] as [string, string]} />
             {/* 4px rounded data-end, square against the baseline — the bar is
                 anchored to zero and should look it. */}
-            <Bar dataKey="entries" fill={cat('lavender')} radius={[4, 4, 0, 0]} />
+            <Bar maxBarSize={MAX_BAR} dataKey="entries" fill={cat('lavender')} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

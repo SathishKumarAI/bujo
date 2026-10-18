@@ -2,6 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card } from '../ui'
 import { cat, onRaised } from '../../lib/colors'
 import type { urgesByType } from '../../lib/streak'
+import { MAX_BAR } from '../page/chartStyle'
 
 type ByType = ReturnType<typeof urgesByType>
 
@@ -28,7 +29,7 @@ export function UrgeMixCard({ byType }: { byType: ByType }) {
             <XAxis type="number" allowDecimals={false} stroke={cat('overlay0')} fontSize={11} />
             <YAxis type="category" dataKey="type" width={84} stroke={cat('overlay0')} fontSize={11} />
             <Tooltip contentStyle={{ background: cat('mantle'), border: `1px solid ${cat('surface0')}`, borderRadius: 8, color: onRaised('text') }} cursor={{ fill: cat('surface0') }} />
-            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+            <Bar maxBarSize={MAX_BAR} dataKey="count" radius={[0, 4, 4, 0]}>
               {byType.map((_, i) => <Cell key={i} fill={cat(URGE_COLORS[i % URGE_COLORS.length])} />)}
             </Bar>
           </BarChart>

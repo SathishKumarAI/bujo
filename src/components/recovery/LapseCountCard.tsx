@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card } from '../ui'
 import { cat, onRaised } from '../../lib/colors'
 import type { LapseWeekday, LapseTrend } from '../../lib/lapse'
+import { MAX_BAR } from '../page/chartStyle'
 
 const DIRECTION: Record<LapseTrend['direction'], { word: string; tone: 'green' | 'red' | 'peach' }> = {
   down: { word: 'falling', tone: 'green' },
@@ -51,7 +52,7 @@ export function LapseCountCard({ name, byWeekday, peak, trend }: {
                 const w = item?.payload as LapseWeekday | undefined
                 return [`${v} on average · ${w?.days ?? 0} day${w?.days === 1 ? '' : 's'}, ${w?.total ?? 0} in total`, 'Per lapse day'] as [string, string]
               }} />
-            <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
+            <Bar maxBarSize={MAX_BAR} dataKey="avg" radius={[4, 4, 0, 0]}>
               {byWeekday.map((w) => <Cell key={w.day} fill={w.day === peak.day ? cat('red') : cat('surface1')} />)}
             </Bar>
           </BarChart>

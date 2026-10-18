@@ -7,6 +7,7 @@ import { cat, onRaised, rechartsTooltip } from '../../lib/colors'
 import { todayISO } from '../../lib/date'
 import { pickleTotals, winRateSeries, weeklyGames, formatStats, cumulativeGames, gamesByDay, monthlyGames } from '../../lib/pickleball'
 import { Facet } from './Facet'
+import { MAX_BAR } from '../page/chartStyle'
 
 const tip = rechartsTooltip
 
@@ -106,7 +107,7 @@ export function TrendCharts({ activeFacet, group }: { activeFacet: string | null
               <XAxis dataKey="wk" stroke={cat('overlay0')} fontSize={11} />
               <YAxis stroke={cat('overlay0')} fontSize={11} />
               <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
-              <Bar dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
+              <Bar maxBarSize={MAX_BAR} dataKey="games" fill={cat('teal')} radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -122,7 +123,7 @@ export function TrendCharts({ activeFacet, group }: { activeFacet: string | null
                 <XAxis dataKey="m" stroke={cat('overlay0')} fontSize={11} />
                 <YAxis stroke={cat('overlay0')} fontSize={11} />
                 <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} formatter={(v, n) => [n === 'winPct' ? `${v}%` : `${v}`, n === 'winPct' ? 'Win %' : 'Games'] as [string, string]} />
-                <Bar dataKey="games" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
+                <Bar maxBarSize={MAX_BAR} dataKey="games" fill={cat('mauve')} radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
