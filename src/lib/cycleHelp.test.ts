@@ -19,11 +19,21 @@ describe('the help content file is internally consistent', () => {
   })
 
   it('has non-empty text for every entry', () => {
-    for (const h of CYCLE_HELP) expect(h.text.trim().length, h.key).toBeGreaterThan(20)
+    for (const h of CYCLE_HELP) {
+      // Points now, not a paragraph. The floor moved from the whole string to
+      // each point, which is the assertion that catches the failure mode of
+      // the split: a sentence cut on its full stops leaving "Optional." as a
+      // bullet. 12 characters is the same floor `cycleGuide.test.ts` uses.
+      expect(h.text.length, `${h.key} is a one-item list`).toBeGreaterThan(1)
+      for (const t of h.text) {
+        expect(t.trim().length, `${h.key} has a fragment: "${t}"`).toBeGreaterThan(12)
+        expect(t.trim(), `${h.key} has an untrimmed point`).toBe(t)
+      }
+    }
   })
 
   it('resolves a known key and returns undefined for an unknown one', () => {
-    expect(cycleHelp('coverline')?.text).toMatch(/reference line/)
+    expect(cycleHelp('coverline')?.text.join(' ')).toMatch(/reference line/)
     // Unknown keys must not throw: an InfoTip with no entry renders nothing,
     // because a gap in the content file is not a reason to crash a page
     // someone is reading their own chart on.

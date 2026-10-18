@@ -17,8 +17,21 @@
 export interface HelpEntry {
   /** Where it appears, and the key an InfoTip asks for. */
   key: string
-  /** The tip itself. Plain, second person, short sentences. */
-  text: string
+  /**
+   * The tip, as points.
+   *
+   * It was one `string` of two or three sentences, and every one of the 22
+   * entries held at least two — a paragraph inside a 320px popover, which is
+   * the shape this app's own rule is against: a field people read is
+   * `string[]` the moment it holds more than one idea.
+   *
+   * The split was generated and then READ, not trusted. Splitting a sentence
+   * on its full stops is how a list ends up with "Optional." as a bullet, and
+   * three entries were rewritten at source rather than split because their
+   * second clause was a fragment — `cycleHelp.test.ts` holds the 12-character
+   * floor that catches exactly that.
+   */
+  text: string[]
   /** Guide section id to scroll to, when there is more to say. */
   more?: string
 }
@@ -26,108 +39,178 @@ export interface HelpEntry {
 export const CYCLE_HELP: HelpEntry[] = [
   {
     key: 'cycle-day',
-    text: 'Day 1 is the first day of full bleeding. Every other number counts from it. Spotting before your period doesn’t start a new cycle.',
+    text: [
+      'Day 1 is the first day of full bleeding.',
+      'Every other number counts from it.',
+      'Spotting before your period doesn’t start a new cycle.',
+    ],
     more: 'getting-started',
   },
   {
     key: 'phase',
-    text: 'Where you are in your cycle, based on your own averages. "Estimated" means calendar-based; "confirmed" means your temperature shift showed ovulation happened.',
+    text: [
+      'Where you are in your cycle, based on your own averages.',
+      '"Estimated" means calendar-based; "confirmed" means your temperature shift showed ovulation happened.',
+    ],
     more: 'reading-your-chart',
   },
   {
     key: 'next-period',
-    text: 'A range, not a promise. It’s built from your own cycle lengths and gets more accurate the more cycles you log.',
+    text: [
+      'A range, not a promise.',
+      'It’s built from your own cycle lengths and gets more accurate the more cycles you log.',
+    ],
     more: 'reading-your-chart',
   },
   {
     key: 'your-average',
-    text: 'Your mean cycle length across logged cycles. Anywhere from 21 to 35 days is common for adults.',
+    text: [
+      'Your mean cycle length across logged cycles.',
+      'Anywhere from 21 to 35 days is common for adults.',
+    ],
     more: 'clinician',
   },
   {
     key: 'temp-shift',
-    text: 'The rise in your waking temperature after ovulation, usually about 0.3–0.5 °F (0.2–0.3 °C). It’s caused by progesterone and stays up until your next period.',
+    text: [
+      'The rise in your waking temperature after ovulation, usually about 0.3–0.5 °F (0.2–0.3 °C).',
+      'It’s caused by progesterone and stays up until your next period.',
+    ],
     more: 'reading-your-chart',
   },
   {
     key: 'menstrual',
-    text: 'Your period. The uterine lining sheds. Usually lasts 3–7 days.',
+    text: [
+      'Your period — the uterine lining sheds.',
+      'Usually lasts 3–7 days.',
+    ],
   },
   {
     key: 'follicular',
-    text: 'From day 1 until ovulation. Estrogen rises and an egg matures. This is the part that varies most — a longer cycle usually means a longer follicular phase.',
+    text: [
+      'From day 1 until ovulation.',
+      'Estrogen rises and an egg matures.',
+      'This is the part that varies most — a longer cycle usually means a longer follicular phase.',
+    ],
   },
   {
     key: 'ovulation-window',
-    text: 'The days an egg is likely released. The egg survives about a day; sperm can survive up to five, so the fertile window starts before ovulation.',
+    text: [
+      'The days an egg is likely released.',
+      'The egg survives about a day; sperm can survive up to five, so the fertile window starts before ovulation.',
+    ],
     more: 'fertility-signs',
   },
   {
     key: 'luteal',
-    text: 'From ovulation to your next period. It’s steady for most people — about 11 to 17 days. Temperature stays higher and PMS symptoms often show up here.',
+    text: [
+      'From ovulation to your next period.',
+      'It’s steady for most people — about 11 to 17 days.',
+      'Temperature stays higher and PMS symptoms often show up here.',
+    ],
   },
   {
     key: 'bbt',
-    text: 'Take it as soon as you wake, before getting up, talking, or drinking — ideally after at least 3 hours of sleep and at about the same time each day. Use the same thermometer.',
+    text: [
+      'Take it as soon as you wake, before getting up, talking, or drinking — ideally after at least 3 hours of sleep and at about the same time each day.',
+      'Use the same thermometer.',
+    ],
     more: 'taking-your-temperature',
   },
   {
     key: 'coverline',
-    text: 'A reference line just above your pre-ovulation temperatures. Three readings in a row above it suggest ovulation has already happened.',
+    text: [
+      'A reference line just above your pre-ovulation temperatures.',
+      'Three readings in a row above it suggest ovulation has already happened.',
+    ],
     more: 'reading-your-chart',
   },
   {
     key: 'temp-disturbed',
-    text: 'Mark this when something could skew the reading: illness, fever, alcohol, travel, a short night, or taking it much later than usual. Those days are left out of ovulation detection.',
+    text: [
+      'Mark this when something could skew the reading: illness, fever, alcohol, travel, a short night, or taking it much later than usual.',
+      'Those days are left out of ovulation detection.',
+    ],
     more: 'taking-your-temperature',
   },
   {
     key: 'cervical mucus',
-    text: 'Changes through the cycle. Watery or clear, stretchy "egg-white" mucus usually appears in the days before ovulation and is the most fertile sign.',
+    text: [
+      'Changes through the cycle.',
+      'Watery or clear, stretchy "egg-white" mucus usually appears in the days before ovulation and is the most fertile sign.',
+    ],
     more: 'fertility-signs',
   },
   {
     key: 'LH test',
-    text: 'Ovulation test strips detect a hormone surge that usually happens 24–36 hours before ovulation. A positive test predicts ovulation; the temperature shift confirms it.',
+    text: [
+      'Ovulation test strips detect a hormone surge that usually happens 24–36 hours before ovulation.',
+      'A positive test predicts ovulation; the temperature shift confirms it.',
+    ],
     more: 'fertility-signs',
   },
   {
     key: 'flow',
-    text: 'How heavy bleeding is. Soaking through a pad or tampon every hour for several hours is worth calling a clinician about.',
+    text: [
+      'How heavy bleeding is.',
+      'Soaking through a pad or tampon every hour for several hours is worth calling a clinician about.',
+    ],
     more: 'clinician',
   },
   {
     key: 'drive',
-    text: 'Your sex drive today, 1 (none) to 5 (high). Optional. Many people notice it rises near ovulation.',
+    text: [
+      'Your sex drive today, 1 (none) to 5 (high) — optional.',
+      'Many people notice it rises near ovulation.',
+    ],
   },
   {
     key: 'mood',
-    text: 'A quick 1–5 check-in. After a few cycles, the Patterns view shows whether your mood follows your cycle.',
+    text: [
+      'A quick 1–5 check-in.',
+      'After a few cycles, the Patterns view shows whether your mood follows your cycle.',
+    ],
     more: 'patterns',
   },
   {
     key: 'cravings',
-    text: 'Appetite and cravings often rise in the luteal phase. Logging them helps you see when yours start.',
+    text: [
+      'Appetite and cravings often rise in the luteal phase.',
+      'Logging them helps you see when yours start.',
+    ],
     more: 'patterns',
   },
   {
     key: 'fertile-window',
-    text: 'The 5 days before ovulation plus ovulation day. It’s an estimate based on your data — it is not contraception.',
+    text: [
+      'The 5 days before ovulation plus ovulation day.',
+      'It’s an estimate based on your data — it is not contraception.',
+    ],
     more: 'fertility-signs',
   },
   {
     key: 'confidence',
-    text: 'Estimated: calendar only. Likely: temperature shift seen. Confirmed: temperature shift plus another sign (LH test or mucus).',
+    text: [
+      'Estimated: calendar only.',
+      'Likely: temperature shift seen.',
+      'Confirmed: temperature shift plus another sign (LH test or mucus).',
+    ],
     more: 'reading-your-chart',
   },
   {
     key: 'pattern-grid',
-    text: 'Each row is something you log; each column is a cycle day. Darker cells mean it happened more often on that day across your cycles.',
+    text: [
+      'Each row is something you log; each column is a cycle day.',
+      'Darker cells mean it happened more often on that day across your cycles.',
+    ],
     more: 'patterns',
   },
   {
     key: 'local-only',
-    text: 'Your cycle data lives only in this browser. Nothing is uploaded. Export a backup regularly — if browser data is cleared, it can’t be recovered.',
+    text: [
+      'Your cycle data lives only in this browser and nothing is uploaded.',
+      'Export a backup regularly — if browser data is cleared, it can’t be recovered.',
+    ],
     more: 'privacy',
   },
 ]

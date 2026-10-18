@@ -48,7 +48,22 @@ export function InfoTip({ tip, onMore }: {
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="max-w-xs" onClick={(e) => e.stopPropagation()}>
-        <p className="text-label text-fg-1">{entry.text}</p>
+        {/* POINTS, and the renderer has to change with the data: `{entry.text}`
+            on a `string[]` is valid JSX that paints the lines CONCATENATED,
+            with no separator and no error — the same defect as two adjacent
+            spans painting one word. `tsc` flagged only the test. */}
+        {entry.text.length === 1 ? (
+          <p className="text-label text-fg-1">{entry.text[0]}</p>
+        ) : (
+          <ul className="space-y-1 text-label text-fg-1">
+            {entry.text.map((t) => (
+              <li key={t} className="flex gap-1.5">
+                <span aria-hidden className="shrink-0 text-fg-3">·</span>
+                <span className="min-w-0">{t}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {entry.more && onMore && (
           <button
             type="button"
