@@ -28,6 +28,7 @@ import { workoutSplitCounts } from '../../lib/stats'
 import { sleepDebt, focusSleepCorrelation } from '../../lib/correlations'
 import { lapseDays } from '../../lib/moodPatterns'
 import { useFocusTrap } from '../../lib/useFocusTrap'
+import { MAX_BAR } from '../page/chartStyle'
 
 const tip = rechartsTooltip
 
@@ -348,7 +349,7 @@ export function useStatsCards(): StatsCards {
           <XAxis dataKey="week" stroke={cat('overlay0')} fontSize={11} />
           <YAxis stroke={cat('overlay0')} fontSize={11} />
           <Tooltip contentStyle={tip()} cursor={{ fill: cat('surface0') }} />
-          <Bar dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
+          <Bar maxBarSize={MAX_BAR} dataKey="minutes" fill={cat('teal')} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
