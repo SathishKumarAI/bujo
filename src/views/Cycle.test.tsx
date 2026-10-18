@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -368,5 +368,38 @@ describe('Cycle · the optional fields are three questions, not nine', () => {
     for (const s of FIELD_SECTIONS) {
       expect(container.textContent, `"${s.title}" is not drawn`).toContain(s.title)
     }
+  })
+})
+
+/**
+ * A LOG ROW OPENS THE DAY, OVER THE LIST.
+ *
+ * It used to select the day and move the month cursor, leaving the reader to
+ * find the act column — the other side of the page on a desktop, a collapsed
+ * strip on a phone. Asked for as "just show me a new window with all the
+ * information where I can edit all that information".
+ *
+ * The assertion that matters is not that a dialog appears: it is that the
+ * dialog holds the SAME controls the act column does. A second editor would
+ * drift from the first, which is the fault fixed in Pickleball this week.
+ */
+describe('Cycle · a log row opens that day in a window', () => {
+  it('opens the picked day, with the real editor inside it', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await user.click(railRow(GROUP_LABEL.log))
+    const rows = [...container.querySelectorAll<HTMLButtonElement>('[data-card="log"] button[aria-pressed]')]
+    expect(rows.length).toBeGreaterThan(0)
+    const label = rows[0].textContent ?? ''
+    await user.click(rows[0])
+
+    const dialog = await screen.findByRole('dialog')
+    // Titled with the day it opened, because the list it came from shows thirty.
+    expect(label).toContain(dialog.querySelector('h2')?.textContent ?? '@@')
+    // The act column's own controls: a temperature input and the optional
+    // fields disclosure. If these ever stop being `DayEditor`/`DayMore`, this
+    // is the test that should fail.
+    expect(within(dialog).getByRole('button', { name: /mucus, LH/i })).toBeInTheDocument()
+    expect(dialog.querySelector('input')).not.toBeNull()
   })
 })

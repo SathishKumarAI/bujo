@@ -28,7 +28,7 @@ import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
   DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
-  CycleGoalCard, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
+  CycleGoalCard, DayWindow, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
 /**
@@ -122,6 +122,15 @@ export function Cycle() {
    * it is one journey's "take me to that section", not a preference.
    */
   const [manualSection, setManualSection] = useState<string | null>(null)
+  /**
+   * The day open in a window, or null.
+   *
+   * Pressing a row in `Your log` used to select the day and move the month
+   * cursor, leaving the reader to find the act column — the other side of the
+   * page on a desktop, a collapsed strip on a phone. The record is in the
+   * review, so the way to correct it belongs over the review.
+   */
+  const [windowDay, setWindowDay] = useState<string | null>(null)
   /** Open the manual on a section. The rail row and the deck move together. */
   const showManual = (s: string) => { setGroup('manual'); setManualSection(s) }
   const sel = days.includes(selected) ? selected : days[0]
@@ -436,13 +445,11 @@ export function Cycle() {
           cycleDayOf={cycleDayOf}
           today={today}
           selected={sel}
-          /* The month moves too. `sel` is clamped to the cursor month, so
-             picking a September row while browsing October would otherwise
-             select nothing at all — the editor would stay on whatever October
-             day it had. Safe to pass `d` into `setMonth`: it is a parameter,
-             not one of this component's memo-derived consts, which is what
-             the React Compiler objects to. */
-          onPick={(d) => { setMonth(d.slice(0, 7)); setSelected(d); logCol.open() }}
+          /* Opens the day OVER the list rather than sending the reader to
+             the act column. The month still moves, so closing the window
+             leaves the editor on the day you were just looking at rather
+             than somewhere else. */
+          onPick={(d) => { setMonth(d.slice(0, 7)); setSelected(d); setWindowDay(d) }}
         />
       </Card>
     ),
@@ -898,6 +905,21 @@ export function Cycle() {
           {/* Outside the rail, and deliberately: a medical disclaimer behind a
               row you have to select is a disclaimer most readers never meet. It
               was always visible under the guide shelf and it stays that way. */}
+          {/* THE DAY, OVER THE LIST. It hosts `DayEditor` and `DayMore` —
+              the act column's own controls — rather than re-declaring them,
+              which is the fault this week's Pickleball fix was about. */}
+          <DayWindow
+            date={windowDay}
+            entry={windowDay ? log.find((x) => x.date === windowDay) : undefined}
+            unit={unit}
+            fertilityFirst={goal === 'conceive'}
+            onClose={() => setWindowDay(null)}
+            onTemp={(temp) => windowDay && setCycle(windowDay, { temp })}
+            onToggleFlag={(fl) => windowDay && toggleFlag(windowDay, fl)}
+            onDrive={(drive) => windowDay && setCycle(windowDay, { drive })}
+            onPatch={(patch) => windowDay && setCycle(windowDay, patch)}
+          />
+
           <p className="mt-4 inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2">
             <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> {CYCLE_DISCLAIMER}
           </p>
