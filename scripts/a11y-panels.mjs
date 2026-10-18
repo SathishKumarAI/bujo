@@ -125,6 +125,31 @@ async function stepDecks(page, onEach) {
   return 20
 }
 
+/**
+ * OPEN A ROW'S FIRST RECORD WINDOW, because axe cannot see inside a dialog
+ * that nobody opened.
+ *
+ * Same blind spot as a closed fold (COD-93) and an unselected rail row
+ * (COD-237), one mechanism further on: Cycle's `Your log` rows each open the
+ * day in a Radix dialog, and everything in it — the temperature input, nine
+ * chip groups, the note — is absent from the DOM until one is pressed.
+ *
+ * One row, not all of them: every row opens the same two components with a
+ * different date, so the thirtieth adds nothing the first did not. Escape
+ * closes it again so the next scan starts from the page, not from a modal.
+ */
+async function openRecordWindow(page) {
+  const opened = await page.evaluate(() => {
+    const row = document.querySelector('#main [data-card="log"] button[aria-pressed]')
+    if (!row) return false
+    row.click()
+    return true
+  })
+  if (!opened) return 0
+  await settle(page)
+  return await page.evaluate(() => (document.querySelector('[role="dialog"]') ? 1 : 0))
+}
+
 async function openFolds(page) {
   let opened = 0
   for (let pass = 0; pass < 4; pass++) {
@@ -192,6 +217,11 @@ for (const vp of [
       await page.evaluate(() => window.dispatchEvent(new Event('bujo:reveal-lazy')))
       await settle(page)
       const folds = await openFolds(page)
+      // A record window holds a whole editor and is not in the DOM until a
+      // row is pressed. Opened after the folds so its own folds are reached
+      // by the pass below.
+      const win = await openRecordWindow(page)
+      if (win) { await openFolds(page); await settle(page) }
       const chars = await page.evaluate(() => (document.querySelector('#main')?.textContent ?? '').length)
       if (chars < 400) { console.log(`${vp.name} · ${theme} · ${page_id}/${label}: rendered ${chars} characters — the panel did not load`); continue }
       /* CANARY · `BUJO_CANARY=1` plants an unlabelled select in `#main`
@@ -213,6 +243,7 @@ for (const vp of [
       /* AND EVERY OTHER CARD OF THE DECK. See `stepDecks` — a row that shows
          one of nine is the COD-237 blind spot wearing a scroller. */
       const cards = await deckCards(page)
+      if (win) { await page.keyboard.press('Escape'); await settle(page) }
       const stepped = await stepDecks(page, async () => {
         const r = await new AxeBuilder({ page }).include('#main').analyze()
         const b = r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
