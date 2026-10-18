@@ -106,7 +106,7 @@ export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: 
         tone="peach"
         value={entry?.drive ?? null}
         onChange={(n) => onDrive(entry?.drive === n ? undefined : n)}
-        scale={{ low: '1 none', high: '5 high' }}
+        scale={{ low: '1 none', high: '5 high', words: DRIVE_WORDS }}
         hint="Optional — press the current number again to clear it"
         options={DRIVE_SCALE.map((n) => ({ value: n, label: String(n) }))}
       />
@@ -116,3 +116,5 @@ export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: 
 
 /** 1–5, the same self-rating scale the urge log already uses. */
 const DRIVE_SCALE = [1, 2, 3, 4, 5] as const
+/** What each step means, so "3" is not a rank with nothing attached. */
+const DRIVE_WORDS = ['none', 'low', 'some', 'strong', 'high']

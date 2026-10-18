@@ -531,8 +531,14 @@ export function Cycle() {
           text={step.text}
           tone={STEP_TONE[step.id]}
           icon={STEP_ICON[step.id]}
-          destination={GROUP_LABEL[step.group]}
-          onPick={() => setGroup(step.group)}
+          /* `late` and `due` point at the LOG, not at a review row: both ask
+             for something to be written down, and the thing that writes is
+             the act column. Everything else elaborates, so it points at the
+             row that elaborates it. */
+          destination={step.id === 'late' || step.id === 'due' ? 'Log a day' : GROUP_LABEL[step.group]}
+          onPick={step.id === 'late' || step.id === 'due'
+            ? () => logCol.open()
+            : () => setGroup(step.group)}
         />
         {/* THE MONTH, where the thing it changes is. It was in the app
             header, two zones away from the only controls it affects. */}
@@ -587,18 +593,35 @@ export function Cycle() {
             value={nextPeriod
               ? (
                 <span className="text-body text-fg-1">
-                  ~{prettyDay(nextPeriod)}
+                  {/* THE COUNTDOWN IS THE HEADLINE, in the same weight as the
+                      cycle day beside it. "in 10d" was `text-label text-fg-2`
+                      — the smallest, quietest thing in the box — and it is
+                      the one figure on this page a reader checks daily.
+                      Asked for as "next period, show that in highlight… the
+                      digits in a big font size so the user can understand
+                      what they are going through."
+
+                      The DATE stays small underneath it. A date is a lookup;
+                      a countdown is the answer. */}
+                  {untilNext != null && (
+                    <span className="block">
+                      <span className="num text-heading font-medium text-fg-1">
+                        {untilNext === 0 ? 'today' : Math.abs(untilNext)}
+                      </span>
+                      {untilNext !== 0 && (
+                        <span className="ml-1 text-label text-fg-2">
+                          {untilNext > 0 ? 'days away' : 'days late'}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  <span className="text-label text-fg-2">~{prettyDay(nextPeriod)}</span>
                   {/* A RANGE, not a promise. The spread is the personal
                       standard deviation, floored at a day and widened further
                       when the log is irregular — narrowing a prediction the
                       data does not support is the failure mode here. */}
                   {prediction.spread > 0 && (
                     <span className="ml-1 text-label text-fg-2">±{prediction.spread}d</span>
-                  )}
-                  {untilNext != null && (
-                    <span className="ml-1.5 text-label text-fg-2">
-                      {untilNext === 0 ? 'today' : untilNext > 0 ? `in ${untilNext}d` : `${-untilNext}d late`}
-                    </span>
                   )}
                   {prediction.early && <span className="ml-1.5 text-label text-fg-2">· early estimate</span>}
                 </span>

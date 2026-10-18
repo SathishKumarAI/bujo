@@ -385,7 +385,13 @@ export function nextStep(entries: CyclePoint[], opts: {
   if (until != null && until < 0) {
     return {
       id: 'late',
-      text: `${-until} ${-until === 1 ? 'day' : 'days'} past the estimate${plus}. Flag day 1 when it starts — an estimate running out is not a result.`,
+      // It asks for a NOTE as well as a flag. An estimate running out is the
+      // one moment on this page where something happened that no chip can
+      // record — a late period, a changed pill, a stressful fortnight — and
+      // the page used to state the fact and offer nothing to do with it.
+      // Asked for as "if the date misses, ask them what happened and ask them
+      // to write in notes".
+      text: `${-until} ${-until === 1 ? 'day' : 'days'} past the estimate${plus}. Flag day 1 when it starts, or note what is going on — an estimate running out is not a result.`,
       group: 'cycle',
     }
   }
