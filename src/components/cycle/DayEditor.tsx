@@ -45,11 +45,20 @@ import { FLAGS, FLAG_COLOR } from './flags'
  * solid fill with a computed neutral becomes the app's calibrated
  * border-plus-wash, which is the one `ChipPick` solves for every theme.
  */
-export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: {
+export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, onDrive }: {
   date: string
   entry: CyclePoint | undefined
   /** 'F' or 'C'. */
   unit: string
+  /**
+   * 1-based cycle day for `date`, or null before the first period.
+   *
+   * It used to be printed on all 31 rows of the month list, which is where
+   * the density that list died of came from. "The 18th" is a calendar fact
+   * and "day 20" is the one that means something here — but only for the day
+   * you are looking at, so it is drawn once, beside that day's own name.
+   */
+  cycleDay?: number | null
   onTemp: (temp: number | undefined) => void
   onToggleFlag: (flag: string) => void
   /** `undefined` clears the rating — an unrated day is not a day rated 1. */
@@ -60,8 +69,11 @@ export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: 
 
   return (
     <div className="rounded-card bg-ink-2 p-3">
-      <p className="mb-3 flex items-baseline gap-2 text-body font-medium text-fg-1">
+      <p className="mb-3 flex flex-wrap items-baseline gap-x-2 text-body font-medium text-fg-1">
         {prettyDay(date)}
+        {cycleDay != null && (
+          <span className="num text-label font-normal text-fg-2">day {cycleDay}</span>
+        )}
         {date === today && (
           /* A quiet pill rather than a grey word: "today" is a state of the
              thing being edited, and the rest of this app draws a state as a

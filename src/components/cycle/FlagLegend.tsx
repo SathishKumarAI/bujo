@@ -170,9 +170,9 @@ export function FlagLegend() {
 /**
  * THE OTHER KEY · what `∴`, `≈`, `◇`, `:`, `−`, `+` and `✦` mean.
  *
- * `MonthList` draws a mucus glyph and an LH glyph in a shared column, with
- * `aria-hidden` on the glyphs and an `sr-only` "mucus creamy, LH negative"
- * beside them. So a **screen-reader user was told what the marks mean and a
+ * `CycleMonth` draws a mucus glyph and an LH glyph under the date, with
+ * `aria-hidden` on them and the whole day named in the cell's `sr-only`
+ * sentence. So a **screen-reader user was told what the marks mean and a
  * sighted one was not** — the exact inverse of the report that created the
  * flag legend ("those are there, but unable to see which colour represents
  * what"), one field over, and shipped in the same card as the fix for it.
@@ -201,10 +201,11 @@ function MarkKey() {
   ]
   return (
     <div className="mt-2 border-t border-line pt-2">
-      <p className="text-caption uppercase tracking-wide text-fg-2">Marks in the day list</p>
+      <p className="text-caption uppercase tracking-wide text-fg-2">Marks on a day</p>
       {/* WHERE THEY ARE SET. A key that decodes `∴ creamy` and does not say
           where `creamy` is recorded sends the reader looking — which is the
-          question that came back twice. The words match the control's own
+          question that came back twice. "On a day" rather than "in the day
+          list": the list is a calendar now and the marks are in its cells. The words match the control's own
           heading exactly, so the sentence and the thing it points at are
           findable by the same search. */}
       <p className="text-label text-fg-2">Set these on a day under <span className="text-fg-1">Mood, mucus, LH &amp; more</span>, above.</p>

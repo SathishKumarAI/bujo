@@ -174,10 +174,16 @@ describe('Cycle · the registry is the review zone', () => {
     expect(toggle.textContent).toMatch(/flag colours/i)
     expect(toggle.textContent).toMatch(/day marks/i)
     expect(toggle.textContent).toMatch(/what every mark means/i)
-    // One press brings back BOTH keys — the hues and the day-list marks.
+    // One press brings back BOTH keys — the hues and the day marks.
     await user.click(toggle)
     expect(screen.getByText(FLAG_MEANS.period)).toBeInTheDocument()
-    expect(container.textContent).toContain('Marks in the day list')
+    // The mark key by its CONTENT, not by its heading. This asserted the
+    // string "Marks in the day list" and broke on the commit that turned the
+    // list into a calendar and the heading into "Marks on a day" — a test
+    // keyed to copy, which is a trap this repo already has an entry for. A
+    // glyph from the map is what the key is FOR, and it cannot be reworded.
+    expect(container.textContent).toContain(MUCUS_GLYPH['egg-white'])
+    expect(container.textContent).toContain('egg white')
   })
 
   /**
@@ -288,7 +294,7 @@ describe('Cycle · your log shows what the averages are made of', () => {
 /**
  * THE MARK KEY · the glyphs the day list draws.
  *
- * `MonthList` renders a mucus glyph and an LH glyph with `aria-hidden` and an
+ * `CycleMonth` renders a mucus glyph and an LH glyph with `aria-hidden` and an
  * `sr-only` phrase beside them, so a screen-reader user was told what `∴−`
  * means and a sighted one was not — the inverse of the report that created
  * the flag legend, in the same card.
@@ -401,5 +407,73 @@ describe('Cycle · a log row opens that day in a window', () => {
     // is the test that should fail.
     expect(within(dialog).getByRole('button', { name: /mucus, LH/i })).toBeInTheDocument()
     expect(dialog.querySelector('input')).not.toBeNull()
+  })
+})
+
+/**
+ * THE MONTH IS A CALENDAR, AND A DAY THAT HAS NOT HAPPENED IS NOT A ROW.
+ *
+ * The list this replaced drew 31 rows of which **13 were future days carrying
+ * an invented cycle day** — `19 d21` through `31 d33`, counted forward past
+ * the next period the same page estimates in zone 1. A prediction drawn as a
+ * record, and pressable, which is the path by which a `period` flag reached a
+ * day that had not happened and joined `avgCycleLength`.
+ *
+ * Asserted on the ACCESSIBLE NAME rather than on a class or a colour: the
+ * cell's `sr-only` sentence is its name, so these are the same strings a
+ * screen-reader user hears, and they survive every restyling.
+ */
+describe('Cycle · the month calendar', () => {
+  /** Every cell of the grid, future ones included — they are not buttons. */
+  const cells = (container: HTMLElement) =>
+    [...container.querySelectorAll('.zone-act [aria-current="date"], .zone-act [aria-pressed]')]
+
+  it('never offers a day that has not happened', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const today = new Date().toISOString().slice(0, 10)
+    const day = Number(today.slice(8))
+    // Today is pressable; the day after it is not a control at all. Scoped by
+    // name, because the number alone appears in half the page.
+    const names = cells(container).map((c) => c.textContent ?? '')
+    expect(names.some((n) => n.includes(`${day}`)), 'today is in the grid').toBe(true)
+    for (const el of cells(container)) {
+      const sr = el.querySelector('.sr-only')?.textContent ?? ''
+      expect(sr, 'a future day reached the pressable set').not.toMatch(/not yet$/)
+    }
+  })
+
+  it('draws the days still to come as dated and inert, not as empty days', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const notYet = [...container.querySelectorAll('.zone-act .sr-only')]
+      .map((s) => s.textContent ?? '')
+      .filter((t) => t.endsWith('not yet'))
+    // The demo's today is mid-month, so there are always some; and none of
+    // them says "nothing logged", which is a claim about a day that happened.
+    expect(notYet.length).toBeGreaterThan(0)
+    for (const t of notYet) expect(t).not.toContain('nothing logged')
+  })
+
+  it('names each day with what is on it, so the cell is not colour alone', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const named = [...container.querySelectorAll('.zone-act .sr-only')]
+      .map((s) => s.textContent ?? '')
+    // The seed flags a period every cycle and takes temperatures through it.
+    expect(named.some((t) => t.includes('period')), 'no period day is named').toBe(true)
+    expect(named.some((t) => /\d{2}\.\d+°/.test(t)), 'no temperature is named').toBe(true)
+  })
+
+  it('puts the cycle day on the day being edited, once, not on all 31', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    const act = container.querySelector('.zone-act')!
+    const dayLabels = (act.textContent ?? '').match(/day \d+/g) ?? []
+    expect(dayLabels.length, 'the cycle day is drawn more than once').toBe(1)
   })
 })

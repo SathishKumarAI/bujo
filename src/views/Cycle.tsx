@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, CaretLeft, CaretRight, ShieldWarning } from '@/components/icons'
+import { CaretLeft, CaretRight, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO, ymOf } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
-import { CollapsibleSection } from '../components/CollapsibleSection'
 import { ActStrip, CardDeck, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
-import { useDevice } from '../components/shell/device'
 import { useStickyState } from '../lib/useStickyState'
 import {
   avgCycleLength, avgPeriodLength, coverline, cycleDay, cycleHistory, daysUntilNextPeriod,
@@ -27,7 +25,7 @@ import {
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
-  DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, MonthList, PhasesCard,
+  CycleMonth, DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, PhasesCard,
   CycleGoalCard, DayWindow, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
@@ -86,7 +84,6 @@ import {
 export function Cycle() {
   const { data, setCycle, setSettings } = useJournal()
   const { month: ym, setMonth } = useCursor()
-  const isPhone = useDevice() === 'mobile'
   const unit = data.settings.tempUnit
   const days = monthDays(ym)
   const today = todayISO()
@@ -729,6 +726,7 @@ export function Cycle() {
             date={sel}
             entry={selEntry}
             unit={unit}
+            cycleDay={cycleDayOf(sel)}
             onTemp={(temp) => setCycle(sel, { temp })}
             onToggleFlag={(f) => toggleFlag(sel, f)}
             onDrive={(drive) => setCycle(sel, { drive })}
@@ -767,7 +765,12 @@ export function Cycle() {
               Real buttons and not links: they move the rail, which is state
               on this page rather than a destination. */}
           <p className="mt-3 border-t border-line pt-2 text-label text-fg-2">
-            Tap any day below to edit it.{' '}
+            {/* "Tap any day below to edit it" went with the list. The card's
+                own subtitle already says "Tap a day, set a temperature…", and
+                a calendar of pressable cells does not need a sentence saying
+                it is pressable — two instructions a line apart is how a card
+                gains a line it cannot pay for, with the act column already
+                70px over its sticky height. */}
             <button
               type="button"
               onClick={() => setGroup('log')}
@@ -786,36 +789,31 @@ export function Cycle() {
             says how the page works.
           </p>
 
-          {isPhone ? (
-            <div className="mt-3">
-              <CollapsibleSection
-                variant="quiet" defaultOpen={false} stickyKey="cycle.month"
-                icon={CalendarBlank} color="mauve"
-                title={prettyMonth(ym)}
-                subtitle="Every day, its temperature and its cycle day"
-              >
-                <MonthList
-                  days={days}
-                  entries={log}
-                  selected={sel}
-                  today={today}
-                  cycleDayOf={cycleDayOf}
-                  onSelect={setSelected}
-                />
-              </CollapsibleSection>
-            </div>
-          ) : (
-            <div className="mt-3">
-              <MonthList
-                days={days}
-                entries={log}
-                selected={sel}
-                today={today}
-                cycleDayOf={cycleDayOf}
-                onSelect={setSelected}
-              />
-            </div>
-          )}
+          {/* ONE CALENDAR, AT EVERY WIDTH, AND NO FOLD ROUND IT.
+              The fold was COD-230's answer to a 956px month list on a 3,703px
+              phone page — a list is 31 rows whatever the viewport, so the only
+              lever left was hiding it. Seven columns of 44px bands is ~280px
+              at both widths, which is less than the fold's own cost to open,
+              so the lever is not needed and the second rendering path that
+              came with it is gone too: `isPhone` and a `CollapsibleSection`
+              meant two components could disagree about the same month. */}
+          {/* The month it is drawing, named. A list carried its month in two
+              sub-headings ("Oct 1–15", "Oct 16–31"); a calendar has one grid
+              and so needs one, and without it a reader who paged back to
+              August is looking at 31 unlabelled squares. No stepper here on
+              purpose — the month cursor already has one in zone 1, and a
+              second control for one piece of state is the "two navigations"
+              fault this page's own rail was built to undo. */}
+          <p className="mt-3 text-label font-medium text-fg-1">{prettyMonth(ym)}</p>
+          <div className="mt-1.5">
+            <CycleMonth
+              days={days}
+              entries={log}
+              selected={sel}
+              today={today}
+              onSelect={setSelected}
+            />
+          </div>
         </Card>
       )}
       zone3={
