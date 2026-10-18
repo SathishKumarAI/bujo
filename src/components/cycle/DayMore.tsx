@@ -120,7 +120,12 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
                 {scales.map((f) => (
                   <ChipPick
                     key={f.key}
-                    label={`${f.label} · 1 ${f.low} … 5 ${f.high}`}
+                    label={f.label}
+                    /* The endpoints move out of the legend and under the
+                       track, where they label the ends they describe. The
+                       legend is the group's NAME again rather than a
+                       sentence. */
+                    scale={{ low: `1 ${f.low}`, high: `5 ${f.high}` }}
                     tone="teal"
                     value={entry?.[f.key] ?? null}
                     onChange={(v) => onPatch({ [f.key]: entry?.[f.key] === v ? undefined : v })}

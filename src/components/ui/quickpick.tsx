@@ -117,6 +117,7 @@ export function ChipPick<T extends string | number>({
   dense = false,
   multi = false,
   action = false,
+  scale,
 }: {
   /** Rendered as a real `<legend>`, so the group is named for a screen reader. */
   label: string
@@ -153,12 +154,103 @@ export function ChipPick<T extends string | number>({
    * case and stays one accent.
    */
   options: { value: T; label: ReactNode; hint?: string; tone?: ChipTone; name?: string }[]
+  /**
+   * RENDER AN ORDERED RATING AS A SEGMENTED TRACK, with these endpoint words.
+   *
+   * A 1–5 rating drawn as five separate pills is five peers, and five peers
+   * is what a TAG row looks like — on Cycle's field panel, `Mood` sat four
+   * pixels above `Mood tags` and the numbers 1–5 had exactly the weight and
+   * shape of `calm` / `happy` / `energetic`. One of those is an ordered scale
+   * and the other is a set, and nothing on screen said so.
+   *
+   * A segment track says it three ways at once: the options are joined rather
+   * than spaced, they divide the width equally rather than sizing to their
+   * labels, and the ends are named. Reported as the field panel looking like
+   * "a just created website"; this is the half of that which was a control
+   * doing an impression of a different control.
+   *
+   * Presence is the switch, because an endpoint pair is the one thing a scale
+   * has that a chip row does not — there is no way to turn this on and have
+   * nothing sensible to put in it.
+   *
+   * NOT for `multi` (a set has no ends) and not for `action` (there is
+   * nothing to be at the end of). Both are ignored here rather than silently
+   * producing a control that lies about itself.
+   */
+  scale?: { low: string; high: string }
   /** One line under the row — what the choice means, not what to do. */
   hint?: ReactNode
   /** A typed escape hatch, or anything else, on the end of the row. */
   after?: ReactNode
   className?: string
 }) {
+  if (scale && !multi && !action) {
+    return (
+      <fieldset className={cn('min-w-0', className)}>
+        <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
+        {/*
+          ONE TRACK, not five pills.
+
+          `divide-x` rather than a gap, so the segments read as one control
+          that has been divided — which is what an ordered scale is. `flex-1`
+          on every segment, so the width is split evenly and the track is as
+          wide as the column: a scale that sizes to its labels implies the
+          labels differ in weight, and 1–5 do not.
+
+          The press target stays at the 44px floor through `py-2` plus the
+          text line, which is what the hand-rolled drive row was using
+          `min-w-11` to guarantee before it came here.
+        */}
+        <div className="flex w-full overflow-hidden rounded-control border border-line-strong divide-x divide-line">
+          {options.map((o) => {
+            const on = value === o.value
+            const t = o.tone ?? tone
+            const drawn = typeof o.label === 'string' ? o.label : ''
+            const spoken = o.name && drawn && !o.name.toLowerCase().includes(drawn.toLowerCase())
+              ? `${drawn} — ${o.name}`
+              : o.name
+            return (
+              <button
+                type="button"
+                key={String(o.value)}
+                onClick={() => onChange(o.value)}
+                aria-pressed={on}
+                title={o.hint}
+                aria-label={spoken}
+                className={cn(
+                  /* `min-h-11` is the 44px target floor COD-96 is open
+                     about, and the hand-rolled drive row this replaces used
+                     `min-w-11` to hit it one dimension at a time. A segment
+                     is as wide as a fifth of the column, so height is the one
+                     that needs saying. */
+                  'num min-h-11 flex-1 py-2 text-center text-label duration-150',
+                  'transition-[color,background-color,box-shadow]',
+                  // No `active:scale-95` here: a segment is part of a track,
+                  // and shrinking one of five joined cells tears the row. The
+                  // fill arriving IS the feedback.
+                  'motion-reduce:transition-none',
+                  on ? ON_TONE[t] : 'bg-ink-2 text-fg-2 hover:bg-ink-3 hover:text-fg-1',
+                )}
+              >
+                {o.label}
+              </button>
+            )
+          })}
+        </div>
+        {/* THE ENDS ARE NAMED, under the track they describe. They used to
+            live inside the legend — "Mood · 1 low … 5 great" — where they
+            made the group's name a sentence and still did not say which end
+            was which. */}
+        <div className="mt-1 flex justify-between text-micro text-fg-2">
+          <span>{scale.low}</span>
+          <span>{scale.high}</span>
+        </div>
+        {hint && <p className="mt-1.5 text-label text-fg-2">{hint}</p>}
+        {after}
+      </fieldset>
+    )
+  }
+
   return (
     <fieldset className={cn('min-w-0', className)}>
       <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
