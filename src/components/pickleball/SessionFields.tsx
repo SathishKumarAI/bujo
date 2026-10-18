@@ -189,7 +189,28 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
             <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
           </div>
-          <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" aria-label="Opponents" />
+          {/* TWO BOXES IN DOUBLES, because doubles is four people and this
+              used to be one field whose placeholder said "Opponent(s)" — a
+              control inviting two names into one string, which then joins
+              against nothing. The second is gated on the format exactly as
+              `Partner` is, so a singles session is never asked for a name it
+              cannot have. */}
+          <div className={f.format === 'doubles' ? 'grid gap-3 sm:grid-cols-2' : undefined}>
+            <Input
+              value={f.opponent}
+              onChange={(e) => set({ opponent: e.target.value })}
+              placeholder={f.format === 'doubles' ? 'Opponent 1' : 'Opponent (optional)'}
+              aria-label={f.format === 'doubles' ? 'First opponent' : 'Opponent'}
+            />
+            {f.format === 'doubles' && (
+              <Input
+                value={f.opponent2}
+                onChange={(e) => set({ opponent2: e.target.value })}
+                placeholder="Opponent 2"
+                aria-label="Second opponent"
+              />
+            )}
+          </div>
         </DisclosureRow>
       </div>
   )

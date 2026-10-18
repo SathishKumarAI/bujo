@@ -9,7 +9,7 @@ import { LazyMount } from '../LazyMount'
 import { cat, onRaised } from '../../lib/colors'
 import { todayISO, addDays, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
 import {
-  partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential,
+  partnerStats, venueStats, opponentRecords, opponentLabel, rollingForm, winStreaks, pointDifferential,
   levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
   pickleHours, scoringStats, playConsistency,
 } from '../../lib/pickleball'
@@ -119,7 +119,7 @@ function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
           voice — where the duration is usually the ONLY fact given — showed as
           "doubles 0–0" and looked empty. It is the sport's required field
           (`domain/activities.ts`), so it reads before the optional ones. */}
-      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{opponentLabel(p) ? ` · vs ${opponentLabel(p)}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
         <Button variant="ghost" size="sm" onClick={() => { setD(draftFrom(p)); setEditing(true) }} aria-label="Edit session" className="text-fg-2 reveal hover:text-mauve">Edit</Button>

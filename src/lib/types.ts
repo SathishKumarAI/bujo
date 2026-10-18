@@ -1045,7 +1045,19 @@ export interface PickleballSession {
   notes?: string
   // ── richer per-game logging (all optional, additive) ──
   /** Opponent(s) name/handle. */
+  /** Opponent — the singles opponent, or one half of a doubles pair. */
   opponent?: string
+  /**
+   * The other half of a doubles pair.
+   *
+   * Purely additive: absent means what it has always meant for every session
+   * already stored — no second name known — so there is no migration and
+   * nothing to run twice. Old sessions carry a free-text pair in `opponent`
+   * alone ("Dan & Priya", "The Thursday pair") and keep working, which is
+   * also why those are NOT auto-split: the format is inconsistent, and a
+   * guess at a separator is a silent corruption of somebody's name.
+   */
+  opponent2?: string
   /** Where you played (court / club / city). */
   location?: string
   /** Self/opponent skill level for the session, e.g. "3.5". */
