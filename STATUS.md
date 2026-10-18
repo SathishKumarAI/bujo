@@ -1,49 +1,53 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/cycle-one-box`, **one PR to open**.
-Cycle's fourth round of reported changes — the SaaS-polish pass.
+**Stopped:** 2026-10-17, on `feat/cycle-fields-ui`, **one PR to open**.
+Cycle round five — the optional-field panel.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | #418–#423 merged | up to date |
-| `feat/cycle-one-box` | **not opened yet** | COD-337 round four — one commit | local |
+| `main` | — | #418–#424 merged | up to date |
+| `feat/cycle-fields-ui` | **not opened yet** | COD-337 round five — one commit | local |
 
 ## The next action
 
-1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,166
-   tests), `clipped`, `design`, `contrast`, `a11y:panels`.
+1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,169
+   tests), `clipped`, `design`, `a11y:panels`.
 2. **Answer `docs/QUESTIONS.md`** — what "saved for every month" meant.
 3. **COD-336** — `maxBarSize` on the nine remaining bar charts.
 4. **The rest of the prose sweep** — `cycleHelp` and `cycleManual`, 27
-   multi-sentence strings. `CYCLE_HELP.text` feeds popovers *and* the Help
-   page, so check consumers first.
+   multi-sentence strings. Check consumers first: `CYCLE_HELP.text` feeds
+   popovers *and* the Help page.
 
 ## What landed on this branch
 
-| | before | after |
-|---|---|---|
-| month stepper | app top bar | inside zone 1's block |
-| orientation | a block in zone 1 **and** a strip at the head of zone 3 | one box |
-| flag colours | five pills always drawn + a separate glyph key | one named row, both keys behind it |
-| the two fold rows | three lines and two | **one line each** |
+The optional-field panel was **nine chip groups at one weight with nothing
+between them**, 56–153px each, in a 424px column. It is three ruled sections
+now — how you felt · what your body did · cycle signs — with the grouping
+declared as data in `dayFields.ts` rather than typed into the view.
 
-`viewChrome` drops `dateNav` for this view so there is one stepper, not two
-for one cursor. `SummaryStrip` is gone from zone 3. Both disclosure rows are a
-non-shrinking title, a muted value pushed right, and the same caret on the
-same side — the `▸` text glyph became the app's own rotating `CaretRight`.
+`fertilityFirst` moves the **section** instead of sorting four chip keys by a
+hand-written `rank()`, which is deleted. Headings sit below the groups' own
+legends in weight, because each group already names itself.
 
-**`npm run clipped` caught the dishonest half of "make it one line":** the
-collapsed summary needed **265px in a 114px slot**, hiding three of the five
-things logged. Fixed by fitting the content (`mood 3 · energy 3 · +3`), not by
-`data-clip-ok`.
+## Ideas considered and not done
+
+- **Making the 1–5 scales look like scales.** Mood and Energy render as five
+  pill chips, identical in weight to tag chips like "calm" / "happy", with
+  their endpoints in the legend ("Mood · 1 low … 5 great"). A segmented
+  control would read better, but `ChipPick` is shared across the app and the
+  change belongs to that component rather than to this panel.
+- **Moving `Drive` in beside Mood and Energy.** Three 1–5 scales currently sit
+  on two surfaces; Drive is in the fast path by an earlier deliberate
+  decision, so moving it needs that decision revisited, not overridden.
 
 ## Open
 
 - `docs/QUESTIONS.md` · what "saved for every month" meant.
 - **COD-336** · `maxBarSize` on nine bar charts.
 - **`cycleHelp` and `cycleManual` prose** — 27 multi-sentence strings.
+- **The two ideas above.**
 - **A seeded journal per `nextStep` branch.**
 - **Home Workout's act is a bare `useState`.**
 - **COD-247 reopened for Recovery.**
