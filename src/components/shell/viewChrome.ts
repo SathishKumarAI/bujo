@@ -29,7 +29,13 @@ export const VIEW_CHROME: Record<ViewId, ViewChrome> = {
   reading: { title: 'Reading', subtitle: 'Want · reading · finished', help: 'Your reading log as three shelves · want-to-read, currently-reading (with a page-progress bar), and finished (with a 1–5 star rating). Set a yearly book goal; pages read and books finished this year roll up into Insights and Goals.' },
   goals: { title: 'Goals', subtitle: 'Every active target in one place', help: 'A cross-view rollup of every active target · habit weekly goals, fitness minutes, challenges, training-program days, and your streak · as progress bars. Tap a row to jump to its home view.' },
   insights: { title: 'Insights', subtitle: 'Streaks, search & reflection', help: 'Reflection hub: streaks, task completion, correlation patterns, a month index, and full-text search (filter by type). The Weekly Review walks you through migrate → review → reflect; the Tag manager renames/merges #tags.' },
-  cycle: { title: 'Cycle', subtitle: 'Temperature & phase', dateNav: 'month', help: 'An opt-in, private basal-temperature and cycle chart with free-form flags. Honours your °F/°C unit. Nothing is shared or predicted · just a calm record.' },
+  /* NO `dateNav`. Cycle carries its own month stepper inside zone 1's block,
+     beside the cycle day it changes — reported as "it shows a calendar like
+     October on the top bar; move it down or give it some space into the day-1
+     box". Two steppers for one cursor would be the page saying the same thing
+     twice, so the header's is the one that goes. Every other month view keeps
+     it. */
+  cycle: { title: 'Cycle', subtitle: 'Temperature & phase', help: 'An opt-in, private basal-temperature and cycle chart with free-form flags. Honours your °F/°C unit. Nothing is shared or predicted · just a calm record.' },
   nofap: { title: 'Recovery', subtitle: 'Streak, urges & resilience', help: 'An opt-in abstinence streak: current streak, personal best, milestones, an urge-surfing counter, and a judgement-free relapse log. Stays entirely on your device.' },
   mindset: { title: 'Mindset', subtitle: 'Train your thinking style', help: 'A toolkit for your mental game and thinking style, app-wide (not just sport). Browse principles across focus, resilience, growth, composure, confidence, discipline and connection; pick a few to actively work on and jot how you’ll apply each. Build the habit of thinking well.' },
   coaching: { title: 'Coaching', subtitle: 'Pickleball academy · beginner to pro', help: 'A full pickleball coaching curriculum, not just tracking: a 12-week beginner→4.0 program with a day-by-day practice schedule, a skill ladder (2.0→4.5+), a drill library by skill, and a mental-game track to build the right mindset. Start the program to track your week.' },

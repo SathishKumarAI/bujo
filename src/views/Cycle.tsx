@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { CalendarBlank, CaretRight, ShieldWarning } from '@/components/icons'
+import { CalendarBlank, CaretLeft, CaretRight, ShieldWarning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
-import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO } from '../lib/date'
+import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO, ymOf } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
 import { CollapsibleSection } from '../components/CollapsibleSection'
@@ -95,6 +95,11 @@ export function Cycle() {
   const [selected, setSelected] = useState(() => (days.includes(today) ? today : days[0]))
   /** True when the month cursor is on the month we are actually living in. */
   const thisMonth = ym === today.slice(0, 7)
+  /** Shift the cursor a month. Local because the header's stepper is gone. */
+  const shiftMonth = (delta: number) => {
+    const [y, mo] = ym.split('-').map(Number)
+    setMonth(ymOf(new Date(y, mo - 1 + delta, 1)))
+  }
   /* The act column, which this page was the last on the contract not to have.
      Measured before: the review panel was **678px at 1440 and 854px at 1920**
      with the day editor holding 424/520px of the shell on every visit, and no
@@ -504,6 +509,17 @@ export function Cycle() {
            one bordered unit rather than a row with a rule under it — which is
            what `actTop` makes possible, since zone 1 is now a 678px column
            instead of the full 1,180px shell. */
+        /* ONE BOX · asked for directly: "for the cycles, could you please merge
+           them all into one box?", pasted with the summary strip, the
+           sentence and the four facts all in the quote. They were two
+           bordered things in two different ZONES saying one thing between
+           them — orientation — and the strip sat at the top of the review
+           where it read as the first panel.
+
+           Order is how it is asked: what to do, which month you are in, where
+           you are today, what the record adds up to, and the promise. The
+           same move Recovery made (REUSABLE-PATTERNS §22), which also deleted
+           its `SummaryStrip` rather than keeping one in each zone. */
         <div className="rounded-card border border-line bg-ink-0 p-3">
         {/* COLOUR IS URGENCY and nothing else — the edge and the glyph, with
             `fg-1` text, because an accent as text on a wash of itself is the
@@ -518,6 +534,37 @@ export function Cycle() {
           destination={GROUP_LABEL[step.group]}
           onPick={() => setGroup(step.group)}
         />
+        {/* THE MONTH, where the thing it changes is. It was in the app
+            header, two zones away from the only controls it affects. */}
+        <div className="mb-2 flex items-center gap-1 border-b border-line pb-2">
+          <button
+            type="button"
+            onClick={() => shiftMonth(-1)}
+            aria-label="Previous month"
+            className="grid h-8 w-8 place-items-center rounded-control text-fg-2 transition-colors hover:bg-ink-2 hover:text-fg-1"
+          >
+            <Icon as={CaretLeft} size="sm" />
+          </button>
+          <span className="num min-w-[9ch] text-center text-body text-fg-1">{prettyMonth(ym)}</span>
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            aria-label="Next month"
+            className="grid h-8 w-8 place-items-center rounded-control text-fg-2 transition-colors hover:bg-ink-2 hover:text-fg-1"
+          >
+            <Icon as={CaretRight} size="sm" />
+          </button>
+          {!thisMonth && (
+            <button
+              type="button"
+              onClick={() => setMonth(todayISO().slice(0, 7))}
+              className="ml-auto text-label text-mauve underline underline-offset-2 hover:text-fg-1"
+            >
+              Back to today
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
           <Fact label={<>Cycle day<InfoTip tip="cycle-day" onMore={showManual} /></>} value={day != null ? <span className="num text-heading font-medium text-fg-1">{day}</span> : <span className="text-body text-fg-2">not started</span>} />
           {/* The pill now says HOW it knows, not just what it thinks.
@@ -565,6 +612,19 @@ export function Cycle() {
               : <span className="text-body text-fg-2">—</span>}
           />
         </div>
+        {/* THE THREE TOTALS, which were a `SummaryStrip` at the top of zone
+            3. They are orientation, not record — "how much do I have" is the
+            same question as "where am I", asked of the whole log instead of
+            today — so they belong in this box and not at the head of the
+            review, where the strip read as the first panel. */}
+        <div className="mt-3 border-t border-line pt-3">
+          <SummaryStrip items={[
+            { label: 'Cycles logged', value: finished.length, empty: finished.length === 0 },
+            { label: 'Avg period', value: periodLen != null ? `${periodLen} days` : '—', empty: periodLen == null },
+            { label: 'Temp shift', value: shift != null ? `seen · ${shift}°` : 'not yet', empty: shift == null },
+          ]} />
+        </div>
+
         {/* The promise, kept in view. It was made once on a screen the user
             saw before they had any data; this is where it stays true. */}
         <CyclePrivacyLine />
@@ -730,12 +790,6 @@ export function Cycle() {
       )}
       zone3={
         <>
-          <SummaryStrip items={[
-            { label: 'Cycles logged', value: finished.length, empty: finished.length === 0 },
-            { label: 'Avg period', value: periodLen != null ? `${periodLen} days` : '—', empty: periodLen == null },
-            { label: 'Temp shift', value: shift != null ? `seen · ${shift}°` : 'not yet', empty: shift == null },
-          ]} />
-
           {/* `@container/page` on the OUTER div and the grid on the inner one:
               an element cannot query itself, so putting both on one div means
               the two-column rail layout never fires. And the phone column is

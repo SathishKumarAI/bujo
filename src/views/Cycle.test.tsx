@@ -141,14 +141,14 @@ describe('Cycle · the registry is the review zone', () => {
       expect(rows[i].querySelector('dt')!.textContent!.trim()).toBe(f)
       expect(rows[i].querySelector('dd')!.textContent!.trim()).toBe(FLAG_MEANS[f])
     }
-    // Folded, the hue→word key survives and only the sentences go. That is the
-    // whole reason the fold is allowed: the report was that the colours were
-    // undecipherable, and hiding the key would reproduce it.
+    // Folded, the whole key goes — pills included. That is a deliberate
+    // change from "closed still draws the pills": the row is named, says what
+    // it holds, and is one press from everything, which is the difference
+    // between hidden and put away.
     const toggle = screen.getByRole('button', { name: /flag colours/i })
     await user.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
-    expect(keys.map((li) => li.textContent!.trim())).toEqual([...FLAGS])
+    expect(container.querySelectorAll('#cycle-flag-meanings > li')).toHaveLength(0)
     expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
   })
 
@@ -158,18 +158,26 @@ describe('Cycle · the registry is the review zone', () => {
    * what must survive it, because hiding the key is the complaint that
    * created this component.
    */
-  it('ships the legend closed, with the hue key still drawn', async () => {
+  it('ships both keys away behind one named row, and one press opens them', async () => {
     const user = userEvent.setup()
     const { container } = mount()
     await openAct(user)
     const toggle = screen.getByRole('button', { name: /flag colours/i })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByText(FLAG_MEANS.period), 'the sentences are away').toBeNull()
-    const keys = [...container.querySelectorAll('#cycle-flag-meanings > li')]
-    expect(keys.map((li) => li.textContent!.trim()), 'the key is not').toEqual([...FLAGS])
-    // And one press brings the sentences back.
+    expect(container.querySelectorAll('#cycle-flag-meanings > li'), 'the pills too').toHaveLength(0)
+    // Put away, not hidden: the row names what is inside it, which is the
+    // only thing that makes closing a key defensible at all. It names the two
+    // CATEGORIES rather than all thirteen marks — listing every one wrapped
+    // the row onto two lines, and a one-liner that is not one line is the
+    // thing this round was asked to fix.
+    expect(toggle.textContent).toMatch(/flag colours/i)
+    expect(toggle.textContent).toMatch(/day marks/i)
+    expect(toggle.textContent).toMatch(/what every mark means/i)
+    // One press brings back BOTH keys — the hues and the day-list marks.
     await user.click(toggle)
     expect(screen.getByText(FLAG_MEANS.period)).toBeInTheDocument()
+    expect(container.textContent).toContain('Marks in the day list')
   })
 
   /**
@@ -295,6 +303,8 @@ describe('Cycle · every mark the day list can draw is decoded', () => {
     const user = userEvent.setup()
     const { container } = mount()
     await openAct(user)
+    // Both keys live behind the one named row now.
+    await user.click(screen.getByRole('button', { name: /flag colours/i }))
     const key = [...container.querySelectorAll('ul')]
       .map((u) => u.textContent ?? '')
       .find((t) => t.includes('creamy') && t.includes('LH'))
