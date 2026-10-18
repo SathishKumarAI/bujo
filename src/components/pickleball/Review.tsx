@@ -2,18 +2,20 @@ import { useState } from 'react'
 import { ArrowSquareOut } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
-import { Card, Empty, Input, Segmented, Textarea } from '../ui'
+import { Card, Empty, Input, Textarea } from '../ui'
 import { Button } from '../ui/button'
 import { SectionRail, StatGrid } from '../page'
 import { LazyMount } from '../LazyMount'
 import { cat, onRaised } from '../../lib/colors'
-import { todayISO, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
+import { todayISO, addDays, prettyDay, fromISODay, WEEKDAYS } from '../../lib/date'
 import {
   partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential,
   levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
   pickleHours, scoringStats, playConsistency,
 } from '../../lib/pickleball'
 import { PB_PANELS } from './panels'
+import { SessionFields } from './SessionFields'
+import { draftFrom, sessionPatch, type SessionDraft } from './sessionDraft'
 import { Facet } from './Facet'
 import { TrendCharts } from './TrendCharts'
 import { CompetitionPanel } from './CompetitionPanel'
@@ -54,36 +56,55 @@ const RESOURCES = [
 
 // History row with in-place editing (BUJO-201): correct a mistyped score/format/
 // duration without delete-and-re-log.
-function PickleRow({ p, onSave, onDelete }: {
+function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
   p: import('../../lib/types').PickleballSession
   onSave: (patch: Partial<import('../../lib/types').PickleballSession>) => void
   onDelete: () => void
+  /** Every partner and venue already logged, for the form's own dropdowns. */
+  partnerNames: string[]
+  venueNames: string[]
 }) {
   const [editing, setEditing] = useState(false)
-  const [d, setD] = useState({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' })
+  /* THE WHOLE SESSION, not five of its fourteen fields. `draftFrom` is the
+     same translation the log form uses, so an edit starts from everything
+     that is stored rather than from the subset this row used to render. */
+  const [d, setD] = useState(() => draftFrom(p))
   // Above the `editing` early return: a row can be captured and then opened for
   // an edit, and a hook called only on one of those paths is a different hook
   // order on each render.
   const justNew = useJustCaptured().has(PICKLEBALL_KEY(p.id))
   function save() {
-    onSave({
-      format: d.format,
-      gamesWon: Number(d.gamesWon) || 0,
-      gamesLost: Number(d.gamesLost) || 0,
-      durationMin: d.durationMin ? Number(d.durationMin) : undefined,
-      notes: d.notes.trim() || undefined,
-    })
+    // `sessionPatch` lists every key, so clearing a partner here actually
+    // clears it — `updatePickleball` merges, and an omitted key would mean
+    // "leave what was there", which is the opposite of what a cleared field
+    // is asking for.
+    onSave(sessionPatch(d))
     setEditing(false)
   }
   if (editing) {
     return (
       <li className="space-y-2 py-2.5">
-        <Segmented value={d.format} onChange={(v) => setD((c) => ({ ...c, format: v }))} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} />
-        <div className="grid grid-cols-3 gap-2">
-          <label className="block text-label text-fg-1">Won<Input type="number" value={d.gamesWon} onChange={(e) => setD((c) => ({ ...c, gamesWon: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-label text-fg-1">Lost<Input type="number" value={d.gamesLost} onChange={(e) => setD((c) => ({ ...c, gamesLost: e.target.value }))} className="mt-1" /></label>
-          <label className="block text-label text-fg-1">Min<Input type="number" value={d.durationMin} onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))} className="mt-1" /></label>
-        </div>
+        {/* THE REAL FORM, not a re-declaration of part of it.
+
+            This row used to render five controls — format, won, lost,
+            duration, notes — against the log form's fourteen. So a session
+            corrected here could be switched to doubles and never given a
+            partner, nor an opponent, location, level, points or scoring.
+            Reported exactly that way, and it is the third time this shape has
+            been found this week.
+
+            The nine missing fields were never lost: `updatePickleball` merges
+            a `Partial<>`, so they survived untouched and unreachable. That is
+            why this is a render change and not a migration. COD-348. */}
+        <SessionFields
+          f={d}
+          set={(patch: Partial<SessionDraft>) => setD((c) => ({ ...c, ...patch }))}
+          recentPartners={partnerNames.slice(0, 1)}
+          allPartners={partnerNames}
+          recentVenues={venueNames.slice(0, 1)}
+          allVenues={venueNames}
+          yesterday={addDays(todayISO(), -1)}
+        />
         <Textarea value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} placeholder="Notes" rows={2} />
         <div className="flex gap-2">
           <Button variant="secondary" onClick={save} className="press-3d flex-1">Save</Button>
@@ -101,7 +122,7 @@ function PickleRow({ p, onSave, onDelete }: {
       <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{p.opponent ? ` · vs ${p.opponent}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
-        <Button variant="ghost" size="sm" onClick={() => { setD({ format: p.format, gamesWon: String(p.gamesWon), gamesLost: String(p.gamesLost), durationMin: p.durationMin != null ? String(p.durationMin) : '', notes: p.notes ?? '' }); setEditing(true) }} aria-label="Edit session" className="text-fg-2 reveal hover:text-mauve">Edit</Button>
+        <Button variant="ghost" size="sm" onClick={() => { setD(draftFrom(p)); setEditing(true) }} aria-label="Edit session" className="text-fg-2 reveal hover:text-mauve">Edit</Button>
         <Button variant="ghost" size="icon-sm" onClick={onDelete} aria-label="Remove" className="text-fg-2 reveal hover:text-red">×</Button>
       </span>
     </li>
@@ -418,7 +439,7 @@ export function PickleballReview({ panel, onPanel }: {
           >
             <ul className="divide-y divide-surface0">
               {shown.map((p) => (
-                <PickleRow key={p.id} p={p} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
+                <PickleRow key={p.id} p={p} partnerNames={partners.map((x) => x.partner)} venueNames={venues.map((x) => x.location)} onSave={(patch) => updatePickleball(p.id, patch)} onDelete={() => removePickleball(p.id)} />
               ))}
             </ul>
           </div>

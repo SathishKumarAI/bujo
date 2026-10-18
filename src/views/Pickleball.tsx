@@ -2,14 +2,14 @@ import { ArrowsClockwise, CalendarDot, CaretRight, Gauge, Plus, Target, Trophy }
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Input, Textarea } from '../components/ui'
-import { ChipPick, DayPick, Stepper } from '../components/ui/quickpick'
-import { durationOptions } from '../components/ui/quickpick.options'
+import { Card, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { ActStrip, PageLayout, DisclosureRow, StatBar, useActColumn, NextStepBlock } from '../components/page'
+import { ActStrip, PageLayout, StatBar, useActColumn, NextStepBlock } from '../components/page'
 import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
+import { SessionFields } from '../components/pickleball/SessionFields'
+import { blankSession, sessionPatch } from '../components/pickleball/sessionDraft'
 import { TodayDrill } from '../components/pickleball/TodayDrill'
 import { PB_PANELS } from '../components/pickleball/panels'
 import { useStickyState } from '../lib/useStickyState'
@@ -37,8 +37,6 @@ import { notify } from '../lib/notify'
  * it is what `PageLayout` puts in the sticky column, and a form that is lifted
  * out of its view ends up with a dozen callbacks for props.
  */
-const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v))
-
 /**
  * `blankOf` is a FUNCTION, not a constant.
  *
@@ -51,7 +49,10 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefin
  * not `0` - a distinction this file depends on (`gamesWon: ''` must not log a
  * 0-0 session). `Stepper` and `ChipPick` speak numbers, so this is the seam.
  */
-const blankOf = () => ({ date: todayISO(), format: 'doubles' as 'singles' | 'doubles', gamesWon: '', gamesLost: '', durationMin: '', partner: '', rpe: '', notes: '', opponent: '', location: '', level: '', pointsFor: '', pointsAgainst: '', scoring: '' as '' | '11' | '15' | '21' | 'rally21' })
+/* The draft shape and the fields that edit it moved to
+   `components/pickleball/SessionFields.tsx`, so the history editor can render
+   the SAME form instead of a five-field subset of it — COD-348. */
+const blankOf = blankSession
 
 export function Pickleball() {
   const { data, addPickleball } = useJournal()
@@ -122,22 +123,7 @@ export function Pickleball() {
     // that. Requiring a score here was the same bug the parser had, in the
     // form: you could not hand-log "played for 40 minutes, didn't keep score".
     if (!f.gamesWon && !f.gamesLost && !f.durationMin) { notify.info('Nothing to log yet', 'A session needs a score or how long you played.'); return }
-    addPickleball({
-      date: f.date,
-      format: f.format,
-      gamesWon: Number(f.gamesWon) || 0,
-      gamesLost: Number(f.gamesLost) || 0,
-      durationMin: f.durationMin ? Number(f.durationMin) : undefined,
-      partner: f.partner.trim() || undefined,
-      rpe: f.rpe ? Number(f.rpe) : undefined,
-      notes: f.notes.trim() || undefined,
-      opponent: f.opponent.trim() || undefined,
-      location: f.location.trim() || undefined,
-      level: f.level.trim() || undefined,
-      pointsFor: f.pointsFor ? Number(f.pointsFor) : undefined,
-      pointsAgainst: f.pointsAgainst ? Number(f.pointsAgainst) : undefined,
-      scoring: f.scoring || undefined,
-    })
+    addPickleball(sessionPatch(f) as Parameters<typeof addPickleball>[0])
     setF(blankOf())
   }
   function repeatLast() {
@@ -295,153 +281,15 @@ export function Pickleball() {
               in 0–21 with no common values, so chips would be a list of twenty-two
               and a Stepper would be eleven taps. A control is only an improvement
               if it is fewer actions than typing. */}
-          <div className="flex flex-col gap-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-            <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
-
-            <ChipPick
-              label="Format"
-              value={f.format}
-              onChange={(v) => set({ format: v })}
-              options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
-            />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Stepper label="Games won" value={numOrUndef(f.gamesWon)} onChange={(v) => set({ gamesWon: v == null ? '' : String(v) })} max={30} placeholder="0" />
-              <Stepper label="Games lost" value={numOrUndef(f.gamesLost)} onChange={(v) => set({ gamesLost: v == null ? '' : String(v) })} max={30} placeholder="0" />
-            </div>
-
-            <ChipPick
-              label="On court for"
-              tone="teal"
-              dense
-              value={numOrUndef(f.durationMin) ?? null}
-              onChange={(v) => set({ durationMin: String(v) })}
-              options={durationOptions([30, 45, 60, 90, 120])}
-              after={
-                <Input
-                  type="number"
-                  value={f.durationMin}
-                  onChange={(e) => set({ durationMin: e.target.value })}
-                  placeholder="Mins"
-                  aria-label="Minutes on court"
-                  className="w-20 py-1"
-                />
-              }
-            />
-
-            <ChipPick
-              label="Effort (RPE)"
-              tone="peach"
-              /* `dense`, because ten chips at the default `px-3` come to 437px
-                 against a 416px act column and wrap 9 + 1 — a single orphan
-                 chip on its own line, which reads as a mistake rather than as
-                 a scale. The prop exists for this: a call site passing its own
-                 `className` would re-decide the chip geometry, which is how
-                 two rows of one control come to disagree. */
-              dense
-              value={numOrUndef(f.rpe) ?? null}
-              onChange={(v) => set({ rpe: String(v) })}
-              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: n, label: String(n) }))}
-              hint="1 easy · 10 everything you had"
-            />
-
-            <div className="grid gap-3 sm:grid-cols-2">
-            {f.format === 'doubles' && (
-              <ChipPick
-                label="Partner"
-                value={f.partner || null}
-                onChange={(v) => set({ partner: f.partner === v ? '' : v })}
-                options={recentPartners.map((n) => ({ value: n, label: n }))}
-                after={
-                  /* `list=` — a real dropdown of every partner you have logged,
-                     on a field you can still type anything into. That is the
-                     whole ask: stop retyping the same four names, without
-                     losing the ability to enter a new one. A `<select>` would
-                     have taken the second half away. */
-                  <>
-                    <Input
-                      value={f.partner}
-                      onChange={(e) => set({ partner: e.target.value })}
-                      placeholder="Pick or type"
-                      aria-label="Partner"
-                      list="pb-partners"
-                      className="w-36 min-w-0 max-w-full py-1"
-                    />
-                    <datalist id="pb-partners">
-                      {allPartners.map((n) => <option key={n} value={n} />)}
-                    </datalist>
-                  </>
-                }
-              />
-            )}
-
-            <ChipPick
-              label="Location"
-              tone="teal"
-              value={f.location || null}
-              onChange={(v) => set({ location: f.location === v ? '' : v })}
-              options={recentVenues.map((n) => ({ value: n, label: n }))}
-              after={
-                <>
-                  <Input
-                    value={f.location}
-                    onChange={(e) => set({ location: e.target.value })}
-                    placeholder="Pick or type"
-                    aria-label="Location"
-                    list="pb-venues"
-                    className="w-36 min-w-0 max-w-full py-1"
-                  />
-                  <datalist id="pb-venues">
-                    {allVenues.map((n) => <option key={n} value={n} />)}
-                  </datalist>
-                </>
-              }
-            />
-            </div>
-
-            {/* The half you fill less than half the time.
-
-                `DisclosureRow` and not a `<details>`: it renders `aria-expanded`,
-                which is what `npm run a11y` clicks to open a fold before it
-                scans. A `<details>` would keep these four controls out of the
-                accessibility gate entirely — the COD-93 trap, arriving by a new
-                route. It is also the page's only disclosure, which is that
-                component's stated rule.
-
-                Tap-to-log costs vertical space — chips are taller than the grid
-                of number inputs they replaced, and this form grew the page by
-                0.4 screens. Folding the optional half is where that comes back,
-                without putting a keyboard back in the fast path. */}
-            <DisclosureRow label="Level, scoring, points & opponents">
-              <ChipPick
-                label="Level"
-                tone="teal"
-                value={f.level || null}
-                onChange={(v) => set({ level: v })}
-                options={['2.5', '3.0', '3.5', '4.0', '4.5', '5.0'].map((l) => ({ value: l, label: l }))}
-              />
-
-              <ChipPick
-                label="Scoring"
-                tone="teal"
-                value={f.scoring || null}
-                onChange={(v) => set({ scoring: v })}
-                options={[
-                  { value: '11' as const, label: 'to 11' },
-                  { value: '15' as const, label: 'to 15' },
-                  { value: '21' as const, label: 'to 21' },
-                  { value: 'rally21' as const, label: 'rally 21' },
-                ]}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
-                <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
-              </div>
-              <Input value={f.opponent} onChange={(e) => set({ opponent: e.target.value })} placeholder="Opponent(s) (optional)" aria-label="Opponents" />
-            </DisclosureRow>
-          </div>
+          <SessionFields
+            f={f}
+            set={set}
+            recentPartners={recentPartners}
+            allPartners={allPartners}
+            recentVenues={recentVenues}
+            allVenues={allVenues}
+            yesterday={yesterday}
+          />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
           <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>
         </Card>
