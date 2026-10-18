@@ -175,10 +175,36 @@ export interface OpponentRecord {
  * sessions naming an opponent count. Sorted by games played desc, then by your
  * lead (diff) desc.
  */
+/**
+ * THE PAIR YOU FACED, AS ONE CANONICAL STRING.
+ *
+ * Doubles is four people and the session carried one `opponent` field, so a
+ * second name had nowhere to go — the form's placeholder said "Opponent(s)"
+ * and invited both into one box. `opponent2` is the other half; this joins
+ * them.
+ *
+ * **Sorted before joining**, which is the part that matters: "Dan & Priya"
+ * and "Priya & Dan" are the same adversary, and without the sort one evening
+ * of doubles would split into two rivalry rows with nothing reporting a
+ * fault. A grouping key that depends on typing order is a statistic that
+ * fragments quietly.
+ *
+ * Falls back to `opponent` alone — which covers singles AND every session
+ * already stored, where the pair is free text in one field. Those are not
+ * split apart: the old format is inconsistent ("The Thursday pair" has no
+ * separator at all) and guessing one would corrupt a name.
+ */
+export function opponentLabel(s: PickleballSession): string | undefined {
+  const a = s.opponent?.trim()
+  const b = s.opponent2?.trim()
+  if (a && b) return [a, b].sort((x, y) => x.localeCompare(y)).join(' & ')
+  return a || b || undefined
+}
+
 export function opponentRecords(data: JournalData): OpponentRecord[] {
   const by = new Map<string, OpponentRecord>()
   for (const s of sessions(data)) {
-    const opp = s.opponent?.trim()
+    const opp = opponentLabel(s)
     if (!opp) continue
     const cur = by.get(opp) ?? { opponent: opp, sessions: 0, games: 0, gamesWon: 0, gamesLost: 0, winPct: 0, diff: 0 }
     cur.sessions += 1

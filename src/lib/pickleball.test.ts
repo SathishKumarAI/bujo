@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent, nextStep } from './pickleball'
+import { pickleTotals, winRateSeries, weeklyGames, playStreak, partnerStats, venueStats, opponentRecords, rollingForm, winStreaks, pointDifferential, levelMatchup, weekdayPerformance, duprTrend, monthlyGames, winRateForecast, rpeLoad, pickleMilestones, pickleHours, scoringStats, upcomingEvents, playConsistency, recentThenFrequent, nextStep , opponentLabel } from './pickleball'
 import { emptyJournal } from './storage'
 import type { PickleballSession } from './types'
 
@@ -590,5 +590,47 @@ describe('nextStep', () => {
     // streak of 3 (1 to go) — the nearest, and the last of the three in order.
     expect(n.text).toContain('Win streak: 3')
     expect(n.text).toContain('1 to go')
+  })
+})
+
+/**
+ * THE SAME PAIR, TYPED EITHER WAY ROUND, IS ONE RIVALRY.
+ *
+ * Doubles has two opponents and the session used to carry one field, so the
+ * second name went into the same box as the first ("Dan & Priya") or nowhere.
+ * With two fields the risk moves: a pair entered as Dan/Priya one week and
+ * Priya/Dan the next would group as TWO rivalries, each with half the games,
+ * and nothing would report a fault — the statistic would just quietly
+ * fragment. The sort in `opponentLabel` is what prevents that, and this is
+ * the assertion that proves the sort is actually there.
+ */
+describe('opponentLabel is the pair, not the typing order', () => {
+  const s = (over: Partial<PickleballSession>): PickleballSession => ({
+    id: 'x', date: '2026-10-01', format: 'doubles', gamesWon: 2, gamesLost: 1, ...over,
+  })
+
+  it('reads the same for a pair entered in either order', () => {
+    expect(opponentLabel(s({ opponent: 'Dan', opponent2: 'Priya' })))
+      .toBe(opponentLabel(s({ opponent: 'Priya', opponent2: 'Dan' })))
+  })
+
+  it('falls back to the one name for singles and for old free text', () => {
+    expect(opponentLabel(s({ opponent: 'Sam', format: 'singles' }))).toBe('Sam')
+    // Every session already stored carries the pair as free text in one
+    // field. Those keep working and are deliberately NOT split apart.
+    expect(opponentLabel(s({ opponent: 'The Thursday pair' }))).toBe('The Thursday pair')
+    expect(opponentLabel(s({}))).toBeUndefined()
+  })
+
+  it('groups a pair into ONE record however it was typed', () => {
+    const data = emptyJournal()
+    data.pickleball = [
+      s({ id: 'a', opponent: 'Dan', opponent2: 'Priya' }),
+      s({ id: 'b', opponent: 'Priya', opponent2: 'Dan', date: '2026-10-08' }),
+    ]
+    const recs = opponentRecords(data)
+    expect(recs, 'one rivalry, not two half-sized ones').toHaveLength(1)
+    expect(recs[0].sessions).toBe(2)
+    expect(recs[0].games).toBe(6)
   })
 })

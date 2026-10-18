@@ -138,13 +138,17 @@ export function habitLogCsv(data: JournalData): string {
 export function pickleballCsv(data: JournalData): string {
   const rows: (string | number | undefined)[][] = []
   for (const s of [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? -1 : 1))) {
-    rows.push(['session', s.date, s.format, s.gamesWon, s.gamesLost, s.partner ?? '', s.opponent ?? '', s.location ?? '', s.durationMin ?? '', s.rpe ?? '', s.pointsFor ?? '', s.pointsAgainst ?? '', s.notes ?? ''])
+    /* `opponent2` gets its OWN column rather than being folded into
+       `opponent`. An export mirrors what is stored; joining the two names at
+       export time is a one-way transform that makes them unrecoverable as
+       separate fields the moment they leave the app. */
+    rows.push(['session', s.date, s.format, s.gamesWon, s.gamesLost, s.partner ?? '', s.opponent ?? '', s.opponent2 ?? '', s.location ?? '', s.durationMin ?? '', s.rpe ?? '', s.pointsFor ?? '', s.pointsAgainst ?? '', s.notes ?? ''])
   }
   for (const e of [...(data.pickleballEvents ?? [])].sort((a, b) => (a.date < b.date ? -1 : 1))) {
-    rows.push([e.kind, e.date, e.format, e.wins ?? '', e.losses ?? '', e.partner ?? '', '', '', '', '', '', '', `${e.name}${e.placement ? ` · ${e.placement}` : ''}`])
+    rows.push([e.kind, e.date, e.format, e.wins ?? '', e.losses ?? '', e.partner ?? '', '', '', '', '', '', '', '', `${e.name}${e.placement ? ` · ${e.placement}` : ''}`])
   }
   return toCsv(
-    ['kind', 'date', 'format', 'won', 'lost', 'partner', 'opponent', 'location', 'durationMin', 'rpe', 'pointsFor', 'pointsAgainst', 'notes'],
+    ['kind', 'date', 'format', 'won', 'lost', 'partner', 'opponent', 'opponent2', 'location', 'durationMin', 'rpe', 'pointsFor', 'pointsAgainst', 'notes'],
     rows,
   )
 }

@@ -140,7 +140,7 @@ const MEMORIES = ['Saw a shooting star', 'Camp chased a lizard', 'First snow on 
    for the 47px measurement. Bump this whenever the seed gains a field or a
    domain a page renders, or the feature is invisible to every existing demo
    journal, which reads exactly like the feature being broken. */
-export const DEMO_VERSION = 22
+export const DEMO_VERSION = 23
 
 /** Notes on a pull-up session, for the third of rows that carry one. */
 const PULL_NOTES = [
@@ -495,11 +495,23 @@ export function generateDemoData(today = todayISO()): JournalData {
     { id: uid('rt'), name: 'My Push', split: 'push', exercises: ['Bench Press', 'Overhead Press', 'Lateral Raise', 'Dip'] },
   ]
   // ── Pickleball sessions (last ~30 days) ──
+  /* `pk` counts the sessions actually pushed, and the opponent branches key
+     off IT rather than off `i`.
+
+     `i` steps by 3 from 1, so `i % 3` is **always 1** — two of the three
+     opponent branches below had been unreachable since they were written,
+     and every seeded session got the same free-text pair. A dead branch in
+     the SEED is the quiet version of this file's own recurring trap: the
+     page could not render what the seed never produced, so no gate ever saw
+     it. Counting pushes fixes the distribution without drawing from `rand()`,
+     which would rewrite every number downstream. */
+  let pk = 0
   for (let i = 1; i <= 30; i += 3) {
     if (rand() > 0.35) {
       const won = 1 + Math.floor(rand() * 4)
       const lost = Math.floor(rand() * 3)
       j.pickleball = j.pickleball ?? []
+      pk += 1
       j.pickleball.push({
         id: uid('pk'), date: addDays(today, -i), format: rand() > 0.3 ? 'doubles' : 'singles',
         gamesWon: won, gamesLost: lost, durationMin: 45 + Math.floor(rand() * 45),
@@ -529,9 +541,19 @@ export function generateDemoData(today = todayISO()): JournalData {
            `cycleSnapshot.test.ts` went red on a change that never touched
            temperatures. A seeded generator is a shared resource: take from it
            in a new place and you have rewritten everything downstream. */
-        location: i % 4 === 0 ? undefined : i % 8 < 4 ? 'Riverside Courts' : 'Eastside Rec',
-        opponent: i % 3 === 0 ? 'Dan & Priya' : i % 3 === 1 ? 'The Thursday pair' : undefined,
-        level: i % 5 === 0 ? '4.0' : i % 5 === 2 ? '3.5' : undefined,
+        location: pk % 4 === 0 ? undefined : pk % 8 < 4 ? 'Riverside Courts' : 'Eastside Rec',
+        /* ONE BRANCH USES THE TWO-FIELD SHAPE, so the pair path is actually
+           rendered by the gates rather than being a branch the seed never
+           takes — this file's own recurring trap. The other two stay as the
+           free text every session already in the wild carries, which is also
+           what keeps `opponentLabel`'s fallback exercised.
+
+           Derived from `i`, not from a fresh `rand()`: taking from the shared
+           stream in a new place rewrites every number drawn after it, which
+           once failed a cycle-temperature snapshot from a pickleball edit. */
+        opponent: pk % 3 === 0 ? 'Dan' : pk % 3 === 1 ? 'The Thursday pair' : undefined,
+        opponent2: pk % 3 === 0 ? 'Priya' : undefined,
+        level: pk % 5 === 0 ? '4.0' : pk % 5 === 2 ? '3.5' : undefined,
         /* Points only where a score was kept, and consistent with the games:
            a won game is 11-ish points for, a lost one 11-ish against. A seed
            that drifts from its own score teaches the page to show a margin
