@@ -501,6 +501,39 @@ needed 123px in 114, so "energy" left the title — mood, mucus and LH are the
 three asked for by name, and energy sits beside mood in both the panel and
 the summary.
 
+## Nine fields, three questions · COD-337 round five
+
+Reported by pasting the opened field panel back — nine legends in a row,
+which is how it reads on screen.
+
+| | before | after |
+|---|---|---|
+| structure | nine chip groups at one weight, nothing between them | three ruled sections |
+| group heights | 56–153px each, in a 424px column | unchanged; the grouping is what changed |
+| `fertilityFirst` | sorted four chip keys by a hand-written `rank()` | moves the **section** |
+
+They were never nine things: how you felt (mood, energy, mood tags), what your
+body did (cravings, symptoms), and the cycle signs (flow, mucus, LH,
+intimacy). The three arrays in `dayFields.ts` nearly encoded that already; now
+a `section` on every field does, with `FIELD_SECTIONS` as the list the panel
+renders.
+
+**The grouping is data, not a heading typed into the view** — a field's label,
+its values and the family it belongs to are three views of one fact, which is
+the reason `dayFields.ts` exists.
+
+The headings sit at `text-caption uppercase`, deliberately **below** the
+groups' own `<legend>`s in weight: each group already names itself, and a
+second competing hierarchy is the thing being removed.
+
+`rank()` is deleted. It sorted four chip fields by key name so conceive mode
+could float mucus and LH up a flat list, with nothing marking that anything
+had moved; moving a named section says the same thing visibly.
+
+Tests cover the failure mode the change introduces — a new field with no
+section, or one no heading draws, would render under nothing. Canaried by
+filing `cravings` under `"nowhere"`.
+
 ## Open
 
 - **COD-336** — the `maxBarSize` sweep over the other nine bar charts.

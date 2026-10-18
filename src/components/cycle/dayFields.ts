@@ -13,9 +13,36 @@
  * and rendering one of these unordered would imply a ranking that is not there.
  */
 
+/**
+ * THE THREE QUESTIONS THE PANEL ASKS, in the order it asks them.
+ *
+ * Nine chip groups rendered as nine peers — same weight, same spacing, no
+ * heading between them — is **~900px of flat stack** in a 424px column, and a
+ * flat list of nine is a thing you scan rather than read. Reported as
+ * "improve the UI of this", pasted as the nine legends in a row, which is
+ * exactly how it reads on screen.
+ *
+ * They are not nine things. They are three: how you felt, what your body did,
+ * and the cycle signs. The grouping is DATA and not a heading typed into the
+ * view, for the reason this file exists at all — a field's label, its values
+ * and the family it belongs to are three views of one fact, and this repo has
+ * the scars from keeping those apart.
+ *
+ * `fertilityFirst` reorders the SECTIONS now rather than the fields inside
+ * them, which is the same intent with a shape the reader can see.
+ */
+export type FieldSection = 'felt' | 'body' | 'signs'
+
+export const FIELD_SECTIONS: { id: FieldSection; title: string }[] = [
+  { id: 'felt', title: 'How you felt' },
+  { id: 'body', title: 'What your body did' },
+  { id: 'signs', title: 'Cycle signs' },
+]
+
 export interface ChipField {
   key: 'flow' | 'mucus' | 'lh' | 'intimacy'
   label: string
+  section: FieldSection
   /** Glossary term for the ⓘ, or undefined where the label says it all. */
   help?: string
   options: { value: string; label: string }[]
@@ -26,6 +53,7 @@ export interface ChipField {
 export const CHIP_FIELDS: ChipField[] = [
   {
     key: 'flow',
+    section: 'signs',
     label: 'Flow',
     help: 'flow',
     onlyWithFlag: 'period',
@@ -38,6 +66,7 @@ export const CHIP_FIELDS: ChipField[] = [
   },
   {
     key: 'mucus',
+    section: 'signs',
     label: 'Cervical mucus',
     help: 'cervical mucus',
     options: [
@@ -50,6 +79,7 @@ export const CHIP_FIELDS: ChipField[] = [
   },
   {
     key: 'lh',
+    section: 'signs',
     label: 'LH test',
     help: 'LH test',
     options: [
@@ -61,6 +91,7 @@ export const CHIP_FIELDS: ChipField[] = [
   },
   {
     key: 'intimacy',
+    section: 'signs',
     label: 'Intimacy',
     options: [
       { value: 'none', label: 'none' },
@@ -73,6 +104,7 @@ export const CHIP_FIELDS: ChipField[] = [
 export interface TagField {
   key: 'moodTags' | 'cravings' | 'symptoms'
   label: string
+  section: FieldSection
   help?: string
   options: string[]
 }
@@ -80,17 +112,20 @@ export interface TagField {
 export const TAG_FIELDS: TagField[] = [
   {
     key: 'moodTags',
+    section: 'felt',
     label: 'Mood tags',
     options: ['calm', 'happy', 'energetic', 'irritable', 'anxious', 'low', 'sensitive'],
   },
   {
     key: 'cravings',
+    section: 'body',
     label: 'Cravings',
     help: 'cravings',
     options: ['sweet', 'salty', 'carbs', 'chocolate', 'bigger appetite'],
   },
   {
     key: 'symptoms',
+    section: 'body',
     label: 'Symptoms',
     options: ['bloating', 'headache', 'breast tenderness', 'acne', 'back pain', 'nausea', 'poor sleep', 'fatigue'],
   },
@@ -98,8 +133,8 @@ export const TAG_FIELDS: TagField[] = [
 
 /** The two 1–5 scales, which share a component and differ only in their ends. */
 export const SCALE_FIELDS = [
-  { key: 'mood' as const, label: 'Mood', low: 'low', high: 'great', help: 'mood' },
-  { key: 'energy' as const, label: 'Energy', low: 'drained', high: 'energised' },
+  { key: 'mood' as const, section: 'felt' as FieldSection, label: 'Mood', low: 'low', high: 'great', help: 'mood' },
+  { key: 'energy' as const, section: 'felt' as FieldSection, label: 'Energy', low: 'drained', high: 'energised' },
 ]
 
 /**
