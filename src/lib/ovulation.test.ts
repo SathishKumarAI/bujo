@@ -205,3 +205,46 @@ describe('predictions are ranges, and widen when the log says they should', () =
     expect(predict([28, 28, 28], '2026-09-01', [11]).ovulation).toBe('2026-09-15')
   })
 })
+
+/**
+ * THE LOG IS NOT SORTED, AND NOTHING IN THE TYPE SAYS SO.
+ *
+ * `detectOvulation`'s docstring said `entries` "must be one cycle, in date
+ * order" and left it at that. `analyseCycles` sorts before slicing;
+ * `views/Cycle.tsx`'s `alignedCycles` did not, and `store.tsx`'s `setCycle`
+ * **appends** — so correcting a day you already logged, after logging a later
+ * one, puts `data.cycle` permanently out of order. That is not an edge case,
+ * it is what editing a past entry does.
+ *
+ * Out of order, `entries[0].date` is whichever day happens to be first in the
+ * array rather than the cycle's day 1, so every `day` number is measured from
+ * the wrong origin, and the 6-before/3-after window scans temperatures in
+ * insertion order — a shift found in a sequence nobody experienced.
+ *
+ * A contract a caller can violate silently is not a contract. The function
+ * sorts its own input now, which is the one place all callers route through.
+ */
+describe('a log in the order it was EDITED, not the order it happened', () => {
+  const inOrder = cycle([...LOWS, ...HIGHS])
+  /** Day 3 corrected last, so it sits at the end — exactly what `setCycle` does. */
+  const edited = [...inOrder.slice(0, 2), ...inOrder.slice(3), inOrder[2]]
+
+  it('finds the same shift whatever order the days arrive in', () => {
+    const r = detectOvulation(edited)
+    expect(r.date).toBe(detectOvulation(inOrder).date)
+    expect(r.coverline).toBe(detectOvulation(inOrder).coverline)
+  })
+
+  it('measures the cycle day from day 1, not from whatever is first in the array', () => {
+    // The period start is still 2026-09-01; moved to the back of the array it
+    // used to become the origin for nothing and push every day negative.
+    const moved = [...inOrder.slice(1), inOrder[0]]
+    const r = detectOvulation(moved)
+    expect(r.day).toBe(6)
+    // The DATE is the half that caught it: with day 1 at the back, the origin
+    // became 2026-09-02 and the whole scan slid a day, while `day` still read
+    // 6 because it is measured from that wrong origin. A cycle-day number
+    // alone cannot tell you the origin is wrong.
+    expect(r.date).toBe('2026-09-06')
+  })
+})

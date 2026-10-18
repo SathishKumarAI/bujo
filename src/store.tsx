@@ -726,12 +726,22 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           return { ...d, monthly }
         }, `month:${ym}`),
 
+      // KEPT IN DATE ORDER, because appending is how it stopped being in it.
+      //
+      // Correcting a day you logged last week, after logging today, used to
+      // push last week's entry to the END of `data.cycle` — so the stored log
+      // was in the order days were EDITED. `detectOvulation` sorts its own
+      // input now, which is where the wrong ovulation date came from, but an
+      // unsorted array is a trap set for the next reader (the CSV export, a
+      // sync merge, anything that takes `cycle[0]` as the earliest day). One
+      // sort at the only writer costs nothing a journal of a few hundred days
+      // will notice and removes the whole class. Asserted in `store.test.tsx`.
       setCycle: (date, cp) =>
         patch((d) => {
           const exists = d.cycle.some((c) => c.date === date)
           const cycle = exists
             ? d.cycle.map((c) => (c.date === date ? { ...c, ...cp } : c))
-            : [...d.cycle, { date, flags: [], ...cp }]
+            : [...d.cycle, { date, flags: [], ...cp }].sort((a, b) => a.date.localeCompare(b.date))
           return { ...d, cycle }
         }, `cyc:${date}`),
 

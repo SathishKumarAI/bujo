@@ -67,17 +67,35 @@ export const CONFIRM_MARGIN = { F: 0.2, C: 0.1 } as const
 /**
  * Detect the thermal shift in one cycle's entries.
  *
- * `entries` must be one cycle, in date order, starting at its period start.
- * `nextPeriodStart` is the following cycle's day 1 when it exists — only then
- * can a luteal length be measured, because the luteal phase ends the day before
- * the next period and a cycle in progress has not ended.
+ * `entries` is one cycle. `nextPeriodStart` is the following cycle's day 1
+ * when it exists — only then can a luteal length be measured, because the
+ * luteal phase ends the day before the next period and a cycle in progress
+ * has not ended.
+ *
+ * **It sorts, rather than asking to be handed a sorted list.** This used to
+ * say "must be one cycle, in date order" and trust it. `analyseCycles` sorts;
+ * `Cycle.tsx`'s `alignedCycles` sliced `data.cycle` as stored and did not —
+ * and `setCycle` APPENDS, so correcting a day you logged earlier, after
+ * logging a later one, leaves the log permanently out of order. That is not
+ * an edge case; it is what editing a past entry does.
+ *
+ * Out of order, two things go wrong at once and only one of them is visible:
+ * `entries[0].date` stops being day 1, so every cycle day is measured from
+ * the wrong origin, and the 6-before/3-after window scans temperatures in
+ * insertion order — a shift found in a sequence nobody lived through.
+ * Measured on one day moved to the back of a clean cycle: ovulation
+ * **Sep 6 → Sep 7**, with `day` still reading 6, because a cycle-day number
+ * is measured from the bad origin and cannot report it. A contract a caller
+ * can break in silence is not a contract, so it is enforced here — the one
+ * place every caller routes through.
  */
 export function detectOvulation(
-  entries: CyclePoint[],
+  input: CyclePoint[],
   unit: 'F' | 'C' = 'F',
   nextPeriodStart?: string,
 ): OvulationResult {
-  if (entries.length === 0) return NONE
+  if (input.length === 0) return NONE
+  const entries = [...input].sort((a, b) => a.date.localeCompare(b.date))
   const start = entries[0].date
 
   // Skip both unreadable days and unreliable ones. A disturbed reading is not

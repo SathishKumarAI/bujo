@@ -167,3 +167,45 @@ describe('a capture moves the app to the page that now holds it', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 })
+
+/**
+ * THE CYCLE LOG IS KEPT IN DATE ORDER, NOT IN EDIT ORDER.
+ *
+ * `setCycle` appended, so the moment you corrected a day you had already
+ * logged — the ordinary act of fixing yesterday's temperature after taking
+ * today's — `data.cycle` was in the order the days were EDITED. Everything
+ * downstream that reads the array positionally inherited that: see the
+ * `detectOvulation` suite, where one day out of place moved the detected
+ * ovulation by a day.
+ *
+ * Asserted at the writer, because sorting at every reader is the version that
+ * misses one.
+ */
+function CycleProbe() {
+  const { data, setCycle } = useJournal()
+  return (
+    <div>
+      <button onClick={() => setCycle('2026-03-10', { temp: 97.5 })}>later</button>
+      <button onClick={() => setCycle('2026-03-02', { temp: 97.1 })}>earlier</button>
+      <div data-testid="dates">{data.cycle.map((c) => c.date).join(',')}</div>
+    </div>
+  )
+}
+
+describe('setCycle keeps data.cycle in date order', () => {
+  it('files a back-dated correction in its place, not at the end', async () => {
+    const user = userEvent.setup()
+    render(
+      <JournalProvider>
+        <CycleProbe />
+      </JournalProvider>,
+    )
+    await user.click(screen.getByRole('button', { name: 'later' }))
+    await user.click(screen.getByRole('button', { name: 'earlier' }))
+    const dates = screen.getByTestId('dates').textContent ?? ''
+    expect(dates).toContain('2026-03-02,2026-03-10')
+    // And the list as a whole is sorted, not merely these two adjacent.
+    const all = dates.split(',').filter(Boolean)
+    expect(all).toEqual([...all].sort())
+  })
+})
