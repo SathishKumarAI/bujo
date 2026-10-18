@@ -125,7 +125,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
                        track, where they label the ends they describe. The
                        legend is the group's NAME again rather than a
                        sentence. */
-                    scale={{ low: `1 ${f.low}`, high: `5 ${f.high}` }}
+                    scale={{ low: `1 ${f.low}`, high: `5 ${f.high}`, words: f.words }}
                     tone="teal"
                     value={entry?.[f.key] ?? null}
                     onChange={(v) => onPatch({ [f.key]: entry?.[f.key] === v ? undefined : v })}

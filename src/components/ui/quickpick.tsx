@@ -176,8 +176,17 @@ export function ChipPick<T extends string | number>({
    * NOT for `multi` (a set has no ends) and not for `action` (there is
    * nothing to be at the end of). Both are ignored here rather than silently
    * producing a control that lies about itself.
+   *
+   * `words` names what the CHOSEN value means, beside the group's label —
+   * "Mood 3 · steady". Asked for as *"if I scroll to three, you should say
+   * you're energetic"*: a number on a 1–5 scale is a rank with no meaning
+   * until something says what the rank is, and the endpoints only define the
+   * two ends. One word per option, in option order, or omit it.
+   *
+   * It names only the SELECTED value, not all five at once — five words
+   * across a 384px track is the wrapped, unreadable row the track replaced.
    */
-  scale?: { low: string; high: string }
+  scale?: { low: string; high: string; words?: string[] }
   /** One line under the row — what the choice means, not what to do. */
   hint?: ReactNode
   /** A typed escape hatch, or anything else, on the end of the row. */
@@ -185,9 +194,22 @@ export function ChipPick<T extends string | number>({
   className?: string
 }) {
   if (scale && !multi && !action) {
+    const picked = options.findIndex((o) => o.value === value)
+    const chosenWord = picked >= 0 ? scale.words?.[picked] : undefined
     return (
       <fieldset className={cn('min-w-0', className)}>
-        <legend className="mb-1.5 text-body text-fg-1">{label}</legend>
+        <legend className="mb-1.5 flex w-full items-baseline gap-2 text-body text-fg-1">
+          <span>{label}</span>
+          {/* THE WORD FOR THE VALUE YOU PICKED. A rank means nothing on its
+              own, and the endpoints define only the ends — "3" on a 1–5 is
+              the value a reader is least able to name. Absent until something
+              is chosen, because a scale with no answer has nothing to say. */}
+          {chosenWord && (
+            <span className="ml-auto text-label text-fg-2">
+              <span className="num text-fg-1">{String(value)}</span> · {chosenWord}
+            </span>
+          )}
+        </legend>
         {/*
           ONE TRACK, not five pills.
 

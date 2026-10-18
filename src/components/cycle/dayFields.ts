@@ -132,9 +132,37 @@ export const TAG_FIELDS: TagField[] = [
 ]
 
 /** The two 1–5 scales, which share a component and differ only in their ends. */
+/**
+ * The 1–5 self-ratings, with a word per step.
+ *
+ * `words` is what the chosen number MEANS, and it is the half a rank cannot
+ * carry on its own: the endpoints define 1 and 5, and 3 — the value people
+ * pick most — is defined by nothing. Asked for as "if I scroll to three, you
+ * should say you're energetic".
+ *
+ * Five words each, in option order, and deliberately plain: these are read
+ * back to someone about their own day, so "fine" beats "moderate" and
+ * nothing here is a judgement. `low`/`high` stay because they label the ends
+ * of the track whether or not anything is chosen.
+ */
 export const SCALE_FIELDS = [
-  { key: 'mood' as const, section: 'felt' as FieldSection, label: 'Mood', low: 'low', high: 'great', help: 'mood' },
-  { key: 'energy' as const, section: 'felt' as FieldSection, label: 'Energy', low: 'drained', high: 'energised' },
+  {
+    key: 'mood' as const,
+    section: 'felt' as FieldSection,
+    label: 'Mood',
+    low: 'low',
+    high: 'great',
+    help: 'mood',
+    words: ['rough', 'low', 'fine', 'good', 'great'],
+  },
+  {
+    key: 'energy' as const,
+    section: 'felt' as FieldSection,
+    label: 'Energy',
+    low: 'drained',
+    high: 'energised',
+    words: ['drained', 'tired', 'steady', 'lively', 'energised'],
+  },
 ]
 
 /**
