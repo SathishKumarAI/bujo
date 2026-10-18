@@ -1,3 +1,5 @@
+import type { ChipTone } from '../ui/quickpick'
+
 /**
  * The flags, and the hue each one keeps everywhere.
  *
@@ -12,13 +14,32 @@ export const FLAGS = ['period', 'spotting', 'ovulation', 'pms', 'cramps'] as con
 
 export type Flag = typeof FLAGS[number]
 
-export const FLAG_COLOR: Record<string, string> = {
+/* Typed as `ChipTone`, not `string`: the chips are a `ChipPick` now, and a
+   hue it cannot render would otherwise type-check here and fall back to the
+   group tone on screen — a flag quietly wearing somebody else's colour. The
+   compiler is the only thing that can hold that, since both are strings. */
+export const FLAG_COLOR: Record<Flag, ChipTone> = {
   period: 'red',
   spotting: 'maroon',
   ovulation: 'green',
   pms: 'mauve',
   cramps: 'peach',
 }
+
+/**
+ * The hue for a flag name that is not known to be one.
+ *
+ * `SymptomPattern` renders rows keyed by whatever `flagPatternByDay` found in
+ * the log, which is a `string` — so it cannot index the typed map directly,
+ * and it carried a `?? 'mauve'` at two call sites instead. One accessor, so
+ * the fallback is written once and is visible as a decision.
+ *
+ * It falls back rather than throwing because an unknown flag is a row of real
+ * data: a journal edited by hand, or a flag retired after it was logged. Two
+ * call sites and a named default is the honest version of what `cat()` does
+ * silently, which CLAUDE.md records as the trap that tinted a calendar.
+ */
+export const flagTone = (name: string): ChipTone => FLAG_COLOR[name as Flag] ?? 'mauve'
 
 /**
  * What each mark records — the legend's second column, beside the swatch.

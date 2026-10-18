@@ -66,6 +66,14 @@ const ON_TONE = {
   green: 'border-green bg-green/15 font-medium text-fg-1',
   yellow: 'border-yellow bg-yellow/15 font-medium text-fg-1',
   red: 'border-red bg-red/15 font-medium text-fg-1',
+  /* `mauve` and `maroon` are here for Cycle's flag row, where the hue is the
+     flag's IDENTITY across four surfaces (the chips, the day-list dots, the
+     symptom rows, the chart's period shading) rather than a decoration. The
+     row was hand-rolled with inline `cat()` fills precisely because these two
+     were missing — which is the "needing a variant later means the primitive
+     under-abstracted" case, answered in the primitive. */
+  mauve: 'border-mauve bg-mauve/15 font-medium text-fg-1',
+  maroon: 'border-maroon bg-maroon/15 font-medium text-fg-1',
 } as const
 /*
   AT REST, a ramp option keeps its colour in the BORDER.
@@ -86,6 +94,8 @@ const REST_TONE = {
   green: 'border-green/50',
   yellow: 'border-yellow/50',
   red: 'border-red/50',
+  mauve: 'border-mauve/50',
+  maroon: 'border-maroon/50',
 } as const
 
 const HOVER_TONE = {
@@ -95,6 +105,8 @@ const HOVER_TONE = {
   green: 'hover:border-green/60',
   yellow: 'hover:border-yellow/60',
   red: 'hover:border-red/60',
+  mauve: 'hover:border-mauve/60',
+  maroon: 'hover:border-maroon/60',
 } as const
 
 export type ChipTone = keyof typeof ON_TONE
