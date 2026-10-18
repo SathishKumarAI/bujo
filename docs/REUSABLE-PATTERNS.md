@@ -994,3 +994,45 @@ not at all, and a vague log is what every pattern card on that page is made of.
 
 The tests assert the shape rather than the vocabulary: no mapping is blank, and
 none maps *back* to something more explicit.
+
+---
+
+## 33 · An ordered rating is a track, not five pills — `ChipPick`'s `scale`
+
+**What it is.** `scale={{ low, high }}` on `ChipPick`. The options render as
+one divided track — joined rather than spaced, `flex-1` so the width splits
+evenly rather than sizing to the labels — with the two ends named underneath.
+
+**The measurement that decided it.** On Cycle's field panel `Mood` sat four
+pixels above `Mood tags`, and the numbers 1–5 carried exactly the weight and
+shape of `calm` / `happy` / `energetic`. One of those is an ordered scale and
+the other is a set, and nothing on screen said which was which. A track says
+"ordered" three ways at once: the segments are joined, they are equal, and
+the ends are labelled.
+
+**Reach for it** for any 1–N self-rating. Not for a set (`multi` has no ends),
+not for an action row (nothing to be at the end of) — both ignore the prop
+rather than draw a control that lies about itself.
+
+**The sweep that came with it.** Five 1–5 scales existed in the app and
+**one** went through `ChipPick`. Two were star ratings, which are a genuinely
+different control. One — Cycle's Drive — was a hand-rolled `<fieldset>` with
+five `min-w-11` buttons and two inline `cat()` colours, which is the
+hand-rolling trap in CLAUDE.md. When you add a variant to a shared control,
+grep for the thing it replaces, not for the component's name.
+
+**Two rules the variant carries so no caller has to remember them:**
+
+| Rule | Why |
+|---|---|
+| `min-h-11` on every segment | the track measured **39px** before it; COD-96 is open on controls under the 44px floor, and a segment is a fifth of a column wide so height is the dimension that needs saying |
+| No `active:scale-95` | a segment is part of a track, and shrinking one of five joined cells tears the row. The fill arriving is the feedback |
+
+**The endpoints leave the legend.** `Mood · 1 low … 5 great` made the group's
+NAME a sentence and still did not say which end was which. The legend is the
+name; the ends are labels on the ends.
+
+**Still hand-rolled, deliberately:** Recovery's urge-intensity row carries a
+hue per step and a word per step, which this variant supports
+(`options[].tone`) but which needs its own before/after measurement on that
+page rather than a conversion in passing.
