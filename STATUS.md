@@ -1,54 +1,68 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/cycle-fields-ui`, **one PR to open**.
-Cycle round five — the optional-field panel.
-
-## Where it stands
-
-| branch | PR | what | state |
-|---|---|---|---|
-| `main` | — | #418–#424 merged | up to date |
-| `feat/cycle-fields-ui` | **not opened yet** | COD-337 round five — one commit | local |
+**Stopped:** 2026-10-18, on `main`, **nothing open**. Seven PRs merged today
+(#418–#427). The queue below is what was reported and deliberately not built.
 
 ## The next action
 
-1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,169
-   tests), `clipped`, `design`, `a11y:panels`.
-2. **Answer `docs/QUESTIONS.md`** — what "saved for every month" meant.
-3. **COD-336** — `maxBarSize` on the nine remaining bar charts.
-4. **The rest of the prose sweep** — `cycleHelp` and `cycleManual`, 27
-   multi-sentence strings. Check consumers first: `CYCLE_HELP.text` feeds
-   popovers *and* the Help page.
+Work the queue in this order — the first two are dependencies of the rest.
 
-## What landed on this branch
+1. **COD-348 · Pickleball's history editor is a five-field subset of a
+   fourteen-field form.** Switching a session to doubles there offers no
+   partner — nor opponent, location, level, points or scoring. **Not data
+   loss**: `updatePickleball` merges a `Partial<>`, so the hidden fields
+   survive, which rules out the expensive fix. The editor should host the
+   real form instead of re-declaring part of it.
+2. **COD-350 · A log row should open the day in a window.** Tapping a row in
+   `Your log` selects a day whose editor is in the act column — the other
+   side of the page on a desktop, a collapsed strip on a phone. Needs a
+   focus-trapped editing dialog, which the app does not have; Challenges wants
+   the same one, so it belongs in `components/page`.
+3. **COD-349 · Doubles needs a team, not one opponent.** `partner?: string` +
+   `opponent?: string` cannot hold four people. A schema change — use the
+   `data-engineer` agent, and settle whether a record is against a PAIR or
+   against each PLAYER before writing anything.
+4. **COD-336** · `maxBarSize` on the nine remaining bar charts.
+5. **The rest of the Cycle prose sweep** — `cycleHelp` and `cycleManual`, 27
+   multi-sentence strings. `CYCLE_HELP.text` feeds popovers *and* the Help
+   page, so check consumers first.
 
-The optional-field panel was **nine chip groups at one weight with nothing
-between them**, 56–153px each, in a 424px column. It is three ruled sections
-now — how you felt · what your body did · cycle signs — with the grouping
-declared as data in `dayFields.ts` rather than typed into the view.
+## What shipped today
 
-`fertilityFirst` moves the **section** instead of sorting four chip keys by a
-hand-written `rank()`, which is deleted. Headings sit below the groups' own
-legends in weight, because each group already names itself.
+| PR | what |
+|---|---|
+| #418 | Cycle onto the contract — worst row 7.38 → 1.88 desktop screens, 13.09 → 3.11 phone |
+| #419 | Challenges — the review went from **1 interactive control to 76** |
+| #420 | Cycle follow-ups — bar widths 430 → 180px, the rail count made true |
+| #421 | `actTop`, subtitles that say what is in the card, `Your log` |
+| #422 | the act column read back — a key for the glyphs, names for the columns |
+| #423 | the guide is points, not paragraphs |
+| #424 | one box at the top, the month beside what it changes |
+| #425 | nine chip groups became three sections |
+| #426 | `ChipPick` draws an ordered rating as a segmented track |
+| #427 | the scale names the value, the countdown is the headline |
 
-## Ideas considered and not done
+## Reported and answered with a reason, not code
 
-- **Making the 1–5 scales look like scales.** Mood and Energy render as five
-  pill chips, identical in weight to tag chips like "calm" / "happy", with
-  their endpoints in the legend ("Mood · 1 low … 5 great"). A segmented
-  control would read better, but `ChipPick` is shared across the app and the
-  change belongs to that component rather than to this panel.
-- **Moving `Drive` in beside Mood and Energy.** Three 1–5 scales currently sit
-  on two surfaces; Drive is in the fast path by an earlier deliberate
-  decision, so moving it needs that decision revisited, not overridden.
+These are in the reply and are **not** queued, because building them would
+have the page claim something untrue:
+
+- **Mood tags as a 1–5 scale.** The seven words are a SET, not an order — you
+  can be calm and sensitive at once, and "is anxious a 5 or a 1?" has no
+  answer. Ordering them invents a claim the data cannot support.
+- **A scroll-to-fill dial.** Slower and less accurate than five segments for a
+  1–5 value, and a custom `role="slider"` with keyboard and touch support is a
+  large build to replace something that works. The part of the ask that was
+  real — "tell me what 3 means" — shipped in #427 as `scale.words`.
+- **Mood and Energy side by side.** Two tracks in a 384px column is five
+  segments of ~36px, under the 44px target floor COD-96 is open about and
+  which #426 just established for this control.
 
 ## Open
 
-- `docs/QUESTIONS.md` · what "saved for every month" meant.
-- **COD-336** · `maxBarSize` on nine bar charts.
-- **`cycleHelp` and `cycleManual` prose** — 27 multi-sentence strings.
-- **The two ideas above.**
-- **A seeded journal per `nextStep` branch.**
+- `docs/QUESTIONS.md` · what "saved for every month" meant — third reading
+  (a per-month summary card) unbuilt on purpose.
+- **A seeded journal per `nextStep` branch**, Cycle.
 - **Home Workout's act is a bare `useState`.**
 - **COD-247 reopened for Recovery.**
 
