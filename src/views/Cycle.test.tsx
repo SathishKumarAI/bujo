@@ -419,26 +419,46 @@ describe('Cycle · a log row opens that day in a window', () => {
  * record, and pressable, which is the path by which a `period` flag reached a
  * day that had not happened and joined `avgCycleLength`.
  *
+ * It lives in the `log` rail row now, beside `DayLog`, because at the bottom
+ * of the act column a tap landed in an editor 900px above it. So these scope
+ * to that card — and the first test is the one that says the move happened.
+ *
  * Asserted on the ACCESSIBLE NAME rather than on a class or a colour: the
  * cell's `sr-only` sentence is its name, so these are the same strings a
  * screen-reader user hears, and they survive every restyling.
  */
 describe('Cycle · the month calendar', () => {
-  /** Every cell of the grid, future ones included — they are not buttons. */
-  const cells = (container: HTMLElement) =>
-    [...container.querySelectorAll('.zone-act [aria-current="date"], .zone-act [aria-pressed]')]
+  /** Open `Your log` and hand back its card — where the calendar now is. */
+  async function logCard(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
+    await user.click(railRow(GROUP_LABEL.log))
+    const card = container.querySelector('[data-card="log"]') as HTMLElement
+    expect(card, 'the log card renders').toBeTruthy()
+    return card
+  }
+
+  /** Every cell of the grid — future ones are not buttons, so they are not here. */
+  const cells = (card: HTMLElement) =>
+    [...card.querySelectorAll('[aria-pressed]')].filter((b) => b.querySelector('.sr-only'))
+
+  it('is beside the log, not stranded at the bottom of the act column', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    const card = await logCard(user, container)
+    expect(card.querySelector('.grid-cols-7'), 'no calendar in the log card').toBeTruthy()
+    // And NOT in the act. A second copy there is two components that can
+    // disagree about the same month, which is what the phone fold was.
+    await openAct(user)
+    const act = container.querySelector('.zone-act') as HTMLElement
+    expect(act.querySelector('.grid-cols-7'), 'the calendar is still in the act').toBeNull()
+  })
 
   it('never offers a day that has not happened', async () => {
     const user = userEvent.setup()
     const { container } = mount()
-    await openAct(user)
-    const today = new Date().toISOString().slice(0, 10)
-    const day = Number(today.slice(8))
-    // Today is pressable; the day after it is not a control at all. Scoped by
-    // name, because the number alone appears in half the page.
-    const names = cells(container).map((c) => c.textContent ?? '')
-    expect(names.some((n) => n.includes(`${day}`)), 'today is in the grid').toBe(true)
-    for (const el of cells(container)) {
+    const card = await logCard(user, container)
+    const pressable = cells(card)
+    expect(pressable.length, 'no pressable cells at all').toBeGreaterThan(0)
+    for (const el of pressable) {
       const sr = el.querySelector('.sr-only')?.textContent ?? ''
       expect(sr, 'a future day reached the pressable set').not.toMatch(/not yet$/)
     }
@@ -447,8 +467,8 @@ describe('Cycle · the month calendar', () => {
   it('draws the days still to come as dated and inert, not as empty days', async () => {
     const user = userEvent.setup()
     const { container } = mount()
-    await openAct(user)
-    const notYet = [...container.querySelectorAll('.zone-act .sr-only')]
+    const card = await logCard(user, container)
+    const notYet = [...card.querySelectorAll('.sr-only')]
       .map((s) => s.textContent ?? '')
       .filter((t) => t.endsWith('not yet'))
     // The demo's today is mid-month, so there are always some; and none of
@@ -460,12 +480,24 @@ describe('Cycle · the month calendar', () => {
   it('names each day with what is on it, so the cell is not colour alone', async () => {
     const user = userEvent.setup()
     const { container } = mount()
-    await openAct(user)
-    const named = [...container.querySelectorAll('.zone-act .sr-only')]
-      .map((s) => s.textContent ?? '')
+    const card = await logCard(user, container)
+    const named = [...card.querySelectorAll('.sr-only')].map((s) => s.textContent ?? '')
     // The seed flags a period every cycle and takes temperatures through it.
     expect(named.some((t) => t.includes('period')), 'no period day is named').toBe(true)
     expect(named.some((t) => /\d{2}\.\d+°/.test(t)), 'no temperature is named').toBe(true)
+  })
+
+  it('opens the day it was tapped, in the same window the log rows open', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    const card = await logCard(user, container)
+    const cell = cells(card).find((c) => !(c.querySelector('.sr-only')?.textContent ?? '').includes('nothing logged'))
+    const name = cell!.querySelector('.sr-only')!.textContent!.split(' · ')[0]
+    await user.click(cell as HTMLElement)
+    // A dialog, not a scroll to the act column — which is the whole point of
+    // the move. `DayWindow` names itself after the day it holds.
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.textContent).toContain(name)
   })
 
   it('puts the cycle day on the day being edited, once, not on all 31', async () => {

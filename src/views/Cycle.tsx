@@ -46,12 +46,24 @@ import {
  * deep. The seed now writes four cycles with a real biphasic temperature
  * shift, which is what made the rest of this pass checkable.
  *
- * Zone 1 · cycle day, phase, next period, personal average — the four facts.
- * Zone 2 · the day editor (temperature, flags, drive), the legend that decodes
- *          the flag colours, and the month — the only things that write.
- * Zone 3 · **a rail over four groups** — This cycle, Fertility, Patterns,
- *          Guide — one group on screen at a time. `lib/cycleCards.ts` is the
- *          registry and `Cycle.test.tsx` binds it to what renders.
+ * Zone 1 · cycle day, phase, next period, personal average — the four facts,
+ *          and the month cursor, which is the page's only one.
+ * Zone 2 · **today**. The day editor (temperature, flags, drive), the optional
+ *          panel, and the legend that decodes the flag colours.
+ * Zone 3 · **a rail over seven groups**, one on screen at a time, with the
+ *          month CALENDAR beside the log in `Your log`. `lib/cycleCards.ts` is
+ *          the registry and `Cycle.test.tsx` binds it to what renders.
+ *
+ * **The calendar is in zone 3 and not zone 2**, which is the one piece of this
+ * page's shape that was argued twice. It shipped at the bottom of the act
+ * column, under the editor and two folds — so a tap on a cell selected the day
+ * in a form ~900px above it, inside a panel that is itself an 868px scroller.
+ * Reported as *"what is the use of that staying in this low place? If I click
+ * on it I need to scroll up and again make the changes."* Beside the log a tap
+ * opens `DayWindow`, a dialog, so the gesture ends where it started — and the
+ * two halves share one `pickDay` so the grid and the list cannot answer the
+ * same question differently. Zone 2 keeps what an act column is for: the day
+ * you are living in.
  *
  * **The four folds are gone, and that is this pass.** Zone 3 shipped as an
  * unlabelled grid of four cards, two loose ones, and a "Guide" shelf of four
@@ -75,8 +87,8 @@ import {
  * Everything in zone 3 is keyed to the **cycle**, not the calendar month, and
  * that is the substantive change: a month boundary cuts a cycle at an
  * arbitrary point, so a perfectly ordinary chart read as two unrelated
- * fragments. The month list stays month-shaped because it is a diary and you
- * look things up in it by date — it just carries the cycle day now too.
+ * fragments. The calendar is the exception and stays month-shaped, because it
+ * is a diary you look things up in by date.
  *
  * Every estimate is worded as one, every derivation returns `null` rather than
  * a fake zero, and nothing here predicts. See `lib/cycleInsights.ts`.
@@ -128,6 +140,17 @@ export function Cycle() {
    * review, so the way to correct it belongs over the review.
    */
   const [windowDay, setWindowDay] = useState<string | null>(null)
+  /**
+   * Open a day for editing — the one gesture both halves of `Your log` make.
+   *
+   * Hoisted because the calendar and the list are two ways of asking the same
+   * question and must answer it identically: a tap on `Fri, Oct 9` in the
+   * grid and a tap on its row have to land in the same place, or the card is
+   * two features that look like one. It moves the month cursor as well as
+   * the selection, so closing the window leaves the page on the day you were
+   * just looking at rather than wherever it started.
+   */
+  const pickDay = (d: string) => { setMonth(d.slice(0, 7)); setSelected(d); setWindowDay(d) }
   /** Open the manual on a section. The rail row and the deck move together. */
   const showManual = (s: string) => { setGroup('manual'); setManualSection(s) }
   const sel = days.includes(selected) ? selected : days[0]
@@ -436,18 +459,70 @@ export function Cycle() {
          twice, which is the fault this page's own history is made of. A
          `Card` with no title renders no header at all. */
       <Card band hideInfo>
-        <DayLog
-          entries={log}
-          unit={unit}
-          cycleDayOf={cycleDayOf}
-          today={today}
-          selected={sel}
-          /* Opens the day OVER the list rather than sending the reader to
-             the act column. The month still moves, so closing the window
-             leaves the editor on the day you were just looking at rather
-             than somewhere else. */
-          onPick={(d) => { setMonth(d.slice(0, 7)); setSelected(d); setWindowDay(d) }}
-        />
+        {/* THE CALENDAR BESIDE THE LIST, which is where it was asked for:
+            *"what is the use of that staying in this low place? If I click on
+            it I need to scroll up and again make the changes."* Exactly
+            right, and measured — the calendar was the LAST thing in the act
+            column, and tapping a cell selected the day in an editor **~900px
+            above it**, inside a panel that is itself a 868px scroller. So the
+            one gesture the grid exists for ended in a scroll back up.
+
+            Here both halves share `pickDay`, so a tap opens that day in
+            `DayWindow` — a dialog over the page. No scrolling in either
+            direction, and the calendar is next to the record it indexes
+            rather than under a form.
+
+            Two halves, not two cards: they are one question asked two ways —
+            the month at a glance, and every day with everything on it. The
+            split is a CONTAINER query because this panel's width is decided
+            by the page split and by whether the act is open, never by the
+            window (`PAGE-SHAPE.md`). Measured with the act open: **579px at
+            1280, 678 at 1440, 854 at 1920** — so `@2xl` (672px) stacks the
+            1280 tier, where 19rem of calendar plus a gap would leave the list
+            250px, and splits everywhere above it. */}
+        <div className="grid gap-x-6 gap-y-5 @2xl/page:grid-cols-[19rem_minmax(0,1fr)]">
+          {/* STICKY, AND `self-start` IS WHAT MAKES IT POSSIBLE.
+              A grid child stretches to its row by default, so this column was
+              **858px of box around 290px of calendar** — a 570px hole beside
+              a list that is the taller half by design (ten records, each two
+              or three lines). `self-start` shrinks the box to its content and
+              is the precondition for `sticky`, which then earns the hole
+              back: the calendar is an INDEX, so it should still be there when
+              you have scrolled to Oct 9 in the list. Same offset token every
+              other sticky in the app uses, so it lands under the header
+              rather than behind it.
+              Sticky only where the two are side by side — stacked, a sticky
+              calendar would pin itself over the list it sits above. */}
+          <div className="@2xl/page:sticky @2xl/page:top-[calc(var(--header-h,3.5rem)+1rem)] @2xl/page:self-start">
+            {/* Each half says what it is. Without the captions this is a
+                calendar next to a list with no statement of how they differ —
+                and they do differ: the grid is ONE month, the list is every
+                day you have ever logged, newest first. */}
+            <p className="mb-1.5 text-label font-medium text-fg-1">{prettyMonth(ym)}</p>
+            <CycleMonth
+              days={days}
+              entries={log}
+              selected={sel}
+              today={today}
+              onSelect={pickDay}
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="mb-1.5 text-label font-medium text-fg-1">Everything you logged</p>
+            <DayLog
+              entries={log}
+              unit={unit}
+              cycleDayOf={cycleDayOf}
+              today={today}
+              selected={sel}
+              /* Opens the day OVER the list rather than sending the reader to
+                 the act column. The month still moves, so closing the window
+                 leaves the editor on the day you were just looking at rather
+                 than somewhere else. */
+              onPick={pickDay}
+            />
+          </div>
+        </div>
       </Card>
     ),
 
@@ -765,12 +840,11 @@ export function Cycle() {
               Real buttons and not links: they move the rail, which is state
               on this page rather than a destination. */}
           <p className="mt-3 border-t border-line pt-2 text-label text-fg-2">
-            {/* "Tap any day below to edit it" went with the list. The card's
-                own subtitle already says "Tap a day, set a temperature…", and
-                a calendar of pressable cells does not need a sentence saying
-                it is pressable — two instructions a line apart is how a card
-                gains a line it cannot pay for, with the act column already
-                70px over its sticky height. */}
+            {/* "Tap any day below to edit it" went when the calendar did.
+                There is nothing below this line to tap any more, and the
+                sentence now says where the days ARE — which is the half of
+                the original report this paragraph was written for: *"where is
+                the history and how can I edit it?"* */}
             <button
               type="button"
               onClick={() => setGroup('log')}
@@ -778,7 +852,8 @@ export function Cycle() {
             >
               Your log
             </button>{' '}
-            has every day with everything on it, and{' '}
+            has the calendar and every day you logged — tap any day there to edit
+            it, in a window. And{' '}
             <button
               type="button"
               onClick={() => setGroup('manual')}
@@ -789,31 +864,23 @@ export function Cycle() {
             says how the page works.
           </p>
 
-          {/* ONE CALENDAR, AT EVERY WIDTH, AND NO FOLD ROUND IT.
-              The fold was COD-230's answer to a 956px month list on a 3,703px
-              phone page — a list is 31 rows whatever the viewport, so the only
-              lever left was hiding it. Seven columns of 44px bands is ~280px
-              at both widths, which is less than the fold's own cost to open,
-              so the lever is not needed and the second rendering path that
-              came with it is gone too: `isPhone` and a `CollapsibleSection`
-              meant two components could disagree about the same month. */}
-          {/* The month it is drawing, named. A list carried its month in two
-              sub-headings ("Oct 1–15", "Oct 16–31"); a calendar has one grid
-              and so needs one, and without it a reader who paged back to
-              August is looking at 31 unlabelled squares. No stepper here on
-              purpose — the month cursor already has one in zone 1, and a
-              second control for one piece of state is the "two navigations"
-              fault this page's own rail was built to undo. */}
-          <p className="mt-3 text-label font-medium text-fg-1">{prettyMonth(ym)}</p>
-          <div className="mt-1.5">
-            <CycleMonth
-              days={days}
-              entries={log}
-              selected={sel}
-              today={today}
-              onSelect={setSelected}
-            />
-          </div>
+          {/* THE CALENDAR IS NOT HERE, AND THAT IS THE POINT.
+              It shipped at the BOTTOM of this column, under the editor, the
+              optional panel and the legend — so a tap on a cell selected the
+              day in a form **~900px above it**, inside a panel that is itself
+              an 868px scroller. Reported exactly: *"what is the use of that
+              staying in this low place? If I click on it I need to scroll up
+              and again make the changes."*
+
+              It lives beside `Your log` now, where a tap opens that day in
+              `DayWindow` — a dialog over the page, so the gesture ends where
+              it started. This column keeps what it is for: **today**. The
+              editor opens on today and writes to today, and any other day is
+              a day you are correcting, which is a review job.
+
+              Measured on the move: this card **938px → 652px** against its
+              868px sticky cap, so the act stops scrolling inside a scrolling
+              page for the first time since it gained a column. */}
         </Card>
       )}
       zone3={
@@ -910,6 +977,7 @@ export function Cycle() {
             date={windowDay}
             entry={windowDay ? log.find((x) => x.date === windowDay) : undefined}
             unit={unit}
+            cycleDay={windowDay ? cycleDayOf(windowDay) : null}
             fertilityFirst={goal === 'conceive'}
             onClose={() => setWindowDay(null)}
             onTemp={(temp) => windowDay && setCycle(windowDay, { temp })}
