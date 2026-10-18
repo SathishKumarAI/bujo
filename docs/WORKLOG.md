@@ -26,6 +26,132 @@ Rules the three share:
 
 ---
 
+## 2026-10-18 — Clearing the queue: five PRs, and three findings nobody reported (COD-336 · 348 · 349 · 350, PRs #429–#433)
+
+Asked to "complete all work" — the queue in `STATUS.md`, worked in dependency
+order. Everything measured against a local preview of each branch's own build
+at `?demo=1`, bundle hash checked against `dist/index.html`.
+
+### COD-336 · cap every bar — and two of the nine files had no chart
+
+The ticket said to measure before sweeping rather than apply a prop nine
+times. Measuring changed what the sweep was.
+
+**Eight Recharts bars across seven files, not nine.** `MoodByPhase.tsx` and
+`FocusCharts.tsx` were on the list because they match `<Bar `, and their
+`<Bar>` is a **local component of the same name** — a CSS bar taking
+`label`/`value`/`hue`. A first pass replaced those and `tsc` caught it
+(`Property 'maxBarSize' does not exist`). Two things with one name are two
+things, and a grep for a component name walks straight into that.
+
+Measured at 2560 with the act shut:
+
+| chart | before | after |
+|---|---|---|
+| Recovery · lapse counts | **208px** | **180px** |
+| Recovery · riskiest days | 208px | 180px |
+| Strength · training volume | 136px | 136px |
+| Insights · journal volume | 34px | 34px |
+
+Only Recovery's were over. **Proven with an A/B** on `LapseCountCard` rather
+than inferred from the round number. For the other six this is a guard, not a
+visible fix — it binds when a user has fewer rows than the seed — and the
+commit says so rather than claiming a win.
+
+### COD-348 · the history editor was five of fourteen fields
+
+Reported as "changing singles to doubles from the history doesn't let me
+enter the partner". Verified and broader: the new-session form collects
+**fourteen** fields, the history editor collected **five**.
+
+**Checking the data-loss half first is what made the fix cheap.**
+`updatePickleball` merges a `Partial<>` (`store.tsx:642`), so the nine
+unreachable fields survived untouched — no migration, no rescue path. The
+editor did not need new data; it needed the real form.
+
+`SessionFields.tsx` is that form, **moved rather than retyped** — the JSX
+lifted whole, because retyping is the trap that cost `views/Pullups.tsx`
+eleven workout formats with every gate green. `sessionDraft.ts` holds the
+three translations, split out because a component file exporting constants
+breaks fast refresh.
+
+The subtle half: `sessionPatch` names **every** key including empty ones.
+Because the store merges, an omitted key means "leave what was there", so
+clearing a partner by omission would silently do nothing.
+
+### COD-349 · doubles has two opponents, and the seed had dead branches
+
+Designed with the `data-engineer` agent first, as `.claude/CLAUDE.md`
+requires. Its answer is why this stayed small: **`opponent2?: string`, purely
+additive, no migration, no schema version.** Old free-text pairs are
+deliberately not split — the format is inconsistent ("The Thursday pair" has
+no separator) and guessing one corrupts a name.
+
+Pair, not per-player, and both readings agree: `opponentRecords` was already
+keyed on the whole string and the card calls itself a rivalry record.
+`opponentLabel()` joins the two **sorted**, which is the load-bearing part — a
+pair typed Dan/Priya one week and Priya/Dan the next would otherwise split
+into two rivalries with half the games each and nothing would report a fault.
+
+**The better find was in the seed.** The loop steps `i += 3` from 1, so
+`i % 3` is **always 1** — the `'Dan & Priya'` and `undefined` arms of the
+opponent conditional had never once executed, nor had two arms each of
+location and level. Every seeded session got the same opponent, so no gate
+had ever rendered the alternatives. That is this repo's most-repeated trap
+living inside the seed itself. After: 1 of 5 sessions carries a two-name pair
+and the rivalry card reads `vs Dan & Priya` beside `vs The Thursday pair`.
+
+### COD-350 · a log row opens the day in a window
+
+The ticket said the app had no editing dialog and would need a new primitive.
+**It has one** — `components/ui/dialog.tsx`, a Radix dialog with five
+callers — so focus trap, Escape, scroll lock and focus restore are not
+written here and cannot be written here wrong. Checking the premise turned a
+new component into a reused one, and `DayWindow` is twenty lines.
+
+It **hosts** `DayEditor` and `DayMore` rather than re-declaring them, which is
+the whole discipline: a second editor drifts from the first, which is the
+fault COD-348 had just fixed one PR earlier.
+
+`a11y-panels` opens one, because axe cannot see inside a dialog nobody
+pressed — the blind spot of a closed fold (COD-93) and an unselected rail row
+(COD-237), one mechanism on. Everything in that window had been absent from
+every scan the gate ever ran. **Canaried** with a planted `<select>`: the gate
+exits red, clean once removed.
+
+### The prose sweep finished
+
+All 22 `cycleHelp` tips held two or three sentences. `STATUS.md` had warned
+its consumers needed checking because it feeds the Help page — **it does
+not**, one consumer, which turned a careful change into a small one.
+
+The split was generated and then **read**, not trusted: three entries would
+have produced a fragment ("Optional." as a bullet) and were rewritten at
+source instead. And `{entry.text}` on a `string[]` paints the lines
+concatenated — the third time that defect appeared in this sweep. `tsc` never
+says a word; only the rendered page or a test does.
+
+### What went wrong
+
+- **`git checkout <file>` wiped uncommitted work twice** while reverting a
+  canary. Copy the file first — the canary is worth running, the undo is what
+  bites.
+- **A canary that could not fail**, twice: a key built from the map it
+  asserts against, and a glyph read from one source on both sides. A derived
+  thing is pinned by breaking its *producer*, not its data.
+- **A commit shipped over a red test** because an `&&` chain ran `grep` first
+  and `grep` succeeded. A grep's exit code is not a test result.
+- **A blind `<Bar ` replace hit local components** of the same name. Caught by
+  `tsc`, but only because those components had typed props.
+
+### Gates
+
+`npm run verify` ended at **160 files, 2,182 tests**. `npm run a11y` 187
+scans, 0 serious. `a11y:panels` clean across seven Cycle rows with a record
+window opened. `clipped`, `design`, `contrast` clean.
+
+---
+
 ## 2026-10-17 — The last two pages off the rollout, then Cycle four more times (COD-334 · 335 · 336 · 337, PRs #418–#421 + one open)
 
 Five merges in one session. The rollout list is finished; everything after

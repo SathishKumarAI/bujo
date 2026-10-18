@@ -1,70 +1,69 @@
 # STATUS
 
-**Stopped:** 2026-10-18, on `main`, **nothing open**. Seven PRs merged today
-(#418–#427). The queue below is what was reported and deliberately not built.
+**Stopped:** 2026-10-18, on `main`, **nothing open**. The queue is empty —
+every item carried into this session is merged.
 
-## The next action
+## Where it stands
 
-Work the queue in this order — the first two are dependencies of the rest.
-
-1. **COD-348 · Pickleball's history editor is a five-field subset of a
-   fourteen-field form.** Switching a session to doubles there offers no
-   partner — nor opponent, location, level, points or scoring. **Not data
-   loss**: `updatePickleball` merges a `Partial<>`, so the hidden fields
-   survive, which rules out the expensive fix. The editor should host the
-   real form instead of re-declaring part of it.
-2. **COD-350 · A log row should open the day in a window.** Tapping a row in
-   `Your log` selects a day whose editor is in the act column — the other
-   side of the page on a desktop, a collapsed strip on a phone. Needs a
-   focus-trapped editing dialog, which the app does not have; Challenges wants
-   the same one, so it belongs in `components/page`.
-3. **COD-349 · Doubles needs a team, not one opponent.** `partner?: string` +
-   `opponent?: string` cannot hold four people. A schema change — use the
-   `data-engineer` agent, and settle whether a record is against a PAIR or
-   against each PLAYER before writing anything.
-4. **COD-336** · `maxBarSize` on the nine remaining bar charts.
-5. **The rest of the Cycle prose sweep** — `cycleHelp` and `cycleManual`, 27
-   multi-sentence strings. `CYCLE_HELP.text` feeds popovers *and* the Help
-   page, so check consumers first.
-
-## What shipped today
+Thirteen PRs merged across the two days (#418–#433). `main` is clean, the
+working tree is clean, no branch is outstanding.
 
 | PR | what |
 |---|---|
-| #418 | Cycle onto the contract — worst row 7.38 → 1.88 desktop screens, 13.09 → 3.11 phone |
-| #419 | Challenges — the review went from **1 interactive control to 76** |
-| #420 | Cycle follow-ups — bar widths 430 → 180px, the rail count made true |
-| #421 | `actTop`, subtitles that say what is in the card, `Your log` |
-| #422 | the act column read back — a key for the glyphs, names for the columns |
-| #423 | the guide is points, not paragraphs |
-| #424 | one box at the top, the month beside what it changes |
-| #425 | nine chip groups became three sections |
-| #426 | `ChipPick` draws an ordered rating as a segmented track |
-| #427 | the scale names the value, the countdown is the headline |
+| #429 | every Recharts bar capped — and two of the nine listed files had no chart in them |
+| #430 | Pickleball's history editor renders the real form, not 5 of its 14 fields |
+| #431 | the 22 help tips are points; three rewritten rather than split |
+| #432 | doubles has two opponents — and the seed had two dead branches |
+| #433 | a log row opens that day in a window |
 
-## Reported and answered with a reason, not code
+## The next action
 
-These are in the reply and are **not** queued, because building them would
-have the page claim something untrue:
+Nothing is queued. The honest list of what is *known* and unbuilt:
 
-- **Mood tags as a 1–5 scale.** The seven words are a SET, not an order — you
-  can be calm and sensitive at once, and "is anxious a 5 or a 1?" has no
-  answer. Ordering them invents a claim the data cannot support.
-- **A scroll-to-fill dial.** Slower and less accurate than five segments for a
-  1–5 value, and a custom `role="slider"` with keyboard and touch support is a
-  large build to replace something that works. The part of the ask that was
-  real — "tell me what 3 means" — shipped in #427 as `scale.words`.
-- **Mood and Energy side by side.** Two tracks in a 384px column is five
-  segments of ~36px, under the 44px target floor COD-96 is open about and
-  which #426 just established for this control.
+1. **`docs/QUESTIONS.md`** — what "it still needs to be saved for every
+   month" meant. Two of three readings shipped; the third (a per-month
+   summary card) is unbuilt on purpose rather than guessed at.
+2. **A seeded journal per `nextStep` branch** on Cycle, so six of its seven
+   tones are *drawn* by a gate rather than only asserted. The one remaining
+   known instance of "a branch the seed never takes cannot fail".
+3. **Home Workout's act is a bare `useState`**, which `PAGE-ROLLOUT.md` says
+   never to do. A correctness nit, not a visible fault.
+4. **COD-247 is reopened for Recovery.** Cycle's half shipped; `NoFap.tsx`
+   still carries the `2xl:grid-cols-2` pin and the `SPAN_2` coupling. The
+   recipe is in a comment on that ticket.
+5. **Challenges' day panel** could host the new `DayWindow` instead of
+   sitting beside the calendar — COD-335 left it there for want of exactly
+   the dialog #433 just built.
 
-## Open
+## What this session found that nobody reported
 
-- `docs/QUESTIONS.md` · what "saved for every month" meant — third reading
-  (a per-month summary card) unbuilt on purpose.
-- **A seeded journal per `nextStep` branch**, Cycle.
-- **Home Workout's act is a bare `useState`.**
-- **COD-247 reopened for Recovery.**
+- **Two of the nine files in the `maxBarSize` sweep had no chart in them.**
+  Their `<Bar>` is a local component of the same name. A first pass replaced
+  those too and `tsc` caught it — two things with one name are two things,
+  and a grep for a component name walks straight into that.
+- **The pickleball seed had unreachable branches.** The loop steps `i += 3`
+  from 1, so `i % 3` is always 1: the `'Dan & Priya'` and `undefined` arms of
+  the opponent conditional, and two arms each of location and level, had
+  never once executed. A dead branch in the seed is the quiet version of this
+  repo's most-repeated trap.
+- **Two ticket premises were wrong**, both found by checking rather than
+  building: `CYCLE_HELP.text` does not feed the Help page (one consumer, not
+  two), and the app *does* have an editing dialog with five callers. Both
+  turned a careful change into a small one.
+
+## Standing traps this session paid for again
+
+- **`git checkout <file>` wiped uncommitted work twice** while reverting a
+  canary. Copy the file first. The canary is worth running; the undo is what
+  bites.
+- **A canary that cannot fail.** Twice: a key built from the map it asserts
+  against, and a glyph read from one source on both sides. A derived thing is
+  pinned by breaking its *producer*, not its data.
+- **`{value}` on a `string[]` compiles and paints the lines concatenated.**
+  Three separate times in the prose sweep. `tsc` never says a word; only the
+  rendered page or a test does.
+- **A commit shipped over a red test** because an `&&` chain ran `grep`
+  first. A grep's exit code is not a test result.
 
 ## Environment
 
