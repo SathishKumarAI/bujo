@@ -4,7 +4,7 @@ import { ChipPick } from '../ui/quickpick'
 import { CommitField } from '../CommitField'
 import { useStickyState } from '../../lib/useStickyState'
 import type { CyclePoint } from '../../lib/types'
-import { CHIP_FIELDS, SCALE_FIELDS, TAG_FIELDS } from './dayFields'
+import { CHIP_FIELDS, FIELD_SECTIONS, SCALE_FIELDS, TAG_FIELDS } from './dayFields'
 
 /**
  * MORE FOR TODAY · the optional half of a day's log.
@@ -41,7 +41,13 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
   const isOpen = open === '1'
 
   const flags = entry?.flags ?? []
-  const chips = fertilityFirst ? [...CHIP_FIELDS].sort((a, b) => rank(a.key) - rank(b.key)) : CHIP_FIELDS
+  const chips = CHIP_FIELDS
+  /* Trying-to-conceive mode puts the cycle signs first — the SECTION moves,
+     not the fields within it, which is what makes the reordering legible
+     instead of a shuffle. */
+  const sections = fertilityFirst
+    ? [...FIELD_SECTIONS].sort((a, b) => (a.id === 'signs' ? -1 : b.id === 'signs' ? 1 : 0))
+    : FIELD_SECTIONS
 
   return (
     <div className="mt-3 border-t border-line pt-2">
@@ -86,54 +92,76 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
       </button>
 
       {isOpen && (
-        <div className="collapse-in mt-3 space-y-4">
-          {/* Mood and energy lead. They are the two people come looking for,
-              and burying them under four fertility fields is what made them
-              unfindable. */}
-          {SCALE_FIELDS.map((f) => (
-            <ChipPick
-              key={f.key}
-              label={`${f.label} · 1 ${f.low} … 5 ${f.high}`}
-              tone="teal"
-              value={entry?.[f.key] ?? null}
-              onChange={(v) => onPatch({ [f.key]: entry?.[f.key] === v ? undefined : v })}
-              options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
-            />
-          ))}
-
-          {TAG_FIELDS.map((f) => {
-            const current = (entry?.[f.key] as string[] | undefined) ?? []
+        <div className="collapse-in mt-3 space-y-5">
+          {/* THREE QUESTIONS, NOT NINE FIELDS.
+              Nine chip groups at one weight with nothing between them is
+              ~900px of flat stack in a 424px column — a list you scan rather
+              than read, and reported as exactly that. The sections come from
+              `dayFields.ts` so the grouping is data rather than a heading
+              typed in here, and `fertilityFirst` reorders the SECTIONS now
+              instead of the fields inside them: the same intent, in a shape
+              the reader can see. */}
+          {sections.map((sec) => {
+            const scales = SCALE_FIELDS.filter((f) => f.section === sec.id)
+            const tags = TAG_FIELDS.filter((f) => f.section === sec.id)
+            const picks = chips.filter((f) => f.section === sec.id
+              && !(f.onlyWithFlag && !flags.includes(f.onlyWithFlag)))
+            if (scales.length + tags.length + picks.length === 0) return null
             return (
-              <ChipPick
-                key={f.key}
-                label={f.label}
-                tone="peach"
-                multi
-                value={current}
-                onChange={(v) => {
-                  const next = current.includes(v) ? current.filter((x) => x !== v) : [...current, v]
-                  // `undefined` rather than `[]` when the last tag comes off: an
-                  // empty array persists as "asked and answered with nothing".
-                  onPatch({ [f.key]: next.length ? next : undefined })
-                }}
-                options={f.options.map((o) => ({ value: o, label: o }))}
-              />
-            )
-          })}
+              <section key={sec.id} className="space-y-4">
+                {/* A quiet rule and a quiet word: the groups under it carry
+                    their own `<legend>`s, so this heading has to sit BELOW
+                    them in weight or the panel gains a second competing
+                    hierarchy. */}
+                <h4 className="border-b border-line pb-1 text-caption uppercase tracking-wide text-fg-2">
+                  {sec.title}
+                </h4>
 
-          {chips.map((f) => {
-            // Flow is meaningless on a day with no bleeding, and an empty
-            // "light / medium / heavy" row on day 14 invites answering it.
-            if (f.onlyWithFlag && !flags.includes(f.onlyWithFlag)) return null
-            const current = entry?.[f.key]
-            return (
-              <ChipPick
-                key={f.key}
-                label={f.label}
-                value={current ?? null}
-                onChange={(v) => onPatch({ [f.key]: current === v ? undefined : v })}
-                options={f.options}
-              />
+                {scales.map((f) => (
+                  <ChipPick
+                    key={f.key}
+                    label={`${f.label} · 1 ${f.low} … 5 ${f.high}`}
+                    tone="teal"
+                    value={entry?.[f.key] ?? null}
+                    onChange={(v) => onPatch({ [f.key]: entry?.[f.key] === v ? undefined : v })}
+                    options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
+                  />
+                ))}
+
+                {tags.map((f) => {
+                  const current = (entry?.[f.key] as string[] | undefined) ?? []
+                  return (
+                    <ChipPick
+                      key={f.key}
+                      label={f.label}
+                      tone="peach"
+                      multi
+                      value={current}
+                      onChange={(v) => {
+                        const next = current.includes(v) ? current.filter((x) => x !== v) : [...current, v]
+                        // `undefined` rather than `[]` when the last tag comes
+                        // off: an empty array persists as "asked and answered
+                        // with nothing".
+                        onPatch({ [f.key]: next.length ? next : undefined })
+                      }}
+                      options={f.options.map((o) => ({ value: o, label: o }))}
+                    />
+                  )
+                })}
+
+                {picks.map((f) => {
+                  const current = entry?.[f.key]
+                  return (
+                    <ChipPick
+                      key={f.key}
+                      label={f.label}
+                      value={current ?? null}
+                      onChange={(v) => onPatch({ [f.key]: current === v ? undefined : v })}
+                      options={f.options}
+                    />
+                  )
+                })}
+              </section>
             )
           })}
 
@@ -183,13 +211,6 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
       )}
     </div>
   )
-}
-
-/** Fertility signs first in conceive mode; the rest keep their order. */
-function rank(key: string): number {
-  const order = ['mucus', 'lh', 'intimacy', 'flow']
-  const i = order.indexOf(key)
-  return i === -1 ? 99 : i
 }
 
 /** What is already recorded, so folding hides the controls and not the answers. */

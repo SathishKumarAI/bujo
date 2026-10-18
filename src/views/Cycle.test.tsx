@@ -9,7 +9,7 @@ import { Cycle } from './Cycle'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL, panelsIn } from '../lib/cycleCards'
 import { FLAGS, FLAG_MEANS } from '../components/cycle'
-import { LH_GLYPH, MUCUS_GLYPH } from '../components/cycle/dayFields'
+import { CHIP_FIELDS, FIELD_SECTIONS, LH_GLYPH, MUCUS_GLYPH, SCALE_FIELDS, TAG_FIELDS } from '../components/cycle/dayFields'
 import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
 import { CAT } from '../lib/colors'
 import { generateDemoData } from '../lib/demo'
@@ -321,6 +321,52 @@ describe('Cycle · every mark the day list can draw is decoded', () => {
     // And the glyphs themselves, or the key would name words with no marks.
     for (const g of [MUCUS_GLYPH.creamy, MUCUS_GLYPH['egg-white'], LH_GLYPH.peak]) {
       expect(key).toContain(g)
+    }
+  })
+})
+
+/**
+ * EVERY OPTIONAL FIELD BELONGS TO A SECTION.
+ *
+ * Nine chip groups rendered as nine peers is the flat stack this grouping
+ * replaced. The failure mode now is a *new* field added to one of the three
+ * arrays with no `section`, which would render under no heading at all — or,
+ * worse, under whichever heading happened to be last. A type makes the field
+ * required; this makes sure the value is one the panel actually draws.
+ */
+describe('Cycle · the optional fields are three questions, not nine', () => {
+  const ids = FIELD_SECTIONS.map((s) => s.id)
+
+  it('files every field under a section the panel renders', () => {
+    const all = [
+      ...SCALE_FIELDS.map((f) => [f.key, f.section] as const),
+      ...TAG_FIELDS.map((f) => [f.key, f.section] as const),
+      ...CHIP_FIELDS.map((f) => [f.key, f.section] as const),
+    ]
+    expect(all.length).toBeGreaterThan(8)
+    for (const [key, section] of all) {
+      expect(ids, `${key} is filed under "${section}", which no section draws`).toContain(section)
+    }
+  })
+
+  it('leaves no section empty, so no heading stands over nothing', () => {
+    // A heading over an empty grid is the failure mode of grouping — the same
+    // rule the rail's own count assertion exists for.
+    const used = new Set([
+      ...SCALE_FIELDS.map((f) => f.section),
+      ...TAG_FIELDS.map((f) => f.section),
+      ...CHIP_FIELDS.map((f) => f.section),
+    ])
+    for (const id of ids) expect(used, `section "${id}" has no fields`).toContain(id)
+  })
+
+  it('draws all three headings in the panel', async () => {
+    const user = userEvent.setup()
+    const { container } = mount()
+    await openAct(user)
+    await user.click(screen.getByRole('button', { name: /mucus, LH/i }))
+    for (const s of FIELD_SECTIONS) {
+      expect(container.textContent, `"${s.title}" is not drawn`).toContain(s.title)
     }
   })
 })
