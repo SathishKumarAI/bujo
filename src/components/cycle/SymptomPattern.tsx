@@ -1,5 +1,5 @@
 import { cat, onRaised } from '../../lib/colors'
-import { FLAG_COLOR } from './flags'
+import { flagTone } from './flags'
 
 /**
  * SYMPTOM PATTERN · the one question a calendar cannot answer.
@@ -75,7 +75,7 @@ export function SymptomPattern({ pattern }: {
           <tbody>
             {pattern.map((row) => (
               <tr key={row.flag}>
-                <th scope="row" className="text-left text-label font-normal" style={{ color: onRaised(FLAG_COLOR[row.flag] ?? 'mauve') }}>
+                <th scope="row" className="text-left text-label font-normal" style={{ color: onRaised(flagTone(row.flag)) }}>
                   {row.flag}
                 </th>
                 {row.days.map((d) => {
@@ -86,7 +86,7 @@ export function SymptomPattern({ pattern }: {
                       title={`${row.flag} · day ${d.day} · ${d.count} of ${cycles} cycles`}
                       className="h-4 rounded-[2px]"
                       style={{
-                        background: share > 0 ? cat(FLAG_COLOR[row.flag] ?? 'mauve') : cat('surface0'),
+                        background: share > 0 ? cat(flagTone(row.flag)) : cat('surface0'),
                         // Floor at 0.25 so a one-in-four cycle is still visible;
                         // a linear ramp from zero makes rare events invisible,
                         // and a rare event is exactly what you are looking for.

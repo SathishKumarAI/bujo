@@ -1,6 +1,5 @@
 import { ChipPick } from '../ui/quickpick'
 import { Input } from '../ui'
-import { cat, onAccent } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
 import { glossaryTerm } from '../../lib/glossary'
@@ -10,14 +9,41 @@ import { FLAGS, FLAG_COLOR } from './flags'
  * The one place on the page that writes. Zone 2 of the contract.
  *
  * One editor for the selected day, never thirty copies of the controls down
- * the month. The temperature field, the five flag chips and the drive rating are
- * the whole interaction this page has.
+ * the month. A temperature, five flags and a drive rating are the whole
+ * interaction this page has.
  *
- * `onAccent(fill)`, not `cat('crust')`, for the pressed chip's text — the
- * light-on-saturated neutral differs per theme and `crust` is near-white in
- * the light ones, which is the trap CLAUDE.md records. Both branches of the
- * ternary are a decision: the unpressed chip uses `subtext0`, because
- * `overlay0` on a neutral fill measures 2.57:1.
+ * ── The three things that were wrong with it ─────────────────────────────
+ *
+ * Reported as *"these inputs are really bad and they're looking too ugly"*,
+ * and there were three distinct faults under that.
+ *
+ * **1 · The temperature had no label and no unit.** It was a `w-24` number
+ * box whose only unit was a `°F` PLACEHOLDER — which disappears the moment a
+ * number is typed, so the field showed `97.95` of nothing. It is the single
+ * most important input on this page (every chart, the shift, the coverline
+ * and the phase confidence are built from it) and it was the one control
+ * presented as a stray form field.
+ *
+ * **2 · The five flags were hand-rolled**, with inline `cat()` fills and an
+ * `onAccent()` foreground — the "hand-rolling a control the app already has"
+ * trap in CLAUDE.md, which this very file's Drive comment cites for the row
+ * directly below it. `ChipPick` already carries the pill radius, the per-tone
+ * selected state, the `active:scale-95` press, a real `<fieldset>`/`<legend>`
+ * and draw-short/announce-long naming. The row needed `mauve` and `maroon`,
+ * which is why it was forked in the first place; those are in the primitive
+ * now rather than re-solved here.
+ *
+ * **3 · A number input and five toggles shared one unlabelled `flex-wrap`
+ * row.** Two different kinds of control, no legend on either, wrapping into
+ * each other at narrow widths. They are two questions and they read as one
+ * pile.
+ *
+ * ── What the hue still means ─────────────────────────────────────────────
+ *
+ * The flag's colour is its identity across four surfaces, so it survives the
+ * move: `options[].tone` carries it per chip. What changes is the idiom — a
+ * solid fill with a computed neutral becomes the app's calibrated
+ * border-plus-wash, which is the one `ChipPick` solves for every theme.
  */
 export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: {
   date: string
@@ -34,72 +60,79 @@ export function DayEditor({ date, entry, unit, onTemp, onToggleFlag, onDrive }: 
 
   return (
     <div className="rounded-card bg-ink-2 p-3">
-      <p className="mb-2 text-body font-medium text-fg-1">
+      <p className="mb-3 flex items-baseline gap-2 text-body font-medium text-fg-1">
         {prettyDay(date)}
-        {date === today && <span className="ml-2 text-label font-normal text-fg-2">today</span>}
+        {date === today && (
+          /* A quiet pill rather than a grey word: "today" is a state of the
+             thing being edited, and the rest of this app draws a state as a
+             pill. */
+          <span className="rounded-pill border border-line px-2 py-0.5 text-micro font-normal text-fg-2">today</span>
+        )}
       </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          type="number"
-          step="0.1"
-          value={entry?.temp ?? ''}
-          onChange={(e) => onTemp(e.target.value ? Number(e.target.value) : undefined)}
-          placeholder={`°${unit}`}
-          aria-label={`Basal temperature on ${prettyDay(date)} (°${unit})`}
-          className="w-24 py-1"
-        />
-        {/* The chip cannot carry an ⓘ: it is already a button, and a button
-            inside a button is invalid markup and unusable with a keyboard. So the
-            expansion rides on the chip's own accessible name instead — "pms"
-            announces as "PMS — Premenstrual syndrome" — and the full definition
-            lives one tap away in the phase legend and in Help's glossary. All
-            three read `src/data/glossary.json`; none of them holds its own copy.
-            A flag with no glossary entry keeps its bare name rather than
-            inventing one. */}
-        {FLAGS.map((f) => {
-          const on = flags.includes(f)
-          const fill = cat(FLAG_COLOR[f])
+
+      {/* THE TEMPERATURE, LABELLED, WITH THE UNIT ALWAYS DRAWN.
+          The unit lives beside the field, not inside it as a placeholder that
+          vanishes on the first keystroke. `text-heading` and `num` because
+          this is the page's primary measurement and it was rendering at the
+          same weight as a chip's caption. */}
+      <label className="block">
+        <span className="text-label text-fg-2">Waking temperature</span>
+        <span className="mt-1 flex items-center gap-2">
+          <Input
+            type="number"
+            step="0.1"
+            inputMode="decimal"
+            value={entry?.temp ?? ''}
+            onChange={(e) => onTemp(e.target.value ? Number(e.target.value) : undefined)}
+            placeholder="—"
+            aria-label={`Waking temperature on ${prettyDay(date)}, degrees ${unit}`}
+            className="num w-28 py-1.5 text-heading"
+          />
+          <span className="num text-body text-fg-2">°{unit}</span>
+        </span>
+      </label>
+
+      {/* THE FLAGS, as the app's own chip row.
+          `multi` because several are true at once — a day can be a period day
+          with cramps — and `aria-pressed` already says "toggle". The `name`
+          carries the glossary expansion, so "pms" announces as "PMS —
+          Premenstrual syndrome"; the chip cannot carry an ⓘ, because a button
+          inside a button is invalid markup and unusable with a keyboard. A
+          flag with no glossary entry keeps its bare name rather than
+          inventing one. */}
+      <ChipPick
+        className="mt-3"
+        label="What happened"
+        /* `dense`, and the measurement with its limit stated.
+           At the default `px-3` the five chips span **402px** against a
+           360px row at 1440, so they wrapped 4 + 1 — a single orphan chip,
+           which reads as a mistake rather than as a row. Dense is **362px**
+           and fits that row exactly.
+           It does NOT fix the phone: the same 362px against a 300px column
+           still wraps 4 + 1, and five words of these lengths cannot be made
+           to fit 300px without shortening the words, which are the data. A
+           prop to control the split would be a control invented for one
+           cosmetic case. The desktop orphan is gone; the phone one is known
+           and left. */
+        dense
+        multi
+        value={flags}
+        onChange={onToggleFlag}
+        options={FLAGS.map((f) => {
           const meaning = glossaryTerm(f)
-          const name = meaning ? `${meaning.term} — ${meaning.expansion}` : f
-          return (
-            <button
-              key={f}
-              onClick={() => onToggleFlag(f)}
-              aria-pressed={on}
-              aria-label={name}
-              title={name}
-              className="rounded-control px-2 py-1 text-label"
-              style={{
-                background: on ? fill : cat('surface0'),
-                color: on ? onAccent(fill) : cat('subtext0'),
-              }}
-            >
-              {f}
-            </button>
-          )
+          return {
+            value: f,
+            label: f,
+            tone: FLAG_COLOR[f],
+            name: meaning ? `${meaning.term} — ${meaning.expansion}` : undefined,
+          }
         })}
-      </div>
+      />
 
-      {/* DRIVE · its own labelled row, not a sixth chip.
-          It is a *scale* and the flags are booleans, so mixing them into one
-          wrapping row would have five numbers reading as five more things that
-          are either on or off. A `<fieldset>` because that is what five mutually
-          exclusive controls are, and `aria-pressed` for the same reason the flags
-          use it — the pressed one is the current value and pressing it again
-          clears it, which a radio group cannot do without a sixth "none" button.
-          `flex-wrap` at the call site, because `Card` cannot wrap markup it does
-          not own and this row plus its legend is 250px on a 324px phone column. */}
-      {/* THE SAME SEGMENTED SCALE AS MOOD AND ENERGY, and it was hand-rolled
-          here first: a `<fieldset>`, five `min-w-11` buttons and two inline
-          `cat()` colours — the "hand-rolling a control the app already has"
-          trap in CLAUDE.md, the one that shipped three panels looking
-          unstyled. `ChipPick` carries the track now, so the three 1–5 scales
-          on this page are one control with one set of rules.
-
-          NO WRAPPING `<fieldset>`. The old one had a legend reading "Drive"
-          and `ChipPick` renders its own, so keeping it nested two fieldsets
-          and announced the group's name twice. The component owns the
-          grouping; the call site owns only where it sits. */}
+      {/* DRIVE · the same segmented track as Mood and Energy.
+          It is a SCALE and the flags are booleans, so it is its own row: five
+          numbers inside the flag row would read as five more things that are
+          either on or off. */}
       <ChipPick
         className="mt-3"
         label="Drive"
