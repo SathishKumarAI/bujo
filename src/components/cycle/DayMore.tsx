@@ -1,3 +1,5 @@
+import { CaretRight } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { ChipPick } from '../ui/quickpick'
 import { CommitField } from '../CommitField'
 import { useStickyState } from '../../lib/useStickyState'
@@ -47,57 +49,40 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
         type="button"
         aria-expanded={isOpen}
         onClick={() => setOpen(isOpen ? '0' : '1')}
-        className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
+        className="flex min-h-11 w-full items-center gap-3 text-left"
       >
-        <span className="min-w-0">
-          {/* The label NAMES the fields, because "More" alone is a fold nobody
-              opens — the first version said only "More for today" and the most
-              asked-for thing on this page (mood and energy) was behind it with
-              nothing to say so.
-
-              THE NAMES ARE ALWAYS DRAWN, and that is a fix. They used to be
-              `summary(entry) || 'flow · mucus · LH · cravings · a note'` — the
-              hint showed only on a day with NOTHING on it, so the moment you
-              logged a mood it was replaced by "mood 3" and the other eight
-              fields became unfindable again. Asked exactly that way: *"where
-              else can I mark it as sticky, creamy? I'm not able to
-              understand"* — mucus is in here, and on a day with any value the
-              word "mucus" appeared nowhere on the page.
-
-              So: the fields always, and what you filled in underneath. The
-              second line costs ~18px on a day that has values and is the
-              answer to the only question anyone asked about this control. */}
-          {/* THE TITLE NAMES THE FIELDS, and that is the second fix here.
-              The first put the field names in the small grey hint beside the
-              title and the question came back unchanged — *"how can I mark
-              it? I'm unable to see it"* — because "Mood, energy & symptoms"
-              is what the eye reads, and mucus is not in it. A hint under a
-              heading that does not mention the thing is a hint nobody
-              connects to the thing.
-
-              So mucus and LH are IN the heading, and the rest is the hint.
-              `MarkKey` in `FlagLegend` names this control by the same words,
-              because the key that advertises `∴ creamy` has to say where
-              `creamy` is set.
-
-              THE HEADING'S ORDER IS THE PANEL'S ORDER. Writing mucus first
-              read better and would have been a lie: the groups render mood,
-              energy, tags, cravings, symptoms, mucus, LH, intimacy — mood
-              and energy lead on an earlier measured decision ("burying them
-              under four fertility fields is what made them unfindable"), and
-              a heading that promises a different order sends the reader to
-              the top of a panel whose first control is not the one named. Two
-              readers wanted opposite things first; naming both in the heading
-              is what serves them, not reordering for the louder one. */}
-          <span className="text-body font-medium text-fg-1">Mood, energy, mucus, LH &amp; more</span>
-          <span className="ml-2 text-label text-fg-2">
-            {isOpen ? 'tap to close' : 'tap to add · flow · cravings · symptoms · a note'}
-          </span>
-          {!isOpen && summary(entry) && (
-            <span className="mt-0.5 block text-label text-fg-1">{summary(entry)}</span>
-          )}
+        {/* THE SAME CARET AS THE ROW UNDER IT, on the same side. These two
+            disclosures sit eight pixels apart and had different glyphs on
+            opposite edges — a `▸` text character on the right here, a rotating
+            `CaretRight` icon on the left there. Two controls that do the same
+            thing and look like two different things is the "just created
+            website" tell in miniature; `caret-turn` is the app's own rotation
+            and this row now uses it. */}
+        <span className="caret-turn caret-turn-quarter inline-flex shrink-0 text-fg-2" data-open={isOpen}>
+          <Icon as={CaretRight} size="sm" />
         </span>
-        <span aria-hidden className="shrink-0 text-fg-2">{isOpen ? '▾' : '▸'}</span>
+
+        {/* ONE LINE, and it stays one: a title that does not shrink, a muted
+            value pushed right that TRUNCATES, and the caret. It rendered as
+            three lines before — the title, a hint listing five field names,
+            and the summary under it — which is what "looking like a just
+            created website" is made of. A row with a name on the left and its
+            state on the right is the shape every settings list in every SaaS
+            uses, and it is one line by construction.
+
+            The field names left the hint because the title already carries
+            the two people ask for, and the rest are named by their own
+            legends once the panel is open. */}
+        {/* "energy" came out of the title to buy the summary its width: with
+            it the row needed 123px of summary in 114px and `npm run clipped`
+            stayed red. Mood, mucus and LH are the three that were actually
+            asked for by name, and energy sits beside mood in the panel and in
+            the summary, so it is the one word that costs nothing to drop. */}
+        <span className="shrink-0 text-body font-medium text-fg-1">Mood, mucus, LH &amp; more</span>
+        <span className="ml-auto min-w-0 truncate text-label text-fg-2">
+          {isOpen ? 'tap to close' : (summary(entry) || 'tap to add')}
+        </span>
+
       </button>
 
       {isOpen && (
@@ -225,5 +210,16 @@ function summary(entry: CyclePoint | undefined): string {
   // "a chart behind a closed fold is a chart that does not exist" rule in
   // docs/PAGE-SHAPE.md applied to a field you typed yourself.
   if (entry.note?.trim()) parts.push('noted')
-  return parts.join(' · ')
+  /* CAPPED AT TWO NAMES AND A COUNT, because the row is one line.
+     The full join is "mood 3 · energy 3 · sticky · 1 tag · temp flagged" —
+     **265px of text in a 114px slot**, which `npm run clipped` caught the
+     moment this row stopped wrapping. Truncating it would have hidden three
+     of the five things a reader logged, and `data-clip-ok` would have been me
+     silencing a true finding rather than fixing it.
+     So the summary fits the space instead: what it is for is "is there
+     anything on this day, roughly what", and two names plus a remainder
+     answers that in a width that always fits. The detail is one press away,
+     which is the whole point of the row. */
+  if (parts.length <= 2) return parts.join(' · ')
+  return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`
 }

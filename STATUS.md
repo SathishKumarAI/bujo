@@ -1,56 +1,43 @@
 # STATUS
 
-**Stopped:** 2026-10-17, on `feat/cycle-guide-points`, **one PR to open**.
-Cycle's content pass — points, and the "how do I mark it" question answered
-on its second asking.
+**Stopped:** 2026-10-17, on `feat/cycle-one-box`, **one PR to open**.
+Cycle's fourth round of reported changes — the SaaS-polish pass.
 
 ## Where it stands
 
 | branch | PR | what | state |
 |---|---|---|---|
-| `main` | — | #418 · #419 · #420 · #421 · #422 all merged | up to date |
-| `feat/cycle-guide-points` | **not opened yet** | COD-337 round three — two commits | local |
+| `main` | — | #418–#423 merged | up to date |
+| `feat/cycle-one-box` | **not opened yet** | COD-337 round four — one commit | local |
 
 ## The next action
 
 1. **Open and merge the PR.** Green locally: `verify` (158 files, 2,166
-   tests), `clipped`, `design`, `a11y:panels`.
+   tests), `clipped`, `design`, `contrast`, `a11y:panels`.
 2. **Answer `docs/QUESTIONS.md`** — what "saved for every month" meant.
 3. **COD-336** — `maxBarSize` on the nine remaining bar charts.
-4. **The rest of the prose sweep.** `lib/cycleHelp.ts` (the ⓘ tooltips, 2–3
-   sentences each) and `lib/cycleManual.ts` (point texts running 130–161
-   chars) are the 27 multi-sentence strings still standing. Same treatment,
-   their own change — `CYCLE_HELP.text` feeds popovers and the Help page, so
-   it needs its consumers checked first.
+4. **The rest of the prose sweep** — `cycleHelp` and `cycleManual`, 27
+   multi-sentence strings. `CYCLE_HELP.text` feeds popovers *and* the Help
+   page, so check consumers first.
 
 ## What landed on this branch
 
-**The guide is points.** Swept first: 91 strings over 120 characters, 36 of
-them two or more sentences; the worst a 456-character luteal `eat`. All five
-`CyclePhase` fields are `string[]`, both renderers updated — `{ph.what}` on a
-list compiles and paints the lines concatenated, so the data change alone
-would have made it worse.
-
-| card | before | after |
+| | before | after |
 |---|---|---|
-| `food`, 1440 | 1,434px | **1,428px** |
-| `food`, phone | 2,509px | **3,044px** |
-| `phases`, phone | 1,089px | 1,392px |
+| month stepper | app top bar | inside zone 1's block |
+| orientation | a block in zone 1 **and** a strip at the head of zone 3 | one box |
+| flag colours | five pills always drawn + a separate glyph key | one named row, both keys behind it |
+| the two fold rows | three lines and two | **one line each** |
 
-Desktop level, **phone +535px for scannability** — the honest cost of bullets.
+`viewChrome` drops `dateNav` for this view so there is one stepper, not two
+for one cursor. `SummaryStrip` is gone from zone 3. Both disclosure rows are a
+non-shrinking title, a muted value pushed right, and the same caret on the
+same side — the `▸` text glyph became the app's own rotating `CaretRight`.
 
-**"How can I mark it?" asked twice.** The first fix put the field names in the
-grey hint; the title still said "Mood, energy & symptoms". It is `Mood,
-energy, mucus, LH & more` now, in the panel's own order, and the mark key says
-where the marks are set.
-
-## What went wrong
-
-- **`git checkout <file>` wiped uncommitted work twice** while reverting a
-  canary. Copy the file first, or stash — the canary is worth running and the
-  undo is what bites.
-- **A canary that could not fail**, again: the first version asserted a glyph
-  read from the map the key is built from.
+**`npm run clipped` caught the dishonest half of "make it one line":** the
+collapsed summary needed **265px in a 114px slot**, hiding three of the five
+things logged. Fixed by fitting the content (`mood 3 · energy 3 · +3`), not by
+`data-clip-ok`.
 
 ## Open
 

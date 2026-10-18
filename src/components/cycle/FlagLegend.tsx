@@ -113,14 +113,24 @@ export function FlagLegend() {
           <span className="caret-turn caret-turn-quarter inline-flex text-fg-2" data-open={open}>
             <Icon as={CaretRight} size="sm" />
           </span>
-          <span className="text-caption font-medium uppercase tracking-wide text-fg-2">
-            Flag colours
+          {/* ONE LINE, in the shape of the field disclosure below the editor
+              — asked for as "make the flag colours hidden and only show when
+              needed… the way you designed the more energy mucus and LH and
+              more, but make it like one-liners".
+
+              The pills used to stay drawn when this was closed, on the
+              argument that hiding a key reproduces the complaint that created
+              it. That argument was about a key with no way back; this is a
+              named, pressable row that says exactly what it holds, which is
+              the difference between hidden and put away. */}
+          <span className="shrink-0 text-body font-medium text-fg-1">Flag colours &amp; day marks</span>
+          {/* Right-aligned and truncating, so this row is one line at every
+              width the act column takes. The count is the honest short form
+              of the list that used to wrap here: five flags, five mucus
+              stages, three LH results. */}
+          <span className="ml-auto min-w-0 truncate text-label text-fg-2">
+            {open ? 'tap to close' : 'what every mark means'}
           </span>
-          {!open && (
-            <span className="ml-auto text-micro uppercase tracking-wide text-fg-2">
-              what each marks
-            </span>
-          )}
         </button>
       </h3>
 
@@ -146,20 +156,13 @@ export function FlagLegend() {
             </div>
           ))}
         </dl>
-      ) : (
-        /* Closed, the legend is still a legend: five hues and five words, one
-           or two lines, which is the whole of what the report asked for. The
-           `title` is the desktop shortcut into the sentence the fold holds. */
-        <ul id="cycle-flag-meanings" className="mt-1 flex flex-wrap gap-1.5">
-          {FLAGS.map((f) => (
-            <li key={f}>
-              <FlagPill flag={f} title={FLAG_MEANS[f]} />
-            </li>
-          ))}
-        </ul>
-      )}
+      ) : null}
 
-      <MarkKey />
+      {/* The hue key and the glyph key are one disclosure, because they are
+          one question — "what does that mark mean" — asked of two columns of
+          the same row. Two adjacent folds for that was the act column saying
+          "here is a key" twice. */}
+      {open && <MarkKey />}
     </div>
   )
 }
@@ -204,7 +207,7 @@ function MarkKey() {
           question that came back twice. The words match the control's own
           heading exactly, so the sentence and the thing it points at are
           findable by the same search. */}
-      <p className="text-label text-fg-2">Set these on a day under <span className="text-fg-1">Mood, energy, mucus, LH &amp; more</span>, above.</p>
+      <p className="text-label text-fg-2">Set these on a day under <span className="text-fg-1">Mood, mucus, LH &amp; more</span>, above.</p>
       <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-label text-fg-2">
         {marks.map(([glyph, word]) => (
           <li key={word}>

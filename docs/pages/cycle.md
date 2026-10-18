@@ -148,9 +148,9 @@ and the act runs from the top of the page.
 
 | zone | holds |
 |---|---|
-| 1 · orient | the `nextStep` sentence, then cycle day · phase+confidence · next period · your average, then the privacy line |
+| 1 · orient | one box: the `nextStep` sentence, the month stepper, four facts, the three totals, the privacy line |
 | 2 · act | the day editor, the optional fold, the flag legend, the month list — collapsible to a 40px strip |
-| 3 · review | one bar: This cycle · How you feel · Fertility · Patterns · Your log · Guide · Manual |
+| 3 · review | one bar: This cycle · How you feel · Fertility · Patterns · Your log · Guide · Manual. No summary strip — it is in zone 1 |
 
 ### The rail
 
@@ -454,6 +454,52 @@ order is the panel's order, because writing mucus first would have promised a
 first control that is not there. `MarkKey` carries one line naming that
 control in its own words, since a key that advertises `∴ creamy` with no
 visible way to record it is what sent the question back.
+
+## One box, and two honest one-liners · COD-337 round four
+
+Four reports in one message that describe one page rather than four fixes.
+
+| | before | after |
+|---|---|---|
+| month stepper | app top bar, two zones from what it changes | inside zone 1's block |
+| orientation | a block in zone 1 **and** a `SummaryStrip` at the head of zone 3 | one box |
+| flag colours | five pills always drawn, plus a separate glyph key | one named row, both keys behind it |
+| the two fold rows | three lines and two | **one line each** |
+| page, 1440 | — | 1,377px · 1.53 screens |
+| page, phone | — | 1,952px · 2.31 screens |
+
+**The month belongs with the thing it changes.** `viewChrome` drops `dateNav`
+for this view, so there is one stepper rather than two for one cursor. Every
+other month view keeps the header's.
+
+**The orientation is one box** — what to do, which month, where you are
+today, what the record adds up to, the promise. `SummaryStrip` is gone from
+zone 3, which is the move Recovery made (§22) rather than keeping one strip
+per zone.
+
+**The flag key is put away, not hidden.** The pills used to stay drawn when
+closed, on the argument that hiding a key reproduces the complaint that
+created it. That argument was about a key with no way back; a named,
+pressable row that says what it holds is a different thing. The glyph key
+moved inside the same disclosure, because "what does that mark mean" is one
+question asked of two columns of one row.
+
+**A one-liner that is not one line is the fault being fixed.** Both rows are
+a non-shrinking title, a muted value pushed right, and the same caret on the
+same side — and the `▸` text glyph became the app's own rotating
+`CaretRight`, so two controls eight pixels apart stop looking like two
+different things.
+
+### The gate caught the dishonest part of that
+
+Making a row one line is easy; making it one line *without hiding anything*
+is the work. `npm run clipped` found the collapsed summary needing **265px in
+a 114px slot** — three of the five things the reader had logged, gone.
+`data-clip-ok` would have silenced a true finding. The content fits the space
+instead: two names and a remainder, `mood 3 · energy 3 · +3`. That still
+needed 123px in 114, so "energy" left the title — mood, mucus and LH are the
+three asked for by name, and energy sits beside mood in both the panel and
+the summary.
 
 ## Open
 
