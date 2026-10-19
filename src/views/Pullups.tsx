@@ -12,6 +12,7 @@ import { buyingGuideUrl } from '../lib/video'
 import {
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
   PanelGrid, PanelCard, DefList, Tag, ActStrip,
+  useActColumn,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
@@ -74,7 +75,17 @@ export function Pullups() {
      being a column at all: the grid becomes `1fr auto` and the review takes the
      width. Default open — a panel that ships collapsed is one `npm run a11y`
      never walks into (COD-93). */
-  const [act, setAct] = useStickyState<'open' | 'shut'>('pullups.act', 'open', ['open', 'shut'])
+  /* `useActColumn`, not a bare `useStickyState`.
+     The two are the same line until you reach a phone. The hook adds the one
+     rule a hand-rolled copy cannot have: **shut by default when the page
+     STACKS**, which it learns from the shell through `onSplitChange` because
+     the split is a container query on the 900px shell and no viewport test can
+     answer it. Without it this page opened its form on a phone and put the
+     record below it — measured at 390 before this change: the act column was
+     **1,117px**, against the 41px strip every page using the hook collapses to.
+     `useActColumn`'s own docstring carries the three measurements that decided
+     the default. */
+  const logCol = useActColumn('pullups')
   const max = maxInput === '' ? logged : Number(maxInput) || 0
   const ability = pullupAbility(max)
 
@@ -129,15 +140,16 @@ export function Pullups() {
     <PageLayout
       tier={1180}
       zone1={<StatBar facts={facts} />}
-      actShut={act === 'shut'}
-      zone2={act === 'shut' ? (
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
+      zone2={logCol.shut ? (
         <ActStrip
           label="Log a session"
           summary={last ? `last: ${repsOf(last.sets)} reps` : 'nothing logged yet'}
-          onOpen={() => setAct('open')}
+          onOpen={logCol.open}
         />
       ) : (
-        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setAct('shut')} />
+        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close} />
       )}
       zone3={
         <Review

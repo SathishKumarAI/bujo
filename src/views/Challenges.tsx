@@ -1,4 +1,4 @@
-import { Archive, CaretLeft, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
+import { Archive, CaretLeft, CaretRight, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -6,7 +6,7 @@ import { Card, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Checkbox } from '../components/ui/checkbox'
-import { EmptyFrame, NextStepBlock, PageLayout, StatBar, SummaryStrip } from '../components/page'
+import { ActStrip, EmptyFrame, NextStepBlock, PageLayout, StatBar, SummaryStrip, useActColumn } from '../components/page'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
@@ -78,6 +78,18 @@ export function Challenges() {
   // the focused one can be archived or deleted out from under this state, and a
   // dangling id would render an empty page with no way back.
   const focused = active.find((c) => c.id === focusId) ?? active[0]
+  /* THE ONE PAGE WITH A LOGGING ZONE 2 AND NO WAY TO PUT IT AWAY.
+     Every other act column in the app collapses to a 41px strip when the page
+     stacks; this one rendered its day card at full height above the review —
+     **642px at 390** — because it never adopted `useActColumn`. Same hook,
+     same strip, same shell-driven default as Cycle, Fitness, Gym, Nutrition,
+     Pickleball and (now) Pull-ups and Home workout.
+
+     It does NOT collapse while `creating`, or with no challenge yet: a form
+     you just opened must stay open, and the empty state's zone 2 is the
+     page's primary action rather than a record of anything. A strip over
+     "Start a challenge" would put the only thing to do behind a tap. */
+  const logCol = useActColumn('challenges')
   const today = todayISO()
 
   return (
@@ -119,8 +131,16 @@ export function Challenges() {
           </div>
         )
       })()}
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut && !!focused && !creating}
       zone2={
-        creating ? (
+        logCol.shut && focused && !creating ? (
+          <ActStrip
+            label="Today"
+            summary={`${focused.name} · ${rulesDoneOn(data, focused.id, today).length} of ${focused.rules.length} ticked`}
+            onOpen={logCol.open}
+          />
+        ) : creating ? (
           <Card band hideInfo title="New challenge" right={
             <Button variant="ghost" size="icon-sm" onClick={() => setCreating(false)} aria-label="Cancel new challenge">
               <Icon as={X} size="sm" />
@@ -129,7 +149,7 @@ export function Challenges() {
             <NewChallengeForm onCreate={(c) => { addChallenge(c); setCreating(false) }} />
           </Card>
         ) : focused ? (
-          <TodayCard challenge={focused} />
+          <TodayCard challenge={focused} onShut={logCol.close} />
         ) : (
           <Card band hideInfo title="Start a challenge" subtitle="75 Hard, 90-day, or your own rules">
             <p className="mb-3 text-body text-fg-2">
@@ -236,7 +256,13 @@ function orientFacts(data: JournalData, c: Challenge, today: string) {
 }
 
 /** Zone 2 · the act. Tick today's rules; nothing else. */
-function TodayCard({ challenge: c }: { challenge: Challenge }) {
+function TodayCard({ challenge: c, onShut }: {
+  challenge: Challenge
+  /* Put the column away. Every other act column in the app can be shut from
+     inside it; without this the strip is reachable once and never again,
+     which `docs/USER-CONTROL.md` calls an affordance with no way back. */
+  onShut?: () => void
+}) {
   const confirm = useConfirm()
   const { data, updateChallenge, removeChallenge } = useJournal()
   const today = todayISO()
@@ -263,6 +289,11 @@ function TodayCard({ challenge: c }: { challenge: Challenge }) {
       subtitle={notStarted ? `Starts ${c.startDate}` : finished ? 'Finished' : `${done.length} of ${c.rules.length} done`}
       right={
         <div className="flex items-center gap-1">
+          {onShut && (
+            <Button variant="ghost" size="icon-sm" onClick={onShut} aria-label="Hide today — the review takes the width">
+              <Icon as={CaretRight} size="sm" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive">
             <Icon as={Archive} size="sm" />
           </Button>
