@@ -229,6 +229,41 @@ Trap: **Tailwind v4 does not fail the build on a stale utility class.** It exits
 migrate every call site first and only then remove it from the theme, with a
 grep as the gate.
 
+**And it is not only STALE classes — an arbitrary value or a container name
+can emit nothing too, having never existed.** Three in one session, all exit
+0, no warning: `w-[6ch]` (the field rendered at the browser's default, and
+widening it from `5.5ch` changed not one pixel — *twice*), `@container/more`
+(so a `@2xl/more:grid-cols-2` beside it queried a container that did not
+exist and matched at **no width at all**), and `@3xl:max-w-5xl` on a dialog
+that is not inside any container, which therefore shipped 512px wide while
+reporting success.
+
+**The tell is always the same: a tweak to a number has no effect.** When
+changing a value does nothing, stop changing it and ask whether the class is
+in the output — `grep '<the class>' dist/assets/*.css`, which is two seconds
+and ends the guessing. Note the corollary for container queries specifically:
+the query rule DOES get emitted (`@container more (width>=42rem){…}`), so
+finding your breakpoint in the CSS proves nothing — it is the `container-name`
+*declaration* that is missing, and a query against a container that does not
+exist never matches and never says so.
+
+Trap: **read a gate's PREDICATE before believing its noun.** `clipped`
+reported *"37px shown of 39px (5 chars)"* on a field whose value is five
+characters, which reads as a width — and `findOverflowingFields` measures
+**`scrollHeight` against `clientHeight`**. It was a HEIGHT: the display step's
+1.15 line-height needs a 37px line box inside a 37px content box. Three
+guesses went into widening something that was too short, one of which was the
+`w-[6ch]` above, so the two traps compounded. The gates in this repo are
+terse on purpose; `scripts/` is where they say what they actually test.
+
+Trap: **`a ?? b ? c : d` parses as `(a ?? b) ? c : d`.** `??` binds tighter
+than the conditional, so the obvious one-liner for a per-option tone
+(`o.tone ?? tone === 'brand' ? 'mauve' : tone`) resolves every TONED row to
+mauve: `o.tone` is a truthy string, so the ternary's condition is satisfied
+and the first arm wins. It produces a *plausible* colour, which is the family
+`cat()`'s silent mauve fallback already belongs to — no type, no gate and no
+screenshot of a single theme can see it. Name the intermediate value.
+
 Trap (fixed, COD-93): **`npm run a11y` could not scan inside a collapsed
 fold.** axe walks the rendered page, so anything behind a closed section was
 simply not checked — folding a section was a way to make a violation vanish

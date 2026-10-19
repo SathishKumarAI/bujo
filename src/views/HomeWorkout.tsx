@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
-import { PageLayout, StatBar, ActStrip } from '../components/page'
+import { PageLayout, StatBar, ActStrip, useActColumn } from '../components/page'
 import { ProgressionNudge, Review, SessionCard, type SessionItem } from '../components/homeworkout'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import { homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
 import { useCappedList } from '../lib/useCappedList'
-import { useStickyState } from '../lib/useStickyState'
 
 /**
  * HOME WORKOUT · an 83-movement training library, and the place a home session
@@ -53,7 +52,17 @@ export function HomeWorkout() {
      turns the act into a 40px rail and hands its width to the review. Default
      open — `npm run a11y` walks the rendered page, so a panel that ships
      collapsed is one the gate never scans (COD-93). */
-  const [act, setAct] = useStickyState<'open' | 'shut'>('homeworkout.act', 'open', ['open', 'shut'])
+  /* `useActColumn`, not a bare `useStickyState`.
+     The two are the same line until you reach a phone. The hook adds the one
+     rule a hand-rolled copy cannot have: **shut by default when the page
+     STACKS**, which it learns from the shell through `onSplitChange` because
+     the split is a container query on the 900px shell and no viewport test can
+     answer it. Without it this page opened its form on a phone and put the
+     record below it — measured at 390 before this change: the act column was
+     **752px**, against the 41px strip every page using the hook collapses to.
+     `useActColumn`'s own docstring carries the three measurements that decided
+     the default. */
+  const logCol = useActColumn('homeworkout')
 
   const sessions = useMemo(
     () => (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1)),
@@ -113,12 +122,13 @@ export function HomeWorkout() {
         { label: 'In this session', value: items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Empty', prose: true },
         { label: 'Last session', value: last ? `${last.sets.length} exercises · ${prettyDay(last.date)}` : 'None yet', prose: true },
       ]} />}
-      actShut={act === 'shut'}
-      zone2={act === 'shut' ? (
+      onSplitChange={logCol.onSplitChange}
+      actShut={logCol.shut}
+      zone2={logCol.shut ? (
         <ActStrip
           label="Today’s session"
           summary={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'} ready to log` : 'Empty'}
-          onOpen={() => setAct('open')}
+          onOpen={logCol.open}
         />
       ) : (
         <>
@@ -136,7 +146,7 @@ export function HomeWorkout() {
           dur={dur} onDur={setDur}
           notes={notes} onNotes={setNotes}
           onLog={logSession}
-          onShut={() => setAct('shut')}
+          onShut={logCol.close}
         />
         </>
       )}

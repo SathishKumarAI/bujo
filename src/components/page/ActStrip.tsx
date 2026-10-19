@@ -1,5 +1,5 @@
 import { Icon } from '../Icon'
-import { CaretLeft } from '../icons'
+import { CaretLeft, CaretRight } from '../icons'
 
 /**
  * The act column, shut — a slim rail on the right that reopens it.
@@ -46,6 +46,79 @@ export function ActStrip({ label, onOpen, summary }: {
           span is paint. */}
       <span aria-hidden className="whitespace-nowrap [writing-mode:vertical-rl]">{label}</span>
       {summary && <span aria-hidden className="hidden text-fg-2 [.page-zones-single_&]:inline">· {summary}</span>}
+    </button>
+  )
+}
+
+/**
+ * THE WAY OUT OF THE ACT COLUMN — one control, so it stops being five.
+ *
+ * WHAT THIS OWNS: the affordance that shuts zone 2 and hands the width back
+ * to the review. It is `ActStrip`'s inverse and lives beside it for that
+ * reason: the pair is one gesture with two ends, and they drifted apart
+ * precisely because only one of them was a component.
+ *
+ * ── What it replaces ─────────────────────────────────────────────────────
+ *
+ * Nine pages have an act column. Audited at `c182ca3`, they shut it **five
+ * different ways**:
+ *
+ * | pages | the control |
+ * |---|---|
+ * | Recovery, Nutrition | the `<h2>` title itself is the button, with a caret |
+ * | Cycle | a separate button painting "Tap to hide" |
+ * | Fitness, Gym, Pickleball | an icon-only ghost button, named `Hide the log` / `Hide the logger` |
+ * | Pull-ups, Home workout | `Card collapsible`'s own caret, named `Collapse …` |
+ * | Challenges | nothing at all, until COD-373 |
+ *
+ * Five shapes, four nouns for the same column, two different verbs, and one
+ * page where the gesture did not exist. Reported as *"make sure we have all
+ * places in a similar manner"*, which is exactly right: a reader who learns
+ * the control on one page should not have to find it again on the next.
+ *
+ * ── The three decisions in it ────────────────────────────────────────────
+ *
+ * **The word is painted, not only announced.** The icon-only version is the
+ * one Recovery's own comment calls "a feature nobody finds", and the `title`
+ * it leaned on does not exist on a phone at all. A caret alone is a glyph
+ * whose meaning you have to already know.
+ *
+ * **The accessible name CONTAINS the painted word.** `label-content-name-mismatch`
+ * (WCAG 2.5.3) compares the name against what is DRAWN, because a
+ * speech-input user says what they can see — so the name extends "Hide"
+ * rather than replacing it. Cycle shipped this exact violation once, painting
+ * "Tap to hide" while announcing "Hide the log", and `a11y:panels` caught it
+ * on all twelve of that page's rows at once.
+ *
+ * **It is not `Card collapsible`.** That folds a card's *body*, which on a
+ * desktop frees height and no width — the act column is a grid track, so a
+ * folded card leaves a ~400px empty lane beside the thing you are reading.
+ * `ActStrip`'s docstring has the measurement: 678px → 1054px of review only
+ * when the TRACK goes.
+ */
+export function ActHide({ what, onHide, className = '' }: {
+  /**
+   * What is being put away, as a noun phrase: `the log`, `today`, `the
+   * logger`. Used to finish the sentence the button announces; never drawn.
+   */
+  what: string
+  onHide: () => void
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onHide}
+      /* `aria-expanded` and not `aria-pressed`: this is a disclosure, and it
+         is the attribute `openFolds()` in the a11y gate looks for — a control
+         that hides content and does not say so is content the gate cannot
+         reach. */
+      aria-expanded
+      aria-label={`Hide ${what} — the review takes the width`}
+      className={`group inline-flex shrink-0 items-center gap-1 text-label text-fg-2 transition-colors hover:text-fg-1 ${className}`}
+    >
+      Hide
+      <Icon as={CaretRight} size="sm" className="transition-transform duration-200 group-hover:translate-x-0.5" />
     </button>
   )
 }
