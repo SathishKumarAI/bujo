@@ -31,9 +31,18 @@ export function cycleDay(entries: CyclePoint[], today: string): number | null {
  * Personal average cycle length over the last few gaps (≤6, so an old
  * irregular year does not outvote the recent pattern). Needs two starts.
  * Gaps outside 15–60 days are skipped as logging artifacts, not cycles.
+ *
+ * **Starts after `today` are not cycles that happened.** `cycleDay` and
+ * `nextPeriodEstimate` both filter to `<= today` and this did not, so a
+ * period flagged on a day still to come — which the month list invited, by
+ * drawing every future day as a pressable row — joined the average that every
+ * phase band, the ring's `of ~29` and the next-period estimate are built
+ * from. Same family as the future rest days in CLAUDE.md: a day that has not
+ * happened is not a measurement. The default keeps it a pure function of its
+ * arguments for the tests; `nextPeriodEstimate` passes the date it was given.
  */
-export function avgCycleLength(entries: CyclePoint[]): number | null {
-  const starts = periodStarts(entries)
+export function avgCycleLength(entries: CyclePoint[], today = todayISO()): number | null {
+  const starts = periodStarts(entries).filter((d) => d <= today)
   const gaps: number[] = []
   for (let i = 1; i < starts.length; i++) {
     const g = dayDiff(starts[i - 1], starts[i])
@@ -47,7 +56,7 @@ export function avgCycleLength(entries: CyclePoint[]): number | null {
 /** Estimated start of the next period: latest start + the personal average. */
 export function nextPeriodEstimate(entries: CyclePoint[], today: string): string | null {
   const starts = periodStarts(entries).filter((d) => d <= today)
-  const len = avgCycleLength(entries)
+  const len = avgCycleLength(entries, today)
   if (starts.length === 0 || len == null) return null
   return addDays(starts[starts.length - 1], len)
 }
@@ -369,7 +378,7 @@ export function nextStep(entries: CyclePoint[], opts: {
 } = {}): CycleStep {
   const today = opts.today ?? todayISO()
   const day = cycleDay(entries, today)
-  const length = avgCycleLength(entries)
+  const length = avgCycleLength(entries, today)
   const until = daysUntilNextPeriod(entries, today)
   const finished = cycleHistory(entries, today).filter((c) => !c.current).length
   const spread = opts.spread ?? 0

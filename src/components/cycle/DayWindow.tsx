@@ -40,11 +40,13 @@ import type { CyclePoint } from '../../lib/types'
  * the app had no editing dialog and would need a new primitive; checking
  * first is what turned a new component into a reused one.
  */
-export function DayWindow({ date, entry, unit, fertilityFirst, onClose, onTemp, onToggleFlag, onDrive, onPatch }: {
+export function DayWindow({ date, entry, unit, cycleDay, fertilityFirst, onClose, onTemp, onToggleFlag, onDrive, onPatch }: {
   /** The day to edit, or `null` when the window is shut. */
   date: string | null
   entry: CyclePoint | undefined
   unit: string
+  /** 1-based cycle day, drawn by `DayEditor`'s header — see the title below. */
+  cycleDay?: number | null
   fertilityFirst: boolean
   onClose: () => void
   onTemp: (temp: number | undefined) => void
@@ -56,9 +58,14 @@ export function DayWindow({ date, entry, unit, fertilityFirst, onClose, onTemp, 
     <Dialog open={date != null} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          {/* The date is the title, because the window is about one day and
-              the list it opened from shows thirty. */}
-          <DialogTitle>{date ? prettyDay(date) : ''}</DialogTitle>
+          {/* `sr-only`, because `DayEditor` draws this exact day six pixels
+              below — the window read **"Fri, Oct 9 / Fri, Oct 9"**, which is
+              the same sentence twice and the fault this page's own history is
+              made of. Radix requires a `DialogTitle` for the dialog's
+              accessible name, so it stays and stops being drawn; the editor's
+              own header is the visible one, and it carries the cycle day
+              besides. */}
+          <DialogTitle className="sr-only">{date ? prettyDay(date) : ''}</DialogTitle>
         </DialogHeader>
         {date && (
           <div className="space-y-3">
@@ -66,6 +73,7 @@ export function DayWindow({ date, entry, unit, fertilityFirst, onClose, onTemp, 
               date={date}
               entry={entry}
               unit={unit}
+              cycleDay={cycleDay}
               onTemp={onTemp}
               onToggleFlag={onToggleFlag}
               onDrive={onDrive}

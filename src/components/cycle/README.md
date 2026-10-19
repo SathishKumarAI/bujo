@@ -19,7 +19,7 @@ renders it. None of them reads the store, which is what keeps
 | Temperature, coverline, period/ovulation shading | `BbtChart.tsx` |
 | Which cycle day each flag lands on | `SymptomPattern.tsx` |
 | The temperature field and the five chips | `DayEditor.tsx` |
-| The month as a list, with its cycle-day column | `MonthList.tsx` |
+| The month as a calendar — the period run, the marks, the selection | `CycleMonth.tsx` |
 | Any number any of them shows | `../../lib/cycleInsights.ts` |
 
 ## Rules
@@ -43,8 +43,10 @@ instead of reading it, with every gate green.
 **Everything in zone 3 is keyed to the cycle, not the calendar month.** A
 month boundary cuts a cycle at an arbitrary point, so the temperature chart —
 whose whole subject is a shift that happens mid-cycle — used to read as two
-unrelated fragments in two different months. `MonthList` is the exception and
-stays month-shaped, because it is a diary you look things up in by date.
+unrelated fragments in two different months. `CycleMonth` is the exception and
+stays month-shaped, because it is a diary you look things up in by date — and
+it is a calendar rather than a list because a list has no weeks in it, so it
+cannot show that the bleed ran Monday to Friday.
 
 **Nothing here predicts.** Every derivation is arithmetic over what was
 logged, every function returns `null` when the log cannot answer, and the
