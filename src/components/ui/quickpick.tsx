@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { cn } from '../../lib/cn'
+import { cat, onAccent } from '../../lib/colors'
 
 /**
  * TAP INSTEAD OF TYPE · the two controls a logging form actually wants.
@@ -59,22 +60,54 @@ import { cn } from '../../lib/cn'
   This also fixes `teal` and `peach`, which shipped with accent text and the
   same arithmetic, at every call site they have.
 */
+/*
+  SELECTED IS A FILL NOW, not a 15% wash of the accent.
+
+  The wash was the idiom and it never worked outside a dark theme: measured on
+  these very chips, composited over the first opaque ancestor, **seven of ten
+  light-theme readings sat under 4.5 and the worst was 3.64**. The fix at the
+  time moved the TEXT to `fg-1` and left the colour in the border and the wash
+  — correct, and it left a selected chip reading as a slightly tinted
+  unselected one. On a phone, in the dark, at arm's length, that is not a
+  state; it is a rumour.
+
+  A fill is unambiguous, and it is the only version where the hue the flag
+  carries everywhere else (the calendar cell, the chart shading, the symptom
+  row) is actually present at strength in the control.
+
+  The TEXT on that fill is computed, not classed. `onAccent()` parses the
+  accent and picks whichever of the theme's two neutrals clears 4.6 against
+  it — there is no `--color-on-teal` to write, and hand-solving 7 accents × 5
+  themes is 35 values nobody will keep in step. `brand` is the exception
+  because it already HAS a solved pair (`--color-brand-ink` is the theme's
+  crust, which is near-white on latte's purple and near-black on mocha's
+  mauve) and a solved pair beats a computed one.
+*/
 const ON_TONE = {
-  brand: 'border-brand bg-brand-wash font-medium text-brand-text',
-  teal: 'border-teal bg-teal/15 font-medium text-fg-1',
-  peach: 'border-peach bg-peach/15 font-medium text-fg-1',
-  green: 'border-green bg-green/15 font-medium text-fg-1',
-  yellow: 'border-yellow bg-yellow/15 font-medium text-fg-1',
-  red: 'border-red bg-red/15 font-medium text-fg-1',
+  brand: 'border-transparent bg-brand font-semibold text-brand-ink',
+  teal: 'border-transparent bg-teal font-semibold',
+  peach: 'border-transparent bg-peach font-semibold',
+  green: 'border-transparent bg-green font-semibold',
+  yellow: 'border-transparent bg-yellow font-semibold',
+  red: 'border-transparent bg-red font-semibold',
   /* `mauve` and `maroon` are here for Cycle's flag row, where the hue is the
      flag's IDENTITY across four surfaces (the chips, the day-list dots, the
      symptom rows, the chart's period shading) rather than a decoration. The
      row was hand-rolled with inline `cat()` fills precisely because these two
      were missing — which is the "needing a variant later means the primitive
      under-abstracted" case, answered in the primitive. */
-  mauve: 'border-mauve bg-mauve/15 font-medium text-fg-1',
-  maroon: 'border-maroon bg-maroon/15 font-medium text-fg-1',
+  mauve: 'border-transparent bg-mauve font-semibold',
+  maroon: 'border-transparent bg-maroon font-semibold',
 } as const
+
+/** The palette key a tone paints with. `brand` is a CSS token rather than a
+ *  palette entry, so it resolves to the accent it is built from — `cat()`
+ *  would otherwise fall back to mauve silently and by luck be right. */
+const railTone = (t: ChipTone): string => (t === 'brand' ? 'mauve' : t)
+
+/** The neutral that clears 4.6 on a tone's fill, per theme. `brand` carries
+ *  its own solved pair in CSS and takes no inline colour. */
+const onFill = (t: ChipTone) => (t === 'brand' ? undefined : { color: onAccent(cat(t)) })
 /*
   AT REST, a ramp option keeps its colour in the BORDER.
 
@@ -110,7 +143,7 @@ const ON_TONE = {
   was not run.
 */
 const REST_TONE = {
-  brand: 'border-fg-3/60',
+  brand: 'border-edge',
   teal: 'border-teal/50',
   peach: 'border-peach/50',
   green: 'border-green/50',
@@ -147,6 +180,7 @@ export function ChipPick<T extends string | number>({
   hint,
   after,
   className,
+  info,
   tone = 'brand',
   dense = false,
   multi = false,
@@ -155,6 +189,15 @@ export function ChipPick<T extends string | number>({
 }: {
   /** Rendered as a real `<legend>`, so the group is named for a screen reader. */
   label: string
+  /**
+   * A marker beside the label — in practice an `InfoTip`.
+   *
+   * It is a slot rather than a `help` string because this primitive has no
+   * business knowing about a glossary: Cycle's tips come from
+   * `lib/cycleHelp.ts` and another page's would not. The caller passes the
+   * node; the legend just makes room for it.
+   */
+  info?: ReactNode
   /** One value, or the selected set when `multi`. */
   value: T | null | undefined | readonly T[]
   onChange: (v: T) => void
@@ -242,7 +285,7 @@ export function ChipPick<T extends string | number>({
             label and stops it being the loudest thing in its own group: in a
             form the CONTROL is the content. */}
         <legend className="mb-1.5 flex w-full items-baseline gap-2 text-label font-medium text-fg-1">
-          <span>{label}</span>
+          <span>{label}{info}</span>
           {/* THE WORD FOR THE VALUE YOU PICKED. A rank means nothing on its
               own, and the endpoints define only the ends — "3" on a 1–5 is
               the value a reader is least able to name. Absent until something
@@ -254,22 +297,61 @@ export function ChipPick<T extends string | number>({
           )}
         </legend>
         {/*
-          ONE TRACK, not five pills.
+          A RAIL, not five boxed cells.
 
-          `divide-x` rather than a gap, so the segments read as one control
-          that has been divided — which is what an ordered scale is. `flex-1`
-          on every segment, so the width is split evenly and the track is as
-          wide as the column: a scale that sizes to its labels implies the
-          labels differ in weight, and 1–5 do not.
+          It was a bordered track divided into five filled segments — one
+          control, correctly, but a control that looks the same whether the
+          scale runs 1→5 or dry→egg-white, and the same whether you have
+          answered it or not. Three things change:
 
-          The press target stays at the 44px floor through `py-2` plus the
-          text line, which is what the hand-rolled drive row was using
-          `min-w-11` to guarantee before it came here.
+          **The rail shows the scale.** A thin notched bar with the choice
+          sitting ON it reads as a position along a run. That matters most
+          where the run is the data: cervical mucus goes dry → egg-white and
+          the progression IS the fertile ramp, which five identical cells hid
+          completely.
+
+          **Nothing chosen draws an EMPTY rail.** Five filled cells with none
+          lit reads as a control waiting to be found; an empty rail reads as a
+          question you have not answered — and this app has to keep "not
+          answered" and "answered 1" apart, because a 1 and a skipped day must
+          never average together (`lib/cycleInsights.ts` returns `null` rather
+          than a fake zero for the same reason).
+
+          **The stops are the labels.** A named scale puts its words under
+          its own notches instead of needing a separate row for the ends, so
+          `flow`, `mucus` and `lh` can stop being chip rows.
+
+          The 44px target floor is kept on the STOPS (`min-h-11`), which are
+          the thing you press — the rail itself is 6px and is a drawing.
         */}
-        <div className="flex w-full overflow-hidden rounded-control border border-line-strong divide-x divide-line">
+        <div className="relative h-1.5 overflow-hidden rounded-pill border border-line bg-ink-2">
+          {/* The notches, so the number of steps is visible before you answer. */}
+          <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
+            {options.map((o, i) => (
+              <span key={String(o.value)} className={i < options.length - 1 ? 'border-r border-line' : ''} />
+            ))}
+          </div>
+          {picked >= 0 && (
+            <span
+              className="absolute inset-y-0 rounded-pill"
+              style={{
+                width: `calc(100% / ${options.length})`,
+                left: `calc(100% / ${options.length} * ${picked})`,
+                /* `railTone` and not an inline ternary. `a ?? b ? c : d` parses
+                   as `(a ?? b) ? c : d`, so the obvious one-liner
+                   (`o.tone ?? tone === 'brand' ? 'mauve' : tone`) resolves
+                   every TONED rail to mauve — a precedence bug that paints a
+                   plausible colour and so cannot be caught by a type or a
+                   gate, which is the family CLAUDE.md records as `cat()`
+                   returning mauve for a name it does not know. */
+                background: cat(railTone(options[picked].tone ?? tone)),
+              }}
+            />
+          )}
+        </div>
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${options.length}, 1fr)` }}>
           {options.map((o) => {
             const on = value === o.value
-            const t = o.tone ?? tone
             const drawn = typeof o.label === 'string' ? o.label : ''
             const spoken = o.name && drawn && !o.name.toLowerCase().includes(drawn.toLowerCase())
               ? `${drawn} — ${o.name}`
@@ -283,18 +365,18 @@ export function ChipPick<T extends string | number>({
                 title={o.hint}
                 aria-label={spoken}
                 className={cn(
-                  /* `min-h-11` is the 44px target floor COD-96 is open
-                     about, and the hand-rolled drive row this replaces used
-                     `min-w-11` to hit it one dimension at a time. A segment
-                     is as wide as a fifth of the column, so height is the one
-                     that needs saying. */
-                  'num min-h-11 flex-1 py-2 text-center text-label duration-150',
-                  'transition-[color,background-color,box-shadow]',
-                  // No `active:scale-95` here: a segment is part of a track,
-                  // and shrinking one of five joined cells tears the row. The
-                  // fill arriving IS the feedback.
-                  'motion-reduce:transition-none',
-                  on ? ON_TONE[t] : 'bg-ink-2 text-fg-2 hover:bg-ink-3 hover:text-fg-1',
+                  /* `hyphens-none` and a non-breaking space are not enough:
+                     `egg-white` breaks at its own hyphen and takes two lines,
+                     which makes one stop taller than its four neighbours and
+                     tilts the whole row. `whitespace-nowrap` with the stop
+                     allowed to overflow its track is the honest trade — the
+                     word stays one word, and the grid stays level. */
+                  'min-h-11 whitespace-nowrap px-0.5 pt-1 text-center text-micro leading-tight duration-150',
+                  'transition-colors motion-reduce:transition-none',
+                  // `num` only for a numeric stop: a word stop in a mono face
+                  // is a word pretending to be a figure.
+                  typeof o.value === 'number' && 'num text-label',
+                  on ? 'font-semibold text-fg-1' : 'text-fg-2 hover:text-fg-1',
                 )}
               >
                 {o.label}
@@ -302,14 +384,24 @@ export function ChipPick<T extends string | number>({
             )
           })}
         </div>
-        {/* THE ENDS ARE NAMED, under the track they describe. They used to
-            live inside the legend — "Mood · 1 low … 5 great" — where they
-            made the group's name a sentence and still did not say which end
-            was which. */}
-        <div className="mt-1 flex justify-between text-micro text-fg-2">
-          <span>{scale.low}</span>
-          <span>{scale.high}</span>
-        </div>
+        {/* THE ENDS ARE NAMED, under the track they describe — but only for a
+            NUMERIC scale. A named one (dry → egg-white) has its words on its
+            own stops already, and repeating the first and last underneath is
+            the same fact twice. */}
+        {typeof options[0]?.value === 'number' && (
+          /* `fg-2`, NOT `fg-3`. These are words a reader reads, so they
+             answer to 4.5 — and `fg-3` at 10px measured **3.78 (neon) · 3.81
+             (vscode) · 3.88 (mocha) · 4.49 (latte)** on the card, caught by
+             `npm run a11y` as six serious violations. `fg-3` is the tier for
+             chrome, and an endpoint label is not chrome: it is the half that
+             tells you which end of the scale is which. Reaching for the
+             quietest step by default is a trap this repo already has an entry
+             for; this is it, one step down. */
+          <div className="mt-0.5 flex justify-between text-micro text-fg-2">
+            <span>{scale.low}</span>
+            <span>{scale.high}</span>
+          </div>
+        )}
         {hint && <p className="mt-1.5 text-label text-fg-2">{hint}</p>}
         {after}
       </fieldset>
@@ -319,7 +411,7 @@ export function ChipPick<T extends string | number>({
   return (
     <fieldset className={cn('min-w-0', className)}>
       {/* A caption, not a heading — see the scale variant's legend above. */}
-      <legend className="mb-1.5 text-label font-medium text-fg-1">{label}</legend>
+      <legend className="mb-1.5 text-label font-medium text-fg-1">{label}{info}</legend>
       <div className={cn('flex flex-wrap items-center', dense ? 'gap-1' : 'gap-1.5')}>
         {options.map((o) => {
           const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
@@ -364,6 +456,7 @@ export function ChipPick<T extends string | number>({
                  somewhere. `Med` and a bare `20` are legible on screen beside
                  their legend and meaningless read aloud on their own. */
               aria-label={spoken}
+              style={on ? onFill(t) : undefined}
               className={cn(
                 /*
                   `transition-all` ANIMATED THE LAYOUT, not just the colours.
@@ -380,7 +473,7 @@ export function ChipPick<T extends string | number>({
                   way. Measured on the rendered page — `transitionProperty` read
                   `all` on every chip in the app.
                 */
-                'rounded-pill border text-label duration-150',
+                'rounded-control border text-label duration-150',
                 'transition-[color,background-color,border-color,box-shadow,transform]',
                 dense ? 'px-2 py-1' : 'px-3 py-1.5',
                 // The press is the feedback. `active:scale-95` reads as the
@@ -563,5 +656,66 @@ export function DayPick({
         />
       }
     />
+  )
+}
+
+/**
+ * ONE THING THAT IS EITHER TRUE OR NOT.
+ *
+ * WHAT THIS OWNS: the only control in the app whose answer is a boolean and
+ * whose meaning is a *setting* rather than a record of the day.
+ * WHAT IT DOES NOT OWN: anything with three states. A tri-state question is a
+ * `ChipPick`, because "not said" has to be reachable and a switch cannot hold
+ * it — a switch that is off is off, not unanswered.
+ *
+ * It exists because `tempDisturbed` shipped as a bare `<input type="checkbox">`
+ * at the bottom of eleven chip groups — the one control on Cycle's day panel
+ * that changes a *calculation* (the reading is dropped from ovulation
+ * detection), drawn as the smallest and least considered thing on the card.
+ * A switch is the one shape in this vocabulary that reads as "this changes how
+ * the app behaves", which is exactly what it does.
+ *
+ * The native input stays, visually hidden, so the label, the keyboard and the
+ * accessibility tree are the platform's rather than re-implemented here.
+ */
+export function Switch({ checked, onChange, label, hint, tone = 'peach' }: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: ReactNode
+  /** One line under the label — what turning it on *does*. */
+  hint?: ReactNode
+  tone?: ChipTone
+}) {
+  return (
+    <label className="flex min-h-11 cursor-pointer items-start gap-2.5 py-1">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="peer sr-only"
+      />
+      {/* `peer-focus-visible` and not a focus ring on the label: the input is
+          what takes focus, and a sighted keyboard user has to see WHICH
+          control they are on, not that the row contains one. */}
+      <span
+        aria-hidden
+        className={cn(
+          'mt-0.5 flex h-5 w-9 shrink-0 items-center rounded-pill border p-0.5 duration-150',
+          'transition-[background-color,border-color] motion-reduce:transition-none',
+          'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1',
+          checked ? 'border-transparent justify-end' : 'border-edge bg-ink-2 justify-start',
+        )}
+        style={checked ? { background: cat(railTone(tone)) } : undefined}
+      >
+        <span
+          className="block size-3.5 rounded-pill duration-150 transition-colors motion-reduce:transition-none"
+          style={{ background: checked ? onAccent(cat(railTone(tone))) : cat('overlay1') }}
+        />
+      </span>
+      <span className="text-label text-fg-2">
+        <span className="font-medium text-fg-1">{label}</span>
+        {hint && <> — {hint}</>}
+      </span>
+    </label>
   )
 }
