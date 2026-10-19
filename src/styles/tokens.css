@@ -38,6 +38,25 @@
      are INSET rather than raised and so get no `--shadow-raise` to carry it —
      a text field is the case. Transparent-ish on dark, a real line on light. */
   --color-ctl-ring: var(--ctl-ring);
+  /* ── The boundary of a control you can operate ───────────────────────────
+     Not a line (a divider) and not `line-strong` (a surface step). Measured
+     across the five themes against the card a control sits on:
+
+       `line-strong` → 1.02–1.64      the old chip border, invisible
+       `ctl-ring`    → 1.37–1.72      every input and select, still
+       `edge`        → 2.51–3.20      this, matching the TONED chips' 2.61–3.11
+
+     A boundary is a non-text graphic, so it answers to the 3:1 floor rather
+     than 4.5 — and the target is not the floor, it is the toned chips that
+     already look right. `fg-3` held back to 60% is the first neutral above
+     the surface family, which is where `line-strong` fails: it IS `surface2`,
+     so it is by construction a step from the fill it is meant to separate.
+
+     `--ctl-ring` deliberately survives. It is also the hairline inside
+     `--shadow-raise` (below), so raising it would darken the edge of every
+     raised surface in the app — a depth-system change wearing a control fix's
+     clothes. `edge` takes the controls; `ctl-ring` keeps the raise. COD-364. */
+  --color-edge: color-mix(in srgb, var(--color-fg-3) 60%, transparent);
 
   /* ── Foreground ───────────────────────────────────────────────────────────
      Three readable tiers. Every one clears WCAG AA (4.5:1) against BOTH the

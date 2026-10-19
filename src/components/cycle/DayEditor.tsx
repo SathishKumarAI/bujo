@@ -1,5 +1,5 @@
 import { ChipPick } from '../ui/quickpick'
-import { Input } from '../ui'
+import { InfoTip } from './InfoTip'
 import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
 import { glossaryTerm } from '../../lib/glossary'
@@ -45,7 +45,7 @@ import { FLAGS, FLAG_COLOR } from './flags'
  * solid fill with a computed neutral becomes the app's calibrated
  * border-plus-wash, which is the one `ChipPick` solves for every theme.
  */
-export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, onDrive }: {
+export function DayEditor({ date, entry, unit, cycleDay, onMore, framed = true, onTemp, onToggleFlag, onDrive }: {
   date: string
   entry: CyclePoint | undefined
   /** 'F' or 'C'. */
@@ -59,6 +59,19 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
    * you are looking at, so it is drawn once, beside that day's own name.
    */
   cycleDay?: number | null
+  /** Open the manual at a section — the ⓘ beside the flag row and the drive
+   *  scale. See `DayMore`'s own note: these keys existed and nothing read
+   *  them. The flag row's points at the section the legend became. */
+  onMore?: (section: string) => void
+  /**
+   * Draw the panel's own fill and padding.
+   *
+   * True in the act column, where this sits in a card beside other things and
+   * needs separating from them. False in `DayWindow`, where it is the whole
+   * left column of a dialog — a grey slab inside a white sheet is a box drawn
+   * for no reason.
+   */
+  framed?: boolean
   onTemp: (temp: number | undefined) => void
   onToggleFlag: (flag: string) => void
   /** `undefined` clears the rating — an unrated day is not a day rated 1. */
@@ -68,7 +81,11 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
   const flags = entry?.flags ?? []
 
   return (
-    <div className="rounded-card bg-ink-2 p-3">
+    /* NO FILL INSIDE THE WINDOW. The slab exists to separate the editor from
+       the card it shares with the legend and the calendar — and in the act
+       column that is still true. In the dialog the editor IS the content, so
+       a grey panel inside a white one is a box for the sake of a box. */
+    <div className={framed ? 'rounded-card bg-ink-2 p-3' : ''}>
       <p className="mb-3 flex flex-wrap items-baseline gap-x-2 text-body font-medium text-fg-1">
         {prettyDay(date)}
         {cycleDay != null && (
@@ -87,18 +104,48 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
           vanishes on the first keystroke. `text-heading` and `num` because
           this is the page's primary measurement and it was rendering at the
           same weight as a chip's caption. */}
-      <label className="block">
-        <span className="text-label text-fg-2">Waking temperature</span>
-        <span className="mt-1 flex items-center gap-2">
-          <Input
+      {/* THE MEASUREMENT, DRAWN AS ONE.
+          Every derivation on this page is built from this number — the shift,
+          the coverline, the phase confidence, the whole Patterns group — and
+          it rendered as a `w-28` number box with a spinner, at the weight of
+          a caption, indistinguishable from a quantity field anywhere else in
+          the app.
+
+          A rule underneath instead of a box around it: you are writing in a
+          journal, not filling in a form, and the rule is also what tells you
+          where the cursor is — it goes `brand` on focus. The spinners go with
+          the box (`appearance-none`): a basal temperature is typed, and two
+          4px arrows that step by 0.1 are a target nobody can hit and a
+          precision nobody wants. */}
+      <label className="mt-3 block">
+        <span className="text-caption uppercase tracking-wide text-fg-2">Waking temperature</span>
+        <span className="mt-0.5 flex w-fit items-baseline gap-1.5 border-b-2 border-edge pb-0.5 focus-within:border-brand">
+          <input
             type="number"
-            step="0.1"
+            step="0.01"
             inputMode="decimal"
             value={entry?.temp ?? ''}
             onChange={(e) => onTemp(e.target.value ? Number(e.target.value) : undefined)}
             placeholder="—"
             aria-label={`Waking temperature on ${prettyDay(date)}, degrees ${unit}`}
-            className="num w-28 py-1.5 text-heading"
+            /* `leading-none` is the load-bearing one, and it took three
+               wrong guesses to find because the failure reads as a width.
+               `npm run clipped` said *"37px shown of 39px (5 chars)"* and
+               `findOverflowingFields` measures **scrollHeight against
+               clientHeight** — a HEIGHT, on a field whose value is five
+               characters. The display step carries a 1.15 line-height, so a
+               32px glyph needs a 37px line box inside a 37px content box and
+               overflows it by two pixels. Widening the field could never fix
+               it.
+
+               Two corollaries kept: `w-28` and not `w-[6ch]`, because
+               Tailwind v4 emitted **no CSS at all** for the arbitrary `ch`
+               width — exit 0, no warning, so the field sat at the browser's
+               default and two separate widenings changed nothing. The tell is
+               a tweak to a number having no effect, and the check is grepping
+               the built CSS for the class, which came back empty. 7rem holds
+               the five characters every value here has (`97.84`, `36.58`). */
+            className="num w-28 appearance-none leading-none border-0 bg-transparent p-0 text-display font-medium tracking-tight text-fg-1 outline-none placeholder:text-fg-3 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <span className="num text-body text-fg-2">°{unit}</span>
         </span>
@@ -115,6 +162,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
       <ChipPick
         className="mt-3"
         label="What happened"
+        info={<InfoTip tip="flags" onMore={onMore} />}
         /* `dense`, and the measurement with its limit stated.
            At the default `px-3` the five chips span **402px** against a
            360px row at 1440, so they wrapped 4 + 1 — a single orphan chip,
@@ -148,6 +196,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
       <ChipPick
         className="mt-3"
         label="Drive"
+        info={<InfoTip tip="drive" onMore={onMore} />}
         tone="peach"
         value={entry?.drive ?? null}
         onChange={(n) => onDrive(entry?.drive === n ? undefined : n)}

@@ -11,10 +11,35 @@
  * fact that stands on its own. `takeaway` is the sentence to remember if the
  * reader reads nothing else in the card.
  *
- * Nine sections with stable ids, because the `InfoTip`s link into them — a tip
+ * Ten sections with stable ids, because the `InfoTip`s link into them — a tip
  * that says "Learn more" and lands nowhere is worse than one that does not
  * offer. A test asserts every `more` resolves to a section here.
  */
+import { FLAGS, FLAG_COLOR, FLAG_MEANS } from '../components/cycle/flags'
+import { LH_GLYPH, MUCUS_GLYPH } from '../components/cycle/dayFields'
+
+/**
+ * The key, BUILT from the three maps rather than retyped beside them.
+ *
+ * `FlagLegend` made this argument about itself and then shipped the mark key
+ * from the glyph maps while the flag half read `FLAG_MEANS` — both right, and
+ * both stranded in the act column. Adding a flag to `flags.ts` or a mucus
+ * stage to `dayFields.ts` adds a line here with no edit, which is the only
+ * version of a key that cannot go quietly wrong.
+ *
+ * `dry` and `not-taken` are deliberately absent from the mark half: `dry`
+ * renders `·`, which at 10px is indistinguishable from punctuation, and
+ * `not-taken` renders nothing at all. Neither is a mark anyone has to decode.
+ */
+const MARK_POINTS: { label: string; text: string }[] = [
+  ...FLAGS.map((f) => ({ label: f, text: `${FLAG_COLOR[f]} · ${FLAG_MEANS[f]}` })),
+  ...Object.entries(MUCUS_GLYPH)
+    .filter(([k]) => k !== 'dry')
+    .map(([k, g]) => ({ label: `${g}  mucus`, text: `${k.replace('-', ' ')} — set it on a day under “The rest of today”.` })),
+  ...Object.entries(LH_GLYPH)
+    .filter(([k]) => k !== 'not-taken')
+    .map(([k, g]) => ({ label: `${g}  LH`, text: `${k} — set it on a day under “The rest of today”.` })),
+]
 
 export interface ManualSection {
   id: string
@@ -148,6 +173,26 @@ export const CYCLE_MANUAL: ManualSection[] = [
       { label: 'Irregular is common', text: 'A chart that does not look like the textbook is not itself a problem.' },
       { label: 'It sees only what you recorded', text: 'It cannot see what you did not.' },
     ],
+  },
+  {
+    /**
+     * THE KEY, which used to live inside the logging card.
+     *
+     * Five flag definitions and a seven-glyph mark key sat under a fold in
+     * the act column, on every visit, in a 416px panel already capped at
+     * 868px. That is a manual page wearing a form's clothes — and it is this
+     * page, so it is here now, reached by the ⓘ on the chip row that asks the
+     * question.
+     *
+     * The flag half is generated from `FLAG_MEANS` and the mark half from
+     * `MUCUS_GLYPH`/`LH_GLYPH` below, for the reason `FlagLegend` already
+     * stated about itself: a hand-written key is a copy that drifts, and a key
+     * that has drifted is worse than none because it is confidently wrong.
+     */
+    id: 'what-the-marks-mean',
+    title: 'Flag colours & day marks',
+    intro: 'What each chip records, and what every mark on a day means.',
+    points: MARK_POINTS,
   },
 ]
 

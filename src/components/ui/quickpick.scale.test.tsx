@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ChipPick } from './quickpick'
 
@@ -12,10 +12,13 @@ import { ChipPick } from './quickpick'
  * `calm` / `happy`. One is ordered and the other is a set, and nothing said
  * so.
  *
- * These assert the three things that carry "ordered" and nothing about the
- * colours, which `check-contrast` owns: the options are ONE joined track,
- * the ends are NAMED, and the legend goes back to being the group's name
- * rather than a sentence with the endpoints in it.
+ * These assert the things that carry "ordered" and nothing about the colours,
+ * which `check-contrast` owns: the options are ONE control rather than five,
+ * the ends are NAMED, the legend is the group's name rather than a sentence
+ * with the endpoints in it — and, since it became a rail, that **nothing
+ * chosen draws an empty rail**. That last one is load-bearing rather than
+ * cosmetic: this app has to keep "not answered" and "answered 1" apart,
+ * because a 1 and a skipped day must never average together.
  */
 const OPTIONS = [1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))
 
@@ -35,11 +38,31 @@ function renderScale(extra: Record<string, unknown> = {}) {
 }
 
 describe('ChipPick · the segmented scale', () => {
-  it('draws one joined track rather than five loose chips', () => {
+  it('draws one rail with five stops, not five loose chips', () => {
     const { container } = renderScale()
-    const track = container.querySelector('.divide-x')
-    expect(track, 'the options share one divided track').toBeTruthy()
-    expect(within(track as HTMLElement).getAllByRole('button')).toHaveLength(5)
+    // The stops are one grid, so they divide the width evenly and read as
+    // positions along a run rather than as five peers that happen to be
+    // adjacent. Asserted on the STRUCTURE, not on a utility class: this test
+    // was keyed to `.divide-x` and broke the day the track became a rail,
+    // which is the "a test keyed to styling" trap one level down from the
+    // one keyed to copy.
+    const stops = container.querySelectorAll('button')
+    expect(stops).toHaveLength(5)
+    const parents = new Set([...stops].map((b) => b.parentElement))
+    expect(parents.size, 'the stops are not one group').toBe(1)
+  })
+
+  it('draws nothing on the rail until something is chosen', () => {
+    const chosen = renderScale().container.querySelectorAll('[style*="width"]').length
+    expect(chosen, 'a chosen value draws a block on the rail').toBeGreaterThan(0)
+    const empty = renderScale({ value: null }).container
+    // Not a styling preference: an empty rail is how "you have not answered"
+    // stays distinguishable from "you answered 1".
+    expect(
+      [...empty.querySelectorAll('[style*="left"]')].length,
+      'an unanswered scale drew a block anyway',
+    ).toBe(0)
+    expect(empty.querySelectorAll('button')).toHaveLength(5)
   })
 
   it('names both ends, outside the legend', () => {

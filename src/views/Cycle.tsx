@@ -23,9 +23,10 @@ import {
   panelsIn, type CycleGroup,
 } from '../lib/cycleCards'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
+import { daySummary } from '../components/cycle/dayFields'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
-  CycleMonth, DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, PhasesCard,
+  CycleMonth, DayEditor, DriveByPhase, FertileWindow, FoodCard, PhasesCard,
   CycleGoalCard, DayWindow, FeelingsCard, InfoTip, LutealCard, Manual, MoodByPhase, PatternGrid, PhaseFoodCard, SymptomPattern, type BbtPoint,
 } from '../components/cycle'
 
@@ -155,6 +156,9 @@ export function Cycle() {
   const showManual = (s: string) => { setGroup('manual'); setManualSection(s) }
   const sel = days.includes(selected) ? selected : days[0]
   const selEntry = log.find((x) => x.date === sel)
+  /** What the optional half already holds for the selected day, for the door
+   *  that opens it. Same function `DayMore`'s own header uses. */
+  const moreSummary = daySummary(selEntry)
 
   /**
    * THE DETECTION ENGINE, run once for the page.
@@ -802,22 +806,46 @@ export function Cycle() {
             entry={selEntry}
             unit={unit}
             cycleDay={cycleDayOf(sel)}
+            onMore={showManual}
             onTemp={(temp) => setCycle(sel, { temp })}
             onToggleFlag={(f) => toggleFlag(sel, f)}
             onDrive={(drive) => setCycle(sel, { drive })}
           />
 
-          {/* The optional half, folded. The fast path above is unchanged:
-              temperature, five flags, drive — the ten-second habit this page
-              was built around stays exactly as long. */}
-          <DayMore entry={selEntry} onPatch={(patch) => setCycle(sel, patch)} fertilityFirst={goal === 'conceive'} />
+          {/* THE SLOW PATH IS NOT HERE ANY MORE, AND NEITHER IS THE KEY.
+              Both were in this column and both were wrong in the same way:
+              the act column is 416px wide and capped at an 868px sticky
+              panel, and it was holding a **2,187px** form plus a reference
+              document. Measured with both folds open, which is the state a
+              reader who wants either of them is in.
 
-          {/* The legend belongs to the act, not to the review: it decodes the
-              chips six pixels above it, and the dead column beside a form is
-              exactly where PAGE-SHAPE says to put the thing you need while
-              doing the thing. Not folded — the report was that the colours are
-              undecipherable, and a closed fold is the same page. */}
-          <FlagLegend />
+              `DayMore` moves into `DayWindow`, which is a dialog and can
+              therefore be as wide as the screen allows — three columns, one
+              view, all fifty-three controls, nothing hidden. The button below
+              opens today in it, which is the same gesture the calendar and the
+              log already use for every other day.
+
+              The legend moves to the manual, whole, and every group keeps an
+              ⓘ that opens it there. It was here because "which colour is
+              which" is asked while pressing the chips — an ⓘ on the chip row
+              answers that in the same place, at the cost of a tap, and gives
+              back the height of a reference document on every single visit. */}
+          <button
+            type="button"
+            onClick={() => setWindowDay(sel)}
+            className="mt-3 flex w-full items-center gap-2.5 rounded-control border border-brand bg-transparent px-3 py-2.5 text-left transition-colors hover:bg-ink-2"
+          >
+            <span className="min-w-0">
+              <span className="block text-label font-semibold text-fg-1">The rest of today</span>
+              {/* WHAT IS ALREADY ON THE DAY, not a fold title. A fold said
+                  "Mood, mucus, LH & more" whether or not any of it was
+                  filled in; this says which of it is. */}
+              <span className="block truncate text-micro text-fg-2">
+                {moreSummary || 'mood, energy, mucus, LH, symptoms, a note'}
+              </span>
+            </span>
+            <Icon as={CaretRight} size="sm" className="ml-auto shrink-0 text-brand-text" />
+          </button>
 
           {/* COD-230 · the month list is 956px of a 3,703px phone page — two
               15-row columns that stack below `sm`, because the rows cannot be
@@ -980,6 +1008,7 @@ export function Cycle() {
             cycleDay={windowDay ? cycleDayOf(windowDay) : null}
             fertilityFirst={goal === 'conceive'}
             onClose={() => setWindowDay(null)}
+            onMore={showManual}
             onTemp={(temp) => windowDay && setCycle(windowDay, { temp })}
             onToggleFlag={(fl) => windowDay && toggleFlag(windowDay, fl)}
             onDrive={(drive) => windowDay && setCycle(windowDay, { drive })}

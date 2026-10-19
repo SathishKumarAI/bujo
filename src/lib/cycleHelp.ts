@@ -134,6 +134,18 @@ export const CYCLE_HELP: HelpEntry[] = [
     more: 'taking-your-temperature',
   },
   {
+    /* The flag row's own ⓘ, and the reason the legend could leave the act
+       column: the five definitions it held are a manual section now, and this
+       is the thing that points at them from where the question is asked. */
+    key: 'flags',
+    text: [
+      'Five things a day can be marked with, each in its own colour.',
+      'The colour is the flag’s identity everywhere — the calendar cell, the chart shading, the symptom rows.',
+      'A day can carry several: bleeding and cramps are not alternatives.',
+    ],
+    more: 'what-the-marks-mean',
+  },
+  {
     key: 'cervical mucus',
     text: [
       'Changes through the cycle.',

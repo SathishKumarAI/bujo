@@ -46,13 +46,13 @@ export const flagTone = (name: string): ChipTone => FLAG_COLOR[name as Flag] ?? 
  *
  * Keyed off the same `FLAG_COLOR` keys and living in the same file on purpose:
  * a flag is a name, a hue and a meaning, and splitting the three across modules
- * is how a colour comes to mean two things. `FlagLegend` renders it; nothing
- * else needs it.
+ * is how a colour comes to mean two things. `lib/cycleManual.ts` builds the
+ * key in the manual from it, and nothing else needs it.
  *
  * This says what pressing the chip *means*, not what the word means. The word
- * is the glossary's job — `pms` carries an `<Abbr>` in the legend, so ACOG's
- * definition of the syndrome is one press away and is deliberately not restated
- * here. Why it is worth logging at all is `TRACKING_TIPS` in `lib/cycleGuide.ts`,
+ * is the glossary's job — `pms` carries an `<Abbr>` wherever it is drawn, so
+ * ACOG's definition of the syndrome is one press away and is deliberately not
+ * restated here. Why it is worth logging at all is `TRACKING_TIPS` in `lib/cycleGuide.ts`,
  * also once.
  */
 export const FLAG_MEANS: Record<Flag, string> = {

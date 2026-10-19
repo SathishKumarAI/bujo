@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -11,6 +11,7 @@ import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL, panelsIn } from 
 import { FLAGS, FLAG_MEANS } from '../components/cycle'
 import { CHIP_FIELDS, FIELD_SECTIONS, LH_GLYPH, MUCUS_GLYPH, SCALE_FIELDS, TAG_FIELDS } from '../components/cycle/dayFields'
 import { CYCLE_DISCLAIMER } from '../lib/cycleGuide'
+import { CYCLE_MANUAL } from '../lib/cycleManual'
 import { CAT } from '../lib/colors'
 import { generateDemoData } from '../lib/demo'
 
@@ -62,6 +63,24 @@ const railRow = (label: string) =>
  * The `aria-expanded="false"` assertion on the way in is the only coverage that
  * default has outside a browser probe.
  */
+/**
+ * Reach the mark key inside the manual's deck.
+ *
+ * `Manual` is a `CardDeck` — one section on screen at a time — so the key is
+ * not in the DOM until its card is. Walk the deck rather than asserting on
+ * whatever happened to open, which would be the single-open-accordion
+ * blindness CLAUDE.md records for the a11y gate, in a unit test.
+ */
+async function openMarkSection(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
+  for (let i = 0; i < CYCLE_MANUAL.length; i++) {
+    if ((container.textContent ?? '').includes(FLAG_MEANS.period)) return
+    const next = screen.queryByRole('button', { name: /next/i })
+    if (!next) break
+    await user.click(next)
+  }
+  expect(container.textContent, 'the mark key is not reachable in the manual').toContain(FLAG_MEANS.period)
+}
+
 async function openAct(user: ReturnType<typeof userEvent.setup>) {
   const strip = screen.getByRole('button', { name: /^Log a day/ })
   expect(strip).toHaveAttribute('aria-expanded', 'false')
@@ -130,60 +149,68 @@ describe('Cycle · the registry is the review zone', () => {
   it('decodes every flag, with the meaning exactly as `flags.ts` writes it', async () => {
     const user = userEvent.setup()
     const { container } = mount()
-    await openAct(user)
-    // The legend ships CLOSED (five pills, no sentences), so this test opens
-    // it before reading the definitions — it is about what the sentences say,
-    // not about which state is the default. The test below owns that.
-    await user.click(screen.getByRole('button', { name: /flag colours/i }))
-    const rows = [...container.querySelectorAll('#cycle-flag-meanings > div')]
-    expect(rows).toHaveLength(FLAGS.length)
-    for (const [i, f] of FLAGS.entries()) {
-      expect(rows[i].querySelector('dt')!.textContent!.trim()).toBe(f)
-      expect(rows[i].querySelector('dd')!.textContent!.trim()).toBe(FLAG_MEANS[f])
+    await user.click(railRow(GROUP_LABEL.manual))
+    await openMarkSection(user, container)
+    const text = container.textContent ?? ''
+    // The MEANING, character-identical to `flags.ts` — not a paraphrase. A
+    // substring check on the word would pass for prose that drifted, and the
+    // whole contract of this key is that the words are not its own.
+    for (const f of FLAGS) {
+      expect(text, `no meaning for "${f}"`).toContain(FLAG_MEANS[f])
     }
-    // Folded, the whole key goes — pills included. That is a deliberate
-    // change from "closed still draws the pills": the row is named, says what
-    // it holds, and is one press from everything, which is the difference
-    // between hidden and put away.
-    const toggle = screen.getByRole('button', { name: /flag colours/i })
-    await user.click(toggle)
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(container.querySelectorAll('#cycle-flag-meanings > li')).toHaveLength(0)
-    expect(screen.queryByText(FLAG_MEANS.period)).toBeNull()
   })
 
   /**
-   * The five sentences were 214px of an 807px act column — a paragraph each
-   * for a question asked once. Closed is the shipped state now; the KEY is
-   * what must survive it, because hiding the key is the complaint that
-   * created this component.
+   * THE KEY LEFT THE LOGGING CARD, and this is the test that says so.
+   *
+   * Five flag definitions and a seven-glyph mark key sat under a fold in the
+   * act column, on every visit, in a 416px panel already capped at 868px —
+   * a manual page wearing a form's clothes. It is a manual section now,
+   * generated from `FLAG_MEANS`, `MUCUS_GLYPH` and `LH_GLYPH` so it cannot
+   * drift from the thing it decodes.
    */
-  it('ships both keys away behind one named row, and one press opens them', async () => {
+  it('is a manual section now, and not in the act column', async () => {
     const user = userEvent.setup()
     const { container } = mount()
     await openAct(user)
-    const toggle = screen.getByRole('button', { name: /flag colours/i })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText(FLAG_MEANS.period), 'the sentences are away').toBeNull()
-    expect(container.querySelectorAll('#cycle-flag-meanings > li'), 'the pills too').toHaveLength(0)
-    // Put away, not hidden: the row names what is inside it, which is the
-    // only thing that makes closing a key defensible at all. It names the two
-    // CATEGORIES rather than all thirteen marks — listing every one wrapped
-    // the row onto two lines, and a one-liner that is not one line is the
-    // thing this round was asked to fix.
-    expect(toggle.textContent).toMatch(/flag colours/i)
-    expect(toggle.textContent).toMatch(/day marks/i)
-    expect(toggle.textContent).toMatch(/what every mark means/i)
-    // One press brings back BOTH keys — the hues and the day marks.
-    await user.click(toggle)
-    expect(screen.getByText(FLAG_MEANS.period)).toBeInTheDocument()
-    // The mark key by its CONTENT, not by its heading. This asserted the
-    // string "Marks in the day list" and broke on the commit that turned the
-    // list into a calendar and the heading into "Marks on a day" — a test
-    // keyed to copy, which is a trap this repo already has an entry for. A
-    // glyph from the map is what the key is FOR, and it cannot be reworded.
-    expect(container.textContent).toContain(MUCUS_GLYPH['egg-white'])
-    expect(container.textContent).toContain('egg white')
+    expect(
+      screen.queryByRole('button', { name: /flag colours/i }),
+      'the legend fold is back in the act column',
+    ).toBeNull()
+    await user.click(railRow(GROUP_LABEL.manual))
+    await openMarkSection(user, container)
+    const text = container.textContent ?? ''
+    // Both halves, by their CONTENT rather than by a heading — a test keyed
+    // to copy is a trap this repo has an entry for, and this very assertion
+    // broke on a rename once already.
+    for (const stage of Object.keys(MUCUS_GLYPH).filter((k) => k !== 'dry')) {
+      expect(text, `no key row for mucus "${stage}"`).toContain(stage.replace('-', ' '))
+    }
+    for (const g of [MUCUS_GLYPH['egg-white'], LH_GLYPH.peak]) {
+      expect(text, `the glyph ${g} is not drawn`).toContain(g)
+    }
+  })
+
+  /**
+   * AND EVERY INPUT POINTS AT IT, which is the half that makes moving the key
+   * out of the act column honest rather than a deletion.
+   *
+   * Asked for directly: *"give an information icon on top of the inputs in
+   * the log, and if I click on it show them the guide or manual."* The wiring
+   * was all present and dead — `dayFields.ts` carries a `help` key on five
+   * fields, `lib/cycleHelp.ts` has an entry with a `more:` target for every
+   * one, and **nothing rendered an `InfoTip` outside zone 1's four facts**.
+   */
+  it('puts an ⓘ on the inputs, and the flag row’s points at the key', async () => {
+    const user = userEvent.setup()
+    mount()
+    await openAct(user)
+    const tip = screen.getByRole('button', { name: /what this means: flags/i })
+    await user.click(tip)
+    const more = await screen.findByRole('button', { name: /learn more/i })
+    await user.click(more)
+    // It lands on the section the legend became, not merely on the manual.
+    expect(await screen.findByText(/Flag colours & day marks/i)).toBeInTheDocument()
   })
 
   /**
@@ -292,41 +319,33 @@ describe('Cycle · your log shows what the averages are made of', () => {
 })
 
 /**
- * THE MARK KEY · the glyphs the day list draws.
+ * THE MARK KEY IS BUILT FROM THE MAPS, wherever it lives.
  *
- * `CycleMonth` renders a mucus glyph and an LH glyph with `aria-hidden` and an
- * `sr-only` phrase beside them, so a screen-reader user was told what `∴−`
- * means and a sighted one was not — the inverse of the report that created
- * the flag legend, in the same card.
- *
- * Asserted against the glyph maps in BOTH directions, which is the rule the
- * flag legend's own docstring states: a hand-written key is a copy that
- * drifts, and a key that has drifted is worse than none because it is
- * confidently wrong.
+ * It moved out of the act column into the manual — see the tests above for
+ * the move and the ⓘ that reaches it. What stays asserted here is the half
+ * that has nothing to do with placement: every mark `CycleMonth` can DRAW is
+ * decoded somewhere, in both directions, because a hand-written key is a copy
+ * that drifts and a key that has drifted is worse than none.
  */
-describe('Cycle · every mark the day list can draw is decoded', () => {
+describe('Cycle · every mark the calendar can draw is decoded', () => {
   it('names each mucus stage and LH result, built from the maps', async () => {
     const user = userEvent.setup()
     const { container } = mount()
-    await openAct(user)
-    // Both keys live behind the one named row now.
-    await user.click(screen.getByRole('button', { name: /flag colours/i }))
-    const key = [...container.querySelectorAll('ul')]
-      .map((u) => u.textContent ?? '')
-      .find((t) => t.includes('creamy') && t.includes('LH'))
-    expect(key, 'the mark key renders').toBeTruthy()
+    await user.click(railRow(GROUP_LABEL.manual))
+    await openMarkSection(user, container)
+    const text = container.textContent ?? ''
 
-    // `dry` renders a `·`, which at 13px is punctuation, and `not-taken`
+    // `dry` renders a `·`, which at 10px is punctuation, and `not-taken`
     // renders nothing — neither is a mark anyone has to decode.
     for (const stage of Object.keys(MUCUS_GLYPH).filter((k) => k !== 'dry')) {
-      expect(key, `no key row for mucus "${stage}"`).toContain(stage.replace('-', ' '))
+      expect(text, `no key row for mucus "${stage}"`).toContain(stage.replace('-', ' '))
     }
     for (const result of Object.keys(LH_GLYPH).filter((k) => k !== 'not-taken')) {
-      expect(key, `no key row for LH "${result}"`).toContain(`LH ${result}`)
+      expect(text, `no key row for LH "${result}"`).toContain(result)
     }
     // And the glyphs themselves, or the key would name words with no marks.
     for (const g of [MUCUS_GLYPH.creamy, MUCUS_GLYPH['egg-white'], LH_GLYPH.peak]) {
-      expect(key).toContain(g)
+      expect(text, `the glyph ${g} is not drawn`).toContain(g)
     }
   })
 })
@@ -366,13 +385,17 @@ describe('Cycle · the optional fields are three questions, not nine', () => {
     for (const id of ids) expect(used, `section "${id}" has no fields`).toContain(id)
   })
 
-  it('draws all three headings in the panel', async () => {
+  it('draws all three headings in the day window', async () => {
     const user = userEvent.setup()
-    const { container } = mount()
+    mount()
     await openAct(user)
-    await user.click(screen.getByRole('button', { name: /mucus, LH/i }))
+    // The panel is not a fold any more — it is the window's content, opened
+    // by the one door in the act column. A fold inside a dialog is a door
+    // behind a door, so `DayMore` renders `embedded` and has no header.
+    await user.click(screen.getByRole('button', { name: /the rest of today/i }))
+    const dialog = await screen.findByRole('dialog')
     for (const s of FIELD_SECTIONS) {
-      expect(container.textContent, `"${s.title}" is not drawn`).toContain(s.title)
+      expect(dialog.textContent, `"${s.title}" is not drawn`).toContain(s.title)
     }
   })
 })
@@ -405,7 +428,11 @@ describe('Cycle · a log row opens that day in a window', () => {
     // The act column's own controls: a temperature input and the optional
     // fields disclosure. If these ever stop being `DayEditor`/`DayMore`, this
     // is the test that should fail.
-    expect(within(dialog).getByRole('button', { name: /mucus, LH/i })).toBeInTheDocument()
+    // The optional half, by its CONTENT rather than by a fold button: it is
+    // `embedded` here, so there is no disclosure to find. A section heading
+    // from `dayFields.ts` is the thing that cannot be present unless the real
+    // `DayMore` rendered.
+    expect(dialog.textContent).toContain(FIELD_SECTIONS[0].title)
     expect(dialog.querySelector('input')).not.toBeNull()
   })
 })

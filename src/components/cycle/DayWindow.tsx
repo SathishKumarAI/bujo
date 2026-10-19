@@ -40,7 +40,7 @@ import type { CyclePoint } from '../../lib/types'
  * the app had no editing dialog and would need a new primitive; checking
  * first is what turned a new component into a reused one.
  */
-export function DayWindow({ date, entry, unit, cycleDay, fertilityFirst, onClose, onTemp, onToggleFlag, onDrive, onPatch }: {
+export function DayWindow({ date, entry, unit, cycleDay, fertilityFirst, onClose, onMore, onTemp, onToggleFlag, onDrive, onPatch }: {
   /** The day to edit, or `null` when the window is shut. */
   date: string | null
   entry: CyclePoint | undefined
@@ -53,10 +53,21 @@ export function DayWindow({ date, entry, unit, cycleDay, fertilityFirst, onClose
   onToggleFlag: (flag: string) => void
   onDrive: (drive: number | undefined) => void
   onPatch: (patch: Partial<CyclePoint>) => void
+  /** Open the manual at a section — every group's ⓘ. */
+  onMore?: (section: string) => void
 }) {
   return (
     <Dialog open={date != null} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        /* A VIEWPORT breakpoint, and that is the exception worth stating.
+           Everything inside a page here is a container query, because a
+           column's width is decided by the page split rather than by the
+           window — but a dialog is not inside the page. It is sized by the
+           viewport directly, so `lg:` is the honest query and a `@3xl` here
+           fires against no container at all and silently never matches, which
+           is how the first version of this shipped 512px wide. */
+        className="max-h-[85vh] overflow-y-auto sm:max-w-lg lg:max-w-5xl"
+      >
         <DialogHeader>
           {/* `sr-only`, because `DayEditor` draws this exact day six pixels
               below — the window read **"Fri, Oct 9 / Fri, Oct 9"**, which is
@@ -68,17 +79,32 @@ export function DayWindow({ date, entry, unit, cycleDay, fertilityFirst, onClose
           <DialogTitle className="sr-only">{date ? prettyDay(date) : ''}</DialogTitle>
         </DialogHeader>
         {date && (
-          <div className="space-y-3">
-            <DayEditor
-              date={date}
-              entry={entry}
-              unit={unit}
-              cycleDay={cycleDay}
-              onTemp={onTemp}
-              onToggleFlag={onToggleFlag}
-              onDrive={onDrive}
-            />
-            <DayMore entry={entry} onPatch={onPatch} fertilityFirst={fertilityFirst} />
+          /* THREE COLUMNS AT WIDTH, because a dialog is not a column.
+             The act column is 416px and cannot be anything else — it is a
+             page split. This is a dialog, so width is the lever that removes
+             the scrolling rather than disclosure: the same ten groups that
+             stacked to **2,187px** in 416px fit one view at 900, and stack
+             again on a phone where they have to.
+
+             `@container` on THIS div and the grid on the inner one, because
+             an element cannot query itself — the trap `docs/PAGE-SHAPE.md`
+             records and that this repo has walked into on every first call
+             site. */
+          <div className="@container">
+            <div className="grid gap-x-7 gap-y-5 @3xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+              <DayEditor
+                date={date}
+                entry={entry}
+                unit={unit}
+                cycleDay={cycleDay}
+                framed={false}
+                onMore={onMore}
+                onTemp={onTemp}
+                onToggleFlag={onToggleFlag}
+                onDrive={onDrive}
+              />
+              <DayMore entry={entry} onPatch={onPatch} fertilityFirst={fertilityFirst} embedded onMore={onMore} />
+            </div>
           </div>
         )}
       </DialogContent>
