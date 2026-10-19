@@ -5,7 +5,6 @@
  */
 export { FLAGS, FLAG_COLOR, FLAG_MEANS, type Flag } from './flags'
 export { CycleWheel } from './CycleWheel'
-export { FlagLegend } from './FlagLegend'
 export { FertileWindow } from './FertileWindow'
 export { DriveByPhase } from './DriveByPhase'
 export { PhaseNutrition } from './PhaseNutrition'

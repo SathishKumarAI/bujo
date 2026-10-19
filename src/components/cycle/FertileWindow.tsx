@@ -8,7 +8,8 @@ import { Abbr } from '../Abbr'
  *
  * The complaint this answers was two questions in one breath: which colour is
  * which, and "what is or what do they do in ovulation, and how to differentiate
- * between ovulation and the other categories". `FlagLegend` answers the first.
+ * between ovulation and the other categories". The manual's mark key
+ * answers the first.
  * The second is not a definition problem — the wheel already names the phase and
  * the guide already describes it — it is an **overlap** problem: the fertile
  * window starts days before ovulation and ends after it, the LH surge comes

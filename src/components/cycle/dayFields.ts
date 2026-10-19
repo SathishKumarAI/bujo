@@ -1,3 +1,5 @@
+import type { CyclePoint } from '../../lib/types'
+
 /**
  * THE OPTIONAL HALF OF A DAY, described once.
  *
@@ -48,12 +50,28 @@ export interface ChipField {
   options: { value: string; label: string }[]
   /** Shown only when this flag is set on the day — flow is meaningless otherwise. */
   onlyWithFlag?: string
+  /**
+   * The options are a PROGRESSION, so draw them on a rail rather than as a
+   * set of peers.
+   *
+   * True for `flow` (light → very heavy), `mucus` (dry → egg-white) and `lh`
+   * (not taken → peak), each of which this file's own docstring already says
+   * is ordered — and which then rendered as rows of identical chips, hiding
+   * the one that matters: the mucus progression IS the fertile ramp.
+   *
+   * False for `intimacy`. `none → protected → unprotected` is not a run from
+   * less to more of anything, and drawing it on a rail would assert an order
+   * that does not exist — which is worse than the flat row it replaces,
+   * because a reader would believe it.
+   */
+  ordered?: boolean
 }
 
 export const CHIP_FIELDS: ChipField[] = [
   {
     key: 'flow',
     section: 'signs',
+    ordered: true,
     label: 'Flow',
     help: 'flow',
     onlyWithFlag: 'period',
@@ -67,6 +85,7 @@ export const CHIP_FIELDS: ChipField[] = [
   {
     key: 'mucus',
     section: 'signs',
+    ordered: true,
     label: 'Cervical mucus',
     help: 'cervical mucus',
     options: [
@@ -80,6 +99,7 @@ export const CHIP_FIELDS: ChipField[] = [
   {
     key: 'lh',
     section: 'signs',
+    ordered: true,
     label: 'LH test',
     help: 'LH test',
     options: [
@@ -189,4 +209,38 @@ export const LH_GLYPH: Record<string, string> = {
   negative: '−',
   positive: '+',
   peak: '✦',
+}
+
+/** What is already recorded, so folding hides the controls and not the answers.
+ *  Exported because the act column's door now names the same thing — one
+ *  sentence, one implementation; two would drift the moment a field is added. */
+export function daySummary(entry: CyclePoint | undefined): string {
+  if (!entry) return ''
+  const parts: string[] = []
+  if (entry.mood != null) parts.push(`mood ${entry.mood}`)
+  if (entry.energy != null) parts.push(`energy ${entry.energy}`)
+  if (entry.flow) parts.push(entry.flow.replace('-', ' '))
+  if (entry.mucus) parts.push(entry.mucus)
+  if (entry.lh && entry.lh !== 'not-taken') parts.push(`LH ${entry.lh}`)
+  const tags = (entry.symptoms?.length ?? 0) + (entry.cravings?.length ?? 0) + (entry.moodTags?.length ?? 0)
+  if (tags) parts.push(`${tags} tag${tags === 1 ? '' : 's'}`)
+  if (entry.tempDisturbed) parts.push('temp flagged')
+  // The note's PRESENCE, not its text: this line is one row in a collapsed
+  // header and a sentence would push everything else off it. Without it a
+  // written note is invisible until the fold is opened again, which is the
+  // "a chart behind a closed fold is a chart that does not exist" rule in
+  // docs/PAGE-SHAPE.md applied to a field you typed yourself.
+  if (entry.note?.trim()) parts.push('noted')
+  /* CAPPED AT TWO NAMES AND A COUNT, because the row is one line.
+     The full join is "mood 3 · energy 3 · sticky · 1 tag · temp flagged" —
+     **265px of text in a 114px slot**, which `npm run clipped` caught the
+     moment this row stopped wrapping. Truncating it would have hidden three
+     of the five things a reader logged, and `data-clip-ok` would have been me
+     silencing a true finding rather than fixing it.
+     So the summary fits the space instead: what it is for is "is there
+     anything on this day, roughly what", and two names plus a remainder
+     answers that in a width that always fits. The detail is one press away,
+     which is the whole point of the row. */
+  if (parts.length <= 2) return parts.join(' · ')
+  return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`
 }

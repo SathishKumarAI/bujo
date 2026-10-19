@@ -10,7 +10,8 @@ import { LH_GLYPH, MUCUS_GLYPH } from './dayFields'
  * WHAT THIS FILE OWNS: the calendar in the act column — where the period
  * fell, which days were logged, and which day the editor above is pointing at.
  * WHAT IT DOES NOT OWN: the fields on a day (`DayMore` writes them, `DayLog`
- * reads them all back), or what the marks mean (`FlagLegend`).
+ * reads them all back), or what the marks mean — that is the manual's
+ * `what-the-marks-mean` section, which every ⓘ on the day's inputs opens.
  *
  * ── What it replaces, and why the list could not be rescued ──────────────
  *
@@ -56,7 +57,7 @@ import { LH_GLYPH, MUCUS_GLYPH } from './dayFields'
  *   dots      the other flags, in `FLAGS` order, each in its own hue. Same
  *             map as the editor chips and the chart shading, never a copy.
  *   glyph     mucus and LH, the two a chart reader cross-references against
- *             the temperature. `FlagLegend`'s `MarkKey` decodes them, and it
+ *             the temperature. the manual's mark key decodes them, and it
  *             is built from the same two maps.
  *   underline a temperature was taken. The VALUE is not drawn — three figures
  *             do not fit under a date, the chart above plots all of them
