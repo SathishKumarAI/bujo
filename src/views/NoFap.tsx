@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ArrowCounterClockwise, CaretRight, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
+import { ArrowCounterClockwise, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
@@ -8,7 +8,7 @@ import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
 import { lapseCountOn, hasLapseQuantity, lapseByWeekday, peakLapseWeekday, lapseTrend, lapseProfile } from '../lib/lapse'
-import { ActStrip, NextStepBlock, PageLayout, StatBar, useActColumn } from '../components/page'
+import { ActHide, ActStrip, NextStepBlock, PageLayout, StatBar, useActColumn } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryCards'
 import { feedbackLedger } from '../lib/recoveryFeedback'
@@ -384,24 +384,18 @@ export function NoFap() {
             onOpen={logCol.open}
           />
         ) : (<>
-        {/* THE TITLE IS THE TOGGLE, and it says so (§27). A heading that is
-            secretly a button is a feature nobody finds, and the `title` it
-            would otherwise rely on does not exist on a phone. */}
-        <h2 className="text-heading font-medium text-fg-1">
-          <button
-            type="button"
-            onClick={logCol.close}
-            aria-expanded
-            title="Hide the log — the review takes the width"
-            className="group flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
-          >
-            Log an urge or a reset{' '}
-            <span className="inline-flex shrink-0 items-center gap-1 text-label font-normal text-fg-2 group-hover:text-fg-1">
-              Tap to hide
-              <Icon as={CaretRight} size="sm" />
-            </span>
-          </button>
-        </h2>
+        {/* THE HEADING IS A HEADING AGAIN, and the way out is `ActHide`.
+            It was the title ITSELF — a whole-width button painting "Tap to
+            hide" — which solved discoverability (the comment it replaces is
+            right that a heading secretly acting as a button is a feature
+            nobody finds) and solved it differently from the four other
+            shapes the same gesture had across nine pages. `ActHide` keeps
+            the painted word and the caret, and makes the control the same
+            object everywhere. */}
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="text-heading font-medium text-fg-1">Log an urge or a reset</h2>
+          <ActHide what="the log" onHide={logCol.close} />
+        </div>
 
         {/* THREE ACTS, ONE CARD, ONE AT A TIME.
 

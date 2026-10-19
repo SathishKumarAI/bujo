@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ArrowsClockwise, CaretRight, Gauge, Plus, Target, Trophy } from '@/components/icons'
+import { ArrowsClockwise, Gauge, Plus, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 import { prettyDay, todayISO, dayDiff } from '../lib/date'
 import { Button } from '../components/ui/button'
-import {
+import {ActHide, 
   ActStrip, ActivityForm, NextStepBlock, PageLayout, StatBar, useActColumn,
   draftOf, emptyDraft, workoutOf, draftIsEmpty, type ActivityDraft,
 } from '../components/page'
@@ -292,9 +292,7 @@ export function Fitness() {
                   Pickleball, Home Workout and Pull-ups put theirs — the strip
                   that comes back is the way in, so the way out belongs on the
                   thing itself. */}
-              <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the log" title="Hide the log — the review takes the width">
-                <Icon as={CaretRight} size="sm" />
-              </Button>
+              <ActHide what="the log" onHide={logCol.close} />
             </span>
           }
         />

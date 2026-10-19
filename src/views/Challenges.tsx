@@ -1,4 +1,4 @@
-import { Archive, CaretLeft, CaretRight, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
+import { Archive, CaretLeft, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -6,7 +6,7 @@ import { Card, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { Switch } from '../components/ui/switch'
 import { Checkbox } from '../components/ui/checkbox'
-import { ActStrip, EmptyFrame, NextStepBlock, PageLayout, StatBar, SummaryStrip, useActColumn } from '../components/page'
+import { ActHide, ActStrip, EmptyFrame, NextStepBlock, PageLayout, StatBar, SummaryStrip, useActColumn } from '../components/page'
 import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
 import { cat, onAccent } from '../lib/colors'
 import type { Challenge, JournalData } from '../lib/types'
@@ -289,11 +289,7 @@ function TodayCard({ challenge: c, onShut }: {
       subtitle={notStarted ? `Starts ${c.startDate}` : finished ? 'Finished' : `${done.length} of ${c.rules.length} done`}
       right={
         <div className="flex items-center gap-1">
-          {onShut && (
-            <Button variant="ghost" size="icon-sm" onClick={onShut} aria-label="Hide today — the review takes the width">
-              <Icon as={CaretRight} size="sm" />
-            </Button>
-          )}
+          {onShut && <ActHide what="today" onHide={onShut} />}
           <Button variant="ghost" size="icon-sm" onClick={() => updateChallenge(c.id, { archived: true })} aria-label="Archive challenge" title="Archive">
             <Icon as={Archive} size="sm" />
           </Button>

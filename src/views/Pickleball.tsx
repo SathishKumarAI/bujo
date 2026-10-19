@@ -1,10 +1,10 @@
-import { ArrowsClockwise, CalendarDot, CaretRight, Gauge, Plus, Target, Trophy } from '@/components/icons'
+import { ArrowsClockwise, CalendarDot, Gauge, Plus, Target, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
 import { Card, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { ActStrip, PageLayout, StatBar, useActColumn, NextStepBlock } from '../components/page'
+import { ActHide, ActStrip, PageLayout, StatBar, useActColumn, NextStepBlock } from '../components/page'
 import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
@@ -256,9 +256,7 @@ export function Pickleball() {
             {/* Shutting it lives in the card header, which is where Home
                 Workout and Pull-ups put theirs — the strip that comes back is
                 the way in, so the way out belongs on the thing itself. */}
-            <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the log" title="Hide the log — the review takes the width">
-              <Icon as={CaretRight} size="sm" />
-            </Button>
+            <ActHide what="the log" onHide={logCol.close} />
           </span>
         }>
           {/* TAP, DON'T TYPE.

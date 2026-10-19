@@ -5,7 +5,7 @@ import { useJournal } from '../store'
 import { addDays, dayDiff, monthDays, prettyDay, prettyMonth, todayISO, ymOf } from '../lib/date'
 import { Card, Pill } from '../components/ui'
 import { Abbr } from '../components/Abbr'
-import { ActStrip, CardDeck, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
+import { ActHide, ActStrip, CardDeck, NextStepBlock, PageLayout, SectionRail, SPAN_PANEL, StatGrid, SummaryStrip, useActColumn } from '../components/page'
 import { useCursor } from '../components/shell/Page'
 import { useStickyState } from '../lib/useStickyState'
 import {
@@ -775,25 +775,7 @@ export function Cycle() {
                 Back to today
               </button>
             )}
-            <button
-              type="button"
-              onClick={logCol.close}
-              aria-expanded
-              /* THE NAME CONTAINS THE PAINTED TEXT, which is not a style
-                 preference: `label-content-name-mismatch` (WCAG 2.5.3)
-                 compares the accessible name against what is DRAWN, because a
-                 speech-input user says what they can see. Announcing more is
-                 fine; announcing something else is a serious violation, and
-                 the first version of this button said "Hide the log — …"
-                 while painting "Tap to hide". Caught by `a11y:panels` on the
-                 run that armed this page — on all twelve of its rows at once,
-                 since the button is in zone 2 and every row renders it. */
-              aria-label="Tap to hide the log — the review takes the width"
-              className="group inline-flex shrink-0 items-center gap-1 text-label text-fg-2 transition-colors hover:text-fg-1"
-            >
-              Tap to hide
-              <Icon as={CaretRight} size="sm" />
-            </button>
+<ActHide what="the log" onHide={logCol.close} />
             </div>
           }
         >

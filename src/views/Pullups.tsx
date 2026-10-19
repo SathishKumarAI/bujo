@@ -10,6 +10,7 @@ import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import { buyingGuideUrl } from '../lib/video'
 import {
+  ActHide,
   PageLayout, StatBar, SummaryStrip, CalendarHeatmap, EmptyFrame, SectionRail,
   PanelGrid, PanelCard, DefList, Tag, ActStrip,
   useActColumn,
@@ -439,9 +440,16 @@ function LogSessionCard({
   return (
     <Card
       band
-      collapsible
-      open
-      onOpenChange={(o) => { if (!o) onShut() }}
+      /* `right={<ActHide/>}` and NOT `collapsible`, which is the fault this
+         sweep is about. `Card collapsible` folds a card's BODY: on a desktop
+         that frees height and no width at all, because the act column is a
+         grid TRACK — a folded card left a ~400px empty lane beside the thing
+         you were reading. The strip is what takes the track away
+         (`ActStrip`'s docstring: review 678px → 1054px), and this is its
+         inverse. It also announced itself as `Collapse Log a pull-up
+         session`, a fifth name for a gesture seven other pages already had
+         four names for. */
+      right={<ActHide what="the log" onHide={onShut} />}
       title="Log a pull-up session"
       subtitle={hint}
     >
