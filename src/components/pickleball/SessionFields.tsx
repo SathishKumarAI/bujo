@@ -2,6 +2,8 @@ import { Input } from '../ui'
 import { ChipPick, DayPick, Stepper } from '../ui/quickpick'
 import { durationOptions } from '../ui/quickpick.options'
 import { DisclosureRow } from '../page'
+import { FieldGroup } from '../ui/FieldGroup'
+import { useDevice } from '../shell/device'
 import { todayISO } from '../../lib/date'
 import type { SessionDraft } from './sessionDraft'
 
@@ -44,9 +46,15 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
   allVenues: string[]
   yesterday: string
 }) {
+  /* ON A PHONE: THE SAME FIELDS, IN THE SAME ORDER, NOTHING FOLDED.
+     Asked for as "all the input should be taken only in one screen" — one
+     scrolling form, so the fold below opens out into a group of its own, and
+     every section is an iOS inset group (`FieldGroup`, `styles/phone.css`).
+     On a desktop each `FieldGroup` renders the exact wrapper it replaced. */
+  const phone = useDevice() === 'mobile'
   return (
-      <div className="flex flex-col gap-3">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <div className={phone ? 'flex flex-col gap-5' : 'flex flex-col gap-3'}>
+        <FieldGroup title="When" desktop="grid gap-3 sm:grid-cols-2">
         <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
 
         <ChipPick
@@ -55,13 +63,14 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
           onChange={(v) => set({ format: v })}
           options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
         />
-        </div>
+        </FieldGroup>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <FieldGroup title="Score" desktop="grid gap-3 sm:grid-cols-2" cols={2}>
           <Stepper label="Games won" value={numOrUndef(f.gamesWon)} onChange={(v) => set({ gamesWon: v == null ? '' : String(v) })} max={30} placeholder="0" />
           <Stepper label="Games lost" value={numOrUndef(f.gamesLost)} onChange={(v) => set({ gamesLost: v == null ? '' : String(v) })} max={30} placeholder="0" />
-        </div>
+        </FieldGroup>
 
+        <FieldGroup title="Session">
         <ChipPick
           label="On court for"
           tone="teal"
@@ -96,8 +105,9 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
           options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: n, label: String(n) }))}
           hint="1 easy · 10 everything you had"
         />
+        </FieldGroup>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <FieldGroup title="Who & where" desktop="grid gap-3 sm:grid-cols-2">
         {f.format === 'doubles' && (
           <ChipPick
             label="Partner"
@@ -149,7 +159,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             </>
           }
         />
-        </div>
+        </FieldGroup>
 
         {/* The half you fill less than half the time.
 
@@ -164,7 +174,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             of number inputs they replaced, and this form grew the page by
             0.4 screens. Folding the optional half is where that comes back,
             without putting a keyboard back in the fast path. */}
-        <DisclosureRow label="Level, scoring, points & opponents">
+        {(() => { const details = (<>
           <ChipPick
             label="Level"
             tone="teal"
@@ -185,7 +195,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
               { value: 'rally21' as const, label: 'rally 21' },
             ]}
           />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className={phone ? 'grid grid-cols-2 gap-3' : 'grid gap-3 sm:grid-cols-2'}>
             <Input type="number" value={f.pointsFor} onChange={(e) => set({ pointsFor: e.target.value })} placeholder="Pts for" aria-label="Points for" />
             <Input type="number" value={f.pointsAgainst} onChange={(e) => set({ pointsAgainst: e.target.value })} placeholder="Pts against" aria-label="Points against" />
           </div>
@@ -195,7 +205,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
               against nothing. The second is gated on the format exactly as
               `Partner` is, so a singles session is never asked for a name it
               cannot have. */}
-          <div className={f.format === 'doubles' ? 'grid gap-3 sm:grid-cols-2' : undefined}>
+          <div className={f.format !== 'doubles' ? undefined : phone ? 'grid grid-cols-2 gap-3' : 'grid gap-3 sm:grid-cols-2'}>
             <Input
               value={f.opponent}
               onChange={(e) => set({ opponent: e.target.value })}
@@ -211,7 +221,11 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
               />
             )}
           </div>
-        </DisclosureRow>
+        </>)
+        return phone
+          ? <FieldGroup title="Details">{details}</FieldGroup>
+          : <DisclosureRow label="Level, scoring, points & opponents">{details}</DisclosureRow>
+        })()}
       </div>
   )
 }
