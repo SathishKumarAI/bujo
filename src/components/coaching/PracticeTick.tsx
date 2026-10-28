@@ -28,11 +28,17 @@ import { practiceKey, practiceStat, togglePractice } from '../../lib/practiceLog
  * otherwise hear "3 times, last Tuesday" nine times with nothing to attach it
  * to.
  */
-export function PracticeTick({ kind, name, className = '' }: {
+export function PracticeTick({ kind, name, className = '', variant = 'pill' }: {
   kind: 'drill' | 'shot'
   /** The drill or shot as written. Slugged into the key — see `practiceKey`. */
   name: string
   className?: string
+  /**
+   * `circle` is the phone's (COD-456): a 44px round check, empty until done,
+   * then filled green with a ✓ — the iOS Reminders control. Same state, same
+   * name, same toggle; only the drawing differs. Desktop keeps the pill.
+   */
+  variant?: 'pill' | 'circle'
 }) {
   const { data, setSettings } = useJournal()
   const today = todayISO()
@@ -46,6 +52,21 @@ export function PracticeTick({ kind, name, className = '' }: {
      is a transform, so it cannot move a computed colour into a mid-animation
      blend the contrast gate would read as a failure. */
   const [popped, setPopped] = useState(false)
+  const label = stat.onDate
+    ? `${name} — ${verb.toLowerCase()} today. Press to remove today.`
+    : `${name} — mark ${verb.toLowerCase()} today.${stat.last ? ` Last done ${prettyDay(stat.last)}, ${stat.days.length} time${stat.days.length === 1 ? '' : 's'} in all.` : ' Never done.'}`
+  const toggle = () => {
+    if (!stat.onDate) setPopped(true)
+    setSettings({ practiceLog: togglePractice(data.settings.practiceLog ?? {}, key, today) })
+  }
+
+  if (variant === 'circle') return (
+    <button type="button" onClick={toggle} aria-pressed={stat.onDate} aria-label={label} className={`check-circle ${className}`}>
+      <span aria-hidden onAnimationEnd={() => setPopped(false)} className={popped ? 'node-pop' : ''}>
+        <Icon as={Check} size="md" />
+      </span>
+    </button>
+  )
 
   return (
     <button
