@@ -8,6 +8,8 @@ import { DayAnatomy, DayChecklist, ProgramMap, RestTimer, useProgram } from '../
 import { useNav } from '../components/shell/nav'
 import { setPendingSession } from '../lib/pendingSession'
 import { restSeconds } from '../lib/programs'
+import { useDevice } from '../components/shell/device'
+import { ProgramPhone } from '../components/program/phone/ProgramPhone'
 
 /**
  * The 12-Week Hypertrophy Block · a Body tab of its own.
@@ -64,6 +66,7 @@ export function Program() {
   // you start browsing. Read off `days` rather than `cur` — `cur` follows the
   // grid, so "Next up: Legs" would have renamed itself the moment you clicked
   // a push day to see what was in it.
+  const phone = useDevice() === 'mobile'
   const up = s.days.find((d) => d.week === s.resume.week && d.day === s.resume.day) ?? s.days[0]
 
   const facts = [
@@ -84,6 +87,19 @@ export function Program() {
     { label: 'Day', value: `${s.curDoneCount}/${s.cur.exercises.length} done` },
     { label: 'Block', value: `${s.totalDays - s.doneCount} days left` },
   ]
+
+  /* A PHONE GETS ITS OWN PAGE (COD-461): the day as rows you tick, weeks and
+     days as tiles — no body map. Same state, same hand-off, same timer. */
+  if (phone) {
+    return (
+      <ProgramPhone
+        s={s}
+        onLoad={() => { setPendingSession(s.cur.exercises.map((e) => e.name)); navigate('gym') }}
+        onCheck={startRest}
+        rest={rest && <RestTimer key={rest.id} seconds={rest.seconds} exercise={rest.exercise} onDismiss={() => setRest(null)} />}
+      />
+    )
+  }
 
   return (
     <PageLayout

@@ -791,3 +791,30 @@ button.cell:active {
   background: var(--color-ink-1);
   box-shadow: var(--shadow-lift);
 }
+
+/* ── Program (`program/phone/ProgramPhone.tsx`, COD-461) ─────────────────── */
+
+/* Week tiles: twelve of them, so narrower than an activity tile. */
+.pick-tile.pick-tile-sm {
+  min-width: 3.5rem;
+  min-height: 3.75rem;
+  gap: 0;
+}
+
+/* "What you actually did" beside a prescribed lift. Weighted to out-rank
+   `.ios-form :is(input…)` (0,3,1). */
+.ios-form .cell input.actual-input {
+  width: 5.5rem;
+  flex: none;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background: var(--color-ink-2);
+  color: var(--color-fg-1);
+  font-size: var(--text-body);
+  text-align: center;
+}
+
+.ios-form .cell input.actual-input::placeholder {
+  color: var(--color-fg-2);
+}
