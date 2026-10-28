@@ -111,7 +111,7 @@ Pickleball (COD-450). On a phone:
 | Rule | How |
 |---|---|
 | **No visualizations.** Charts, trend cards and analytics panels are desktop-only | `panels.ts` marks each panel `phone: true` only if you WRITE to it; `panelsFor(phone)` filters the bar |
-| **The log is the first thing on the page**, every field open, one scrolling form | the view returns early on a phone with the form as zone 1 and no act column |
+| **The log is the first thing on the page, and logging needs NO scroll** | a one-screen quick log (`pickleball/QuickLog.tsx`): what every session has on screen, everything optional in a bottom `Sheet` (`ui/sheet.tsx`), the draft pre-filled from last time (`carryOver`). A long grouped form — even fully open and iOS-styled at 2.62 screens — was rejected: "try not to make them scroll down again and again" |
 | **iOS geometry**: 17px fields, 44px targets, inset groups, chips as one segmented row | `FieldGroup` + `styles/phone.css` (`.ios-form`) — scoped classes, no media query |
 | **Decided by screen width**, never a "desktop mode" | `useDevice()` (`shell/device.tsx`) — ≤767px, or touch under 1024px |
 | **Desktop does not change.** Prove it | `FieldGroup` renders the exact desktop wrapper it replaced; probe the page at 1440 before and after and diff the numbers |

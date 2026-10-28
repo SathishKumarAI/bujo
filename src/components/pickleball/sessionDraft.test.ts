@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blankSession, draftFrom, sessionPatch } from './sessionDraft'
+import { blankSession, carryOver, draftFrom, sessionPatch } from './sessionDraft'
 import type { PickleballSession } from '../../lib/types'
 
 /**
@@ -80,6 +80,28 @@ describe('a session survives the round trip through the form', () => {
     expect(cleared.worked).toBeUndefined()
     expect(cleared.energy).toBeUndefined()
     expect(cleared.toFix).toEqual(['Third-shot drop'])
+  })
+
+  /**
+   * A SINGLES SESSION HAS NO PARTNER. The form hides Partner and Opponent 2
+   * in singles but keeps their values, so a draft carried over from a doubles
+   * session (`carryOver`, "Repeat last") and switched to singles still held
+   * "Mara" — and wrote it. Found by the quick-log e2e (COD-452).
+   */
+  it('does not write a partner or a second opponent onto a singles session', () => {
+    const patch = sessionPatch({ ...draftFrom(FULL), format: 'singles', opponent2: 'Jo' })
+    expect('partner' in patch).toBe(true)
+    expect(patch.partner).toBeUndefined()
+    expect(patch.opponent2).toBeUndefined()
+    expect(patch.opponent).toBe('Sam & Jo')
+  })
+
+  it('carries over what rarely changes and nothing about this session', () => {
+    const d = carryOver(FULL)
+    expect([d.format, d.durationMin, d.partner, d.location, d.level, d.scoring]).toEqual(['doubles', '75', 'Ravi', 'Riverside', '3.5', '11'])
+    expect([d.gamesWon, d.gamesLost, d.rpe, d.notes, d.energy, d.pain]).toEqual(['', '', '', '', '', ''])
+    expect(d.worked).toEqual([])
+    expect(carryOver(undefined)).toEqual(blankSession())
   })
 
   it('keeps a zero score as a zero, not as absent', () => {

@@ -20,10 +20,14 @@ on the desktop version: it must not change.
 <direction>
 - A phone is for LOGGING and for reading back what you logged. A desktop is for
   reading analysis. On a phone: no charts, no trend cards, no analytics panels.
-- The log is the first thing on the page. Every input is open — nothing behind
-  a fold — in one form you scroll, not one you hunt through.
-- Fit as much as possible into the first screen. Kill empty space. Essentials
-  (date, the main numbers) must be visible without scrolling.
+- The log is the first thing on the page and logging needs NO scroll: the
+  log button must sit above the bottom nav on a 664px-tall screen.
+- Ask on screen only what changes every time; pre-fill what rarely changes
+  from the last entry; put everything optional in a bottom sheet, one tap
+  away. A long form — even open and grouped — is the wrong shape (rejected
+  on Pickleball at 2.62 screens).
+- Kill empty space. The biggest thing on screen is the number every entry
+  has (Pickleball: a scoreboard).
 - iOS geometry: 17px fields, 15px labels, 13px uppercase section headers,
   44px minimum tap target, inset grouped sections, a full-width primary button.
 - Phone vs desktop is decided by screen width (`useDevice()`), never a mode.
@@ -36,10 +40,12 @@ on the desktop version: it must not change.
    at desktop 1440x900, with a Playwright probe in your scratchpad: page height,
    y of the submit button, visible fields, chart count, review panels/tabs,
    headings. Save the desktop numbers — they are the contract.
-2. Reuse what Pickleball built: `FieldGroup` (components/ui/FieldGroup.tsx),
-   `styles/phone.css` (`.ios-form`, `.ios-row`, `[data-chip-row]`),
-   `panelsFor()`-style `phone: true` flags on review panels, and an early
-   `if (phone) return` in the view with the form as zone 1 and no act column.
+2. Reuse what Pickleball built: the quick-log shape (`pickleball/QuickLog.tsx`),
+   `Sheet` (components/ui/sheet.tsx) for the optional half, a `carryOver`-style
+   pre-fill, the form component's `sections` prop so the sheet reuses the ONE
+   form, `FieldGroup` and `styles/phone.css` (`.ios-form`, `.ios-row`,
+   `.ios-bare`, `[data-chip-row]`, `.ios-range`), `phone: true` flags on review
+   panels, and an early `if (phone) return` with the log as zone 1.
 3. Put short choices on one line, label left (`className={phone ? 'ios-row' :
    undefined}`). Chip rows become one segmented row; pick-several rows wrap
    four to a line. Drop helper text the control already says.
@@ -84,11 +90,11 @@ decision you need from the owner, if any.
 |---|---|---|
 | form on the page (phone) | no — shut strip | first, y285 in demo (y~133 real) |
 | inputs reachable | 1 | 22 incl. "How it went" |
-| form height | — | 2.62 screens (3.05 before the density pass) |
+| form height | — | 427px, 0.64 screens — log button at y560, nav at 616 (a grouped form was 2.62 screens and rejected) |
+| a typical log | — | +, +, Log — format, time, partner, court carried over |
 | review panels on phone | 5, 3 analytics | 2 |
 | desktop probe | — | byte-identical |
 
-Why not literally one screen: ~22 inputs at a 44px floor is ~970px of
-controls before a single label, against a 664px visible screen. One screen
-holds the essentials (date, format, score); the rest is one scroll down. To go
-further means fewer questions, not smaller ones.
+Why the sheet: ~22 inputs at a 44px floor is ~970px of controls against a
+664px screen, so "all on one screen" is only possible by asking fewer
+questions each time — the everyday ones on screen, the rest one tap away.

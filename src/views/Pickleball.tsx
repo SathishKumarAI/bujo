@@ -9,11 +9,11 @@ import { todayISO, addDays, prettyDay } from '../lib/date'
 import { pickleTotals, recentThenFrequent, nextStep } from '../lib/pickleball'
 import { PickleballReview } from '../components/pickleball/Review'
 import { SessionFields } from '../components/pickleball/SessionFields'
-import { blankSession, sessionPatch } from '../components/pickleball/sessionDraft'
+import { blankSession, carryOver, sessionPatch } from '../components/pickleball/sessionDraft'
 import { TodayDrill } from '../components/pickleball/TodayDrill'
 import { PB_PANELS, panelsFor } from '../components/pickleball/panels'
 import { useDevice } from '../components/shell/device'
-import { FieldGroup } from '../components/ui/FieldGroup'
+import { QuickLog } from '../components/pickleball/QuickLog'
 import { useStickyState } from '../lib/useStickyState'
 import { notify } from '../lib/notify'
 
@@ -59,7 +59,10 @@ const blankOf = blankSession
 export function Pickleball() {
   const { data, addPickleball } = useJournal()
   const today = todayISO()
-  const [f, setF] = useState(blankOf)
+  /* A phone starts every session from the last one (`carryOver`) — the quick
+     log asks only what changes; a desktop starts blank, as it always has. */
+  const phone = useDevice() === 'mobile'
+  const [f, setF] = useState(() => (phone ? carryOver([...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))[0]) : blankOf()))
   const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
 
   const all = pickleTotals(data)
@@ -84,7 +87,6 @@ export function Pickleball() {
      `useActColumn` for the three measurements that decided it. */
   const logCol = useActColumn('pickleball')
   /* ON A PHONE THE LOG IS THE PAGE — see the early return below. */
-  const phone = useDevice() === 'mobile'
   const phonePanels = panelsFor(phone)
 
   /**
@@ -129,11 +131,11 @@ export function Pickleball() {
     // form: you could not hand-log "played for 40 minutes, didn't keep score".
     if (!f.gamesWon && !f.gamesLost && !f.durationMin) { notify.info('Nothing to log yet', 'A session needs a score or how long you played.'); return }
     addPickleball(sessionPatch(f) as Parameters<typeof addPickleball>[0])
-    setF(blankOf())
+    setF(phone ? carryOver(sessionPatch(f) as Parameters<typeof carryOver>[0]) : blankOf())
   }
   function repeatLast() {
     const last = sessions[0]
-    if (last) setF({ ...blankOf(), date: today, format: last.format, durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', location: last.location ?? '', level: last.level ?? '', scoring: last.scoring ?? '' })
+    if (last) setF(carryOver(last))
   }
 
   const atAGlance = (
@@ -254,30 +256,15 @@ export function Pickleball() {
       <PageLayout
         tier={1180}
         zone1={(
-          /* THE PHONE LOG: no card frame, iOS inset groups on the page ground
-             (`FieldGroup`, `styles/phone.css`), every field open and one
-             full-width button at the end. Same `SessionFields`, same `log()`. */
-          <section aria-label="Log a session" className="ios-form flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-2 px-1">
-              <h2 className="text-title font-semibold text-fg-1">Log a session</h2>
-              {sessions.length > 0 && (
-                <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button>
-              )}
-            </div>
-            <SessionFields
-              f={f}
-              set={set}
-              recentPartners={recentPartners}
-              allPartners={allPartners}
-              recentVenues={recentVenues}
-              allVenues={allVenues}
-              yesterday={yesterday}
-            />
-            <FieldGroup title="Notes">
-              <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} aria-label="Notes" />
-            </FieldGroup>
-            <Button variant="primary" size="lg" onClick={log} className="press-3d h-12 w-full text-heading font-semibold">Log session</Button>
-          </section>
+          <QuickLog
+            f={f}
+            set={set}
+            onLog={log}
+            recentPartners={recentPartners}
+            allPartners={allPartners}
+            recentVenues={recentVenues}
+            allVenues={allVenues}
+          />
         )}
         zone3={<>{atAGlance}<PickleballReview panel={panel} onPanel={setPanel} /></>}
       />
