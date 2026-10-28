@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog'
 
 /**
@@ -22,10 +22,18 @@ export function Sheet({ open, onOpenChange, title, description, children }: {
   description?: string
   children: ReactNode
 }) {
+  // Focus goes back to whatever opened the sheet. Radix returns it to a
+  // `DialogTrigger`, and no caller has one — every sheet is opened from a
+  // button with `open` state — so it fell to <body>: measured on the phone ☰,
+  // Escape left `document.activeElement` as BODY. At mount the opener is still
+  // the active element, so remember it there.
+  const opener = useRef<HTMLElement | null>(null)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
+        onOpenAutoFocus={() => { opener.current = document.activeElement as HTMLElement | null }}
+        onCloseAutoFocus={(e) => { if (opener.current?.isConnected) { e.preventDefault(); opener.current.focus() } }}
         className="sheet-up ios-form top-auto bottom-0 left-0 flex max-h-[88dvh] max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none rounded-t-card border-x-0 border-b-0 p-0 sm:max-w-none"
       >
         <span aria-hidden className="sheet-grabber" />

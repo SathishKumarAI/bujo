@@ -15,6 +15,8 @@ The header's individual controls live one level down in
 | Hiding the rail by clicking its empty column or over-scrolling it | `railGestures.ts` — the thresholds; `SideRail.tsx` wires them |
 | The five section links, active treatment, where a section click lands | `SectionNav.tsx` — the rail’s upper half |
 | The two header rows and their order | `TopBar.tsx` (+ `topbar/`) |
+| The PHONE header — ☰ · tab strip · Quick add; `TopBar` hands off to it on `useDevice() === 'mobile'` | `PhoneTopBar.tsx` (strip + 44px floor: `.phone-bar`, `.phone-strip` in `styles/phone.css`) |
+| What the phone ☰ sheet holds | `PhoneMenu.tsx` — a row the desktop `AccountMenu` gains that a phone needs goes in BOTH |
 | The section’s tabs — stacked in the rail, a scrolling row on a phone | `SectionTabs.tsx` |
 | The phone tab bar | `BottomNav.tsx` |
 | When either bar hides on scroll | `useHideOnScroll.ts` |
@@ -32,7 +34,7 @@ The header's individual controls live one level down in
 
 - **The rail is back, and it replaced the nav rows rather than joining them.**
   Desktop navigation is `SideRail` (sections + the section’s tabs, 208px,
-  always open); phones are unchanged — `TopBar`’s tab row plus `BottomNav`.
+  always open); phones get `PhoneTopBar` (☰, the tab strip, Quick add) plus `BottomNav`.
   PR #120 deleted a 240px rail that sat *above* a top bar and a detached tab
   row — three chrome layers answering one question — and with it the
   collapse, auto-hide, mobile drawer and scrim that existed only to win back
