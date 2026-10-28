@@ -1068,6 +1068,15 @@ export interface PickleballSession {
   pointsAgainst?: number
   /** Scoring used: 11/15/21 side-out, or rally-to-21. */
   scoring?: '11' | '15' | '21' | 'rally21'
+  // ── how it went (all optional, additive — COD-451) ──
+  /** Skills that worked today — `SESSION_SKILLS` values, the academy's own groups. */
+  worked?: string[]
+  /** Skills to work on — same vocabulary, so it can point at the drills that fix it. */
+  toFix?: string[]
+  /** Energy after playing, 1 drained … 5 buzzing. */
+  energy?: number
+  /** Any pain or a niggle during or after. Absent means not answered, not "no". */
+  pain?: boolean
   /** Provenance key for an imported/dictated row — see `Workout.src`. */
   src?: string
 }

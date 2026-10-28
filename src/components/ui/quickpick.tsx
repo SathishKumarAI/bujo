@@ -322,7 +322,7 @@ export function ChipPick<T extends string | number>({
       <legend className="mb-1.5 text-label font-medium text-fg-1">{label}</legend>
       {/* `data-chip-row` is the hook `styles/phone.css` turns into one
           segmented row on a phone. It draws nothing on its own. */}
-      <div data-chip-row className={cn('flex flex-wrap items-center', dense ? 'gap-1' : 'gap-1.5')}>
+      <div data-chip-row={multi ? 'multi' : ''} className={cn('flex flex-wrap items-center', dense ? 'gap-1' : 'gap-1.5')}>
         {options.map((o) => {
           const on = multi ? (Array.isArray(value) && (value as readonly T[]).includes(o.value)) : value === o.value
           const t = o.tone ?? tone

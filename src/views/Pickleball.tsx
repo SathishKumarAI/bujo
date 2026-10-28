@@ -257,7 +257,7 @@ export function Pickleball() {
           /* THE PHONE LOG: no card frame, iOS inset groups on the page ground
              (`FieldGroup`, `styles/phone.css`), every field open and one
              full-width button at the end. Same `SessionFields`, same `log()`. */
-          <section aria-label="Log a session" className="ios-form flex flex-col gap-5">
+          <section aria-label="Log a session" className="ios-form flex flex-col gap-4">
             <div className="flex items-center justify-between gap-2 px-1">
               <h2 className="text-title font-semibold text-fg-1">Log a session</h2>
               {sessions.length > 0 && (
@@ -274,7 +274,7 @@ export function Pickleball() {
               yesterday={yesterday}
             />
             <FieldGroup title="Notes">
-              <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={3} aria-label="Notes" />
+              <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} aria-label="Notes" />
             </FieldGroup>
             <Button variant="primary" size="lg" onClick={log} className="press-3d h-12 w-full text-heading font-semibold">Log session</Button>
           </section>
