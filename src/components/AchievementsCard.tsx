@@ -35,7 +35,14 @@ export function AchievementsCard({ className }: { className?: string } = {}) {
           return (
             <li
               key={a.id}
-              className={`flex items-start gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'opacity-50'}`}
+              /* NO OPACITY on a locked tile. `opacity-50` composited its text
+                 to 1.82-2.94:1 on a phone, at every theme — hidden for months
+                 because the book cover's gradient left axe unable to compute a
+                 ground, so it reported "incomplete", not "fail". Dropping that
+                 frame on phones (COD-454) made it measurable. Locked now reads
+                 as a padlock, a dashed edge and `fg-2` text: quieter by token,
+                 still legible. */
+              className={`flex items-start gap-2 rounded-card border p-2.5 transition-colors ${got ? '' : 'border-dashed'}`}
               style={{ borderColor: got ? cat(a.color) : cat('surface0'), background: got ? cat(a.color) + '14' : 'transparent' }}
             >
               <span
@@ -47,7 +54,7 @@ export function AchievementsCard({ className }: { className?: string } = {}) {
                 {got ? a.emoji : <Icon as={Lock} size="sm" className="text-fg-2" />}
               </span>
               <div className="min-w-0">
-                <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : cat('overlay0') }}>{a.label}</p>
+                <p className="text-body leading-snug font-medium" style={{ color: got ? cat('text') : cat('subtext0') }}>{a.label}</p>
                 {/* `label` is a name and stays tight; `desc` is a sentence. It was
                     `text-micro` — 10px, the step tokens.css reserves for data
                     chrome and says explicitly is "never for prose" — five steps

@@ -3,6 +3,7 @@ import { ChipPick, DayPick, Stepper } from '../ui/quickpick'
 import { durationOptions } from '../ui/quickpick.options'
 import { DisclosureRow } from '../page'
 import { FieldGroup } from '../ui/FieldGroup'
+import { SessionFieldsPhone } from './SessionFieldsPhone'
 import { useDevice } from '../shell/device'
 import { todayISO } from '../../lib/date'
 import { SESSION_SKILLS } from '../../lib/pickleballAcademy'
@@ -57,6 +58,10 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
   sections?: readonly SessionSection[]
 }) {
   const has = (k: SessionSection) => !sections || sections.includes(k)
+  /* A PHONE GETS ITS OWN DRAWING of the same fields (`SessionFieldsPhone`),
+     so the quick log's sheet and the history edit sheet both get it without
+     knowing; desktop rendering below is unchanged. */
+  const phoneDevice = useDevice() === 'mobile'
   /* ON A PHONE: THE SAME FIELDS, IN THE SAME ORDER, NOTHING FOLDED.
      Asked for as "all the input should be taken only in one screen" — one
      scrolling form, so the fold below opens out into a group of its own, and
@@ -132,6 +137,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             )}
           </div>
   )
+  if (phoneDevice) return <SessionFieldsPhone f={f} set={set} allPartners={allPartners} allVenues={allVenues} sections={sections} />
   return (
       <div className={phone ? 'flex flex-col gap-4' : 'flex flex-col gap-3'}>
         {has('when') && (<>

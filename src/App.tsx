@@ -1,7 +1,7 @@
 import { getSyncPassphrase } from './lib/syncSecret'
 import { consumeAuthError } from './lib/supabase'
 import { notify } from './lib/notify'
-import { lazy, Suspense, useState, useEffect, useRef, useCallback } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { migrate } from './lib/storage'
 import { resolveIncoming, CONFLICT_PROMPT } from './lib/conflict'
 import { useConfirm } from './components/ConfirmDialog'
@@ -24,7 +24,7 @@ import { CursorProvider, DeepLinkSync } from './components/shell/cursor'
 import { readDeepLink, onRouteChange } from './lib/deepLink'
 import { SECTIONS, tabsOf, type SectionGates } from './components/shell/sections'
 import { setPrimaryScope } from './lib/onePrimary'
-import { DeviceProvider } from './components/shell/device'
+import { DeviceProvider, useDevice } from './components/shell/device'
 import { NavProvider } from './components/shell/nav'
 import { CaptureReceiptProvider } from './components/CaptureReceipt'
 import type { ViewId } from './components/shell/viewChrome'
@@ -229,17 +229,7 @@ export default function App() {
             One token, read in both places. */}
         <div className="mx-auto max-w-[var(--container-max)]" style={{ zoom }}>
           <Suspense fallback={<SkeletonView />}>
-            {book ? (
-              <div className="book">
-                <div key={view} className="book-inner page-in">
-                  <Current />
-                </div>
-              </div>
-            ) : (
-              <div key={view} className="page-in">
-                <Current />
-              </div>
-            )}
+            <ViewFrame book={!!book} view={view}><Current /></ViewFrame>
           </Suspense>
         </div>
       </AppShell>
@@ -247,5 +237,25 @@ export default function App() {
       </NavProvider>
     </CursorProvider>
     </DeviceProvider>
+  )
+}
+
+/**
+ * The frame every view sits in: the book cover and page-turn on a desktop,
+ * NOTHING on a phone. Asked for directly — "drop out the card kind of
+ * animation in the background, keep it clean and neat for the mobile
+ * version". On a phone the cover was a 1px rounded frame plus 16px of inner
+ * padding inside `<main>`'s own 16px, around every page. A component and not
+ * inline in `App`, because `App` renders the `DeviceProvider` and so cannot
+ * read it.
+ */
+function ViewFrame({ book, view, children }: { book: boolean; view: string; children: ReactNode }) {
+  if (useDevice() === 'mobile') return <div key={view}>{children}</div>
+  return book ? (
+    <div className="book">
+      <div key={view} className="book-inner page-in">{children}</div>
+    </div>
+  ) : (
+    <div key={view} className="page-in">{children}</div>
   )
 }
