@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "coverage": "vitest run --coverage",
     "design": "node scripts/check-design-system.mjs",
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1 --port 5199 --strictPort",
     "icons": "node scripts/build-icons.mjs",
     "manual": "node scripts/build-manual.mjs",
     "space": "node scripts/space-audit.mjs",

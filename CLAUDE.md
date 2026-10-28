@@ -118,6 +118,36 @@ the rename is a two-line diff.
   record editor, links built from a name rather than pinned, and the capped
   list. Read it before building any of them a third time.
 
+## Starting a server — never stop someone else's
+
+This machine runs several projects at once. Measured 2026-10-28: an Astro site
+on 4321, three `serve-dist` previews on 4322–4324, another Vite app on 3000,
+Plane on 8080, Postgres on 5432/5433. **Never kill, stop or restart a process
+this session did not start** — not to free a port, not because it "looks
+stale". A port in use means pick another port.
+
+1. **List what is listening first**, with the command line that owns it:
+   ```
+   Get-NetTCPConnection -State Listen | Select-Object -Unique LocalPort, OwningProcess |
+     ForEach-Object { "{0}`t{1}" -f $_.LocalPort, (Get-CimInstance Win32_Process -Filter "ProcessId=$($_.OwningProcess)").CommandLine }
+   ```
+2. **Dev is pinned to `127.0.0.1:5199`** — `npm run dev` is
+   `vite --host 127.0.0.1 --port 5199 --strictPort`. The host matters: on
+   Windows `localhost` binds `[::1]`, so a second server on `localhost:5199`
+   started beside one on `127.0.0.1:5199` without colliding (measured). Open
+   `http://127.0.0.1:5199`. `--strictPort` makes it fail loudly instead of
+   drifting onto 5173, which belongs to whichever project started first. If 5199 is taken *by this repo*, reuse it; if by
+   anything else, pass another port (`npm run dev -- --port 5299`).
+3. **Previews: 4310 and up**, always `--strictPort`, always `BUJO_URL` set to
+   match (see the gates section below).
+4. **Run servers in the background** and stop only the ones you started, by
+   the PID you started.
+
+Google sign-in on a dev port only returns to that port if the origin is in
+Supabase's redirect allow-list (`http://localhost:5199/**`,
+`http://127.0.0.1:5199/**`); otherwise Supabase silently sends you to the Site
+URL. See `docs/auth/google-oauth-setup.md`.
+
 ## Running the browser gates
 
 `npm run a11y`, `npm run smoke`, `npm run clipped` and `npm run space` drive a
