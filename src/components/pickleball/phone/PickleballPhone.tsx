@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { CalendarDot, Medal, Target, Trophy, Timer } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { Cell, Cells } from '../../ui/cells'
 import { Sheet } from '../../ui/sheet'
 import { PracticeTick } from '../../coaching/PracticeTick'
-import { cat, onAccent, onRaised } from '../../../lib/colors'
+import { cat, onRaised } from '../../../lib/colors'
+import { StatTiles } from '../../ui/statTiles'
 import { fromISODay, prettyDay, todayISO } from '../../../lib/date'
 import { pickleTotals, upcomingEvents } from '../../../lib/pickleball'
 import { ACADEMY_DRILLS } from '../../../lib/pickleballAcademy'
@@ -62,25 +62,11 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
       <QuickLog f={f} set={set} onLog={onLog} recentPartners={recentPartners} allPartners={allPartners} recentVenues={recentVenues} allVenues={allVenues} />
 
       {/* THE WEEK, three numbers and no chart. */}
-      <section aria-label="This week" className="flex flex-col gap-1.5">
-        <h2 className="px-1 text-heading font-semibold text-fg-1">This week</h2>
-        <ul className="grid grid-cols-3 gap-2">
-          {[
-            { k: 'Games', v: goal > 0 ? `${week.games}/${goal}` : String(week.games), icon: Target, tone: 'sky' },
-            { k: 'Won', v: week.games ? `${week.winPct}%` : '–', icon: Trophy, tone: 'green' },
-            { k: 'Sessions', v: String(week.sessions), icon: Timer, tone: 'mauve' },
-          ].map((s) => (
-            /* A list, not a <dl>: a definition list's items may hold only
-               term/value pairs, and the icon tile made it invalid
-               (axe `definition-list`, every theme). Reads "0/12 Games". */
-            <li key={s.k} className="stat-tile">
-              <span aria-hidden className="stat-icon" style={{ background: cat(s.tone), color: onAccent(cat(s.tone)) }}><Icon as={s.icon} size="sm" /></span>
-              <span className="stat-value">{s.v}</span>
-              <span className="truncate text-label text-fg-2">{s.k}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <StatTiles label="This week" tiles={[
+        { k: 'Games', v: goal > 0 ? `${week.games}/${goal}` : String(week.games), icon: Target, tone: 'sky' },
+        { k: 'Won', v: week.games ? `${week.winPct}%` : '–', icon: Trophy, tone: 'green' },
+        { k: 'Sessions', v: String(week.sessions), icon: Timer, tone: 'mauve' },
+      ]} />
 
       <Cells title="Today">
         <Cell icon={Target} tone="mauve" title={drill.name} subtitle={`Drill · ${drill.skill}`} trail={<PracticeTick kind="drill" name={drill.name} variant="circle" />} />

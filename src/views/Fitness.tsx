@@ -19,6 +19,8 @@ import { cadence, nextStep } from '../lib/fitnessReview'
 import { FITNESS_PANELS } from '../components/fitness/panels'
 import { FitnessReview } from '../components/fitness/Review'
 import { useStickyState } from '../lib/useStickyState'
+import { useDevice } from '../components/shell/device'
+import { FitnessPhone } from '../components/fitness/phone/FitnessPhone'
 
 /**
  * FITNESS · log a cardio session or a game, then read what they add up to.
@@ -119,6 +121,7 @@ export function Fitness() {
   /* The act column's open/shut, including the stacked default — see
      `useActColumn` for the three measurements that decided it. */
   const logCol = useActColumn('fitness')
+  const phone = useDevice() === 'mobile'
 
   // ── Zone 1 facts, all of which re-read on mode change ─────────────────────
   const goal = data.settings.fitnessGoalMin ?? 150
@@ -256,6 +259,11 @@ export function Fitness() {
       />
     </div>
   )
+
+  /* A PHONE GETS ITS OWN PAGE (COD-459): the log first, the week as three
+     numbers, recent sessions as rows — no charts. Every hook is above this
+     line; the desktop return below is unchanged. */
+  if (phone) return <FitnessPhone key={mode} mode={mode} onMode={switchMode} sessions={sessions} unit={unit} />
 
   return (
     <PageLayout
