@@ -35,6 +35,21 @@ export const blankSession = () => ({
 })
 
 /** A stored session as a draft — the editor's seed. */
+/**
+ * A blank draft that carries over what is usually the same as last time —
+ * format, length, partner, court, level, scoring — and none of what is about
+ * THIS session (date, score, effort, how it went, notes).
+ *
+ * One definition for both callers: the desktop's "Repeat last" button, and
+ * the phone's quick log, which starts every session from it so a typical log
+ * is the score and one tap (COD-452).
+ */
+export function carryOver(last: PickleballSession | undefined): SessionDraft {
+  const d = blankSession()
+  if (!last) return d
+  return { ...d, format: last.format, durationMin: String(last.durationMin ?? ''), partner: last.partner ?? '', location: last.location ?? '', level: last.level ?? '', scoring: last.scoring ?? '' }
+}
+
 export function draftFrom(p: PickleballSession): SessionDraft {
   return {
     date: p.date,
@@ -75,11 +90,14 @@ export function sessionPatch(f: SessionDraft): Partial<PickleballSession> {
     gamesWon: Number(f.gamesWon) || 0,
     gamesLost: Number(f.gamesLost) || 0,
     durationMin: f.durationMin ? Number(f.durationMin) : undefined,
-    partner: f.partner.trim() || undefined,
+    // Doubles-only fields, cleared on singles: the form hides them but keeps
+    // their values, so a carried-over doubles draft switched to singles would
+    // otherwise write last week's partner onto it.
+    partner: f.format === 'doubles' ? f.partner.trim() || undefined : undefined,
     rpe: f.rpe ? Number(f.rpe) : undefined,
     notes: f.notes.trim() || undefined,
     opponent: f.opponent.trim() || undefined,
-    opponent2: f.opponent2.trim() || undefined,
+    opponent2: f.format === 'doubles' ? f.opponent2.trim() || undefined : undefined,
     location: f.location.trim() || undefined,
     level: f.level.trim() || undefined,
     pointsFor: f.pointsFor ? Number(f.pointsFor) : undefined,

@@ -63,6 +63,23 @@
   margin: 0;
 }
 
+/* The quick log's rows (Time, Effort) carry one short word, so a narrower
+   label column — the 88px one clipped "1h 30m". */
+.ios-form fieldset.ios-row-short > legend {
+  flex-basis: 3.5rem;
+}
+
+/* A choice whose options name themselves (Doubles | Singles): the legend is
+   kept for screen readers and taken off the screen. */
+.ios-form fieldset.ios-bare > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .ios-form fieldset.ios-row > [data-chip-row] {
   flex: 1 1 0;
   min-width: 0;
@@ -163,4 +180,31 @@
 
 .ios-form [data-chip-row='multi'] > button {
   flex: 1 1 calc(25% - 0.25rem);
+}
+
+/* THE BOTTOM SHEET (`components/ui/sheet.tsx`) slides up from the edge it is
+   pinned to. Reduced motion gets it in place, no travel. */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-up {
+  animation: sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-up { animation: none; }
+}
+
+/* THE EFFORT SLIDER: the native range, tinted with the brand and a 28px
+   thumb inside a 44px row. `data-unset` dims it until it is first touched, so
+   the resting position (5) does not read as an answer. */
+.ios-range {
+  accent-color: var(--color-brand);
+  height: 2.75rem;
+}
+
+.ios-range[data-unset] {
+  opacity: 0.45;
 }
