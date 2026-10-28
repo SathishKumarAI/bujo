@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { CalendarDot, Medal, Target } from '@/components/icons'
+import { CalendarDot, Medal, Target, Trophy, Timer } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { Cell, Cells } from '../../ui/cells'
 import { Sheet } from '../../ui/sheet'
 import { PracticeTick } from '../../coaching/PracticeTick'
-import { cat, onRaised } from '../../../lib/colors'
+import { cat, onAccent, onRaised } from '../../../lib/colors'
 import { fromISODay, prettyDay, todayISO } from '../../../lib/date'
 import { pickleTotals, upcomingEvents } from '../../../lib/pickleball'
 import { ACADEMY_DRILLS } from '../../../lib/pickleballAcademy'
@@ -63,22 +64,26 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
       {/* THE WEEK, three numbers and no chart. */}
       <section aria-label="This week" className="flex flex-col gap-1.5">
         <h2 className="px-1 text-heading font-semibold text-fg-1">This week</h2>
-        <dl className="grid grid-cols-3 gap-2">
+        <ul className="grid grid-cols-3 gap-2">
           {[
-            { k: 'Games', v: goal > 0 ? `${week.games}/${goal}` : String(week.games) },
-            { k: 'Won', v: week.games ? `${week.winPct}%` : '–' },
-            { k: 'Sessions', v: String(week.sessions) },
+            { k: 'Games', v: goal > 0 ? `${week.games}/${goal}` : String(week.games), icon: Target, tone: 'sky' },
+            { k: 'Won', v: week.games ? `${week.winPct}%` : '–', icon: Trophy, tone: 'green' },
+            { k: 'Sessions', v: String(week.sessions), icon: Timer, tone: 'mauve' },
           ].map((s) => (
-            <div key={s.k} className="rounded-[0.875rem] bg-ink-1 px-3 py-2.5 shadow-[0_0_0_1px_var(--color-line)]">
-              <dt className="truncate text-label text-fg-2">{s.k}</dt>
-              <dd className="num text-title font-bold text-fg-1">{s.v}</dd>
-            </div>
+            /* A list, not a <dl>: a definition list's items may hold only
+               term/value pairs, and the icon tile made it invalid
+               (axe `definition-list`, every theme). Reads "0/12 Games". */
+            <li key={s.k} className="stat-tile">
+              <span aria-hidden className="stat-icon" style={{ background: cat(s.tone), color: onAccent(cat(s.tone)) }}><Icon as={s.icon} size="sm" /></span>
+              <span className="stat-value">{s.v}</span>
+              <span className="truncate text-label text-fg-2">{s.k}</span>
+            </li>
           ))}
-        </dl>
+        </ul>
       </section>
 
       <Cells title="Today">
-        <Cell icon={Target} tone="mauve" title={drill.name} subtitle={`Drill · ${drill.skill}`} trail={<PracticeTick kind="drill" name={drill.name} />} />
+        <Cell icon={Target} tone="mauve" title={drill.name} subtitle={`Drill · ${drill.skill}`} trail={<PracticeTick kind="drill" name={drill.name} variant="circle" />} />
         {soon && <Cell icon={CalendarDot} tone="peach" title={soon.name} subtitle={soon.daysUntil === 0 ? 'Today' : soon.daysUntil === 1 ? 'Tomorrow' : `In ${soon.daysUntil} days`} onPress={() => setComp(true)} />}
       </Cells>
 
@@ -91,7 +96,7 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
               <Cell
                 key={p.id}
                 lead={(
-                  <span className="num grid h-9 w-14 shrink-0 place-items-center rounded-[0.625rem] text-body font-bold" style={{ background: cat(result) + '22', color: onRaised(result) }}>
+                  <span className="score-badge" style={{ background: cat(result) + '22', color: onRaised(result) }}>
                     {p.gamesWon}–{p.gamesLost}
                   </span>
                 )}
