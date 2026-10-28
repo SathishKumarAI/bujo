@@ -167,7 +167,7 @@ export const SESSION_SKILLS = [
   { value: 'Serve', label: 'Serve' },
   { value: 'Return', label: 'Return' },
   { value: 'Third-shot drop', label: 'Drop', name: 'Third-shot drop' },
-  { value: 'Dinking', label: 'Dink', name: 'Dinking' },
+  { value: 'Dinking', label: 'Dinking' },
   { value: 'Reset / transition', label: 'Reset', name: 'Reset / transition' },
   { value: 'Volleys / hands', label: 'Volleys', name: 'Volleys / hands' },
   { value: 'Footwork', label: 'Footwork' },

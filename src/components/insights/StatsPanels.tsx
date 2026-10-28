@@ -306,7 +306,7 @@ export function useStatsCards(): StatsCards {
       <p className="mb-3 text-body text-fg-2">
         {prettyMonth(ym)} ·{' '}
         {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
-          <>avg mood <span className="font-medium" style={{ color: moodColor(Math.round(avg)) }}>{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
+          <>avg mood <span className="font-medium text-fg-1"><span aria-hidden className="mr-1 inline-block size-2 rounded-pill align-middle" style={{ background: moodColor(Math.round(avg)) }} />{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
         )}
       </p>
     )

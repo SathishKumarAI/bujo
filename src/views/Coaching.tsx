@@ -634,7 +634,7 @@ function TodaySession({ slot, dow }: { slot: typeof WEEKLY_TEMPLATE[number]; dow
       <div className="flex flex-wrap gap-1">
         {WEEKLY_TEMPLATE.map((d, i) => (
           <span key={d.day} title={`${d.day} · ${d.focus}`}
-            className={`rounded-pill px-1.5 py-0.5 text-micro transition-colors ${i === (dow + 6) % 7 ? 'bg-teal/20 text-teal ring-1 ring-teal/40' : 'bg-ink-2 text-fg-2 hover:bg-ink-1 hover:text-fg-1'}`}>
+            className={`rounded-pill px-1.5 py-0.5 text-micro transition-colors ${i === (dow + 6) % 7 ? 'bg-teal/20 text-fg-1 ring-1 ring-teal/40' : 'bg-ink-2 text-fg-2 hover:bg-ink-1 hover:text-fg-1'}`}>
             {d.day}
           </span>
         ))}

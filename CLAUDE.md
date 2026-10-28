@@ -120,6 +120,46 @@ Trap: `useActColumn` shuts the act column whenever the page STACKS, which on a
 phone hid the form behind a strip — the measured "before" on Pickleball was
 one visible field. A phone page must not route its form through it.
 
+Phone surfaces (COD-454): `ui/seg.tsx` (iOS segmented control), `ui/cells.tsx`
+(inset grouped rows), `ui/sheet.tsx`, all styled in `styles/phone.css`. The
+shell's book frame and page-turn are dropped for EVERY phone page in
+`App.tsx`'s `ViewFrame` — so a phone card now sits on the page ground, not the
+cover's card colour, and an accent-on-wash pill can fall under 4.5 (Coaching's
+today-pill went to 4.39 in latte; fixed by moving its text to `fg-1`).
+
+Trap: **tap-again-to-clear on a PRE-SELECTED control drops data.** Time arrives
+selected from last session, and people tap the highlighted option to confirm
+it — the e2e did exactly that and logged a session with no duration. `Seg`'s
+`allowNone` is for optional answers that start empty, never for a carried-over
+value.
+
+Trap: **axe's `label-content-name-mismatch` compares WHOLE WORDS.** "Dink"
+inside the letters of "Dinking" still failed, at every theme; so does an
+`aria-label` that replaces a row's visible text. Say extra words BEFORE the
+visible text (`Cell`'s `label` is a visually-hidden prefix), never instead of
+it.
+
+Trap (open, COD-455): **the book cover blinds axe on DESKTOP.** `.book`
+paints its ground as `linear-gradient(var(--card), var(--card))`, and axe
+cannot compute contrast through a background-image, so text under the cover is
+"incomplete", never "fail". Dropping the cover on phones surfaced four real,
+long-standing failures at once (Insights achievements faded with `opacity-50`
+to 1.82–2.94:1, Insights' avg-mood number 1.82, Today's chips 4.21) — fixed,
+but desktop still renders the cover. A green desktop scan proves nothing about
+contrast until the cover paints a flat `background-color`.
+
+Trap: **the phone session form is a second DRAWING of the same fields.**
+`SessionFields` hands off to `SessionFieldsPhone` on a phone (both sheets get it
+for free), so a field added to a session goes in BOTH files. The round-trip
+test guards the draft, not the drawing. And in a browser probe: an input with a
+`list` is a **combobox** and a number input is a **spinbutton** — not a
+textbox; two selectors here timed out on that before the form was suspected.
+
+Trap: **"lighter than its track" has no single token across the five
+themes.** The card colour is lighter than `ink-2` in latte and dawn and darker
+in mocha, neon and vscode — measured, not assumed — so the segmented thumb is a
+16% text-colour mix by default and `ink-1` under the two light themes.
+
 ## Two documents to read before changing a page
 
 - **`docs/USER-CONTROL.md`** — what a person must always be able to do with
