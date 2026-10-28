@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ACADEMY_DRILLS, ACADEMY_LEVELS, DRILL_FIXES, MINDSET, TECHNIQUES, TWELVE_WEEK,
-  ACADEMY_TOTAL_WEEKS, levelForRating,
+  ACADEMY_TOTAL_WEEKS, levelForRating, SESSION_SKILLS,
 } from './pickleballAcademy'
 import { COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUrl } from './pickleballSafety'
 
@@ -152,5 +152,24 @@ describe('levelForRating', () => {
     const lvl = levelForRating(seeded)
     expect(seeded).toBeGreaterThan(lvl.band[0])
     expect(seeded).toBeLessThan(lvl.band[1])
+  })
+})
+
+/**
+ * SESSION_SKILLS is the vocabulary "what worked / to work on" stores (COD-451).
+ * It must be the academy's own groups, or "to fix: Drop" points at no drill —
+ * a lookup that silently finds nothing passes. And a short chip label must be
+ * CONTAINED in its announced name, or axe's label-content-name-mismatch fails.
+ */
+describe('session skills', () => {
+  it('are every one an academy drill group', () => {
+    for (const s of SESSION_SKILLS) expect(Object.keys(DRILL_FIXES), s.value).toContain(s.value)
+    expect(SESSION_SKILLS.length).toBe(7)
+  })
+  it('announce a name that contains the drawn label', () => {
+    for (const s of SESSION_SKILLS) {
+      const name = 'name' in s ? s.name : s.value
+      expect(name.toLowerCase(), s.label).toContain(s.label.toLowerCase())
+    }
   })
 })

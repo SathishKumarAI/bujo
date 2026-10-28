@@ -153,6 +153,26 @@ export interface AcademyDrill { name: string; skill: string; how: string }
  * present in `ACADEMY_DRILLS` has one — a lookup that silently returns
  * undefined for a renamed group is the dead-field trap in CLAUDE.md.
  */
+/**
+ * The skills a session can say worked or needs work — the academy's drill
+ * groups, so "to fix: Third-shot drop" is the same key `DRILL_FIXES` and
+ * `ACADEMY_DRILLS` group by. `Solo / wall` is a way to practise, not a shot,
+ * so it is not offered.
+ *
+ * DRAW SHORT, ANNOUNCE LONG: `label` is what fits a phone chip and `name` the
+ * group in full. Each `name` CONTAINS its `label` (WCAG 2.5.3, the
+ * `label-content-name-mismatch` trap in CLAUDE.md).
+ */
+export const SESSION_SKILLS = [
+  { value: 'Serve', label: 'Serve' },
+  { value: 'Return', label: 'Return' },
+  { value: 'Third-shot drop', label: 'Drop', name: 'Third-shot drop' },
+  { value: 'Dinking', label: 'Dink', name: 'Dinking' },
+  { value: 'Reset / transition', label: 'Reset', name: 'Reset / transition' },
+  { value: 'Volleys / hands', label: 'Volleys', name: 'Volleys / hands' },
+  { value: 'Footwork', label: 'Footwork' },
+] as const
+
 export const DRILL_FIXES: Record<string, string> = {
   'Dinking': 'Your dinks sit up and get attacked, or rallies end because you miss before they do.',
   'Third-shot drop': 'You drive every third shot, they punch it back, and you never get to the kitchen line.',

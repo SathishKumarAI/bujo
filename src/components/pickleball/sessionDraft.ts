@@ -28,6 +28,10 @@ export const blankSession = () => ({
   pointsFor: '',
   pointsAgainst: '',
   scoring: '' as '' | '11' | '15' | '21' | 'rally21',
+  worked: [] as string[],
+  toFix: [] as string[],
+  energy: '',
+  pain: '' as '' | 'yes' | 'no',
 })
 
 /** A stored session as a draft — the editor's seed. */
@@ -48,6 +52,10 @@ export function draftFrom(p: PickleballSession): SessionDraft {
     pointsFor: p.pointsFor != null ? String(p.pointsFor) : '',
     pointsAgainst: p.pointsAgainst != null ? String(p.pointsAgainst) : '',
     scoring: p.scoring ?? '',
+    worked: p.worked ?? [],
+    toFix: p.toFix ?? [],
+    energy: p.energy != null ? String(p.energy) : '',
+    pain: p.pain == null ? '' : p.pain ? 'yes' : 'no',
   }
 }
 
@@ -77,5 +85,9 @@ export function sessionPatch(f: SessionDraft): Partial<PickleballSession> {
     pointsFor: f.pointsFor ? Number(f.pointsFor) : undefined,
     pointsAgainst: f.pointsAgainst ? Number(f.pointsAgainst) : undefined,
     scoring: f.scoring || undefined,
+    worked: f.worked.length ? f.worked : undefined,
+    toFix: f.toFix.length ? f.toFix : undefined,
+    energy: f.energy ? Number(f.energy) : undefined,
+    pain: f.pain === '' ? undefined : f.pain === 'yes',
   }
 }

@@ -5,6 +5,7 @@ import { DisclosureRow } from '../page'
 import { FieldGroup } from '../ui/FieldGroup'
 import { useDevice } from '../shell/device'
 import { todayISO } from '../../lib/date'
+import { SESSION_SKILLS } from '../../lib/pickleballAcademy'
 import type { SessionDraft } from './sessionDraft'
 
 /** `''` is "not filled", which a `Stepper` reads as no value rather than 0. */
@@ -52,12 +53,61 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
      every section is an iOS inset group (`FieldGroup`, `styles/phone.css`).
      On a desktop each `FieldGroup` renders the exact wrapper it replaced. */
   const phone = useDevice() === 'mobile'
+  /* ONE LINE, LABEL LEFT — iOS's settings row, for a choice short enough to
+     sit beside its name (`styles/phone.css`, `.ios-row`). */
+  const row = phone ? 'ios-row' : undefined
+  const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
+  /* HOW IT WENT — what worked, what to fix, energy, pain (COD-451). Optional,
+     and in the phone's own group right after the facts, because a phone is
+     where you answer it, at the side of the court. On a desktop it sits in the
+     Details fold, so the desktop form looks the same until you open it — and
+     the history editor, which renders this same component, can still reach
+     every field it stores. */
+  const howItWent = (<>
+    <ChipPick
+      label="What worked"
+      tone="green"
+      multi
+      value={f.worked}
+      onChange={(v) => set({ worked: toggle(f.worked, v) })}
+      options={SESSION_SKILLS.map((s) => ({ value: s.value, label: s.label, name: 'name' in s ? s.name : undefined }))}
+    />
+    <ChipPick
+      label="To work on"
+      tone="peach"
+      multi
+      value={f.toFix}
+      onChange={(v) => set({ toFix: toggle(f.toFix, v) })}
+      options={SESSION_SKILLS.map((s) => ({ value: s.value, label: s.label, name: 'name' in s ? s.name : undefined }))}
+    />
+    <ChipPick
+      className={row}
+      label={phone ? 'Energy 1–5' : 'Energy after'}
+      tone="teal"
+      value={numOrUndef(f.energy) ?? null}
+      onChange={(v) => set({ energy: numOrUndef(f.energy) === v ? '' : String(v) })}
+      /* A phone draws the plain segmented row beside its label; the scale's
+         ends line is a second row a phone pays for on every session. */
+      scale={phone ? undefined : { low: '1 drained', high: '5 buzzing' }}
+      options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n) }))}
+    />
+    <ChipPick
+      className={row}
+      label="Any pain?"
+      tone="red"
+      value={f.pain || null}
+      onChange={(v) => set({ pain: f.pain === v ? '' : v })}
+      options={[{ value: 'no' as const, label: 'No' }, { value: 'yes' as const, label: 'Yes' }]}
+      hint={f.pain === 'yes' ? 'Say where in the notes.' : undefined}
+    />
+  </>)
   return (
-      <div className={phone ? 'flex flex-col gap-5' : 'flex flex-col gap-3'}>
+      <div className={phone ? 'flex flex-col gap-4' : 'flex flex-col gap-3'}>
         <FieldGroup title="When" desktop="grid gap-3 sm:grid-cols-2">
         <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
 
         <ChipPick
+          className={row}
           label="Format"
           value={f.format}
           onChange={(v) => set({ format: v })}
@@ -103,7 +153,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
           value={numOrUndef(f.rpe) ?? null}
           onChange={(v) => set({ rpe: String(v) })}
           options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ value: n, label: String(n) }))}
-          hint="1 easy · 10 everything you had"
+          hint={phone ? undefined : '1 easy · 10 everything you had'}
         />
         </FieldGroup>
 
@@ -161,6 +211,8 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
         />
         </FieldGroup>
 
+        {phone && <FieldGroup title="How it went">{howItWent}</FieldGroup>}
+
         {/* The half you fill less than half the time.
 
             `DisclosureRow` and not a `<details>`: it renders `aria-expanded`,
@@ -176,6 +228,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             without putting a keyboard back in the fast path. */}
         {(() => { const details = (<>
           <ChipPick
+            className={row}
             label="Level"
             tone="teal"
             value={f.level || null}
@@ -221,6 +274,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
               />
             )}
           </div>
+          {!phone && howItWent}
         </>)
         return phone
           ? <FieldGroup title="Details">{details}</FieldGroup>

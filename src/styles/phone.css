@@ -44,11 +44,33 @@
 
 .ios-form legend {
   font-size: var(--text-body);
+  margin-bottom: 0.25rem;
+}
+
+/* ONE LINE, LABEL LEFT: the iOS settings row, for a choice short enough to
+   sit beside its own name (Format, Level, Energy, Pain). A floated legend is
+   not the fieldset's "rendered legend", so it lays out as an ordinary flex
+   item — the standard way to put a legend beside its control. */
+.ios-form fieldset.ios-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ios-form fieldset.ios-row > legend {
+  float: left;
+  flex: 0 0 5.5rem;
+  margin: 0;
+}
+
+.ios-form fieldset.ios-row > [data-chip-row] {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* The section header above a group: small, uppercase, outside the card. */
 .ios-group-title {
-  margin: 0 0 0.375rem;
+  margin: 0 0 0.25rem;
   padding-inline: 1rem;
   font-size: var(--text-label);
   font-weight: 500;
@@ -60,8 +82,8 @@
 /* The group itself: a card-coloured inset block on the page ground. */
 .ios-group {
   display: grid;
-  gap: 0.875rem;
-  padding: 0.875rem 1rem;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
   border-radius: var(--radius-card);
   /* The page ground, not the card colour: on a phone the zone already sits
      on a card-coloured shell, and an ink-1 group on ink-1 was invisible. */
@@ -76,6 +98,7 @@
   flex-wrap: nowrap;
   gap: 0.25rem;
 }
+
 
 .ios-form [data-chip-row] > button {
   flex: 1 1 0;
@@ -92,15 +115,24 @@
   min-width: 4.5rem;
 }
 
-/* Two or more chips AND a field: the chips keep the row, the field takes a
-   line of its own. Sharing it clipped "Yesterday" and "1h 30m" — measured,
+/* Today | Yesterday | the date, on one line: the picker is the widest
+   thing in it, so it takes 1.6 shares at 15px — measured, at 2 shares and 17px
+   "Yesterday" clipped at 390px. */
+.ios-form [data-chip-row] > input[type='date'] {
+  flex: 1.6 1 0;
+  font-size: var(--text-body);
+  padding-inline: 0.5rem;
+}
+
+/* Three or more chips AND a field: the chips keep the row, the field takes a
+   line of its own (two chips and a date share one line fine). Sharing it clipped "Yesterday" and "1h 30m" — measured,
    six items in a 326px group leave a chip ~45px for a ~52px label. */
-.ios-form [data-chip-row]:has(> button + button):has(> input) {
+.ios-form [data-chip-row]:has(> button + button + button):has(> input) {
   flex-wrap: wrap;
   row-gap: 0.5rem;
 }
 
-.ios-form [data-chip-row]:has(> button + button) > input {
+.ios-form [data-chip-row]:has(> button + button + button) > input {
   flex-basis: 100%;
 }
 
@@ -119,4 +151,16 @@
    a 375px iPhone SE as well as a 390px Pro (measured: clipped at 15 on SE). */
 .ios-form [data-chip-row]:has(> button:nth-of-type(5)) > button {
   font-size: var(--text-label);
+}
+
+/* Pick-several rows are a set, not a scale (LAST in the file on purpose:
+   it overrides the equal-share segment rule above at equal specificity): four to a line and wrapping,
+   because seven skills in one 326px row is ~44px a chip for "Footwork". */
+.ios-form [data-chip-row='multi'] {
+  flex-wrap: wrap;
+  row-gap: 0.375rem;
+}
+
+.ios-form [data-chip-row='multi'] > button {
+  flex: 1 1 calc(25% - 0.25rem);
 }
