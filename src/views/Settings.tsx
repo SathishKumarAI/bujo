@@ -1,10 +1,11 @@
 import { Cloud, Database, Palette, User } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
 import { SectionScreen } from '../components/panes/SectionScreen'
 import { readDeepLink } from '../lib/deepLink'
+import { useDevice } from '../components/shell/device'
 import {
   AccountTab, AppearanceTab, DataTab, SyncTab,
 } from '../components/settings'
@@ -82,6 +83,21 @@ export function Settings() {
     return wanted && TABS.includes(wanted) ? wanted : 'account'
   })
 
+  // On a phone the four tabs are one scrolling strip (`.phone-strip`,
+  // styles/phone.css) instead of wrapping to two rows — and a deep link to a
+  // tab past the edge (`tab=data`) has to bring it into view. Rect maths on the
+  // list only; `scrollIntoView` would scroll the page too.
+  const phone = useDevice() === 'mobile'
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const list = listRef.current
+    const a = list?.querySelector<HTMLElement>('[data-state="active"]')
+    if (!phone || !list || !a) return
+    const lr = list.getBoundingClientRect()
+    const ar = a.getBoundingClientRect()
+    if (ar.left < lr.left || ar.right > lr.right) list.scrollLeft += ar.left - lr.left - (lr.width - ar.width) / 2
+  }, [phone, tab])
+
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these pills to 209px each across the wide tier. They are labels, not a
   // segmented control — they should be as wide as their text.
@@ -108,7 +124,7 @@ export function Settings() {
             less than it holds (it showed everything) and `a11y` asks whether
             the tree is sound (it was). Overridden at the same specificity it
             is set at. */}
-        <TabsList className="mb-4 flex w-full flex-wrap justify-start gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto">
+        <TabsList ref={listRef} className={`${phone ? 'phone-strip ' : ''}mb-4 flex w-full flex-wrap justify-start gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
           {/* "Account", not "Profile". There were two destinations answering
               "who is this journal for" — a whole `views/Account.tsx` holding
               the Google sign-in and a card titled "You", and this tab holding
