@@ -76,11 +76,6 @@ export function PracticeTick({ kind, name, className = '', variant = 'pill' }: {
         setSettings({ practiceLog: togglePractice(data.settings.practiceLog ?? {}, key, today) })
       }}
       aria-pressed={stat.onDate}
-      aria-label={
-        stat.onDate
-          ? `${name} — ${verb.toLowerCase()} today. Press to remove today.`
-          : `${name} — mark ${verb.toLowerCase()} today.${stat.last ? ` Last done ${prettyDay(stat.last)}, ${stat.days.length} time${stat.days.length === 1 ? '' : 's'} in all.` : ' Never done.'}`
-      }
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-pill border px-2 py-0.5 text-label transition-colors active:scale-95 ${
         stat.onDate
           ? 'border-green bg-green/15 text-fg-1'
@@ -93,9 +88,14 @@ export function PracticeTick({ kind, name, className = '', variant = 'pill' }: {
       <span aria-hidden onAnimationEnd={() => setPopped(false)} className={`grid h-3.5 w-3.5 place-items-center rounded-[4px] ${popped ? 'node-pop' : ''} ${stat.onDate ? 'bg-green' : 'border border-line-strong'}`}>
         {stat.onDate && <Icon as={Check} size="sm" className="h-2.5 w-2.5 text-ink-0" />}
       </span>
-      <span aria-hidden>
+      {/* The name is the painted text with words said AROUND it, never
+          instead of it (COD-481): an `aria-label` replacing "3× · Oct 22"
+          failed axe's label-content-name-mismatch on every chip. */}
+      <span className="sr-only">{name} — </span>
+      <span>
         {stat.onDate ? `${verb} today` : stat.days.length > 0 ? `${stat.days.length}× · ${prettyDay(stat.last!)}` : verb}
       </span>
+      <span className="sr-only">{stat.onDate ? '. Press to remove today.' : `. Mark ${verb.toLowerCase()} today.`}</span>
     </button>
   )
 }

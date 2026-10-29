@@ -24,7 +24,14 @@ needs a decision (COD-436).
 Monthly, Collections, Challenges, Recovery, Pull-ups, Settings; desktop DOM
 identical on all six.
 
-**Next:** COD-481 (a Coaching chip's label mismatch, heading order) filed. The
+**Then #465 (COD-487, COD-481): phone navigation, the third pass.** The phone bar's
+tab strip is gone: the title ("Body" over "Nutrition ▾") opens a 3-column
+grid of all 20 pages, in the bottom bar's order, fitting one screen. The
+bottom bar remembers each section's last page (`shell/lastPage.ts`). The
+a11y gate opens that grid to reach a phone tab (`go()` in
+`scripts/a11y-axe.mjs`).
+
+**Next:** COD-481 heading-order half still open (the chip name is fixed in #465). The
 owner asked what "improving duration of the video" meant — unanswered.
 
 ## The next action
