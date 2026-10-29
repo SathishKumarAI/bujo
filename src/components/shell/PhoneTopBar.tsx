@@ -9,6 +9,7 @@ import { PhoneMenu } from './PhoneMenu'
 import { SectionTabs } from './SectionTabs'
 import { DateNav } from './topbar/DateNav'
 import { useSuggestionCount } from './topbar/useSuggestionCount'
+import { useSampleData } from '../useSampleData'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
@@ -48,7 +49,8 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   const chrome = VIEW_CHROME[view]
   const current = sectionOf(view)
   const hasTabs = !!current && tabsOf(current, gates).length > 1
-  const suggestions = useSuggestionCount()
+  // Everything the ☰ Notifications tab lists, so the number and the tab agree.
+  const suggestions = useSuggestionCount() + (useSampleData().active ? 1 : 0)
   const { data } = useJournal()
   const { user } = useAuthUser()
   const setUp = !!user || !!data.settings.profile
@@ -62,7 +64,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label={suggestions > 0 ? `Menu · ${suggestions} suggestions` : 'Menu'}
+          aria-label={suggestions > 0 ? `Menu · ${suggestions} notifications` : 'Menu'}
           aria-expanded={menuOpen}
           aria-haspopup="dialog"
           onClick={() => setMenuOpen(true)}
