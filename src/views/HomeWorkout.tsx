@@ -7,6 +7,7 @@ import { homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
 import { useCappedList } from '../lib/useCappedList'
+import { useDevice } from '../components/shell/device'
 
 /**
  * HOME WORKOUT · an 83-movement training library, and the place a home session
@@ -63,6 +64,7 @@ export function HomeWorkout() {
      `useActColumn`'s own docstring carries the three measurements that decided
      the default. */
   const logCol = useActColumn('homeworkout')
+  const phone = useDevice() === 'mobile'
 
   const sessions = useMemo(
     () => (data.workouts ?? []).filter((w) => w.activity === 'homeWorkout').sort((a, b) => (a.date < b.date ? 1 : -1)),
@@ -136,7 +138,7 @@ export function HomeWorkout() {
             arrive with, and this is the only thing on the page that answers it
             from your own history. The builder below is where you act on it, and
             it keeps the one primary button — these are secondary. */}
-        <ProgressionNudge rows={progress} onAdd={add} />
+        {!phone && <ProgressionNudge rows={progress} onAdd={add} />}
         <SessionCard
           items={items}
           onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
@@ -148,6 +150,9 @@ export function HomeWorkout() {
           onLog={logSession}
           onShut={logCol.close}
         />
+        {/* A phone logs first (COD-468): the nudges were 452px between the
+            page top and the session builder. Same card, one slot lower. */}
+        {phone && <ProgressionNudge rows={progress} onAdd={add} />}
         </>
       )}
       zone3={

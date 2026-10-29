@@ -11,6 +11,7 @@ import { LibraryList } from '../components/mindset/LibraryList'
 import { MINDSET_LIBRARY, MINDSET_MAX_FOCUS, principleById } from '../lib/mindset'
 import { daysPracticed } from '../lib/mindsetPractice'
 import { todayISO } from '../lib/date'
+import { useDevice } from '../components/shell/device'
 
 /**
  * Mindset — pick a few principles to actively practise, record a personal cue
@@ -30,10 +31,14 @@ import { todayISO } from '../lib/date'
 export function Mindset() {
   const { data, addMindsetFocus, setMindsetNote, removeMindsetFocus, toggleMindsetPractice } = useJournal()
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('All')
+  const focus = useMemo(() => data.mindsetFocus ?? [], [data.mindsetFocus])
+  const phone = useDevice() === 'mobile'
+  // A phone opens the library on ONE shelf — the leading principle's — not
+  // all 46 principles stacked (11.3 phone screens, COD-468). `All` is one tap.
+  const [filter, setFilter] = useState(() =>
+    phone ? (principleById(focus[0]?.principleId ?? '')?.category ?? MINDSET_LIBRARY[0].category) : 'All')
 
   const today = todayISO()
-  const focus = useMemo(() => data.mindsetFocus ?? [], [data.mindsetFocus])
   const log = data.mindsetPractice ?? {}
   const focusedIds = new Set(focus.map((f) => f.principleId))
   const full = focus.length >= MINDSET_MAX_FOCUS
@@ -93,7 +98,8 @@ export function Mindset() {
         onTogglePractice={toggleMindsetPractice}
       />
 
-      <PracticeBand log={log} focusedIds={focusedIds} today={today} />
+      {/* A 26-week heatmap and a balance chart: a phone draws neither. */}
+      {!phone && <PracticeBand log={log} focusedIds={focusedIds} today={today} />}
 
       <LibraryBar
         query={query}
