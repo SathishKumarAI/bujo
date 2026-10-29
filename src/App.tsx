@@ -250,7 +250,7 @@ export default function App() {
  * read it.
  */
 function ViewFrame({ book, view, children }: { book: boolean; view: string; children: ReactNode }) {
-  if (useDevice() === 'mobile') return <div key={view}>{children}</div>
+  if (useDevice() === 'mobile') return <div key={view} className="phone-frame">{children}</div>
   return book ? (
     <div className="book">
       <div key={view} className="book-inner page-in">{children}</div>

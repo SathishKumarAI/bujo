@@ -82,12 +82,12 @@ export function DayMasthead({
   else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
 
   return (
-    <header className="mb-4 border-b-2 border-line pb-3">
+    <header className="day-masthead mb-4 border-b-2 border-line pb-3">
       {/* `items-baseline` so the date sits on the weekday's baseline rather than
           in the middle of a 40px display line, and `flex-wrap` so the tabs drop
           to their own row on a phone instead of squeezing the dateline. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3">
-        <h2 className="font-display text-title leading-tight font-medium text-fg-1 sm:text-display">
+        <h2 className="day-masthead-date font-display text-title leading-tight font-medium text-fg-1 sm:text-display">
           {weekday}
           <span className="ml-3 font-sans text-body font-normal text-fg-2">
             {dayMonth}

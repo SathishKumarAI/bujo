@@ -898,3 +898,32 @@ button.cell:active {
   background: color-mix(in oklab, var(--color-brand) 12%, var(--color-ink-1));
   box-shadow: 0 0 0 2px var(--color-brand);
 }
+
+/* ── Every phone page (`App.tsx` ViewFrame adds .phone-frame, COD-468) ──── */
+
+/* A card band's 24px top and bottom read as empty bands on a 390px screen,
+   where every card stacks. 16px keeps the rule between cards visible. */
+.phone-frame .card-band {
+  padding-block: 1rem;
+}
+
+/* Today's dateline repeats the top bar's date stepper ("Wed, Oct 28") on a
+   phone. Kept for screen readers — a page needs its heading — not drawn. */
+.phone-frame .day-masthead {
+  margin-bottom: 0;
+  padding-bottom: 0.5rem;
+}
+
+.phone-frame .day-masthead-date {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.phone-frame .day-masthead > div + div {
+  margin-top: 0;
+  border-top: 0;
+}

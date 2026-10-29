@@ -17,6 +17,7 @@ import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
 import { CollapsibleSection } from '../components/CollapsibleSection'
+import { useDevice } from '../components/shell/device'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -78,6 +79,9 @@ function TodayFocused() {
   const { day: date } = useCursor()
   const nav = useNav()
   const future = isFutureDay(date)
+  // A phone logs (CLAUDE.md, COD-468): the goal rings and the review fold's
+  // trend cards are charts, so a phone draws neither — the plan stays.
+  const phone = useDevice() === 'mobile'
 
   return (
     // `wide`, not `read`: with a rail beside it the reading column still lands
@@ -108,7 +112,7 @@ function TodayFocused() {
               only in `TodayClassic`, a layout this one replaced. So the
               question had no answer on the default Today at any width, and the
               space to answer it in was already paid for. */}
-          <WeeklyGoalRings date={date} />
+          {!phone && <WeeklyGoalRings date={date} />}
         </div>
 
         {/* Habits spans both rows: it is the tallest card and the one whose
@@ -145,6 +149,12 @@ function TodayFocused() {
 
           `defaultOpen={false}` with a `stickyKey`: shut on a first visit, and
           remembered for anyone who wants it open. */}
+      {phone ? (
+        /* A phone has no trend cards to fold away, so the plan stands on its
+           own — a fold titled "Today's plan" around a card titled "Today's
+           plan" says the same thing twice. */
+        <div className="mt-4"><TodayPlanCard date={date} /></div>
+      ) : (
       <CollapsibleSection
         title="How the day adds up"
         subtitle="plan, trends and the month — none of it needs answering"
@@ -157,6 +167,7 @@ function TodayFocused() {
           <HabitsSurface slot="review" />
         </div>
       </CollapsibleSection>
+      )}
     </Page>
   )
 }
