@@ -74,6 +74,8 @@ export interface FocusCardMeta {
   /** The card's own title, so a drifted heading is visible in one file. */
   title: string
   group: FocusGroup
+  /** Drawn on a phone: something you DO or edit, not a chart (COD-468). */
+  phone?: true
   /**
    * Takes the whole row (`SPAN_2`) instead of one column.
    *
@@ -115,10 +117,10 @@ export const FOCUS_CARDS: FocusCardMeta[] = [
   { id: 'projects', title: 'By project', group: 'subjects' },
   { id: 'tags', title: 'Languages & tools', group: 'subjects' },
 
-  { id: 'typingdrill', title: 'Typing practice', group: 'typing' },
+  { id: 'typingdrill', title: 'Typing practice', group: 'typing', phone: true },
   { id: 'typingstats', title: 'Speed & accuracy', group: 'typing' },
 
-  { id: 'history', title: 'History', group: 'log', wide: true },
+  { id: 'history', title: 'History', group: 'log', wide: true, phone: true },
 ]
 
 /**
