@@ -3,10 +3,14 @@
 // This is the same approach the Home Workout library uses, lifted out so every
 // view (Gym, Pull-ups, program trackers, …) can surface a proper-form video
 // from just a name. We don't hardcode video ids by default (those rot); pass a
-// pinned `yt` id only when you want a specific clip.
+// pinned `yt` id only when you want a specific clip. The one exception is the
+// owner-chosen demo catalogue in `lib/demoClips.ts`, looked up by name below —
+// a lift with no clip there still gets the search.
 
-/** Proper-form demo link — a pinned clip if `yt` is set, else a targeted search. */
-export function videoUrl(name: string, yt?: string): string {
+import { demoClipId } from './demoClips'
+
+/** Proper-form demo link — a pinned clip (`yt`, else the catalogue's), else a targeted search. */
+export function videoUrl(name: string, yt = demoClipId(name)): string {
   if (yt) return `https://www.youtube.com/watch?v=${yt}`
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' proper form technique')}`
 }

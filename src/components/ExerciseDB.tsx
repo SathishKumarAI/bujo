@@ -8,6 +8,7 @@ import { muscleNames } from '../lib/muscles'
 import { Empty, Input, Pill } from './ui'
 import { Button } from './ui/button'
 import { useFocusTrap } from '../lib/useFocusTrap'
+import { videoUrl } from '../lib/video'
 
 /** Stable identity, so the derived empty case doesn't churn referentially. */
 const EMPTY_RESULTS: WgerExercise[] = []
@@ -107,7 +108,7 @@ export function ExerciseDB({ onPick }: { onPick: (name: string, muscles?: number
                   )}
                 </div>
                 <a
-                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selected.name + ' exercise form')}`}
+                  href={videoUrl(selected.name)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 text-body text-red hover:underline"

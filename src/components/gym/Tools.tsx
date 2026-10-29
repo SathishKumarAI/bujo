@@ -14,6 +14,7 @@ import { exerciseInfo } from '../../lib/exerciseInfo'
 import { onRaised } from '../../lib/colors'
 import { EXERCISE_LIBRARY, musclesForExercise, splitMeta } from '../../lib/fitness'
 import type { Routine, Split } from '../../lib/types'
+import { videoUrl } from '../../lib/video'
 
 /**
  * THE TWO REVIEW ROWS THAT ARE NOT ABOUT THE RECORD · Load and Lookup.
@@ -143,7 +144,7 @@ function AnatomyCard({
           )}
           {focusEx && (
             <a
-              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(focusEx + ' exercise form')}`}
+              href={videoUrl(focusEx)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-body text-red hover:underline"

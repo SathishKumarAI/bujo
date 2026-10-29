@@ -368,6 +368,15 @@ rendered nothing fourteen times while both pinned URLs answered **200**. The
 report was "the URLs are not working". Count how many rows carry the field
 before debugging the field's value.
 
+**The one curated exception — `lib/demoClips.ts`.** The owner chose a channel
+of 65 single-lift demos (ChadMollickDotCom), and `videoUrl` reaches for one by
+exact normalised name before falling back to the search — so every
+`VideoLink` gets it with no call-site change. Pinning is safe *there* because
+nothing breaks when a clip dies: the search is still behind it. Matching is
+exact plus a hand-checked alias list, never fuzzy — "Front squats" shares every
+word with the Smith-machine clip and is a different lift. 35 of the app's 115
+lift names hit a clip when it landed.
+
 ---
 
 ## 6 · A capped list with an honest affordance — `useCappedList` + `ShowMore`

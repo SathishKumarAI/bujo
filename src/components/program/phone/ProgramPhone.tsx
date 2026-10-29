@@ -8,6 +8,7 @@ import { addDays, prettyDay, todayISO } from '../../../lib/date'
 import { notify } from '../../../lib/notify'
 import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
+import { VideoLink } from '../../VideoLink'
 import { storedSets } from '../../gym/phone/strengthHelpers'
 import type { ProgramState } from '../useProgram'
 import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep } from './programLog'
@@ -210,6 +211,9 @@ export function ProgramPhone({ s, onCheck, rest }: {
                           {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
                         </button>
                       )}
+                      {/* Form demo, inside the open row only — the closed
+                          list stays one line per lift. A 44px target. */}
+                      <VideoLink name={e.name} label="Watch how" size="sm" className="min-h-11 self-start" />
                     </div>
                     <SetCards bare rows={mine} onChange={(r) => replaceLift(e.name, r)} unit={unit} data={data} onRest={tick} done={done} />
                   </div>

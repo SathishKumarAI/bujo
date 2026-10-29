@@ -75,7 +75,11 @@ export function VideoLink({
       // Naming it after the exercise rather than "Watch demo" also fixes the
       // quieter problem: a screen reader listing twenty links all called "Watch
       // demo" cannot be used to pick one.
-      aria-label={`Watch a form demo for ${name}`}
+      //
+      // And the name STARTS with the painted label (`Watch how: Leg press`):
+      // axe's `label-content-name-mismatch` needs the visible words inside
+      // the name, and "Watch demo" is not inside "Watch a form demo for …".
+      aria-label={label ? `${label}: ${name}` : `Watch a form demo for ${name}`}
       style={{ color: quiet ? cat('subtext0') : onRaised('red') }}
       className={cn('inline-flex items-center gap-1 text-label hover:underline', className)}
       onClick={(e) => e.stopPropagation()}
