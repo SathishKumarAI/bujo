@@ -181,11 +181,17 @@ describe('filters', () => {
 })
 
 describe('video links come from lib/video', () => {
-  it('builds a search when nothing is pinned', () => {
+  it('builds a search when nothing is pinned and the demo catalogue has no clip', () => {
+    const burpee = exerciseById('burpee')!
+    expect(burpee.yt).toBeUndefined()
+    expect(demoUrl(burpee)).toContain('youtube.com/results')
+    expect(demoUrl(burpee)).toContain(encodeURIComponent('Burpees proper form technique'))
+    expect(searchUrl(burpee)).toContain(encodeURIComponent('how to Burpees exercise'))
+  })
+
+  it('opens the catalogue clip for a movement lib/demoClips knows, and keeps the search beside it', () => {
     const pushup = exerciseById('pushup')!
-    expect(pushup.yt).toBeUndefined()
-    expect(demoUrl(pushup)).toContain('youtube.com/results')
-    expect(demoUrl(pushup)).toContain(encodeURIComponent('Push-ups proper form technique'))
+    expect(demoUrl(pushup)).toBe('https://www.youtube.com/watch?v=i_dDCs2CcD4')
     expect(searchUrl(pushup)).toContain(encodeURIComponent('how to Push-ups exercise'))
   })
 
