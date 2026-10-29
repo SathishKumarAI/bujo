@@ -63,7 +63,7 @@ export function ActivityFieldsPhone({ part, mode, draft, onChange, unit }: {
         <label className="flex items-center gap-3">
           <span className="flex w-[4.5rem] shrink-0 flex-col">
             <span className="text-body font-medium text-fg-1">Effort</span>
-            <span className="text-label text-fg-2">{draft.rpe === '' ? 'Slide' : EFFORT_WORD[Number(draft.rpe)]}</span>
+            <span className="text-label text-fg-2">{draft.rpe === '' ? 'Optional' : EFFORT_WORD[Number(draft.rpe)]}</span>
           </span>
           <input
             type="range" min={1} max={10}
@@ -73,7 +73,7 @@ export function ActivityFieldsPhone({ part, mode, draft, onChange, unit }: {
             className="effort min-w-0 flex-1"
             data-unset={draft.rpe === '' || undefined}
           />
-          <span className="num w-8 shrink-0 text-right text-title font-bold text-fg-1">{draft.rpe === '' ? '–' : draft.rpe}</span>
+          <span className="num w-8 shrink-0 text-right text-title font-bold text-fg-1">{draft.rpe === '' ? '' : draft.rpe}</span>
         </label>
       </>
     )
