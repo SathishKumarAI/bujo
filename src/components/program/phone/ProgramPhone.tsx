@@ -217,13 +217,13 @@ export function ProgramPhone({ s, onCheck, rest }: {
         {/* Docked above the bottom nav, so Log is always one thumb away however
             many lifts are open — and the rest timer docks INSIDE it, above
             the buttons, rather than as a second fixed layer on top of them. */}
-        <div className="log-dock grid grid-cols-[auto_1fr] gap-2">
-          {rest && <div className="col-span-2">{rest}</div>}
-          <button type="button" className="round-btn h-[3.25rem] w-[3.25rem]" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
+        <div className="log-dock">
+          {rest && <div className="w-full">{rest}</div>}
+          <button type="button" className="round-btn" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
             onClick={() => patch({ done: allTicked ? [] : rows.map((r) => r.id) })}>
             <Icon as={ListChecks} size="md" />
           </button>
-          <button type="button" className="cta" onClick={log}>
+          <button type="button" className="cta cta-compact" onClick={log}>
             <Icon as={Check} size="md" />{ticked.length ? `Log workout · ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
           </button>
         </div>
