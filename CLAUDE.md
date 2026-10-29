@@ -486,7 +486,7 @@ assumed.
 
 Trap (fixed, COD-202): **a browser gate that scrolls hides the navigation it is
 about to look for.** `BottomNav` and the top bar's section fold share
-`useHideOnScroll`, so the phone's *only* navigation slides away on scroll-down —
+`useHideOnScroll`, so the phone's *only* navigation slid away on scroll-down (no longer: the bar stays put since 2026-10-29, `BottomNav.tsx`) —
 and `a11y-axe.mjs` scrolls constantly, opening folds and pulling tab rows into
 view. `onScreen` then measured the bar at **y 845 in an 844px viewport**:
 present, labelled, one pixel below the fold, and therefore identical by the only

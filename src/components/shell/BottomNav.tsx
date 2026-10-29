@@ -1,7 +1,8 @@
 import { Icon as AppIcon } from '@/components/Icon'
 import { hrefFor } from '../../lib/deepLink'
-import { useHideOnScroll } from './useHideOnScroll'
-import { SECTIONS, landingOf, sectionOf, type SectionGates } from './sections'
+import { useState } from 'react'
+import { SECTIONS, landingOf, sectionOf, tabsOf, type SectionGates, type SectionId } from './sections'
+import { SectionSheet } from './SectionSheet'
 import type { ViewId } from './viewChrome'
 
 /**
@@ -17,9 +18,12 @@ import type { ViewId } from './viewChrome'
  * This is the whole of navigation on a phone: the top bar hides its section row
  * below `md` precisely because this bar is the reachable copy.
  *
- * It slides away on scroll-down and back on scroll-up, sharing
- * `useHideOnScroll` with the top bar's fold so the two edges move on the same
- * rule rather than on two copies of it.
+ * **It never hides.** It used to slide away on scroll-down (`useHideOnScroll`),
+ * so on a long page the only navigation a phone has was gone until you
+ * scrolled back up — owner, 2026-10-29: "so that user doesn't need to again
+ * scroll up". An iOS tab bar stays put; so does this one. A second tap on the
+ * active section lists all its pages (`SectionSheet`), from anywhere on the
+ * page.
  */
 export function BottomNav({
   view,
@@ -30,13 +34,16 @@ export function BottomNav({
   gates: SectionGates
   onNavigate: (id: ViewId) => void
 }) {
-  const hidden = useHideOnScroll()
   const current = sectionOf(view)
+  // A second tap on the section you are in lists all its pages — the thumb's
+  // way to them, from anywhere on a long page, without scrolling back up to
+  // the tab strip (owner: "so that user doesn't need to again scroll up").
+  const [sheet, setSheet] = useState<SectionId | null>(null)
 
   return (
     <nav
       aria-label="Sections"
-      className={`nav-slide fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur md:hidden ${hidden ? 'translate-y-full' : 'translate-y-0'}`}
+      className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {SECTIONS.map((s) => {
@@ -51,7 +58,8 @@ export function BottomNav({
             onClick={(e) => {
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
               e.preventDefault()
-              onNavigate(target)
+              if (active && tabsOf(s.id, gates).length > 1) setSheet(s.id)
+              else onNavigate(target)
             }}
             aria-label={s.label}
             aria-current={active ? 'page' : undefined}
@@ -70,6 +78,9 @@ export function BottomNav({
           </a>
         )
       })}
+      {current && (
+        <SectionSheet section={sheet ?? current} view={view} gates={gates} open={sheet !== null} onOpenChange={(o) => !o && setSheet(null)} onNavigate={onNavigate} />
+      )}
     </nav>
   )
 }
