@@ -103,6 +103,23 @@ the same 7px rise and the honest options were to reuse a class whose name lies
 or to duplicate the keyframes. Renamed to `.settle-in` the moment the second
 caller appeared — which is the cheapest possible moment, and the only one where
 the rename is a two-line diff.
+## A phone logs, a desktop reads
+
+Owner direction, 2026-10-28, applied page by page starting with Body →
+Pickleball (COD-450). On a phone:
+
+| Rule | How |
+|---|---|
+| **No visualizations.** Charts, trend cards and analytics panels are desktop-only | `panels.ts` marks each panel `phone: true` only if you WRITE to it; `panelsFor(phone)` filters the bar |
+| **The log is the first thing on the page**, every field open, one scrolling form | the view returns early on a phone with the form as zone 1 and no act column |
+| **iOS geometry**: 17px fields, 44px targets, inset groups, chips as one segmented row | `FieldGroup` + `styles/phone.css` (`.ios-form`) — scoped classes, no media query |
+| **Decided by screen width**, never a "desktop mode" | `useDevice()` (`shell/device.tsx`) — ≤767px, or touch under 1024px |
+| **Desktop does not change.** Prove it | `FieldGroup` renders the exact desktop wrapper it replaced; probe the page at 1440 before and after and diff the numbers |
+
+Trap: `useActColumn` shuts the act column whenever the page STACKS, which on a
+phone hid the form behind a strip — the measured "before" on Pickleball was
+one visible field. A phone page must not route its form through it.
+
 ## Two documents to read before changing a page
 
 - **`docs/USER-CONTROL.md`** — what a person must always be able to do with

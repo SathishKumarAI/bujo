@@ -12,6 +12,7 @@ import { duprTrend, upcomingEvents } from '../../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../../lib/pickleballPlan'
 import type { PickleballFormat } from '../../lib/types'
 import { notify } from '../../lib/notify'
+import { useDevice } from '../shell/device'
 
 const tip = rechartsTooltip
 
@@ -40,9 +41,12 @@ export function CompetitionPanel() {
   const { data, addPickleEvent, removePickleEvent, logDupr, removeDupr } = useJournal()
   const today = todayISO()
   const [dupr, setDupr] = useState({ date: today, rating: '' })
-  const [duprOpen, setDuprOpen] = useState(false)
+  /* A phone logs and a desktop reads (`panels.ts`, `phone`): on a phone both
+     forms start open and the DUPR trend chart is not drawn. */
+  const phone = useDevice() === 'mobile'
+  const [duprOpen, setDuprOpen] = useState(phone)
   const [duprCardOpen, setDuprCardOpen] = useState(true)
-  const [evOpen, setEvOpen] = useState(false)
+  const [evOpen, setEvOpen] = useState(phone)
   const [evCardOpen, setEvCardOpen] = useState(true)
   const [ev, setEv] = useState(evtBlankOf)
   const setE = (p: Partial<ReturnType<typeof evtBlankOf>>) => setEv((c) => ({ ...c, ...p }))
@@ -144,7 +148,7 @@ export function CompetitionPanel() {
                 <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
                 <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
               </div>
-              {duprStats.points.length >= 2 && (
+              {!phone && duprStats.points.length >= 2 && (
                 <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>

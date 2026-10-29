@@ -11,7 +11,9 @@ import { PickleballReview } from '../components/pickleball/Review'
 import { SessionFields } from '../components/pickleball/SessionFields'
 import { blankSession, sessionPatch } from '../components/pickleball/sessionDraft'
 import { TodayDrill } from '../components/pickleball/TodayDrill'
-import { PB_PANELS } from '../components/pickleball/panels'
+import { PB_PANELS, panelsFor } from '../components/pickleball/panels'
+import { useDevice } from '../components/shell/device'
+import { FieldGroup } from '../components/ui/FieldGroup'
 import { useStickyState } from '../lib/useStickyState'
 import { notify } from '../lib/notify'
 
@@ -81,6 +83,9 @@ export function Pickleball() {
   /* The act column's open/shut, including the stacked default — see
      `useActColumn` for the three measurements that decided it. */
   const logCol = useActColumn('pickleball')
+  /* ON A PHONE THE LOG IS THE PAGE — see the early return below. */
+  const phone = useDevice() === 'mobile'
+  const phonePanels = panelsFor(phone)
 
   /**
    * The log form's Partner and Location chips.
@@ -173,7 +178,7 @@ export function Pickleball() {
             tone={tone}
             icon={StepIcon}
             destination={step.group ? PB_PANELS.find((g) => g.id === step.group)?.label : undefined}
-            onPick={step.group ? () => setPanel(step.group!) : undefined}
+            onPick={step.group && phonePanels.some((g) => g.id === step.group) ? () => setPanel(step.group!) : undefined}
           />
         )
       })()}
@@ -228,6 +233,56 @@ export function Pickleball() {
       <TodayDrill />
     </div>
   )
+
+  /* ON A PHONE THE LOG IS THE PAGE, and it is the first thing on it.
+
+     Asked for directly: a phone is for logging, and "all the input should be
+     taken only in one screen" — one scrolling form. Before this the phone got
+     the desktop's order with the act column SHUT (`useActColumn` closes it
+     whenever the page stacks): the form was not on the page at all, and once
+     opened it started 723px down, under the sentence, the four totals and the
+     drill. So a phone gets its own order — the log as zone 1, no act column,
+     and the summary after it, ahead of the record (which `panels.ts` trims to
+     the panels you write to). Hooks are all above; the desktop return below is
+     untouched.
+
+     The form: no card frame, iOS inset groups on the page ground
+     (`FieldGroup`, `styles/phone.css`), every field open, one full-width
+     button at the end. Same `SessionFields`, same `log()`. */
+  if (phone) {
+    return (
+      <PageLayout
+        tier={1180}
+        zone1={(
+          /* THE PHONE LOG: no card frame, iOS inset groups on the page ground
+             (`FieldGroup`, `styles/phone.css`), every field open and one
+             full-width button at the end. Same `SessionFields`, same `log()`. */
+          <section aria-label="Log a session" className="ios-form flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <h2 className="text-title font-semibold text-fg-1">Log a session</h2>
+              {sessions.length > 0 && (
+                <Button variant="secondary" onClick={repeatLast} className="press-3d inline-flex items-center gap-1"><Icon as={ArrowsClockwise} size="sm" /> Repeat last</Button>
+              )}
+            </div>
+            <SessionFields
+              f={f}
+              set={set}
+              recentPartners={recentPartners}
+              allPartners={allPartners}
+              recentVenues={recentVenues}
+              allVenues={allVenues}
+              yesterday={yesterday}
+            />
+            <FieldGroup title="Notes">
+              <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={3} aria-label="Notes" />
+            </FieldGroup>
+            <Button variant="primary" size="lg" onClick={log} className="press-3d h-12 w-full text-heading font-semibold">Log session</Button>
+          </section>
+        )}
+        zone3={<>{atAGlance}<PickleballReview panel={panel} onPanel={setPanel} /></>}
+      />
+    )
+  }
 
   return (
     <PageLayout

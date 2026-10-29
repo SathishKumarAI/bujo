@@ -1,0 +1,122 @@
+/*
+ * PHONE FORMS — iOS grouped-list geometry.
+ *
+ * OWNS: the type size and touch height of a form on a phone, and the inset
+ * group a phone form is built from (`components/ui/FieldGroup.tsx`).
+ * DOES NOT OWN: anything a desktop renders. Nothing here uses a media query;
+ * these classes are only ever rendered when `useDevice()` says `mobile`, which
+ * is decided by the screen's width. A desktop never gets them, so a desktop
+ * cannot change because of this file.
+ *
+ * Asked for directly: on a phone the app is for logging, laid out like an iOS
+ * app — "iOS kind of application resolutions need to be maintained, both with
+ * font and all other things". iOS's scale maps onto the tokens we already
+ * have, so there is no new size here:
+ *
+ * | iOS            | pt | token          |
+ * |----------------|----|----------------|
+ * | Body (a row)   | 17 | --text-heading |
+ * | Subhead        | 15 | --text-body    |
+ * | Footnote/header| 13 | --text-label   |
+ * | Min tap target | 44 | 2.75rem        |
+ *
+ * UNLAYERED ON PURPOSE. The shared controls inside (`ChipPick`, `Stepper`,
+ * `Input`) set their own sizes with Tailwind utilities, and an unlayered rule
+ * is the only thing that beats a utility (CLAUDE.md, the `.prose-doc a` trap).
+ * Every selector is scoped under `.ios-form`, so the reach is exactly the
+ * phone forms and nothing else.
+ */
+
+.ios-form {
+  font-size: var(--text-heading);
+}
+
+/* 17px in every field: also what stops iOS Safari zooming the page on focus,
+   which it does to any input under 16px. */
+.ios-form :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  font-size: var(--text-heading);
+  min-height: 2.75rem;
+}
+
+.ios-form :is(button, [role='radio'], [role='checkbox']) {
+  min-height: 2.75rem;
+}
+
+.ios-form legend {
+  font-size: var(--text-body);
+}
+
+/* The section header above a group: small, uppercase, outside the card. */
+.ios-group-title {
+  margin: 0 0 0.375rem;
+  padding-inline: 1rem;
+  font-size: var(--text-label);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+}
+
+/* The group itself: a card-coloured inset block on the page ground. */
+.ios-group {
+  display: grid;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-card);
+  /* The page ground, not the card colour: on a phone the zone already sits
+     on a card-coloured shell, and an ink-1 group on ink-1 was invisible. */
+  background: var(--color-ink-0);
+}
+
+/* CHIPS AS ONE SEGMENTED ROW, the iOS control for "one of a few".
+   Every option takes an equal share and the row never wraps — a wrapped
+   chip row was 9 + 1 for effort and 5 + 1 for level, a lone chip on a line
+   of its own. A free-text field in the row (`after`) takes what is left. */
+.ios-form [data-chip-row] {
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+}
+
+.ios-form [data-chip-row] > button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0;
+  white-space: nowrap;
+  /* 15, iOS's segmented-control size — the 17 a field gets clipped "1h 30m". */
+  font-size: var(--text-body);
+}
+
+.ios-form [data-chip-row] > input {
+  flex: 2 1 0;
+  width: auto;
+  min-width: 4.5rem;
+}
+
+/* Two or more chips AND a field: the chips keep the row, the field takes a
+   line of its own. Sharing it clipped "Yesterday" and "1h 30m" — measured,
+   six items in a 326px group leave a chip ~45px for a ~52px label. */
+.ios-form [data-chip-row]:has(> button + button):has(> input) {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+
+.ios-form [data-chip-row]:has(> button + button) > input {
+  flex-basis: 100%;
+}
+
+/* One chip and a field (the last partner, the last court): the chip is as
+   wide as its name up to about half the row, then ellipsed — the full name is
+   still its accessible name and the field's dropdown holds it in full. */
+.ios-form [data-chip-row] > button:only-of-type {
+  flex: 0 1 auto;
+  max-width: 45%;
+  padding-inline: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Five segments or more: 13, iOS's default segmented size, so "1h 30m" fits
+   a 375px iPhone SE as well as a 390px Pro (measured: clipped at 15 on SE). */
+.ios-form [data-chip-row]:has(> button:nth-of-type(5)) > button {
+  font-size: var(--text-label);
+}

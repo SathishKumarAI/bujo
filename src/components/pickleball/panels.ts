@@ -56,11 +56,23 @@ import { ChartBar, Clock, Medal, PersonSimpleRun, Sword } from '@/components/ico
  * it changes no layout and it is the only thing between four plausible rows.
  *
  * The moment comes first, then what answers it. Keep it one line.
+ *
+ * `phone` — A PHONE IS FOR LOGGING, A DESKTOP IS FOR READING.
+ *
+ * Asked for directly: on a phone, "no chance for any visualizations — if they
+ * want to see visualizations, they need to use the desktop". So a phone gets
+ * only the panels you WRITE to (the session history you fix a score in, the
+ * event and DUPR forms) and none of the three analytics panels. Decided by
+ * `useDevice()`, i.e. the screen's width, never by a desktop/mobile mode.
+ * Adding a panel: `phone: true` only if it holds a form or your own entries.
  */
 export const PB_PANELS = [
-  { id: 'results', label: 'Results', blurb: 'Am I winning · form, margins, the win-rate trend and which days go well', icon: PersonSimpleRun, color: 'sky' },
-  { id: 'sessions', label: 'Sessions', blurb: 'What you logged · every session, newest first, and a score you can still fix', icon: Clock, color: 'green' },
-  { id: 'activity', label: 'Activity', blurb: 'Am I playing · volume, cadence, effort and the badges that follow from them', icon: ChartBar, color: 'teal' },
-  { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red' },
-  { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow' },
+  { id: 'results', label: 'Results', blurb: 'Am I winning · form, margins, the win-rate trend and which days go well', icon: PersonSimpleRun, color: 'sky', phone: false },
+  { id: 'sessions', label: 'Sessions', blurb: 'What you logged · every session, newest first, and a score you can still fix', icon: Clock, color: 'green', phone: true },
+  { id: 'activity', label: 'Activity', blurb: 'Am I playing · volume, cadence, effort and the badges that follow from them', icon: ChartBar, color: 'teal', phone: false },
+  { id: 'matchups', label: 'Matchups', blurb: 'Before you pick a partner or a court · who you win with, who beats you, and where', icon: Sword, color: 'red', phone: false },
+  { id: 'competition', label: 'Competition', blurb: 'Before an entry and after a result · events, the DUPR trend, kept apart from casual play', icon: Medal, color: 'yellow', phone: true },
 ] as const
+
+/** The panels this device shows — every one on a desktop, the logging ones on a phone. */
+export const panelsFor = (phone: boolean) => (phone ? PB_PANELS.filter((p) => p.phone) : PB_PANELS)

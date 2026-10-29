@@ -13,7 +13,8 @@ import {
   levelMatchup, weekdayPerformance, monthlyGames, winRateForecast, rpeLoad, pickleMilestones,
   pickleHours, scoringStats, playConsistency,
 } from '../../lib/pickleball'
-import { PB_PANELS } from './panels'
+import { PB_PANELS, panelsFor } from './panels'
+import { useDevice } from '../shell/device'
 import { SessionFields } from './SessionFields'
 import { draftFrom, sessionPatch, type SessionDraft } from './sessionDraft'
 import { Facet } from './Facet'
@@ -130,7 +131,7 @@ function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
 }
 
 
-export function PickleballReview({ panel, onPanel }: {
+export function PickleballReview({ panel: asked, onPanel }: {
   /**
    * Which row is open.
    *
@@ -143,6 +144,12 @@ export function PickleballReview({ panel, onPanel }: {
   onPanel: (id: string) => void
 }) {
   const { data, updatePickleball, removePickleball, setSettings } = useJournal()
+  /* On a phone the bar holds only the logging panels (`panels.ts`). The
+     remembered choice is shared with the desktop, so a phone that inherits
+     "Results" opens Sessions instead of an empty bar — without overwriting the
+     choice the desktop will read back. */
+  const panels = panelsFor(useDevice() === 'mobile')
+  const panel = panels.some((p) => p.id === asked) ? asked : 'sessions'
   const today = todayISO()
   const sessions = [...(data.pickleball ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
   /**
@@ -343,7 +350,7 @@ export function PickleballReview({ panel, onPanel }: {
         <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
           <SectionRail
             label="Pickleball record"
-            groups={PB_PANELS.map((g) => ({ id: g.id, label: g.label }))}
+            groups={panels.map((g) => ({ id: g.id, label: g.label }))}
             value={panel}
             onChange={(id: string | null) => { onPanel(id ?? 'sessions'); setFacet(null); setFocus(null) }}
             railAt="never"
