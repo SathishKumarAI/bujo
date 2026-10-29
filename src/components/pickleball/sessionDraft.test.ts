@@ -27,6 +27,10 @@ const FULL: PickleballSession = {
   pointsFor: 33,
   pointsAgainst: 28,
   scoring: '11',
+  worked: ['Dinking', 'Serve'],
+  toFix: ['Third-shot drop'],
+  energy: 4,
+  pain: false,
 }
 
 describe('a session survives the round trip through the form', () => {
@@ -61,6 +65,21 @@ describe('a session survives the round trip through the form', () => {
     expect(cleared.partner).toBeUndefined()
     expect(cleared.opponent).toBeUndefined()
     expect(cleared.level).toBeUndefined()
+  })
+
+  /**
+   * HOW IT WENT (COD-451). `pain: false` is an ANSWER — "no pain" — and must
+   * not collapse into absent, which means "not asked"; and an emptied skill
+   * list has to clear, by the same name-it-to-clear rule as the partner.
+   */
+  it('keeps "no pain" as false and clears an emptied skill list', () => {
+    expect(sessionPatch(draftFrom(FULL)).pain).toBe(false)
+    expect(sessionPatch({ ...draftFrom(FULL), pain: '' }).pain).toBeUndefined()
+    const cleared = sessionPatch({ ...draftFrom(FULL), worked: [], energy: '' })
+    expect('worked' in cleared).toBe(true)
+    expect(cleared.worked).toBeUndefined()
+    expect(cleared.energy).toBeUndefined()
+    expect(cleared.toFix).toEqual(['Third-shot drop'])
   })
 
   it('keeps a zero score as a zero, not as absent', () => {

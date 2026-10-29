@@ -74,6 +74,17 @@ function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
   // an edit, and a hook called only on one of those paths is a different hook
   // order on each render.
   const justNew = useJustCaptured().has(PICKLEBALL_KEY(p.id))
+  const phone = useDevice() === 'mobile'
+  /* HOW IT WENT, read back (COD-451). Only for a session that answered any of
+     it — a field that is written and never shown is the write-only trap in
+     CLAUDE.md — and the note rides along only when pain was flagged, because
+     that is where the form tells you to say where it hurts. */
+  const how = [
+    p.worked?.length ? `worked: ${p.worked.join(', ')}` : '',
+    p.toFix?.length ? `work on: ${p.toFix.join(', ')}` : '',
+    p.energy != null ? `energy ${p.energy}/5` : '',
+    p.pain ? `pain${p.notes ? ` — ${p.notes}` : ''}` : '',
+  ].filter(Boolean).join(' · ')
   function save() {
     // `sessionPatch` lists every key, so clearing a partner here actually
     // clears it — `updatePickleball` merges, and an omitted key would mean
@@ -84,7 +95,7 @@ function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
   }
   if (editing) {
     return (
-      <li className="space-y-2 py-2.5">
+      <li className={phone ? 'ios-form flex flex-col gap-5 py-3' : 'space-y-2 py-2.5'}>
         {/* THE REAL FORM, not a re-declaration of part of it.
 
             This row used to render five controls — format, won, lost,
@@ -120,7 +131,9 @@ function PickleRow({ p, onSave, onDelete, partnerNames, venueNames }: {
           voice — where the duration is usually the ONLY fact given — showed as
           "doubles 0–0" and looked empty. It is the sport's required field
           (`domain/activities.ts`), so it reads before the optional ones. */}
-      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{opponentLabel(p) ? ` · vs ${opponentLabel(p)}` : ''}{p.location ? ` · ${p.location}` : ''}</span></span>
+      <span className="text-fg-1">{prettyDay(p.date)} <span className="text-fg-2">· {p.format}{p.durationMin ? ` · ${p.durationMin} min` : ''}{p.partner ? ` · with ${p.partner}` : ''}{opponentLabel(p) ? ` · vs ${opponentLabel(p)}` : ''}{p.location ? ` · ${p.location}` : ''}</span>
+        {how && <span className="mt-0.5 block text-label text-fg-2">{how}</span>}
+      </span>
       <span className="flex items-center gap-2">
         <span style={{ color: onRaised('green') }}>{p.gamesWon}</span>–<span style={{ color: onRaised('red') }}>{p.gamesLost}</span>
         <Button variant="ghost" size="sm" onClick={() => { setD(draftFrom(p)); setEditing(true) }} aria-label="Edit session" className="text-fg-2 reveal hover:text-mauve">Edit</Button>
