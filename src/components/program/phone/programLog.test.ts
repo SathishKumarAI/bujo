@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actualOf, followOn, planRows, splitForFocus } from './programLog'
+import { actualOf, followOn, planRows, splitForFocus, suggestWeight } from './programLog'
 import { newSetRow } from '../../gym/setRow'
 import type { JournalData } from '../../../lib/types'
 
@@ -50,5 +50,18 @@ describe('followOn', () => {
     const old = [newSetRow({ weight: '50' })]
     const edited = [...old, newSetRow({ weight: '50' })]
     expect(followOn(old, edited)).toBe(edited)
+  })
+})
+
+describe('suggestWeight', () => {
+  it('adds one plate after a session that hit every rep, and repeats the weight after one that fell short', () => {
+    expect(suggestWeight({ weight: 35, reps: 12 }, 12, 'lb')).toBe(40)
+    expect(suggestWeight({ weight: 35, reps: 10 }, 12, 'lb')).toBe(35)
+    expect(suggestWeight({ weight: 20, reps: 8 }, 8, 'kg')).toBe(22.5)
+  })
+
+  it('suggests nothing without a weighted session to go on', () => {
+    expect(suggestWeight(null, 12, 'lb')).toBeNull()
+    expect(suggestWeight({ weight: 0, reps: 12 }, 12, 'lb')).toBeNull()
   })
 })
