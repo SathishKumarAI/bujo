@@ -9,6 +9,7 @@ import { LogSession } from '../components/focus/LogSession'
 import { SessionHistory } from '../components/focus/SessionHistory'
 import { TypingDrill, TypingStats } from '../components/focus/TypingBand'
 import { FindingsList, InterruptionCost } from '../components/focus/Findings'
+import { useDevice } from '../components/shell/device'
 import {
   CumulativeLine, DayBars, DeepWorkGrid, DurationBars, InterruptionBars, ShareBars,
   TagQualityBars, WeekBars, WeekdayBars,
@@ -78,6 +79,7 @@ export function Focus() {
      the subject you were reading — `allowed` is the registry, so a renamed group
      cannot resurrect from a stale localStorage key. */
   const [group, setGroup] = useStickyState<FocusGroup>('focus.group', FOCUS_DEFAULT_GROUP, FOCUS_GROUPS)
+  const phone = useDevice() === 'mobile'
 
   const weekMin = weeklyCodingMinutes(data, today)
   const projected = projectedWeeklyMinutes(data, today)
@@ -198,8 +200,13 @@ export function Focus() {
   /** What the selected group renders, and what the rail counts. Same predicate
    *  for both, so a card that yields nothing can never leave a heading over an
    *  empty grid or a rail row promising a card that is not there. */
-  const idsIn = (g: FocusGroup) => FOCUS_CARDS.filter((c) => c.group === g && cards[c.id])
-  const shown = idsIn(group)
+  const idsIn = (g: FocusGroup) => FOCUS_CARDS.filter((c) => c.group === g && cards[c.id] && (!phone || c.phone))
+  // A phone keeps only the cards you act on — the history you edit and the
+  // typing drill — so the rail lists only groups that still hold one, and a
+  // sticky desktop group with nothing left falls back to the first.
+  const groups = FOCUS_GROUPS.filter((g) => idsIn(g).length > 0)
+  const at = groups.includes(group) ? group : (groups.find((g) => g === 'log') ?? groups[0] ?? group)
+  const shown = idsIn(at)
 
   return (
     <PageLayout
@@ -265,15 +272,15 @@ export function Focus() {
                   5.7-screen phone page this replaces. */}
               <SectionRail
                 label="Focus sections"
-                groups={FOCUS_GROUPS.map((g) => ({ id: g, label: FOCUS_GROUP_LABEL[g], count: idsIn(g).length }))}
-                value={group}
+                groups={groups.map((g) => ({ id: g, label: FOCUS_GROUP_LABEL[g], count: idsIn(g).length }))}
+                value={at}
                 onChange={(id) => setGroup((id as FocusGroup | null) ?? FOCUS_DEFAULT_GROUP)}
               />
               <div className="min-w-0">
-                <section data-domain={group}>
+                <section data-domain={at}>
                   <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                    <h2 className="text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[group]}</h2>
-                    <p className="text-label text-fg-2">{FOCUS_GROUP_BLURB[group]}</p>
+                    <h2 className="text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[at]}</h2>
+                    <p className="text-label text-fg-2">{FOCUS_GROUP_BLURB[at]}</p>
                     <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
                   </div>
                   {/* Two columns is the ceiling, and it is a correction rather
