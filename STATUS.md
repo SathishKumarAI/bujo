@@ -1,6 +1,6 @@
 # STATUS
 
-**Stopped:** 2026-10-29, on `docs/phone-handoff` (top of the phone stack).
+**Stopped:** 2026-10-29, on `feat/phone-section-sheet` (top of the phone stack, #463).
 **Full session record:** `docs/sessions/2026-10-29-phone-pages.md` — read it
 first, it is written to be read cold.
 
@@ -18,6 +18,11 @@ needs a decision (COD-436).
 | #448 | old shell PR | **close it** — replaced by #449 |
 | #449 → #457 | shell ☰ menu, Program log/bar/last weight, Plan, act column, Today, Mindset/Coaching/Home Workout, Focus/Reading | open, stacked |
 | `docs/phone-handoff` | these docs | open, on top of #457 |
+| #459 → #463 | demo clips (ChadMollickDotCom, 65 lifts), watch-how on drills/principles, sample-data notice → ☰ Notifications tab, Insights without charts on a phone, section sheet + bottom nav that stays | open, stacked on #458 |
+
+**Next:** COD-484 (Settings › Account paragraphs → points) is filed, not
+done. COD-481 (a Coaching chip's label mismatch, heading order) filed. The
+owner asked what "improving duration of the video" meant — unanswered.
 
 ## The next action
 
