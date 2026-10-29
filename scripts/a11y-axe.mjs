@@ -323,7 +323,8 @@ const UNITS = [
       vp,
       theme,
       label: `${vp.name} · ${theme}`,
-      scans: VIEWS.length + COMPANIONS.length,
+      // Minus Mind on a phone, which `runUnit` skips (not a phone destination).
+      scans: VIEWS.filter(([s]) => vp.name !== 'phone' || s !== 'Mind').length + COMPANIONS.length,
     })),
   ),
   // The receipt pass is desktop-only and always was — see `scanReceipt`.
@@ -1152,6 +1153,10 @@ async function runUnit(w, unit) {
 
   await setTheme(w, unit.theme)
   for (const [section, tab] of VIEWS) {
+    // Mind is not a phone destination (owner, 2026-10-29; `PHONE_SECTIONS`):
+    // no bottom tab, no grid tile, so there is no door to walk through. Its
+    // four pages are still scanned at desktop width on every run.
+    if (w.viewport === 'phone' && section === 'Mind') continue
     const label = tab ? `${section} · ${tab}` : section
     // Named BEFORE the navigation, not after. `w.at` is what a crash dump
     // reports, and setting it only inside `scan` made it name the *previous*

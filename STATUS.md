@@ -31,6 +31,11 @@ bottom bar remembers each section's last page (`shell/lastPage.ts`). The
 a11y gate opens that grid to reach a phone tab (`go()` in
 `scripts/a11y-axe.mjs`).
 
+**Then #466 (COD-488): Mind off the phone, and a grid door on Today.**
+`PHONE_SECTIONS` drops Mind from the bottom bar and the grid (deep links
+still open its pages; desktop unchanged). Today and section-less bars
+(Settings, Help) get a ⊞ "All pages" button.
+
 **Next:** COD-481 heading-order half still open (the chip name is fixed in #465). The
 owner asked what "improving duration of the video" meant — unanswered.
 

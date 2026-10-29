@@ -222,6 +222,15 @@ export const SECTIONS: Section[] = [
 ]
 
 /**
+ * The sections a PHONE shows (bottom bar and page grid). Owner, 2026-10-29:
+ * "in mobile version, mind is not required, its services as well" — Mind and
+ * its four pages (Mindset, Reading, Collections, Focus) are desktop reading.
+ * Not deleted: a deep link still opens them, and the desktop rail is
+ * unchanged. Bring Mind back to the phone by removing it from this filter.
+ */
+export const PHONE_SECTIONS: Section[] = SECTIONS.filter((s) => s.id !== 'mind')
+
+/**
  * Which section a view belongs to — the "section prefix" the active state
  * matches on.
  *

@@ -19,7 +19,7 @@ vi.mock('../../lib/supabase', () => ({
 const { PhoneTopBar } = await import('./PhoneTopBar')
 const { BottomNav } = await import('./BottomNav')
 const { JournalProvider } = await import('../../store')
-const { SECTIONS, tabsOf } = await import('./sections')
+const { PHONE_SECTIONS, tabsOf } = await import('./sections')
 const { lastPageOf, rememberPage } = await import('./lastPage')
 const { CursorProvider } = await import('./cursor')
 
@@ -27,16 +27,16 @@ const gates = { cycle: true, nofap: true }
 afterEach(() => { cleanup(); localStorage.clear() })
 
 describe('every page is one tap from anywhere on a phone', () => {
-  it('the title opens every page of the app, and a Mind page is one tap from Body', async () => {
+  it('the title opens every phone page, and Insights is one tap from Body', async () => {
     const nav = vi.fn()
     render(<JournalProvider><PhoneTopBar view="fitness" gates={gates} onNavigate={nav} onQuickAdd={() => {}} /></JournalProvider>)
     await userEvent.click(screen.getByRole('button', { name: 'Body Fitness, all pages' }))
     const grid = screen.getByRole('navigation', { name: 'All pages' })
-    const all = SECTIONS.flatMap((s) => tabsOf(s.id, gates))
+    const all = PHONE_SECTIONS.flatMap((s) => tabsOf(s.id, gates))
     expect(within(grid).getAllByRole('button')).toHaveLength(all.length)
     expect(within(grid).getByRole('button', { name: 'Fitness' }).getAttribute('aria-current')).toBe('page')
-    await userEvent.click(within(grid).getByRole('button', { name: 'Reading' }))
-    expect(nav).toHaveBeenCalledWith('reading')
+    await userEvent.click(within(grid).getByRole('button', { name: 'Insights' }))
+    expect(nav).toHaveBeenCalledWith('insights')
   })
 
   it('names the bar with the grid’s word for the page, not the view title', () => {
@@ -44,13 +44,35 @@ describe('every page is one tap from anywhere on a phone', () => {
     expect(screen.getByRole('button', { name: 'Plan Month, all pages' })).toBeTruthy()
   })
 
+  // Owner: "not able to navigate from today to other pages". Today's row is
+  // its date, so it was the one bar with no door to the grid.
+  it('Today has a grid button too, and Nutrition is one tap from it', async () => {
+    const nav = vi.fn()
+    render(<JournalProvider><CursorProvider><PhoneTopBar view="today" gates={gates} onNavigate={nav} onQuickAdd={() => {}} /></CursorProvider></JournalProvider>)
+    await userEvent.click(screen.getByRole('button', { name: 'All pages' }))
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'All pages' })).getByRole('button', { name: 'Nutrition' }))
+    expect(nav).toHaveBeenCalledWith('nutrition')
+  })
+
   it('a second tap on the active tab opens the same grid', async () => {
     const nav = vi.fn()
     render(<BottomNav view="fitness" gates={gates} onNavigate={nav} />)
     await userEvent.click(screen.getByRole('link', { name: 'Body' }))
     expect(nav).not.toHaveBeenCalled()
-    await userEvent.click(within(screen.getByRole('navigation', { name: 'All pages' })).getByRole('button', { name: 'Focus' }))
-    expect(nav).toHaveBeenCalledWith('focus')
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'All pages' })).getByRole('button', { name: 'Coaching' }))
+    expect(nav).toHaveBeenCalledWith('coaching')
+  })
+})
+
+describe('Mind is not on the phone', () => {
+  // Owner: "in mobile version, mind is not required". The failure is it
+  // coming back through either door.
+  it('has no bottom tab and no grid group', async () => {
+    render(<BottomNav view="fitness" gates={gates} onNavigate={() => {}} />)
+    expect(screen.queryByRole('link', { name: 'Mind' })).toBeNull()
+    await userEvent.click(screen.getByRole('link', { name: 'Body' }))
+    const grid = screen.getByRole('navigation', { name: 'All pages' })
+    for (const page of ['Mindset', 'Reading', 'Collections', 'Focus']) expect(within(grid).queryByRole('button', { name: page })).toBeNull()
   })
 })
 
@@ -58,7 +80,7 @@ describe('the bottom bar keeps each section’s place', () => {
   it('Body goes back to the Body page you left, not to Fitness', async () => {
     rememberPage('nutrition')
     const nav = vi.fn()
-    render(<BottomNav view="reading" gates={gates} onNavigate={nav} />)
+    render(<BottomNav view="insights" gates={gates} onNavigate={nav} />)
     await userEvent.click(screen.getByRole('link', { name: 'Body' }))
     expect(nav).toHaveBeenCalledWith('nutrition')
     expect(screen.queryByRole('dialog')).toBeNull()
