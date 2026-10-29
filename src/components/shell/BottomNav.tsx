@@ -1,7 +1,8 @@
 import { Icon as AppIcon } from '@/components/Icon'
 import { hrefFor } from '../../lib/deepLink'
-import { useState } from 'react'
-import { SECTIONS, landingOf, sectionOf, tabsOf, type SectionGates, type SectionId } from './sections'
+import { useEffect, useState } from 'react'
+import { SECTIONS, sectionOf, type SectionGates, type SectionId } from './sections'
+import { lastPageOf, rememberPage } from './lastPage'
 import { SectionSheet } from './SectionSheet'
 import type { ViewId } from './viewChrome'
 
@@ -22,7 +23,7 @@ import type { ViewId } from './viewChrome'
  * so on a long page the only navigation a phone has was gone until you
  * scrolled back up — owner, 2026-10-29: "so that user doesn't need to again
  * scroll up". An iOS tab bar stays put; so does this one. A second tap on the
- * active section lists all its pages (`SectionSheet`), from anywhere on the
+ * active section lists every page (`SectionSheet`), from anywhere on the
  * page.
  */
 export function BottomNav({
@@ -35,10 +36,11 @@ export function BottomNav({
   onNavigate: (id: ViewId) => void
 }) {
   const current = sectionOf(view)
-  // A second tap on the section you are in lists all its pages — the thumb's
-  // way to them, from anywhere on a long page, without scrolling back up to
-  // the tab strip (owner: "so that user doesn't need to again scroll up").
+  // A second tap on the section you are in lists every page of the app, its
+  // own section first — the thumb's way to any page from anywhere on a long
+  // page (owner: "so that user doesn't need to again scroll up").
   const [sheet, setSheet] = useState<SectionId | null>(null)
+  useEffect(() => rememberPage(view), [view])
 
   return (
     <nav
@@ -48,9 +50,9 @@ export function BottomNav({
     >
       {SECTIONS.map((s) => {
         const active = current === s.id
-        // The section's first *visible* tab, so a gated-off Cycle never makes
-        // Body land on a page that is not there.
-        const target = landingOf(s.id, gates)
+        // Where you left this section (`lastPage.ts`), else its first
+        // *visible* tab — a gated-off Cycle is never a destination.
+        const target = lastPageOf(s.id, gates)
         return (
           <a
             key={s.id}
@@ -58,7 +60,7 @@ export function BottomNav({
             onClick={(e) => {
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
               e.preventDefault()
-              if (active && tabsOf(s.id, gates).length > 1) setSheet(s.id)
+              if (active) setSheet(s.id)
               else onNavigate(target)
             }}
             aria-label={s.label}
@@ -79,7 +81,7 @@ export function BottomNav({
         )
       })}
       {current && (
-        <SectionSheet section={sheet ?? current} view={view} gates={gates} open={sheet !== null} onOpenChange={(o) => !o && setSheet(null)} onNavigate={onNavigate} />
+        <SectionSheet view={view} gates={gates} open={sheet !== null} onOpenChange={(o) => !o && setSheet(null)} onNavigate={onNavigate} />
       )}
     </nav>
   )

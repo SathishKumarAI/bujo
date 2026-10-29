@@ -576,6 +576,30 @@ async function go(w, name) {
    * Being loose costs nothing: a false positive here only means the real
    * selectors run a moment earlier, and they are the strict ones.
    */
+  /**
+   * ON A PHONE A PAGE'S DOOR IS INSIDE A SHEET. The phone bar has no tab
+   * strip since 2026-10-29: its title ("Body / Fitness ▾", named "…, all
+   * pages") opens a grid of every page (`SectionSheet`, a `<nav>`). So when
+   * the shell has painted and the name is nowhere in it, open the grid first
+   * — otherwise the wait below burns its full 15s on every phone tab.
+   */
+  await items.first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {})
+  // VISIBLE matches: the desktop rail is in the DOM at 0x0 on a phone.
+  if ((await items.filter({ hasText: name }).filter({ visible: true }).count()) === 0) {
+    const all = w.page.getByRole('button', { name: /, all pages$/ })
+    if (await all.count()) {
+      await all.first().click()
+      await w.page.waitForTimeout(400)
+      // Not a page after all (a Today surface that had not painted yet):
+      // shut the grid, or the open sheet swallows the NEXT click — the first
+      // run of this died on "Plan" with the grid intercepting it.
+      const grid = w.page.getByRole('navigation', { name: 'All pages' })
+      if ((await grid.getByRole('button', { name, exact: true }).count()) === 0) {
+        await w.page.keyboard.press('Escape')
+        await w.page.waitForTimeout(300)
+      }
+    }
+  }
   await items
     .filter({ hasText: name })
     .first()
@@ -615,6 +639,9 @@ async function go(w, name) {
     (await onScreen(w, byName('link'))) ??
     (await onScreen(w, byName('button')))
   if (!target) return false
+  // Already here: on a phone a second tap on the active bottom tab opens the
+  // page grid (`BottomNav`), and that open sheet then swallows the next click.
+  if ((await target.getAttribute('aria-current')) === 'page') return true
   await target.click()
   await w.page.waitForTimeout(300)
   await settle(w)

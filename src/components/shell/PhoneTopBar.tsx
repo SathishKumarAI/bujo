@@ -6,12 +6,11 @@ import { useJournal } from '../../store'
 import { useAuthUser } from '../../lib/authUser'
 import { Button } from '../ui/button'
 import { PhoneMenu } from './PhoneMenu'
-import { SectionTabs } from './SectionTabs'
 import { SectionSheet } from './SectionSheet'
 import { DateNav } from './topbar/DateNav'
 import { useSuggestionCount } from './topbar/useSuggestionCount'
 import { useSampleData } from '../useSampleData'
-import { sectionOf, tabsOf, type SectionGates } from './sections'
+import { SECTIONS, sectionOf, tabsOf, type SectionGates } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 /**
@@ -20,15 +19,22 @@ import { VIEW_CHROME, type ViewId } from './viewChrome'
  * OWNS: the phone bar's layout and the hamburger's open state.
  * DOES NOT OWN: the desktop header (`TopBar.tsx` hands off here only when
  * `useDevice()` says mobile, so the desktop branch is untouched), the menu's
- * rows (`PhoneMenu.tsx`), the tab row itself (`SectionTabs.tsx`).
+ * rows (`PhoneMenu.tsx`), the page grid (`SectionSheet.tsx`).
+ *
+ * **No tab strip (2026-10-29).** The row is the page's name under its
+ * section's, and tapping it opens every page of the app. The strip it
+ * replaced showed 2.5 of Body's 11 pages with the third cut to "Pro…" —
+ * owner: "if I have this [the page grid], why do I need the top navbar with
+ * these options?" The neighbour hop the strip gave is the bottom bar's
+ * memory now (`lastPage.ts`).
  *
  * Owner direction, 2026-10-28: no search, no microphone, no logo, Account behind
  * a hamburger — "usability is what matters most". What went where:
  *
  * | Was in the bar | Now |
  * |---|---|
- * | Cadence wordmark | gone — the bottom nav and the tab row already say where you are |
- * | Search (⌘K palette) | gone — every destination is in the bottom nav + tab row; undo/redo, Settings and Help are in the menu; themes, export and demo data are in Settings |
+ * | Cadence wordmark | gone — the bottom nav and the title (section over page) already say where you are |
+ * | Search (⌘K palette) | gone — every destination is in the bottom nav + the title's page grid; undo/redo, Settings and Help are in the menu; themes, export and demo data are in Settings |
  * | Microphone (Ask Relay) | gone on a phone — Quick add is the typed capture beside it; the desktop rail keeps the voice agent |
  * | Account menu | the ☰ sheet, with the suggestion count on the ☰ |
  *
@@ -37,7 +43,7 @@ import { VIEW_CHROME, type ViewId } from './viewChrome'
  *
  * A view with no tabs and a date cursor (Today) puts the cursor in the row;
  * a second row appears only for tabs AND a cursor (Month, Trackers), where the
- * strip is using the width. Nothing folds on scroll: at 52px there is nothing
+ * title is using the row. Nothing folds on scroll: at 52px there is nothing
  * worth the motion.
  */
 export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
@@ -50,16 +56,42 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   const [allOpen, setAllOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const current = sectionOf(view)
-  const tabCount = current ? tabsOf(current, gates).length : 0
-  const hasTabs = tabCount > 1
-  // More pages than a 390px strip shows (Body 11, Mind 4): an always-visible
-  // door to the whole list, so a page off the right edge is never a secret.
-  const showAll = tabCount > 3
+  const tabs = current ? tabsOf(current, gates) : []
+  const hasTabs = tabs.length > 1
+  const sectionLabel = SECTIONS.find((s) => s.id === current)?.label
+  // The grid's own word for this page, so the bar and the tile agree ("Month",
+  // where the view's title says "Monthly").
+  const pageLabel = tabs.find((t) => t.view === view)?.label ?? chrome.title
   // Everything the ☰ Notifications tab lists, so the number and the tab agree.
   const suggestions = useSuggestionCount() + (useSampleData().active ? 1 : 0)
   const { data } = useJournal()
   const { user } = useAuthUser()
   const setUp = !!user || !!data.settings.profile
+
+  // WHERE YOU ARE, as the way to go anywhere else: the section over the page,
+  // and a tap opens every page of the app (`SectionSheet`). Not an <h1> inside
+  // the button — a heading is not button content — so the h1 is beside it.
+  const titleButton = current && (
+    <>
+      <h1 className="sr-only">{chrome.title}</h1>
+      <button
+        type="button"
+        onClick={() => setAllOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={allOpen}
+        className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-control px-2 text-left transition-colors active:bg-ink-2"
+      >
+        {/* `{' '}` so the name reads "Plan Month", not "PlanMonth" — two spans
+            with nothing between them are one word to a screen reader. */}
+        {sectionLabel !== pageLabel && <><span className="text-micro font-medium text-fg-2">{sectionLabel}</span>{' '}</>}
+        <span className="flex max-w-full items-center gap-1 text-heading leading-tight font-semibold text-fg-1">
+          <span className="truncate">{pageLabel}</span>
+          <Icon as={CaretDown} size="sm" className="shrink-0 text-fg-2" />
+          <span className="sr-only">, all pages</span>
+        </span>
+      </button>
+    </>
+  )
 
   return (
     <header className="app-header phone-bar sticky top-0 z-30 border-b border-line bg-card/75 shadow-raise backdrop-blur-lg md:hidden">
@@ -84,30 +116,12 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
           )}
         </Button>
 
-        {hasTabs ? (
-          <>
-            <h1 className="sr-only">{chrome.title}</h1>
-            {/* Faded at the right edge when more pages follow, so a tab cut
-                in half against "All" reads as "this scrolls", not as broken. */}
-            <div className={`phone-strip flex min-w-0 flex-1 ${showAll ? '[mask-image:linear-gradient(to_right,black_80%,transparent)]' : ''}`}>
-              <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
-            </div>
-            {showAll && current && (
-              <Button
-                variant="ghost"
-                onClick={() => setAllOpen(true)}
-                aria-haspopup="dialog"
-                aria-expanded={allOpen}
-                className="h-11 shrink-0 gap-0.5 rounded-pill px-2 text-label text-fg-2"
-              >
-                All {tabCount}{' '}<span className="sr-only">pages</span>
-                <Icon as={CaretDown} size="sm" />
-              </Button>
-            )}
-          </>
+        {current && (hasTabs || !chrome.dateNav) ? (
+          titleButton
         ) : chrome.dateNav ? (
           /* Today: the bottom nav already says "Today", so the row spends its
-             width on the date you are logging, not on the word. */
+             width on the date you are logging, not on the word. A second tap
+             on the Today tab opens every page. */
           <>
             <h1 className="sr-only">{chrome.title}</h1>
             <div className="flex min-w-0 flex-1 justify-center">
@@ -131,7 +145,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
       )}
 
       <PhoneMenu open={menuOpen} onOpenChange={setMenuOpen} onNavigate={onNavigate} />
-      {current && <SectionSheet section={current} view={view} gates={gates} open={allOpen} onOpenChange={setAllOpen} onNavigate={onNavigate} />}
+      {current && <SectionSheet view={view} gates={gates} open={allOpen} onOpenChange={setAllOpen} onNavigate={onNavigate} />}
     </header>
   )
 }

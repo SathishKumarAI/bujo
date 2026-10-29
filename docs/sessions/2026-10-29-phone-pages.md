@@ -74,6 +74,21 @@ after #443 (memory pressure) — first thing to do once the stack is merged.
 `docs/NEXT-SESSION.md` §1; rule in `CLAUDE.md` ("Next up"). Links only — no
 embedded player.
 
+## Phone navigation, the third pass (COD-487)
+
+Owner: "unable to navigate from body to … mind", then, seeing the grid:
+"if I have this, why do I need the top navbar with these options?"
+
+| tried | why it went |
+|---|---|
+| tab strip + "All 11" sheet of one section | Body → Reading was still three taps, and the strip showed 2.5 of 11 with the third cut to "Pro…" |
+| every page as list rows | Body's 11 rows filled the sheet; Mind started below the fold — the scroll the sheet exists to remove |
+| grid with the current section first | groups moved on every page; a fixed order keeps each page in one place |
+
+Shipped: title button (section over page) → 3-column grid of all 20 pages,
+624px, no scroll; bottom bar remembers each section's last page. Cost: a
+neighbouring page is two taps, not one — the memory covers the common hop.
+
 ## What was tried and thrown away
 
 - **Program steppers** (‹ Week 1 › ‹ Day 1 ›, 175×60 each, a picker sheet
