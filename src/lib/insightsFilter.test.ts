@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CARDS, DOMAINS, DOMAIN_LABEL, sortResults, visibleCards, entriesPerWeek, type Domain } from './insightsFilter'
+import { CARDS, DOMAINS, DOMAIN_LABEL, sortResults, visibleCards, entriesPerWeek, forDevice, type Domain } from './insightsFilter'
 import type { JournalData } from './types'
 
 /**
@@ -142,5 +142,20 @@ describe('entriesPerWeek', () => {
     // weeks draws a flat line over them.
     const out = entriesPerWeek(data, 8, '2026-06-18')
     expect(out.some((w) => w.entries === 0)).toBe(true)
+  })
+})
+
+describe('forDevice (COD-483)', () => {
+  const every = Object.fromEntries(CARDS.map((c) => [c.id, c.id]))
+
+  it('drops every chart on a phone and nothing else', () => {
+    const phone = forDevice(every, true)
+    for (const c of CARDS) expect(c.id in phone, c.id).toBe(!c.chart)
+    // Measured at 390px when this landed: 14 panels draw an SVG or a tinted grid.
+    expect(CARDS.filter((c) => c.chart)).toHaveLength(14)
+  })
+
+  it('leaves the desktop untouched', () => {
+    expect(forDevice(every, false)).toBe(every)
   })
 })
