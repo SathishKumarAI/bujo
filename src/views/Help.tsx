@@ -7,6 +7,7 @@ import { PageLayout } from '../components/page/PageLayout'
 import { StatBar } from '../components/page/StatBar'
 import { SectionRail } from '../components/page/SectionRail'
 import { useNav } from '../components/shell/nav'
+import { useDevice } from '../components/shell/device'
 import { BULLET_LEGEND } from '../lib/bullets'
 import { onRaised } from '../lib/colors'
 import { GUIDE, TUTORIALS, guideByGroup, searchGuide, type GuideCard, type Tutorial } from '../lib/guide'
@@ -41,6 +42,10 @@ export function Help() {
   /* One group at a time, `null` for All. Defaults to the first — landing on
      all twenty-five features is the 10.9-screen page this replaces. */
   const [group, setGroup] = useState<string | null>(guideByGroup()[0]?.id ?? null)
+  // On a phone the rail is a select that already reads "Today · 1"; with one
+  // group shown, its "TODAY · 1" heading said it again, and the fold under it
+  // said "Today" a third time. The heading stays for screen readers.
+  const phone = useDevice() === 'mobile'
   /* A query crosses groups. Searching "backup" while the rail sits on Body
      must find it — the whole reason the search exists is to reach a feature
      whose section you do not remember. Same rule as Insights. */
@@ -132,7 +137,7 @@ export function Help() {
                 <div className="min-w-0 space-y-5">
                   {groups.map((g) => (
                     <section key={g.id} data-guide-group={g.id} aria-label={g.label}>
-                      <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
+                      <h3 className={phone && groups.length === 1 ? 'sr-only' : 'mb-2 text-micro tracking-wider text-fg-2 uppercase'}>
                         {g.label} · {g.cards.length}
                       </h3>
                       <div className="space-y-2">
@@ -320,6 +325,9 @@ function Glossary() {
      to put on a rail. Defaults to Cycle because that is the domain that produced
      the request — landing on all twenty is landing on the wall. */
   const [domain, setDomain] = useState<string | null>(all[0]?.domain ?? null)
+  // Same as the guide above: one domain picked on a phone, and the select
+  // already names it.
+  const phone = useDevice() === 'mobile'
   const groups = domain ? all.filter((g) => g.domain === domain) : all
   return (
     <Card
@@ -346,7 +354,7 @@ function Glossary() {
       <div className="min-w-0 space-y-4">
         {groups.map((g) => (
           <section key={g.domain} aria-label={g.label}>
-            <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
+            <h3 className={phone && groups.length === 1 ? 'sr-only' : 'mb-2 text-micro tracking-wider text-fg-2 uppercase'}>
               {g.label} · {g.terms.length}
             </h3>
             {/* A definition list, because that is what this is: `dt`/`dd` gives a
