@@ -1,4 +1,4 @@
-import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
+import { Barbell, BookOpen, Brain, CaretLeft, CaretRight, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type CSSProperties } from 'react'
 import { useJournal } from '../store'
@@ -10,6 +10,7 @@ import { useConfirm } from '../components/ConfirmDialog'
 import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
+import { useDevice } from '../components/shell/device'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { coachingResetPatch, coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
@@ -131,6 +132,11 @@ export function Coaching() {
   // find their place on a page whose whole promise is "follow this in order".
   const firstUnfinished = TWELVE_WEEK.find((w) => !done.includes(w.week))?.week ?? ACADEMY_TOTAL_WEEKS
   const [openWeek, setOpenWeek] = useState<number | null>(start ? firstUnfinished : 1)
+  // A phone shows ONE week of the roadmap with a ‹ Week n › stepper, the way
+  // Program does — twelve stacked rows were 2,222px of a 4.4-screen page
+  // (COD-468). The open week, else the calendar week.
+  const phone = useDevice() === 'mobile'
+  const phoneWeek = openWeek ?? (week || 1)
 
   /* Sticky so the section survives a reload — the seven folds this page
      started as each did, and losing that would be a regression dressed as a
@@ -410,8 +416,16 @@ export function Coaching() {
                   </div>
                 )}
               </aside>}
+              {phone && (
+                <div className="flex items-center justify-between gap-2">
+                  <button type="button" className="round-btn" aria-label="Previous week" disabled={phoneWeek <= 1} onClick={() => setOpenWeek(phoneWeek - 1)}><Icon as={CaretLeft} size="sm" /></button>
+                  <span className="text-body font-semibold text-fg-1">Week {phoneWeek} of {ACADEMY_TOTAL_WEEKS}</span>
+                  <button type="button" className="round-btn" aria-label="Next week" disabled={phoneWeek >= ACADEMY_TOTAL_WEEKS} onClick={() => setOpenWeek(phoneWeek + 1)}><Icon as={CaretRight} size="sm" /></button>
+                </div>
+              )}
               <ol className="space-y-1.5 @3xl/page:col-start-1 @3xl/page:row-start-1">
               {TWELVE_WEEK.map((w, i) => {
+                if (phone && w.week !== phoneWeek) return null
                 const isDone = done.includes(w.week)
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
@@ -420,7 +434,7 @@ export function Coaching() {
                 // one. See `lib/coachingWeek.ts`.
                 const played = start ? rowsInCoachingWeek(sessions, start, w.week) : []
                 const note = weekNotes[String(w.week)] ?? ''
-                const last = i === TWELVE_WEEK.length - 1
+                const last = phone || i === TWELVE_WEEK.length - 1
                 return (
                   <li key={w.week} className="settle-in flex gap-3" style={{ '--i': i } as CSSProperties}>
                     {/* The gutter: the node, then the line down to the next
