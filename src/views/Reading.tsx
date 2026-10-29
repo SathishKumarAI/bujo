@@ -16,6 +16,7 @@ import {
   staleBooks,
 } from '../lib/reading'
 import { todayISO } from '../lib/date'
+import { useDevice } from '../components/shell/device'
 
 /**
  * Reading — what you are reading, the three shelves, and how the year has gone.
@@ -32,6 +33,7 @@ export function Reading() {
   const books = data.books ?? []
   const today = todayISO()
   const sum = readingSummary(books, today)
+  const phone = useDevice() === 'mobile'
 
   return (
     <Page width="wide" className="gap-0 sm:gap-0">
@@ -49,13 +51,18 @@ export function Reading() {
 
       <Stalled items={staleBooks(books, today)} />
 
-      <ReadingReview
-        books={books}
-        today={today}
-        streak={readingStreak(books, today)}
-        avgDays={averageDaysToFinish(books)}
-        pagesRead={sum.pages}
-      />
+      {/* Finished-by-month bars and the year in books: a phone draws
+          neither (COD-468) — "Reading now" above already says how the year
+          is going in one line. */}
+      {!phone && (
+        <ReadingReview
+          books={books}
+          today={today}
+          streak={readingStreak(books, today)}
+          avgDays={averageDaysToFinish(books)}
+          pagesRead={sum.pages}
+        />
+      )}
 
       {/* LEARNINGS AND READ LATER SHARE A ROW.
 
