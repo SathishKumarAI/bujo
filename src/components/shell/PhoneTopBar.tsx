@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { List, Plus } from '@/components/icons'
+import { CaretDown, List, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { useJournal } from '../../store'
@@ -7,6 +7,7 @@ import { useAuthUser } from '../../lib/authUser'
 import { Button } from '../ui/button'
 import { PhoneMenu } from './PhoneMenu'
 import { SectionTabs } from './SectionTabs'
+import { SectionSheet } from './SectionSheet'
 import { DateNav } from './topbar/DateNav'
 import { useSuggestionCount } from './topbar/useSuggestionCount'
 import { useSampleData } from '../useSampleData'
@@ -46,9 +47,14 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   onQuickAdd: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [allOpen, setAllOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const current = sectionOf(view)
-  const hasTabs = !!current && tabsOf(current, gates).length > 1
+  const tabCount = current ? tabsOf(current, gates).length : 0
+  const hasTabs = tabCount > 1
+  // More pages than a 390px strip shows (Body 11, Mind 4): an always-visible
+  // door to the whole list, so a page off the right edge is never a secret.
+  const showAll = tabCount > 3
   // Everything the ☰ Notifications tab lists, so the number and the tab agree.
   const suggestions = useSuggestionCount() + (useSampleData().active ? 1 : 0)
   const { data } = useJournal()
@@ -81,9 +87,23 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
         {hasTabs ? (
           <>
             <h1 className="sr-only">{chrome.title}</h1>
-            <div className="phone-strip flex min-w-0 flex-1">
+            {/* Faded at the right edge when more pages follow, so a tab cut
+                in half against "All" reads as "this scrolls", not as broken. */}
+            <div className={`phone-strip flex min-w-0 flex-1 ${showAll ? '[mask-image:linear-gradient(to_right,black_80%,transparent)]' : ''}`}>
               <SectionTabs view={view} gates={gates} onNavigate={onNavigate} />
             </div>
+            {showAll && current && (
+              <Button
+                variant="ghost"
+                onClick={() => setAllOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={allOpen}
+                className="h-11 shrink-0 gap-0.5 rounded-pill px-2 text-label text-fg-2"
+              >
+                All {tabCount}{' '}<span className="sr-only">pages</span>
+                <Icon as={CaretDown} size="sm" />
+              </Button>
+            )}
           </>
         ) : chrome.dateNav ? (
           /* Today: the bottom nav already says "Today", so the row spends its
@@ -111,6 +131,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
       )}
 
       <PhoneMenu open={menuOpen} onOpenChange={setMenuOpen} onNavigate={onNavigate} />
+      {current && <SectionSheet section={current} view={view} gates={gates} open={allOpen} onOpenChange={setAllOpen} onNavigate={onNavigate} />}
     </header>
   )
 }

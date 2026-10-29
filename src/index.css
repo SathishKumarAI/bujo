@@ -775,15 +775,11 @@ body.handwriting textarea {
   .header-rail[data-collapsed='true']:focus-within > * { opacity: 1; }
 }
 
-/* The bottom nav's half of the same rule. It used to carry a literal
-   `duration-300` and no reduced-motion guard — the one motion site in the app
-   that routed around both the tokens and the convention. */
-.nav-slide { transition: transform var(--dur-base) var(--ease-emphasis); }
-
+/* The bottom nav no longer slides (it never hides on a phone — BottomNav.tsx),
+   so only the desktop header rail moves here. */
 @media (prefers-reduced-motion: reduce) {
   .header-rail,
-  .header-rail > *,
-  .nav-slide {
+  .header-rail > * {
     transition: none;
   }
 }
