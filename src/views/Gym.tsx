@@ -10,7 +10,7 @@ import { musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
 import { RestTimer } from '../components/program'
 import {
-  SessionLogger, newSetRow, setLineOf, type SetRow,
+  SessionLogger, newSetRow, type SetRow,
   GymReview, GymLoad, GymLookup, PlateCalculator, GYM_PANELS,
 } from '../components/gym'
 import { activityForSplit } from '../domain/activities'
@@ -22,8 +22,11 @@ import {
 } from '../lib/fitness'
 import { cachedMusclesForName } from '../lib/wger'
 import { useStickyState } from '../lib/useStickyState'
+import { useDevice } from '../components/shell/device'
+import { GymPhone } from '../components/gym/phone/GymPhone'
+import { storedSets } from '../components/gym/phone/strengthHelpers'
 import { restFor } from '../lib/rest'
-import type { Split, WorkoutSet } from '../lib/types'
+import type { Split } from '../lib/types'
 
 /**
  * Strength · the Body cluster's log-a-lifting-session page, on the three-zone
@@ -81,6 +84,7 @@ export function Gym() {
      and the review takes its width). */
   const [panel, setPanel] = useStickyState<string>('gym.panel', 'week', GYM_PANELS.map((p) => p.id))
   const logCol = useActColumn('gym')
+  const phone = useDevice() === 'mobile'
 
   const unit = data.settings.weightUnit
   // Bar + smallest-plate step default per unit, for the auto warm-up generator.
@@ -190,19 +194,10 @@ export function Gym() {
     // Legacy "NxM @ w" set-string: parseSet() reads M (the number after `x`)
     // as reps. One row = one set, so N = 1 (set count) and M = actual reps —
     // previously N held the loop index, leaving the rep slot wrong.
-    const sets = valid.map((r) => setLineOf(r, unit))
+    // ONE translation for both devices (`gym/phone/strengthHelpers.ts`) — the
+    // phone's edit sheet saves through it too, so the two cannot drift.
+    const { sets, setRows: structured } = storedSets(rows, unit, data.settings)
     if (sets.length === 0) { notify.info('No sets to finish', 'Add a weight and reps to at least one row.'); return }
-    // Structured rows for analytics (volume / progression / previous-session).
-    const structured: WorkoutSet[] = valid.map((r) => ({
-      exercise: r.exercise.trim(),
-      weight: r.weight ? Number(r.weight) : undefined,
-      reps: r.reps ? Number(r.reps) : undefined,
-      rpe: r.rpe ? Number(r.rpe) : undefined,
-      kind: r.kind ?? 'working',
-      // The rest this set was run with, so a session carries how long it took
-      // and not only what was in it.
-      restSec: restFor({ exercise: r.exercise, reps: r.reps, kind: r.kind }, data.settings),
-    }))
     // Detect a fresh PR *before* this session is committed (compare vs prior data).
     // The biggest 1RM-improving set wins the celebration.
     let pr: { exercise: string; weight: number; reps: number } | null = null
@@ -241,10 +236,9 @@ export function Gym() {
     notify.success(`Routine “${name}” saved`, `${exercises.length} ${exercises.length === 1 ? 'exercise' : 'exercises'}.`)
   }
 
-  return (
-    <>
-      {/* ── PR celebration · ephemeral, auto-dismissing (F2) ── */}
-      {prParty && (
+  /* ── PR celebration · ephemeral, auto-dismissing (F2). A constant so the
+     phone page and the desktop page both show it. ── */
+  const prToast = prParty && (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] grid place-items-center px-4" role="status" aria-live="polite">
           <div className="celebrate-pop flex items-center gap-2 rounded-card border border-line-strong bg-ink-1/95 px-5 py-3 text-center shadow-2xl backdrop-blur">
             <AppIcon as={Trophy} size="lg" style={{ color: onRaised('yellow') }} />
@@ -254,7 +248,59 @@ export function Gym() {
             </p>
           </div>
         </div>
-      )}
+      
+  )
+  /* Shared by both devices — on a phone it sits above Finish. */
+  const restTimer = rest && (
+    <RestTimer
+      key={rest.key}
+      seconds={rest.seconds}
+      exercise={rest.exercise}
+      onDismiss={() => setRest(null)}
+      onExtend={(sec) => {
+        /* `+30s` is also how the exercise's rest is SET. The change
+           is made where it is felt — during the rest that was too
+           short — instead of in a field somebody has to go and
+           find, and the next set of that lift inherits it
+           (`lib/rest.ts`). */
+        setRest((r) => (r ? { ...r, seconds: sec } : r))
+        setSettings({ restByExercise: { ...(data.settings.restByExercise ?? {}), [rest.exercise.toLowerCase()]: sec } })
+      }}
+    />
+  )
+
+  /* A PHONE GETS ITS OWN PAGE (COD-460): exercise cards with set rows, the
+     split as tiles, recent sessions as rows — no charts. Same rows, same
+     `finish`, same rest timer; every hook is above this line. */
+  if (phone) {
+    return (
+      <>
+        {prToast}
+        <GymPhone
+          data={data}
+          split={split}
+          setSplit={setSplit}
+          suggested={suggested}
+          rows={rows}
+          setRows={setRows}
+          date={date}
+          setDate={setDate}
+          onFinish={finish}
+          unit={unit}
+          recentExercises={recentExercises}
+          onRest={(r) => setRest({ exercise: r.exercise, seconds: restFor({ exercise: r.exercise, reps: r.reps, kind: r.kind }, data.settings), key: Date.now() })}
+          onLoadRoutine={loadRoutine}
+          setsThisWeek={setsThisWeek}
+          lastSession={lastSession}
+          rest={restTimer}
+        />
+      </>
+    )
+  }
+
+  return (
+    <>
+      {prToast}
 
       <PageLayout
         /* The dashboard tier, and it fixes a documented workaround rather
@@ -354,21 +400,7 @@ export function Gym() {
             {rest ? (
               <section className="mt-4">
                 <h2 className="sr-only">Rest timer</h2>
-                <RestTimer
-                  key={rest.key}
-                  seconds={rest.seconds}
-                  exercise={rest.exercise}
-                  onDismiss={() => setRest(null)}
-                  onExtend={(sec) => {
-                    /* `+30s` is also how the exercise's rest is SET. The change
-                       is made where it is felt — during the rest that was too
-                       short — instead of in a field somebody has to go and
-                       find, and the next set of that lift inherits it
-                       (`lib/rest.ts`). */
-                    setRest((r) => (r ? { ...r, seconds: sec } : r))
-                    setSettings({ restByExercise: { ...(data.settings.restByExercise ?? {}), [rest.exercise.toLowerCase()]: sec } })
-                  }}
-                />
+                {restTimer}
               </section>
             ) : (
               <p className="mt-4 text-label text-fg-2">
