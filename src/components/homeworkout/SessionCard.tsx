@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon'
 import { Card, Input, Textarea } from '../ui'
 import { Button } from '../ui/button'
 import { ChipPick, DayPick } from '../ui/quickpick'
-import { EmptyFrame } from '../page'
+import { ActHide, EmptyFrame } from '../page'
 import { addDays } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { HOME_ROUTINES } from '../../lib/homeProgramming'
@@ -67,9 +67,15 @@ export function SessionCard({
   return (
     <Card
       band
-      collapsible
-      open
-      onOpenChange={(o) => { if (!o) onShut() }}
+      /* `right={<ActHide/>}` and NOT `collapsible`, which is the fault this
+         sweep is about. `Card collapsible` folds a card's BODY: on a desktop
+         that frees height and no width at all, because the act column is a
+         grid TRACK — a folded card left a ~400px empty lane beside the thing
+         you were reading. The strip is what takes the track away
+         (`ActStrip`'s docstring: review 678px → 1054px), and this is its
+         inverse. It also announced itself as `Collapse Today’s session`, a fifth name for a gesture seven other pages already had
+         four names for. */
+      right={<ActHide what="the session" onHide={onShut} />}
       title={<span className="inline-flex items-center gap-2"><Icon as={Barbell} size="md" className="text-mauve" /> Today’s session</span>}
       /* The subtitle has to say what is inside while it is shut, or the fold
          hides the one number you would reopen it for. */

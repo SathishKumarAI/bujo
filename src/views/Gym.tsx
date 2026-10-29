@@ -1,11 +1,11 @@
-import { CaretRight, Trophy } from '@/components/icons'
+import { Trophy } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useEffect, useMemo, useState } from 'react'
 import { useJournal } from '../store'
 import { clearPendingSession, peekPendingSession } from '../lib/pendingSession'
 import { Input } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { ActStrip, PageLayout, StatBar, DisclosureRow, useActColumn } from '../components/page'
+import { ActHide, ActStrip, PageLayout, StatBar, DisclosureRow, useActColumn } from '../components/page'
 import { musclesForSplit } from '../lib/muscles'
 import { notify } from '../lib/notify'
 import { RestTimer } from '../components/program'
@@ -293,9 +293,7 @@ export function Gym() {
                 </span>
                 {/* Shutting it lives on the thing itself; the strip that comes
                     back is the way in, so the way out belongs here. */}
-                <Button variant="ghost" size="icon-sm" onClick={logCol.close} aria-label="Hide the logger" title="Hide the logger — the review takes the width">
-                  <AppIcon as={CaretRight} size="sm" />
-                </Button>
+                <ActHide what="the logger" onHide={logCol.close} />
               </h2>
               <SessionLogger
                 data={data}

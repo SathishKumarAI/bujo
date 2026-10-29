@@ -4,12 +4,11 @@ import { prettyDay, todayISO } from '../lib/date'
 import { uid } from '../lib/storage'
 import { useConfirm } from '../components/ConfirmDialog'
 import { notify } from '../lib/notify'
-import { CaretRight, ForkKnife, Gauge, NotePencil, Plus, Target, Trophy } from '@/components/icons'
-import { Icon } from '@/components/Icon'
+import { ForkKnife, Gauge, NotePencil, Plus, Target, Trophy } from '@/components/icons'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
+import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { onRaised } from '../lib/colors'
@@ -297,31 +296,18 @@ export function Nutrition() {
               pressable and is not is worse than one that does nothing — so the
               heading IS the button, with `aria-expanded` saying which way it
               goes and the caret kept as the affordance that says so visually. */}
-          {/* AND IT SAYS SO. Asked for as "for the side, a log what you ate,
-              you can mention that — you can tap it to hide it". A heading that
-              is secretly a button is a feature nobody finds: the hint is drawn
-              beside the caret, quietly, rather than left in a `title` nobody
-              hovers and a phone cannot show at all. */}
-          <h2 className="text-heading font-medium text-fg-1">
-            <button
-              type="button"
-              onClick={logCol.close}
-              aria-expanded
-              title="Hide the log — the review takes the width"
-              className="group flex w-full items-center justify-between gap-2 text-left transition-colors hover:text-fg-2"
-            >
-              Log what you ate{' '}
-              {/* The space is load-bearing. Without a text node between them
-                  these two spans paint — and are ANNOUNCED as — "Log what you
-                  ateTap to hide", one token. Same defect as the rail's "All24",
-                  found by measuring `textContent` rather than by reading the
-                  JSX, which is the only way it is ever visible. */}
-              <span className="inline-flex shrink-0 items-center gap-1 text-label font-normal text-fg-2 group-hover:text-fg-1">
-                Tap to hide
-                <Icon as={CaretRight} size="sm" />
-              </span>
-            </button>
-          </h2>
+          {/* THE HEADING IS A HEADING AGAIN, and the way out is `ActHide`.
+              It was the title ITSELF — a whole-width button painting "Tap to
+              hide" — which solved discoverability (the comment it replaces is
+              right that a heading secretly acting as a button is a feature
+              nobody finds) and solved it differently from the four other
+              shapes the same gesture had across nine pages. `ActHide` keeps
+              the painted word and the caret, and makes the control the same
+              object everywhere. */}
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-heading font-medium text-fg-1">Log what you ate</h2>
+            <ActHide what="the log" onHide={logCol.close} />
+          </div>
 
           <label className="block text-body text-fg-1">
             Date
