@@ -3,6 +3,7 @@ import { useJournal } from '../../store'
 import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
 import { notify } from '../../lib/notify'
+import { PhonePoints } from '../PhonePoints'
 
 /**
  * The local account: a name and an emoji, kept in this journal and nowhere else.
@@ -110,10 +111,17 @@ export function LocalAccountCard() {
         )}
       </div>
 
-      <p className="mt-3 text-label text-fg-2">
-        This is a name, not a login. It is saved in your journal like any other setting, and anyone
-        with this device can change it. To lock the journal itself, use the passcode in Settings.
-      </p>
+      <PhonePoints
+        className="mt-3 text-label text-fg-2"
+        prose={<p className="mt-3 text-label text-fg-2">
+          This is a name, not a login. It is saved in your journal like any other setting, and anyone
+          with this device can change it. To lock the journal itself, use the passcode in Settings.
+        </p>}
+        points={[
+          'A name, not a login — anyone with this device can change it',
+          'To lock the journal, use the passcode in Settings',
+        ]}
+      />
     </Card>
   )
 }

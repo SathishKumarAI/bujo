@@ -20,8 +20,11 @@ needs a decision (COD-436).
 | `docs/phone-handoff` | these docs | open, on top of #457 |
 | #459 → #463 | demo clips (ChadMollickDotCom, 65 lifts), watch-how on drills/principles, sample-data notice → ☰ Notifications tab, Insights without charts on a phone, section sheet + bottom nav that stays | open, stacked on #458 |
 
-**Next:** COD-484 (Settings › Account paragraphs → points) is filed, not
-done. COD-481 (a Coaching chip's label mismatch, heading order) filed. The
+**Then #464 (COD-486, COD-484):** the last six pages got a phone shape —
+Monthly, Collections, Challenges, Recovery, Pull-ups, Settings; desktop DOM
+identical on all six.
+
+**Next:** COD-481 (a Coaching chip's label mismatch, heading order) filed. The
 owner asked what "improving duration of the video" meant — unanswered.
 
 ## The next action

@@ -6,6 +6,7 @@ import { useAccountStatus } from '../../lib/accountStatus'
 import { identityOf, phaseCopy, SYNCED, WITHHELD, type AccountPhase } from '../../lib/account'
 import { notify } from '../../lib/notify'
 import { useState } from 'react'
+import { PhonePoints } from '../PhonePoints'
 
 /**
  * THE ONLY SIGN-IN SURFACE IN THIS APP, and it is kept to one on purpose.
@@ -185,23 +186,39 @@ export function AccountCard() {
             half again the average letter, so 56ch lands at 68-75 characters.
             The class rather than `.prose-doc` itself, which also recolours to
             `subtext1` — the honesty sentence below is `fg-1` on purpose. */}
-          <p className="text-body text-fg-2">
-            An account is how this journal reaches your phone and your desktop without copying
-            anything by hand. One tap, and it keeps itself up to date from then on — there is
-            nothing else to set up and no second password to remember.
-          </p>
+          <PhonePoints
+            prose={<p className="text-body text-fg-2">
+              An account is how this journal reaches your phone and your desktop without copying
+              anything by hand. One tap, and it keeps itself up to date from then on — there is
+              nothing else to set up and no second password to remember.
+            </p>}
+            points={[
+              'Your journal on your phone and your desktop, nothing copied by hand',
+              'One tap, and it keeps itself up to date',
+              'No second password to remember',
+            ]}
+          />
           <Button onClick={connect} disabled={busy}>
             {busy ? 'Opening Google…' : 'Continue with Google'}
           </Button>
           {/* The honest half. Not a footnote and not styled as one — it is the
               sentence the previous version of this card promised the opposite
               of, so a reader who skims has to still meet it. */}
-          <p className="text-body text-fg-1">
-            <strong>Your journal is private to your account, not secret from the server.</strong>{' '}
-            It is stored in a form the service can read, so losing access never loses your data —
-            and anyone with database access could read it. Your cycle log is the exception: it is
-            never uploaded, by any route.
-          </p>
+          <PhonePoints
+            className="text-body text-fg-1"
+            prose={<p className="text-body text-fg-1">
+              <strong>Your journal is private to your account, not secret from the server.</strong>{' '}
+              It is stored in a form the service can read, so losing access never loses your data —
+              and anyone with database access could read it. Your cycle log is the exception: it is
+              never uploaded, by any route.
+            </p>}
+            points={[
+              <strong key="h">Private to your account, not secret from the server</strong>,
+              'Losing access never loses your data',
+              'Anyone with database access could read it',
+              'Your cycle log is never uploaded, by any route',
+            ]}
+          />
         </div>
       )}
     </Card>

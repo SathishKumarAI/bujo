@@ -3,6 +3,7 @@ import { Card, Segmented } from '../ui'
 import { Row, Toggle } from './shared'
 import { AccountCard } from '../account/AccountCard'
 import { LocalAccountCard } from '../account/LocalAccountCard'
+import { PhonePoints } from '../PhonePoints'
 import type { Gender } from '../../lib/types'
 
 /**
@@ -116,11 +117,20 @@ export function AccountTab() {
                     on={s.discreetRecovery === true}
                     onChange={(v) => setSettings({ discreetRecovery: v })}
                   />
-                  <p className="mt-1 text-label text-fg-2">
-                    Shows “Pattern A”, “Habit N” and the like instead of the explicit words. Display only —
-                    nothing stored changes and your exports keep the real names. Addictions you named
-                    yourself are left alone. For a real lock, use the passcode under Privacy.
-                  </p>
+                  <PhonePoints
+                    className="mt-1 text-label text-fg-2"
+                    prose={<p className="mt-1 text-label text-fg-2">
+                      Shows “Pattern A”, “Habit N” and the like instead of the explicit words. Display only —
+                      nothing stored changes and your exports keep the real names. Addictions you named
+                      yourself are left alone. For a real lock, use the passcode under Privacy.
+                    </p>}
+                    points={[
+                      'Shows “Pattern A”, “Habit N” instead of the explicit words',
+                      'Display only — your data and exports keep the real names',
+                      'Addictions you named yourself are left alone',
+                      'For a real lock, use the passcode under Privacy',
+                    ]}
+                  />
                 </div>
               )}
             </div>

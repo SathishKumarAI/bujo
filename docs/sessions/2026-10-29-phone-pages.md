@@ -57,6 +57,12 @@ merging its parent, or merge with "delete branch" off.
 | Reading | 4.12 | **3.09** |
 | Today | Habits at y744 | **y389** |
 | Home Workout | first input y893 | **y433** |
+| Monthly | 1.97, a charts-only analytics fold | **1.88**, fold off on a phone (COD-486) |
+| Collections | 2.98, an Index repeating the two bands below it | **2.42**, Index off on a phone (COD-486) |
+| Challenges | 2.70, two stat blocks, a 75-cell calendar | **1.97**, one stat block, calendar in a "Past days" fold (COD-486) |
+| Recovery | 3.46, a ring chart above the log; SOS over the Insights tab | **3.27**, one stat row, log at y362 (was 491); SOS above the nav (COD-486) |
+| Pull-ups | 3.27, Log button below 7 fields | **2.87**, effort/duration/notes in a bottom sheet (COD-486) |
+| Settings | 4 paragraphs over 140 chars | **0**, points on a phone via `PhonePoints` (COD-484) |
 
 Every changed page: axe 0 violations at mocha + latte (Plan and Program also
 dawn); desktop 1440 re-probed and unchanged. Full `npm run a11y` NOT re-run

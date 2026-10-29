@@ -15,6 +15,7 @@ import { challengeRuleKey } from '../lib/recordKeys'
 import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
 import { notify } from '../lib/notify'
+import { useDevice } from '../components/shell/device'
 import {
   CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -91,6 +92,9 @@ export function Challenges() {
      "Start a challenge" would put the only thing to do behind a tap. */
   const logCol = useActColumn('challenges')
   const today = todayISO()
+  // A phone logs, a desktop reads: the stat tiles repeat zone 1's facts, and
+  // the 75-cell calendar is a picker for past days, so it folds away.
+  const phone = useDevice() === 'mobile'
 
   return (
     <PageLayout
@@ -162,7 +166,7 @@ export function Challenges() {
         )
       }
       zone3={<>
-        <SummaryStrip items={reviewTiles(data, focused, today)} />
+        {!phone && <SummaryStrip items={reviewTiles(data, focused, today)} />}
 
         {focused ? (
           /* THE REVIEW IS TWO COLUMNS, because it was one 262px calendar in a
@@ -178,7 +182,11 @@ export function Challenges() {
              in. */
           <div className="@container/review">
             <div className="grid items-start gap-4 @min-[38rem]/review:grid-cols-[auto_minmax(0,1fr)]">
-              <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />
+              {phone ? (
+                <QuietSection title="Past days" subtitle="tap a day to read or fix it" defaultOpen={false} stickyKey="challenges.calendar">
+                  <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />
+                </QuietSection>
+              ) : <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />}
               <DayPanel challenge={focused} today={today} picked={picked} onClear={() => setPicked(null)} />
             </div>
           </div>
