@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CalendarDot, MapPin, Minus, Plus, SlidersHorizontal, Users } from '@/components/icons'
+import { CalendarDot, CaretDown, Check, MapPin, Minus, Plus, SlidersHorizontal, Users } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Seg } from '../ui/seg'
 import { Cell, Cells } from '../ui/cells'
@@ -66,6 +66,7 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
         <label className="relative inline-flex h-[2.75rem] shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-ink-2 px-3 text-body font-medium text-fg-1">
           <Icon as={CalendarDot} size="sm" className="text-fg-2" />
           {dayLabel}
+          <Icon as={CaretDown} size="sm" className="text-fg-2" />
           <input
             type="date"
             value={f.date}
@@ -106,7 +107,9 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
                 >
                   {v}
                 </output>
-                <button type="button" className="round-btn" onClick={() => bump(k, 1)} aria-label={`One more game ${name.toLowerCase()}`}><Icon as={Plus} size="md" /></button>
+                {/* + is the tap a session is made of, so it is the filled one;
+                    − corrects a mis-tap and stays quiet. */}
+                <button type="button" className="round-btn round-btn-primary" onClick={() => bump(k, 1)} aria-label={`One more game ${name.toLowerCase()}`}><Icon as={Plus} size="md" /></button>
               </div>
             </div>,
           ]
@@ -156,7 +159,7 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
         <Cell icon={SlidersHorizontal} tone="mauve" title="How it went, level, notes" subtitle={added > 0 ? `${added} added` : 'Optional'} onPress={() => setMore(true)} />
       </Cells>
 
-      <button type="button" className="cta" onClick={onLog}>Log session</button>
+      <button type="button" className="cta" onClick={onLog}><Icon as={Check} size="md" />Log session</button>
 
       <Sheet open={more} onOpenChange={setMore} title="More about this session" description="All optional">
         <div className="flex flex-col gap-4">

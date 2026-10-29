@@ -331,9 +331,22 @@ button.cell:active {
   height: 2.75rem;
   place-items: center;
   border-radius: 999px;
-  background: var(--color-ink-2);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
   color: var(--color-fg-1);
   transition: transform 120ms, background-color 120ms;
+}
+
+/* The tap a session is made of: filled, brand, with its own ink. */
+.round-btn-primary {
+  background: var(--color-brand);
+  box-shadow: var(--shadow-raise);
+  color: var(--color-brand-ink);
+}
+
+.round-btn-primary:active {
+  background: var(--color-brand);
+  filter: brightness(0.92);
 }
 
 .round-btn:active {
@@ -384,8 +397,11 @@ button.cell:active {
   box-shadow: 0 0 0 3px var(--color-ink-1), var(--shadow-lift);
 }
 
-.effort[data-unset]::-webkit-slider-runnable-track { opacity: 0.35; }
-.effort[data-unset]::-moz-range-track { opacity: 0.35; }
+/* Unset: a plain neutral track, NOT a faded one. In WebKit the thumb is a
+   child of the track, so `opacity` on the track dimmed the thumb too — it read
+   as a disabled control in the dark themes (measured on a screenshot). */
+.effort[data-unset]::-webkit-slider-runnable-track { background: var(--color-ink-3); }
+.effort[data-unset]::-moz-range-track { background: var(--color-ink-3); }
 
 /* THE MAIN ACTION: solid, full width, pressable. */
 .cta {
@@ -508,4 +524,105 @@ button.cell:active {
   font-size: var(--text-title);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Buttons and icons, second pass (COD-456) ─────────────────────────────── */
+
+/* The main action carries its icon. */
+.cta > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* iOS sheet Done: bold brand text, no fill, a full 44px target. */
+.sheet-done {
+  min-height: 2.75rem;
+  flex: none;
+  padding-inline: 0.5rem;
+  color: var(--color-brand-text);
+  font-size: var(--text-heading);
+  font-weight: 600;
+}
+
+/* The sheet's grabber: the cue that it is a sheet you can dismiss. */
+.sheet-grabber {
+  display: block;
+  width: 2.25rem;
+  height: 0.3125rem;
+  margin: 0.375rem auto 0;
+  border-radius: 999px;
+  background: var(--color-line-strong);
+}
+
+/* THE ROUND CHECK (`PracticeTick variant="circle"`): a 44px target around a
+   28px ring. Empty until done, then filled green with a check — Reminders. */
+.check-circle {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.check-circle > span {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--color-line-strong);
+  color: transparent;
+  transition: background-color 150ms, box-shadow 150ms;
+}
+
+.check-circle[aria-pressed='true'] > span {
+  background: var(--color-green);
+  box-shadow: none;
+  color: var(--color-ink-0);
+}
+
+/* WEEK STATS: an icon tile, a big number in the app's own face, a caption. */
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+  border-radius: 0.875rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+.stat-icon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border-radius: 0.5rem;
+}
+
+/* Numbers in the app's sans with fixed-width digits, not the monospace
+   `.num` face, which read as code ("0/12", "3-0") on a phone. */
+.stat-value,
+.score-badge {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.stat-value {
+  margin-top: 0.25rem;
+  font-size: var(--text-title);
+  line-height: 1.1;
+  color: var(--color-fg-1);
+}
+
+.score-badge {
+  display: grid;
+  width: 3.5rem;
+  height: 2.25rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.625rem;
+  font-size: var(--text-body);
 }

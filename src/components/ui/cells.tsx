@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { CaretRight, type Icon as IconGlyph } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { cat, onRaised } from '../../lib/colors'
+import { cat, onAccent } from '../../lib/colors'
 
 /**
  * An inset grouped list — iOS Settings' rows — for a phone.
@@ -48,7 +48,10 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
     <>
       {label && <span className="sr-only">{label} </span>}
       {lead ?? (icon && (
-        <span className="cell-tile" style={{ background: cat(tone) + '22', color: onRaised(tone) }}>
+        /* A SOLID tile with a light-or-dark glyph picked against it
+           (`onAccent`), as iOS Settings draws them — the 13% wash with an
+           accent glyph read as washed out at arm's length. */
+        <span className="cell-tile" style={{ background: cat(tone), color: onAccent(cat(tone)) }}>
           <Icon as={icon} size="sm" />
         </span>
       ))}
