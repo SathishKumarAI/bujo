@@ -63,6 +63,11 @@ merging its parent, or merge with "delete branch" off.
 | Recovery | 3.46, a ring chart above the log; SOS over the Insights tab | **3.27**, one stat row, log at y362 (was 491); SOS above the nav (COD-486) |
 | Pull-ups | 3.27, Log button below 7 fields | **2.87**, effort/duration/notes in a bottom sheet (COD-486) |
 | Settings | 4 paragraphs over 140 chars | **0**, points on a phone via `PhonePoints` (COD-484) |
+| Nutrition (2nd pass) | 2.69, two rings above the log, a macro bar chart | **1.81**, log y380 → y272, figures row, Today panel only (COD-491) |
+| Home workout (2nd pass) | 3.04, tiles + month heatmap above the sessions | **1.93** (COD-491) |
+| Recovery / Pull-ups (rail) | 3.27 / 2.87, chip rail on 2 lines | **2.54 / 2.23**, one select (COD-491) |
+| Coaching | chapter chips on 3 lines, ~140px | one 44px select (COD-491) |
+| Cycle (2nd pass) | 2.08, three totals above the log | **1.97** (COD-491) |
 
 Every changed page: axe 0 violations at mocha + latte (Plan and Program also
 dawn); desktop 1440 re-probed and unchanged. Full `npm run a11y` NOT re-run

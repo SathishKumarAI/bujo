@@ -1,5 +1,6 @@
 import { Icon } from '@/components/Icon'
-import { X } from '@/components/icons'
+import { CaretDown, X } from '@/components/icons'
+import { useDevice } from '../shell/device'
 
 /**
  * SECTION RAIL · pick a subject instead of scrolling past five of them.
@@ -151,6 +152,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
   railAt?: '4xl' | '2xl' | 'never'
 }) {
   const o = ORIENT[railAt]
+  const phone = useDevice() === 'mobile'
   const rows: { key: string; label: string; count?: number; value: string | null }[] = [
     ...(allCount == null ? [] : [{ key: 'all', label: allLabel, count: allCount, value: null }]),
     ...groups.map((g) => ({ key: g.id, label: g.label, count: g.count, value: g.id as string | null })),
@@ -175,6 +177,35 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
     literal now (it interpolates `o.nav`), and this comment is full of
     backticks.
   */
+  /*
+    ON A PHONE, ONE NATIVE SELECT — the Program selection bar (`.select-pill`).
+    Measured at 390px: Coaching's eight chapters wrapped to three lines
+    (~140px) before any content, and Recovery, Pull-ups and Home workout to
+    two. A select is one 44px row, opens the iOS wheel, and shows the whole
+    list when it is open. Still inside the `<nav>`, so the gates and a
+    screen reader find it where the chips were.
+  */
+  if (phone) return (
+    <nav aria-label={label} className="flex items-center gap-2 pb-2">
+      <label className="select-pill flex-1">
+        <span className="sr-only">{label}</span>
+        <select value={value ?? 'all'} onChange={(e) => onChange(e.target.value === 'all' ? null : e.target.value)}>
+          {rows.map((r) => (
+            <option key={r.key} value={r.key} disabled={r.count === 0}>
+              {r.count == null ? r.label : `${r.label} · ${r.count}`}
+            </option>
+          ))}
+        </select>
+        <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
+      </label>
+      {filtering && (
+        <button onClick={onClear} className="inline-flex min-h-11 shrink-0 items-center gap-1 px-2 text-label text-fg-2">
+          <Icon as={X} size="sm" /> Clear
+        </button>
+      )}
+    </nav>
+  )
+
   return (
     <nav
       aria-label={label}

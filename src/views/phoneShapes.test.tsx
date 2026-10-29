@@ -7,6 +7,7 @@ import { NavProvider } from '../components/shell/nav'
 import { DeviceProvider } from '../components/shell/device'
 import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
+import { SectionRail } from '../components/page'
 
 /**
  * The phone shapes of the last pages to get one, each test named for the way
@@ -57,5 +58,28 @@ describe('Pull-ups log on a phone', () => {
     await userEvent.click(screen.getByRole('button', { name: /Effort, duration, notes/ }))
     expect(screen.getByRole('dialog', { name: 'How it went' })).toBeTruthy()
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
+  })
+})
+
+describe('a section rail on a phone', () => {
+  // The failure: Coaching's eight chapter chips wrapping to three lines
+  // (~140px) above the content. A phone gets one native select.
+  const groups = [{ id: 'a', label: 'Shots', count: 14 }, { id: 'b', label: 'Drills', count: 21 }]
+
+  it('is one select on a phone, and choosing an option switches the panel', async () => {
+    phone()
+    const onChange = vi.fn()
+    wrap(<SectionRail label="Chapters" groups={groups} value="a" onChange={onChange} railAt="never" />)
+    const select = screen.getByRole('combobox', { name: 'Chapters' })
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    await userEvent.selectOptions(select, 'b')
+    expect(onChange).toHaveBeenCalledWith('b')
+  })
+
+  it('stays the chip row on a desktop', () => {
+    desktop()
+    wrap(<SectionRail label="Chapters" groups={groups} value="a" onChange={() => {}} railAt="never" />)
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect(screen.getAllByRole('button')).toHaveLength(2)
   })
 })

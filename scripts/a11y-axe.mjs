@@ -716,12 +716,17 @@ async function scanInsightsAll(w) {
   // also match a future `All-time` row.
   const sel = 'nav[aria-label="Insight domains"] button[aria-label^="All "]';
   await w.page.locator(sel).first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {})
-  const clicked = await w.page.evaluate((s) => {
-    const b = document.querySelector(s)
-    if (!b) return false
-    b.click()
-    return true
-  }, sel)
+  // On a phone the rail is one native select (`SectionRail`), not buttons.
+  const pick = 'nav[aria-label="Insight domains"] select'
+  await w.page.locator(`${sel}, ${pick}`).first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {})
+  const clicked = (await w.page.locator(pick).count())
+    ? await w.page.locator(pick).selectOption('all').then(() => true).catch(() => false)
+    : await w.page.evaluate((s) => {
+      const b = document.querySelector(s)
+      if (!b) return false
+      b.click()
+      return true
+    }, sel)
   if (!clicked) {
     const rows = await w.page.locator('nav[aria-label="Insight domains"] button').evaluateAll(
       (els) => els.map((e) => e.getAttribute('aria-label') ?? e.textContent?.trim()),

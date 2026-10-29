@@ -10,6 +10,7 @@ import { HOME_EXERCISES, type HomeExercise } from '../../lib/homeExercises'
 import type { CappedList } from '../../lib/useCappedList'
 import type { Workout } from '../../lib/types'
 import { ExerciseLibrary } from './ExerciseLibrary'
+import { useDevice } from '../shell/device'
 import { Programming, Equipment, Sources } from './Manual'
 
 /**
@@ -63,6 +64,9 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
     'homeworkout.panel', 'history', HW_PANELS.map((p) => p.id),
   )
   const current = HW_PANELS.find((p) => p.id === panel) ?? HW_PANELS[0]
+  // A phone logs, a desktop reads: the tiles and the month heatmap sat above
+  // the sessions you can edit, so on a phone History opens on the sessions.
+  const phone = useDevice() === 'mobile'
 
   return (
     <section>
@@ -89,14 +93,16 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
 
             {panel === 'history' && (
               <>
-                <SummaryStrip items={[
-                  { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-                  { label: 'Exercises logged', value: totalExercises, empty: sessions.length === 0 },
-                  { label: 'Movements available', value: HOME_EXERCISES.length },
-                ]} />
-                <div className="mt-3">
-                  <CalendarHeatmap ranges storageKey="homeworkout" fluid data={heat} unit="exercises" label="Home-workout exercises per day" />
-                </div>
+                {!phone && <>
+                  <SummaryStrip items={[
+                    { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+                    { label: 'Exercises logged', value: totalExercises, empty: sessions.length === 0 },
+                    { label: 'Movements available', value: HOME_EXERCISES.length },
+                  ]} />
+                  <div className="mt-3">
+                    <CalendarHeatmap ranges storageKey="homeworkout" fluid data={heat} unit="exercises" label="Home-workout exercises per day" />
+                  </div>
+                </>}
                 {sessions.length === 0 ? (
                   <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
                 ) : (

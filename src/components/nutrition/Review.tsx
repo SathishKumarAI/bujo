@@ -8,6 +8,7 @@ import {
 } from '../../lib/nutritionReview'
 import { dailySeries, heatDays } from '../../lib/nutritionSeries'
 import { useJournal } from '../../store'
+import { useDevice } from '../shell/device'
 import { NUTRITION_PANELS } from './panels'
 import { BalanceCard, FortnightCard, RemainingCard, TargetsCard, TopFoodsCard, WeekdayCard } from './Cards'
 import { CalorieCalendarCard, CalorieWaveCard } from './Charts'
@@ -34,7 +35,7 @@ import { CalorieCalendarCard, CalorieWaveCard } from './Charts'
  * each is one pass over `data.metrics`, and a prop list that long is a second
  * place for two components to disagree about what a number means.
  */
-export function NutritionReview({ panel, onPanel, date, onDate, targets, onTargets, macroBar, dayLog }: {
+export function NutritionReview({ panel: chosen, onPanel, date, onDate, targets, onTargets, macroBar, dayLog }: {
   panel: string
   onPanel: (id: string) => void
   /** The day being logged — the Today row is about this date, not about now. */
@@ -63,6 +64,11 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
 }) {
   const { data } = useJournal()
   const today = todayISO()
+  // A phone logs, a desktop reads: Trend and Patterns are charts, and the
+  // macro bar repeats "What is left" in colour, so a phone gets the Today
+  // panel alone and no picker for one row.
+  const phone = useDevice() === 'mobile'
+  const panel = phone ? 'today' : chosen
 
   const days = loggedDays(data, 14, today, targets)
   const avg = averages(days)
@@ -90,13 +96,13 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
       <h2 className="sr-only">The record</h2>
       <div className="@container/page">
         <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
-          <SectionRail
+          {!phone && <SectionRail
             label="Nutrition record"
             groups={NUTRITION_PANELS.map((g) => ({ id: g.id, label: g.label }))}
             value={panel}
             onChange={(id: string | null) => onPanel(id ?? 'today')}
             railAt="never"
-          />
+          />}
           <div className="min-w-0">
             <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
               <h3 className="flex items-center gap-2 text-heading font-medium text-fg-1">
@@ -110,7 +116,7 @@ export function NutritionReview({ panel, onPanel, date, onDate, targets, onTarge
               {/* What you logged, FIRST: the macro split is the consequence,
                   and you cannot judge a ratio you cannot correct. */}
               {dayLog}
-              <div className={dayLog ? 'mt-4' : undefined}>{macroBar}</div>
+              {!phone && <div className={dayLog ? 'mt-4' : undefined}>{macroBar}</div>}
               <div className="mt-4">
                 <StatGrid>
                   <RemainingCard m={m} targets={targets} />
