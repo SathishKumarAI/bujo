@@ -1,7 +1,7 @@
 import { Check } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Sheet } from '../ui/sheet'
-import { SECTIONS, tabsOf, type SectionGates } from './sections'
+import { PHONE_SECTIONS, tabsOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
 
 /**
@@ -29,11 +29,11 @@ export function SectionSheet({ view, gates, open, onOpenChange, onNavigate }: {
     <Sheet open={open} onOpenChange={onOpenChange} title="All pages">
       {/* A GRID, not a list of rows. As rows, Body's eleven filled the sheet
           and Mind started below the fold — the scroll this sheet exists to
-          remove. Three across, all twenty pages fit one 844px screen.
+          remove. Three across, all sixteen phone pages fit one 844px screen.
           Groups keep the bottom bar's order rather than putting the current
           section first, so a page is always in the same place. */}
       <nav aria-label="All pages" className="flex flex-col gap-3">
-        {SECTIONS.map((s) => (
+        {PHONE_SECTIONS.map((s) => (
           <section key={s.id} aria-label={s.label}>
             <h2 className="mb-1.5 flex items-center gap-1.5 text-label font-semibold text-fg-2">
               <Icon as={s.icon} size="sm" />{s.label}

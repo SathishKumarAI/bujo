@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CaretDown, List, Plus } from '@/components/icons'
+import { CaretDown, List, Plus, SquaresFour } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { SHELL_SCOPE } from '../../lib/onePrimary'
 import { useJournal } from '../../store'
@@ -93,6 +93,24 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
     </>
   )
 
+  // The same grid from a bar whose row is the date (Today) or that belongs to
+  // no section (Settings, Help). Owner, 2026-10-29: "not able to navigate from
+  // today to other pages" — Today was the one page with no door to the grid,
+  // so Nutrition or Coaching meant landing on another Body page first.
+  const gridButton = (
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      aria-label="All pages"
+      aria-haspopup="dialog"
+      aria-expanded={allOpen}
+      onClick={() => setAllOpen(true)}
+      className="shrink-0"
+    >
+      <Icon as={SquaresFour} size="md" />
+    </Button>
+  )
+
   return (
     <header className="app-header phone-bar sticky top-0 z-30 border-b border-line bg-card/75 shadow-raise backdrop-blur-lg md:hidden">
       <div className="flex min-h-13 items-center gap-1 px-2">
@@ -127,9 +145,13 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
             <div className="flex min-w-0 flex-1 justify-center">
               <DateNav view={view} mode={chrome.dateNav} />
             </div>
+            {gridButton}
           </>
         ) : (
-          <h1 className="min-w-0 flex-1 truncate px-1 text-heading leading-tight font-semibold text-foreground">{chrome.title}</h1>
+          <>
+            <h1 className="min-w-0 flex-1 truncate px-1 text-heading leading-tight font-semibold text-foreground">{chrome.title}</h1>
+            {gridButton}
+          </>
         )}
 
         {/* `primaryScope`: mounts once for every view — see `lib/onePrimary.ts`. */}
@@ -145,7 +167,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
       )}
 
       <PhoneMenu open={menuOpen} onOpenChange={setMenuOpen} onNavigate={onNavigate} />
-      {current && <SectionSheet view={view} gates={gates} open={allOpen} onOpenChange={setAllOpen} onNavigate={onNavigate} />}
+      <SectionSheet view={view} gates={gates} open={allOpen} onOpenChange={setAllOpen} onNavigate={onNavigate} />
     </header>
   )
 }

@@ -1,20 +1,20 @@
 import { Icon as AppIcon } from '@/components/Icon'
 import { hrefFor } from '../../lib/deepLink'
 import { useEffect, useState } from 'react'
-import { SECTIONS, sectionOf, type SectionGates, type SectionId } from './sections'
+import { PHONE_SECTIONS, sectionOf, type SectionGates, type SectionId } from './sections'
 import { lastPageOf, rememberPage } from './lastPage'
 import { SectionSheet } from './SectionSheet'
 import type { ViewId } from './viewChrome'
 
 /**
- * Mobile-only bottom tab bar (hidden ≥ md): the five sections, equal width, no
+ * Mobile-only bottom tab bar (hidden ≥ md): the four phone sections, equal width, no
  * centre FAB. Capture lives in the top bar's Quick add.
  *
- * It reads `SECTIONS` directly. It used to take the rail's items and resolve a
+ * It reads `PHONE_SECTIONS` (every section but Mind) directly. It used to take the rail's items and resolve a
  * hand-written `PRIMARY` list of five ids against them, which failed silently:
  * retiring a nav id dropped its tab with no error, and collapsing the Body
  * cluster once left the bar at three. There is no list to fall out of sync now
- * — the sections *are* the tabs, which is part of why there are five of them.
+ * — the sections *are* the tabs (four on a phone: Mind is desktop-only).
  *
  * This is the whole of navigation on a phone: the top bar hides its section row
  * below `md` precisely because this bar is the reachable copy.
@@ -48,7 +48,7 @@ export function BottomNav({
       className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line bg-card/95 backdrop-blur md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {SECTIONS.map((s) => {
+      {PHONE_SECTIONS.map((s) => {
         const active = current === s.id
         // Where you left this section (`lastPage.ts`), else its first
         // *visible* tab — a gated-off Cycle is never a destination.
