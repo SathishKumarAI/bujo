@@ -59,3 +59,32 @@ describe('PhoneTopBar menu', () => {
     expect(screen.getByRole('button', { name: 'Quick add' })).toBeTruthy()
   })
 })
+
+const { emptyJournal, STORAGE_KEY } = await import('../../lib/storage')
+
+describe('PhoneTopBar notifications', () => {
+  afterEach(() => localStorage.clear())
+
+  // The failure: the sample-data notice existing nowhere on a phone. It left
+  // the page (152px over every view) for the ☰, so the ☰ has to count it, open
+  // on it, and carry the actions the strip had.
+  it('counts the sample-data notice, opens on it, and Keep takes it away', async () => {
+    const d = emptyJournal()
+    d.settings.demoSeeded = true
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d))
+    mount()
+    await userEvent.click(screen.getByRole('button', { name: /^Menu · \d+ notifications$/ }))
+    expect(screen.getByRole('radio', { name: /^Notifications \d+$/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByText('You’re exploring sample data')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Clear the demo/ })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: /Keep this as mine/ }))
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).settings.demoSeeded).toBe(false)
+  })
+
+  it('keeps Settings one tab away when there is nothing new', async () => {
+    mount()
+    await userEvent.click(screen.getByRole('button', { name: /^Menu/ }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Menu' }))
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy()
+  })
+})

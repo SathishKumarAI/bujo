@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { NavProvider } from './shell/nav'
 import { emptyJournal, STORAGE_KEY } from '../lib/storage'
 import { ExploreBanner } from './ExploreBanner'
+import { DeviceProvider } from './shell/device'
 
 /**
  * The failure this catches: the sample-data strip going back to being
@@ -42,6 +43,20 @@ describe('ExploreBanner', () => {
 
   it('is absent outside the demo, dismissed or not', () => {
     mount()
+    expect(screen.queryByText(/exploring sample data/i)).toBeNull()
+  })
+})
+
+describe('ExploreBanner on a phone', () => {
+  afterEach(() => { localStorage.clear(); vi.unstubAllGlobals() })
+
+  // The failure: the strip coming back above every phone page — four rows,
+  // 152px of a 664px screen. On a phone the notice is the ☰'s Notifications
+  // tab (PhoneTopBar.test.tsx), never the page.
+  it('draws nothing on a phone, even while exploring', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    seedExploring()
+    render(<DeviceProvider><JournalProvider><NavProvider navigate={() => {}}><ExploreBanner /></NavProvider></JournalProvider></DeviceProvider>)
     expect(screen.queryByText(/exploring sample data/i)).toBeNull()
   })
 })
