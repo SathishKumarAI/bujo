@@ -131,7 +131,7 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
       <label className="flex items-center gap-3">
         <span className="flex w-[4.5rem] shrink-0 flex-col">
           <span className="text-body font-medium text-fg-1">Effort</span>
-          <span className="text-label text-fg-2">{f.rpe === '' ? 'Slide' : EFFORT_WORD[Number(f.rpe)]}</span>
+          <span className="text-label text-fg-2">{f.rpe === '' ? 'Optional' : EFFORT_WORD[Number(f.rpe)]}</span>
         </span>
         <input
           type="range"
@@ -143,7 +143,7 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
           className="effort min-w-0 flex-1"
           data-unset={f.rpe === '' || undefined}
         />
-        <span className="num w-8 shrink-0 text-right text-title font-bold text-fg-1">{f.rpe === '' ? '–' : f.rpe}</span>
+        <span className="num w-8 shrink-0 text-right text-title font-bold text-fg-1">{f.rpe === '' ? '' : f.rpe}</span>
       </label>
 
       <Cells>

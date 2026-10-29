@@ -88,7 +88,6 @@ export function GymPhone({ data, split, setSplit, suggested, rows, setRows, date
             <Icon as={CaretDown} size="sm" className="text-fg-2" />
             <input type="date" value={date} max={today} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Date, ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
           </label>
-          <span className="text-label text-fg-2">Next up: <span className="font-semibold text-fg-1">{splitMeta(suggested).label}</span></span>
         </div>
 
         {/* THE SPLIT, as tiles. The suggested one is pre-selected by the view
@@ -120,9 +119,16 @@ export function GymPhone({ data, split, setSplit, suggested, rows, setRows, date
             sat below every exercise card, off screen exactly when it counts. */}
         {rest && <div className="rest-dock">{rest}</div>}
 
-        <button type="button" className="cta" onClick={finish}>
-          <Icon as={Check} size="md" />{workingSets > 0 ? `Finish workout · ${workingSets} ${workingSets === 1 ? 'set' : 'sets'}` : 'Finish workout'}
-        </button>
+        {/* Only once there is something to finish. With no exercise it was a
+            full-width primary that could only answer "No sets to finish" —
+            the two rows above are the actions then. "Next up" is said by
+            the pre-selected split tile and the Next tile, so the header no
+            longer says it a third time. */}
+        {filled.length > 0 && (
+          <button type="button" className="cta" onClick={finish}>
+            <Icon as={Check} size="md" />{workingSets > 0 ? `Finish workout · ${workingSets} ${workingSets === 1 ? 'set' : 'sets'}` : 'Finish workout'}
+          </button>
+        )}
       </section>
 
       <StatTiles label="This week" tiles={[
