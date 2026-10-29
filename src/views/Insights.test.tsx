@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -143,5 +143,25 @@ describe('Insights · the registry is the page', () => {
     await user.type(screen.getByLabelText('Search the journal and this page'), 'sleep debt')
     const ids = [...container.querySelectorAll('[data-card]')].map((e) => e.getAttribute('data-card'))
     expect(ids).toContain('sleepdebt')  // domain `mood`, while the rail says Records
+  })
+})
+
+describe('Insights on a phone', () => {
+  // The failure: the same three figures twice, a screen apart — the top
+  // strip's streak / tasks / mood are the Weekly digest's first three rows.
+  // DeviceProvider decides by matchMedia, which jsdom lacks; stub a phone.
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('drops the top strip on a phone and keeps the digest', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    const { DeviceProvider } = await import('../components/shell/device')
+    localStorage.setItem('bujo:data', JSON.stringify(generateDemoData()))
+    render(
+      <DeviceProvider><NavProvider navigate={() => {}}><CursorProvider><ConfirmProvider><JournalProvider>
+        <Insights />
+      </JournalProvider></ConfirmProvider></CursorProvider></NavProvider></DeviceProvider>,
+    )
+    expect(screen.queryByText('current streak')).toBeNull()
+    expect(screen.getByText('Logging streak')).toBeTruthy()
   })
 })
