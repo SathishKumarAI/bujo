@@ -9,6 +9,8 @@ import { SESSION_SKILLS } from '../../lib/pickleballAcademy'
 import type { SessionDraft } from './sessionDraft'
 
 /** `''` is "not filled", which a `Stepper` reads as no value rather than 0. */
+export type SessionSection = 'when' | 'score' | 'session' | 'who' | 'how' | 'details'
+
 const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefined : Number(v))
 
 /**
@@ -36,7 +38,7 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefin
  * fourteen never rendered once the day had passed.
  */
 
-export function SessionFields({ f, set, recentPartners, allPartners, recentVenues, allVenues, yesterday }: {
+export function SessionFields({ f, set, recentPartners, allPartners, recentVenues, allVenues, yesterday, sections }: {
   f: SessionDraft
   set: (p: Partial<SessionDraft>) => void
   /** The one chip: who you played with last. */
@@ -46,7 +48,15 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
   recentVenues: string[]
   allVenues: string[]
   yesterday: string
+  /**
+   * Which parts to draw; all of them by default. The phone's quick log draws
+   * the everyday facts itself and puts only `who`, `how` and `details` in its
+   * sheet (COD-452) — still this one component, so there is still exactly one
+   * form for a session.
+   */
+  sections?: readonly SessionSection[]
 }) {
+  const has = (k: SessionSection) => !sections || sections.includes(k)
   /* ON A PHONE: THE SAME FIELDS, IN THE SAME ORDER, NOTHING FOLDED.
      Asked for as "all the input should be taken only in one screen" — one
      scrolling form, so the fold below opens out into a group of its own, and
@@ -101,8 +111,30 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
       hint={f.pain === 'yes' ? 'Say where in the notes.' : undefined}
     />
   </>)
+  /* The opponents. On a phone they are WHO, beside the partner and the court
+     — the quick log's "Opponent" pill opens the sheet onto them; on a
+     desktop they stay in the Details fold where they have always been. */
+  const opponents = (
+          <div className={f.format !== 'doubles' ? undefined : phone ? 'grid grid-cols-2 gap-3' : 'grid gap-3 sm:grid-cols-2'}>
+            <Input
+              value={f.opponent}
+              onChange={(e) => set({ opponent: e.target.value })}
+              placeholder={f.format === 'doubles' ? 'Opponent 1' : 'Opponent (optional)'}
+              aria-label={f.format === 'doubles' ? 'First opponent' : 'Opponent'}
+            />
+            {f.format === 'doubles' && (
+              <Input
+                value={f.opponent2}
+                onChange={(e) => set({ opponent2: e.target.value })}
+                placeholder="Opponent 2"
+                aria-label="Second opponent"
+              />
+            )}
+          </div>
+  )
   return (
       <div className={phone ? 'flex flex-col gap-4' : 'flex flex-col gap-3'}>
+        {has('when') && (<>
         <FieldGroup title="When" desktop="grid gap-3 sm:grid-cols-2">
         <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
 
@@ -114,12 +146,16 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
           options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
         />
         </FieldGroup>
+        </>)}
 
+        {has('score') && (<>
         <FieldGroup title="Score" desktop="grid gap-3 sm:grid-cols-2" cols={2}>
           <Stepper label="Games won" value={numOrUndef(f.gamesWon)} onChange={(v) => set({ gamesWon: v == null ? '' : String(v) })} max={30} placeholder="0" />
           <Stepper label="Games lost" value={numOrUndef(f.gamesLost)} onChange={(v) => set({ gamesLost: v == null ? '' : String(v) })} max={30} placeholder="0" />
         </FieldGroup>
+        </>)}
 
+        {has('session') && (<>
         <FieldGroup title="Session">
         <ChipPick
           label="On court for"
@@ -156,7 +192,9 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
           hint={phone ? undefined : '1 easy · 10 everything you had'}
         />
         </FieldGroup>
+        </>)}
 
+        {has('who') && (<>
         <FieldGroup title="Who & where" desktop="grid gap-3 sm:grid-cols-2">
         {f.format === 'doubles' && (
           <ChipPick
@@ -209,9 +247,11 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             </>
           }
         />
+        {phone && opponents}
         </FieldGroup>
+        </>)}
 
-        {phone && <FieldGroup title="How it went">{howItWent}</FieldGroup>}
+        {phone && has('how') && <FieldGroup title="How it went">{howItWent}</FieldGroup>}
 
         {/* The half you fill less than half the time.
 
@@ -226,6 +266,7 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             of number inputs they replaced, and this form grew the page by
             0.4 screens. Folding the optional half is where that comes back,
             without putting a keyboard back in the fast path. */}
+        {has('details') && (<>
         {(() => { const details = (<>
           <ChipPick
             className={row}
@@ -258,28 +299,14 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
               against nothing. The second is gated on the format exactly as
               `Partner` is, so a singles session is never asked for a name it
               cannot have. */}
-          <div className={f.format !== 'doubles' ? undefined : phone ? 'grid grid-cols-2 gap-3' : 'grid gap-3 sm:grid-cols-2'}>
-            <Input
-              value={f.opponent}
-              onChange={(e) => set({ opponent: e.target.value })}
-              placeholder={f.format === 'doubles' ? 'Opponent 1' : 'Opponent (optional)'}
-              aria-label={f.format === 'doubles' ? 'First opponent' : 'Opponent'}
-            />
-            {f.format === 'doubles' && (
-              <Input
-                value={f.opponent2}
-                onChange={(e) => set({ opponent2: e.target.value })}
-                placeholder="Opponent 2"
-                aria-label="Second opponent"
-              />
-            )}
-          </div>
+          {!phone && opponents}
           {!phone && howItWent}
         </>)
         return phone
           ? <FieldGroup title="Details">{details}</FieldGroup>
           : <DisclosureRow label="Level, scoring, points & opponents">{details}</DisclosureRow>
         })()}
+        </>)}
       </div>
   )
 }
