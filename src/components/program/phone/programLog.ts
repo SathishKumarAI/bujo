@@ -36,3 +36,22 @@ export function actualOf(rows: SetRow[], unit: string): string {
     .map((r) => (r.weight ? `${r.weight}${unit}×${r.reps || '?'}` : r.reps))
     .join(', ')
 }
+
+/**
+ * An edit to one set carries to the sets after it that still held the old
+ * value — type 50 on set 1 and sets 2 and 3 follow, the way the next set is
+ * usually the same weight. A set you already changed by hand keeps its value.
+ */
+export function followOn(old: SetRow[], edited: SetRow[]): SetRow[] {
+  if (old.length !== edited.length) return edited
+  const out = edited.map((r) => ({ ...r }))
+  out.forEach((r, i) => {
+    for (const f of ['weight', 'reps'] as const) {
+      if (r[f] === old[i][f]) continue
+      for (let k = i + 1; k < out.length; k++) {
+        if (out[k][f] === old[i][f]) out[k] = { ...out[k], [f]: r[f] }
+      }
+    }
+  })
+  return out
+}
