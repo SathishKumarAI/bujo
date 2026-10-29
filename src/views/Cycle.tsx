@@ -23,6 +23,7 @@ import {
   panelsIn, type CycleGroup,
 } from '../lib/cycleCards'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
+import { useDevice } from '../components/shell/device'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
   CycleMonth, DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, PhasesCard,
@@ -114,8 +115,10 @@ export function Cycle() {
      with the day editor holding 424/520px of the shell on every visit, and no
      way to give it back. Stacked it is worse than that — the editor, the
      legend and the month fold are 682px of phone above a review the page
-     exists to show, which is why `useActColumn` starts shut when stacked. */
+     exists to show, which is why `useActColumn` starts shut when stacked —
+     on a desktop window. A phone opens on the editor (COD-467). */
   const logCol = useActColumn('cycle')
+  const phone = useDevice() === 'mobile'
   /* Which zone-3 group is on screen. Sticky, because the four folds it replaces
      each had a `stickyKey` and losing that is a regression dressed as a
      redesign — `allowed` is the registry, so a renamed group cannot resurrect
@@ -533,7 +536,7 @@ export function Cycle() {
   /** What the selected group renders, and what the rail counts. Same predicate
    *  for both, so a card that yields nothing can never leave a heading over an
    *  empty grid or a rail row promising a card that is not there. */
-  const idsIn = (g: CycleGroup) => CYCLE_CARDS.filter((c) => c.group === g && cards[c.id])
+  const idsIn = (g: CycleGroup) => CYCLE_CARDS.filter((c) => c.group === g && cards[c.id] && !(phone && c.chart))
   const shown = idsIn(group)
 
   /**
