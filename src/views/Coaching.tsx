@@ -23,6 +23,8 @@ import {
 import { COURT_INJURIES, SAFETY_DISCLAIMER, WARMUP } from '../lib/pickleballSafety'
 import { SafetyChapter } from '../components/coaching/SafetyChapter'
 import { PracticeTick } from '../components/coaching/PracticeTick'
+import { VideoLink } from '../components/VideoLink'
+import { drillQuery } from '../lib/video'
 
 /**
  * COACHING · the 12-week pickleball program, and the manual that teaches it.
@@ -881,7 +883,11 @@ function Manual({ chapter }: { chapter: string }) {
                     so these were the only disclosures a screen reader could not
                     tell the state of — and the reason the page census counted 32
                     folds rather than 38. */}
-                <button onClick={() => setOpenSkill(pinned ? null : skill)} aria-expanded={open} aria-label={`${pinned ? 'Unpin' : 'Pin open'} ${skill} drills`} className="flex w-full items-start justify-between gap-2 p-2.5 text-left">
+                {/* No `aria-label`: it said "Pin open Dinking drills" over a button
+                    that paints the skill AND its symptom, which is
+                    `label-content-name-mismatch` (serious) on every row. The
+                    painted text is the name; `aria-expanded` is the state. */}
+                <button onClick={() => setOpenSkill(pinned ? null : skill)} aria-expanded={open} className="flex w-full items-start justify-between gap-2 p-2.5 text-left">
                   <span className="min-w-0">
                     <span className="block text-body font-medium text-fg-1">{skill}</span>
                     {/* The symptom, on the CLOSED row. A list of drill names
@@ -896,6 +902,7 @@ function Manual({ chapter }: { chapter: string }) {
                     {list.map((d) => (
                       <li key={d.name} className="flex flex-wrap items-start gap-x-2 gap-y-1 text-label">
                         <span className="min-w-0 flex-1"><span className="text-fg-1">{d.name}</span> <span className="text-fg-2">· {d.how}</span></span>
+                        <VideoLink name={d.name} query={drillQuery(d.name)} label="" size="sm" quiet className="min-h-6 min-w-6 justify-center" />
                         <PracticeTick kind="drill" name={d.name} />
                       </li>
                     ))}

@@ -15,6 +15,19 @@ export function videoUrl(name: string, yt = demoClipId(name)): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' proper form technique')}`
 }
 
+/** A YouTube search for exactly `q` — the domain helpers below say what to ask. */
+export function youtubeSearchUrl(q: string): string {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`
+}
+
+// One question per domain: "proper form" is the right search for a lift and
+// the wrong one for a drill or an idea. A page passes one of these as
+// `VideoLink`'s `query`.
+/** A pickleball drill, by its name. */
+export const drillQuery = (name: string) => `pickleball ${name} drill`
+/** A mindset principle — a talk about the idea, not a how-to. */
+export const principleQuery = (title: string) => `${title} explained`
+
 /** Always-available "find more" search link. */
 export function videoSearchUrl(name: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent('how to ' + name + ' exercise')}`
