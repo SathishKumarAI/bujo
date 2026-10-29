@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '../ui/button'
 import { Eyebrow } from '../mod'
 import type { MindsetPrinciple } from '../../lib/mindset'
+import { VideoLink } from '../VideoLink'
+import { principleQuery } from '../../lib/video'
 
 /** One key per day, so the spotlight is a morning ritual and not a toll gate. */
 const seenKey = (day: string) => `bujo:mindset-spotlight:${day}`
@@ -95,6 +97,8 @@ export function PrincipleSpotlight({
         {cue?.trim() && (
           <p className="border-l-2 border-brand pl-3 text-body text-pretty text-fg-1">{cue.trim()}</p>
         )}
+
+        <VideoLink name={principle.title} query={principleQuery(principle.title)} label="Watch a talk" quiet className="self-start" />
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => setDismissed(true)}>

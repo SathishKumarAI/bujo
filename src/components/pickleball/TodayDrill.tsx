@@ -6,6 +6,8 @@ import { useNav } from '../shell/nav'
 import { fromISODay, todayISO } from '../../lib/date'
 import { ACADEMY_DRILLS, DRILL_FIXES } from '../../lib/pickleballAcademy'
 import { PracticeTick } from '../coaching/PracticeTick'
+import { VideoLink } from '../VideoLink'
+import { drillQuery } from '../../lib/video'
 
 /**
  * TODAY'S DRILL — one row of the orient block, not a card in the record.
@@ -50,6 +52,7 @@ export function TodayDrill() {
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-body font-medium text-fg-1">{drill.name}</span>
           <Pill color="mauve" size="micro" className="px-2">{drill.skill}</Pill>
+          <VideoLink name={drill.name} query={drillQuery(drill.name)} label="Watch how" />
         </p>
         <Button variant="ghost" onClick={() => nav('coaching')} title={`${ACADEMY_DRILLS.length} more drills, the warm-up and the twelve-week program, in Coaching`} className="mt-1 h-auto max-w-full truncate p-0 text-label text-fg-2 hover:text-fg-1 hover:no-underline">
           {/* Shortened once the block shares its row with the log: at 288px

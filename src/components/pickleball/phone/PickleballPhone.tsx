@@ -9,6 +9,8 @@ import { StatTiles } from '../../ui/statTiles'
 import { fromISODay, prettyDay, todayISO } from '../../../lib/date'
 import { pickleTotals, upcomingEvents } from '../../../lib/pickleball'
 import { ACADEMY_DRILLS } from '../../../lib/pickleballAcademy'
+import { VideoLink } from '../../VideoLink'
+import { drillQuery } from '../../../lib/video'
 import type { PickleballSession } from '../../../lib/types'
 import { CompetitionPanel } from '../CompetitionPanel'
 import { QuickLog } from '../QuickLog'
@@ -69,7 +71,11 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
       ]} />
 
       <Cells title="Today">
-        <Cell icon={Target} tone="mauve" title={drill.name} subtitle={`Drill · ${drill.skill}`} trail={<PracticeTick kind="drill" name={drill.name} variant="circle" />} />
+        <Cell icon={Target} tone="mauve" title={drill.name} subtitle={`Drill · ${drill.skill}`} trail={<span className="flex items-center gap-1">
+          {/* Icon-only at 44px: the cell's title already names the drill. */}
+          <VideoLink name={drill.name} query={drillQuery(drill.name)} label="" size="md" className="min-h-11 min-w-11 justify-center" />
+          <PracticeTick kind="drill" name={drill.name} variant="circle" />
+        </span>} />
         {soon && <Cell icon={CalendarDot} tone="peach" title={soon.name} subtitle={soon.daysUntil === 0 ? 'Today' : soon.daysUntil === 1 ? 'Tomorrow' : `In ${soon.daysUntil} days`} onPress={() => setComp(true)} />}
       </Cells>
 

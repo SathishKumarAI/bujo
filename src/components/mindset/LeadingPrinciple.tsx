@@ -1,5 +1,7 @@
 import { Band, BandCell, BandRow, Eyebrow, Statement } from '../mod'
 import type { MindsetPrinciple } from '../../lib/mindset'
+import { VideoLink } from '../VideoLink'
+import { principleQuery } from '../../lib/video'
 
 /**
  * The page's opening band: the one principle you are leading with, said loudly.
@@ -62,6 +64,7 @@ export function LeadingPrinciple({
                 <span className="whitespace-nowrap">
                   Practised {daysPracticed} {daysPracticed === 1 ? 'day' : 'days'}
                 </span>
+                <VideoLink name={principle.title} query={principleQuery(principle.title)} label="Watch a talk" quiet />
               </div>
             </>
           ) : (

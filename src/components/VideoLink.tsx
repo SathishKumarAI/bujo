@@ -1,6 +1,6 @@
 import { Play } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { videoUrl } from '../lib/video'
+import { videoUrl, youtubeSearchUrl } from '../lib/video'
 import { cat, onRaised } from '../lib/colors'
 import { cn } from '../lib/cn'
 
@@ -36,10 +36,17 @@ export function VideoLink({
   label = 'Watch demo',
   size = 'sm',
   quiet = false,
+  query,
   className,
 }: {
   name: string
   yt?: string
+  /**
+   * The whole search, for a thing that is not a lift (`drillQuery`,
+   * `principleQuery` in `lib/video.ts`). Without it the link asks for proper
+   * form, and reaches for the lift catalogue first.
+   */
+  query?: string
   label?: string
   /** Was a px number (11 by default, 13 at one call site). Icons come from the
    *  three-step scale now, so the prop takes a step instead — a caller cannot
@@ -63,7 +70,7 @@ export function VideoLink({
 }) {
   return (
     <a
-      href={videoUrl(name, yt)}
+      href={query && !yt ? youtubeSearchUrl(query) : videoUrl(name, yt)}
       target="_blank"
       rel="noreferrer"
       // Named after the exercise, always — and this is not belt-and-braces.
@@ -79,7 +86,7 @@ export function VideoLink({
       // And the name STARTS with the painted label (`Watch how: Leg press`):
       // axe's `label-content-name-mismatch` needs the visible words inside
       // the name, and "Watch demo" is not inside "Watch a form demo for …".
-      aria-label={label ? `${label}: ${name}` : `Watch a form demo for ${name}`}
+      aria-label={label ? `${label}: ${name}` : query ? `Watch a video: ${name}` : `Watch a form demo for ${name}`}
       style={{ color: quiet ? cat('subtext0') : onRaised('red') }}
       className={cn('inline-flex items-center gap-1 text-label hover:underline', className)}
       onClick={(e) => e.stopPropagation()}
