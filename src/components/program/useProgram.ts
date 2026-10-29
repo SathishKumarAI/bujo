@@ -87,6 +87,19 @@ export function useProgram(only?: string) {
     setSettings({ programActuals: next })
   }
 
+  /**
+   * A day logged in one write: the lifts that got sets are ticked and their
+   * actuals recorded. One `setSettings`, because `toggleEx` and `setActual`
+   * each spread the `done`/`actuals` of THIS render — called in a loop, every
+   * call but the last is overwritten.
+   */
+  function logDay(results: { i: number; actual: string }[]) {
+    const keys = results.map((r) => key(r.i))
+    const next = { ...actuals }
+    for (const r of results) if (r.actual) next[key(r.i)] = r.actual
+    setSettings({ programDone: [...new Set([...done, ...keys])], programActuals: next })
+  }
+
   return {
     p, programs, pid, pickProgram,
     week, day, curWeek, cur, unit, goTo,
@@ -94,7 +107,7 @@ export function useProgram(only?: string) {
     resume, browsing,
     done, actuals, curDone, curDoneCount, allCurDone,
     dayComplete, weekComplete,
-    key, toggleEx, toggleAll, setActual,
+    key, toggleEx, toggleAll, setActual, logDay,
   }
 }
 
