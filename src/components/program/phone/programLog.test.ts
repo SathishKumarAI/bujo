@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actualOf, planRows, splitForFocus } from './programLog'
+import { actualOf, followOn, planRows, splitForFocus } from './programLog'
 import { newSetRow } from '../../gym/setRow'
 import type { JournalData } from '../../../lib/types'
 
@@ -36,5 +36,19 @@ describe('splitForFocus', () => {
 describe('actualOf', () => {
   it('writes weight×reps and skips empty sets', () => {
     expect(actualOf([newSetRow({ weight: '60', reps: '8' }), newSetRow(), newSetRow({ reps: '10' })], 'kg')).toBe('60kg×8, 10')
+  })
+})
+
+describe('followOn', () => {
+  it('carries an edited weight to later sets that still held the old one, not to ones changed by hand', () => {
+    const old = [newSetRow({ weight: '', reps: '8' }), newSetRow({ weight: '', reps: '8' }), newSetRow({ weight: '40', reps: '8' })]
+    const edited = old.map((r, i) => (i === 0 ? { ...r, weight: '50' } : r))
+    expect(followOn(old, edited).map((r) => r.weight)).toEqual(['50', '50', '40'])
+  })
+
+  it('leaves sets alone when a row was added or removed', () => {
+    const old = [newSetRow({ weight: '50' })]
+    const edited = [...old, newSetRow({ weight: '50' })]
+    expect(followOn(old, edited)).toBe(edited)
   })
 })

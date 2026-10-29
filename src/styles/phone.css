@@ -794,40 +794,94 @@ button.cell:active {
 
 /* ── Program (`program/phone/ProgramPhone.tsx`, COD-461) ─────────────────── */
 
-/* Week · Day steppers, side by side: ‹ face ›. The face opens the picker. */
-.stepper {
+/* THE SELECTION BAR: week and day side by side in one row. Each pill is a
+   native select (the iOS wheel) with its own caret drawn on top. */
+.select-bar {
   display: grid;
-  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
-  align-items: stretch;
-  min-height: 3.75rem;
-  border-radius: 0.875rem;
-  background: var(--color-ink-1);
-  box-shadow: 0 0 0 1px var(--color-line);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
 }
 
-.stepper-arrow {
-  display: grid;
-  place-items: center;
-  border-radius: 0.875rem;
-  color: var(--color-fg-1);
-}
-
-.stepper-arrow:active:not(:disabled) {
-  background: var(--color-ink-2);
-}
-
-.stepper-arrow:disabled {
-  color: var(--color-line-strong);
-}
-
-.stepper-face {
+.select-pill {
+  position: relative;
+  display: flex;
   min-width: 0;
-  padding-block: 0.375rem;
-  text-align: center;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: 0.75rem;
+  background: var(--color-ink-2);
 }
 
-.stepper-face:active {
-  background: var(--color-ink-2);
+.select-pill select {
+  width: 100%;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 2rem 0 0.875rem;
+  overflow: hidden;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: var(--color-fg-1);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-pill select:focus-visible {
+  border-radius: 0.75rem;
+  outline: 2px solid var(--color-brand);
+}
+
+.select-pill > svg {
+  position: absolute;
+  right: 0.75rem;
+}
+
+/* Program's Log button, pinned above the bottom nav while the list scrolls. */
+.log-dock {
+  position: sticky;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 30;
+  margin-inline: -0.5rem;
+  padding: 0.5rem;
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--color-ink-0) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* ONE ROW PER LIFT, opening to its set cards. */
+.lift-row + .lift-row {
+  box-shadow: inset 0 1px 0 var(--color-line);
+}
+
+.lift-row[data-done] {
+  background: color-mix(in oklab, var(--color-green) 8%, var(--color-ink-1));
+}
+
+/* The set counter: "2/3" in a ring, a filled check when the lift is done. */
+.set-count {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--color-line-strong);
+  color: var(--color-fg-1);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+  transition: background-color 150ms, box-shadow 150ms;
+}
+
+.set-count:active {
+  transform: scale(0.94);
+}
+
+.set-count[aria-pressed='true'] {
+  background: var(--color-green);
+  box-shadow: none;
+  color: var(--color-ink-0);
 }
 
 /* THE PHONE BAR (`shell/PhoneTopBar.tsx`). Every control in it is a 44px

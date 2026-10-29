@@ -18,7 +18,7 @@ import { newSetRow, type SetRow } from '../setRow'
  * in a session (supersets, coming back to it) draws twice rather than being
  * silently merged — merging would reorder sets the lifter did in that order.
  */
-export function SetCards({ rows, onChange, unit, data, onRest, done }: {
+export function SetCards({ rows, onChange, unit, data, onRest, done, bare }: {
   rows: SetRow[]
   onChange: (rows: SetRow[]) => void
   unit: string
@@ -27,6 +27,9 @@ export function SetCards({ rows, onChange, unit, data, onRest, done }: {
   onRest?: (row: SetRow) => void
   /** Ids of sets already rested this session (drawn ticked). */
   done?: ReadonlySet<string>
+  /** No card frame and no name row — the caller's own row already shows both
+   *  (Program's lift row opening in place). */
+  bare?: boolean
 }) {
   const groups: { exercise: string; start: number; rows: SetRow[] }[] = []
   rows.forEach((r, i) => {
@@ -52,8 +55,8 @@ export function SetCards({ rows, onChange, unit, data, onRest, done }: {
         // Working sets are numbered 1, 2, 3 — warm-ups draw "W" and do not count.
         const numbers = g.rows.reduce<number[]>((acc, r) => [...acc, r.kind === 'warmup' ? 0 : (acc.filter(Boolean).length + 1)], [])
         return (
-          <section key={g.rows[0].id} aria-label={g.exercise} className="cells">
-            <div className="flex items-baseline justify-between gap-2 px-4 pt-3 pb-1">
+          <section key={g.rows[0].id} aria-label={g.exercise} className={bare ? undefined : 'cells'}>
+            <div className={bare ? 'sr-only' : 'flex items-baseline justify-between gap-2 px-4 pt-3 pb-1'}>
               <h3 className="min-w-0 truncate text-heading font-semibold text-fg-1">{g.exercise}</h3>
               <span className="shrink-0 text-label text-fg-2">{prev ? `Last ${prev.weight > 0 ? `${prev.weight}${unit}` : 'bodyweight'} × ${prev.reps}` : 'First time'}</span>
             </div>
