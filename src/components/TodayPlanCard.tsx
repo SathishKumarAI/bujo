@@ -9,6 +9,7 @@ import { atRiskHabits } from '../lib/streak'
 import { weekCoverage } from '../lib/coverage'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
+import { useDevice } from './shell/device'
 
 /**
  * "Today's plan" · a compact daily command-centre. It *summarises and links*
@@ -97,15 +98,21 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   // summary card · avoids the "crowded Today" con from DECISIONS D-34).
   const week = weekCoverage(data, day, 7)
   const weekScore = Math.round((week.reduce((a, d) => a + d.score, 0) / week.length) * 100)
+  /* A PHONE LOGS, A DESKTOP READS. On a phone this card is its chips alone:
+     the week strip is a bar chart, and the streak button repeated the
+     summary's "3 streaks at risk" and the habit rows' red "!" — and its
+     target, `trackers`, redirects to Today, so the tap only jumped to the
+     top of the page it was already on (measured: scrollY 1762 → 0). */
+  const phone = useDevice() === 'mobile'
 
   return (
     <Card
       band
       title={isToday ? 'Today’s plan' : `Plan · ${prettyDay(day)}`}
       hideInfo
-      right={<span className="text-label text-fg-2">week {weekScore}%</span>}
+      right={phone ? undefined : <span className="text-label text-fg-2">week {weekScore}%</span>}
     >
-      {atRisk.length > 0 && (
+      {!phone && atRisk.length > 0 && (
         <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${atRisk[0].streak}-day ${atRisk[0].habit.name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
@@ -142,7 +149,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
           where it sits rather than vanishing into the track. Colour stays as
           the redundant cue, which is what keeps it readable for anyone who
           cannot separate the hues. */}
-      <div
+      {!phone && <div
         className="mt-3 flex gap-1.5 border-t border-line pt-3"
         role="img"
         aria-label={`Coverage this week: ${week.map((d) => `${WEEKDAYS[new Date(d.date + 'T00:00').getDay()]} ${Math.round(d.score * 100)}%`).join(', ')}`}
@@ -191,7 +198,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
             </div>
           )
         })}
-      </div>
+      </div>}
     </Card>
   )
 }

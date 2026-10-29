@@ -8,6 +8,7 @@ import { DeviceProvider } from '../components/shell/device'
 import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
 import { SectionRail } from '../components/page'
+import { TodayPlanCard } from '../components/TodayPlanCard'
 
 /**
  * The phone shapes of the last pages to get one, each test named for the way
@@ -81,5 +82,21 @@ describe('a section rail on a phone', () => {
     wrap(<SectionRail label="Chapters" groups={groups} value="a" onChange={() => {}} railAt="never" />)
     expect(screen.queryByRole('combobox')).toBeNull()
     expect(screen.getAllByRole('button')).toHaveLength(2)
+  })
+})
+
+describe("Today's plan on a phone", () => {
+  // The failure: a 7-day bar chart on the phone's Today, and the coverage
+  // strip is the only `role="img"` this card draws.
+  it('draws the week strip on a desktop', () => {
+    desktop()
+    wrap(<TodayPlanCard />)
+    expect(screen.getByRole('img', { name: /^Coverage this week/ })).toBeTruthy()
+  })
+
+  it('draws no chart on a phone', () => {
+    phone()
+    wrap(<TodayPlanCard />)
+    expect(screen.queryByRole('img', { name: /^Coverage this week/ })).toBeNull()
   })
 })
