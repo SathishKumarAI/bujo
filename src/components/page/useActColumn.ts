@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStickyState } from '../../lib/useStickyState'
+import { useDevice } from '../shell/device'
 
 /**
  * THE ACT COLUMN'S OPEN/SHUT STATE, INCLUDING THE ONE RULE NOBODY GUESSES.
@@ -31,6 +32,13 @@ import { useStickyState } from '../../lib/useStickyState'
  * the sticky value keeps governing the desktop — where it is a real
  * preference rather than a reaction to a layout they can see.
  *
+ * **Except on a phone (COD-467).** There the page's job is logging (CLAUDE.md,
+ * "a phone logs, a desktop reads"), so a stacked phone page opens on its form.
+ * Auto-shutting hid the form behind a strip on every page without its own
+ * phone layout — Cycle, Pull-ups, Nutrition, Home Workout, Challenges,
+ * Recovery — the trap CLAUDE.md records as "the measured before on Pickleball
+ * was one visible field". A shut the reader chose still holds.
+ *
  * ```tsx
  * const col = useActColumn('pickleball')
  * <PageLayout
@@ -44,10 +52,11 @@ export function useActColumn(key: string) {
   const [act, setAct] = useStickyState<'open' | 'shut'>(`${key}.act`, 'open', ['open', 'shut'])
   const [stacked, setStacked] = useState(false)
   const [touched, setTouched] = useState(false)
+  const phone = useDevice() === 'mobile'
 
   return {
     /** True when zone 2 should render its `ActStrip` instead of its content. */
-    shut: act === 'shut' || (stacked && !touched),
+    shut: act === 'shut' || (stacked && !touched && !phone),
     open: () => { setTouched(true); setAct('open') },
     close: () => { setTouched(true); setAct('shut') },
     /** Hand straight to `PageLayout`'s `onSplitChange`. */

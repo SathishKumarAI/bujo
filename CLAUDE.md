@@ -116,9 +116,12 @@ Pickleball (COD-450). On a phone:
 | **Decided by screen width**, never a "desktop mode" | `useDevice()` (`shell/device.tsx`) — ≤767px, or touch under 1024px |
 | **Desktop does not change.** Prove it | `FieldGroup` renders the exact desktop wrapper it replaced; probe the page at 1440 before and after and diff the numbers |
 
-Trap: `useActColumn` shuts the act column whenever the page STACKS, which on a
-phone hid the form behind a strip — the measured "before" on Pickleball was
-one visible field. A phone page must not route its form through it.
+Trap (fixed, COD-467): `useActColumn` shut the act column whenever the page
+STACKED, which on a phone hid the form behind a strip — the measured "before"
+on Pickleball was one visible field, and Cycle and Nutrition had NO visible
+input at all. It now stays open on a phone (a chosen shut still holds). A
+phone sweep found it on six pages at once: fix a phone gap in the shared
+hook, not page by page.
 
 Phone surfaces (COD-454): `ui/seg.tsx` (iOS segmented control), `ui/cells.tsx`
 (inset grouped rows), `ui/sheet.tsx`, all styled in `styles/phone.css`. The
