@@ -11,6 +11,8 @@ import { hrefFor } from '../lib/deepLink'
 import { parseICS } from '../lib/ics'
 import { entryThread, migrationCounts, overdueBucketOf, overdueBuckets } from '../lib/bullets'
 import type { BulletType, Entry } from '../lib/types'
+import { useDevice } from '../components/shell/device'
+import { PlanPhone } from '../components/plan/PlanPhone'
 
 /**
  * One-tap recurring rules. The Setup card used to open on an empty text box,
@@ -63,6 +65,7 @@ export function Plan() {
   const [openThread, setOpenThread] = useState<string | null>(null)
   const [agingOpen, setAgingOpen] = useState(true)
   const [icsNote, setIcsNote] = useState<string | null>(null)
+  const phone = useDevice() === 'mobile'
 
   // ── Recurring rule form ──
   const [text, setText] = useState('')
@@ -185,6 +188,17 @@ export function Plan() {
     }
     reader.readAsText(file)
     if (fileRef.current) fileRef.current.value = ''
+  }
+
+  /* A PHONE GETS ONE DAY AT A TIME (COD-466): the seven-column table showed
+     four and a half columns at 390px. Same overdue list, same import. */
+  if (phone) {
+    return (
+      <>
+        <PlanPhone today={today} overdue={overdue} onImport={() => fileRef.current?.click()} importNote={icsNote} />
+        <input ref={fileRef} type="file" accept=".ics,text/calendar" onChange={onIcs} className="hidden" />
+      </>
+    )
   }
 
   return (

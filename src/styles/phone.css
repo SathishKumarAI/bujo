@@ -873,3 +873,28 @@ button.cell:active {
   flex: none;
   min-height: 2.75rem;
 }
+
+/* ── Plan week strip (`plan/PlanPhone.tsx`, COD-466) ──────────────────────── */
+
+/* Seven days in one row at 390px: 47px each, the chosen one ringed, today in
+   the brand colour. */
+.day-chip {
+  display: flex;
+  min-height: 4.25rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+  color: var(--color-fg-1);
+}
+
+.day-chip[data-today] {
+  color: var(--color-brand-text);
+}
+
+.day-chip[aria-checked='true'] {
+  background: color-mix(in oklab, var(--color-brand) 12%, var(--color-ink-1));
+  box-shadow: 0 0 0 2px var(--color-brand);
+}
