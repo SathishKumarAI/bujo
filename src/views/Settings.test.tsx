@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -101,5 +101,24 @@ describe('?tab= addresses a section', () => {
     window.history.replaceState(null, '', '/?view=settings&tab=nonsense')
     mount()
     expect(screen.getByRole('tab', { selected: true }).textContent?.trim()).toBe('Account')
+  })
+})
+
+describe('Settings tabs on a phone', () => {
+  // The failure: a fourth tab off the right edge of a scrolling strip whose
+  // clip fell in the gap, so the row looked complete with three. On a phone
+  // the tabs are a two-column grid, and the long label is whole.
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('lays the four tabs out as a grid with "Sync & privacy" in full', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    const { DeviceProvider } = await import('../components/shell/device')
+    render(
+      <DeviceProvider><NavProvider navigate={() => {}}><ConfirmProvider><JournalProvider>
+        <Settings />
+      </JournalProvider></ConfirmProvider></NavProvider></DeviceProvider>,
+    )
+    expect(screen.getByRole('tablist').className).toContain('grid-cols-2')
+    expect(screen.getAllByRole('tab').map((t) => t.textContent?.trim())).toEqual(['Account', 'Appearance', 'Sync & privacy', 'Data'])
   })
 })

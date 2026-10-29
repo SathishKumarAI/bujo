@@ -124,7 +124,13 @@ export function Settings() {
             less than it holds (it showed everything) and `a11y` asks whether
             the tree is sound (it was). Overridden at the same specificity it
             is set at. */}
-        <TabsList ref={listRef} className={`${phone ? 'phone-strip ' : ''}mb-4 flex w-full flex-wrap justify-start gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
+        {/* ON A PHONE, A 2×2 GRID — not the scrolling strip. Measured at
+            390px: Sync ended at x370 and Data began at x376, so the strip's
+            clip fell in the gap and the row looked complete with three tabs;
+            the fourth was off the edge with nothing to say so (the
+            `.phone-strip` trap, in its own comment). Four tabs fit two-up
+            with their whole labels, "Sync & privacy" included. */}
+        <TabsList ref={listRef} className={`${phone ? 'grid grid-cols-2' : 'flex flex-wrap justify-start'} mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
           {/* "Account", not "Profile". There were two destinations answering
               "who is this journal for" — a whole `views/Account.tsx` holding
               the Google sign-in and a card titled "You", and this tab holding
@@ -135,7 +141,7 @@ export function Settings() {
           {/* "& privacy" is hidden below `sm`: with it, this row wrapped onto a
               third line at 390px, and those overflowing rows drew on top of
               the panel. It is a clarifier, not the name. */}
-          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> Sync<span className="hidden sm:inline">&nbsp;&amp; privacy</span></TabsTrigger>
+          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> {phone ? 'Sync & privacy' : <>Sync<span className="hidden sm:inline">&nbsp;&amp; privacy</span></>}</TabsTrigger>
           <TabsTrigger value="data" className={tabClass}><Icon as={Database} size="sm" /> Data</TabsTrigger>
         </TabsList>
 
