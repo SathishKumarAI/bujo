@@ -722,13 +722,15 @@ export function Cycle() {
             same question as "where am I", asked of the whole log instead of
             today — so they belong in this box and not at the head of the
             review, where the strip read as the first panel. */}
-        <div className="mt-3 border-t border-line pt-3">
+        {/* Not on a phone: three totals to read, above the day you came to
+            log — the log moved up ~110px without them. */}
+        {!phone && <div className="mt-3 border-t border-line pt-3">
           <SummaryStrip items={[
             { label: 'Cycles logged', value: finished.length, empty: finished.length === 0 },
             { label: 'Avg period', value: periodLen != null ? `${periodLen} days` : '—', empty: periodLen == null },
             { label: 'Temp shift', value: shift != null ? `seen · ${shift}°` : 'not yet', empty: shift == null },
           ]} />
-        </div>
+        </div>}
 
         {/* The promise, kept in view. It was made once on a screen the user
             saw before they had any data; this is where it stays true. */}

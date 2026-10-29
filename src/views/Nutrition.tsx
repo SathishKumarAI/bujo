@@ -8,7 +8,7 @@ import { ForkKnife, Gauge, NotePencil, Plus, Target, Trophy } from '@/components
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
+import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, StatBar, useActColumn, NextStepBlock } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { onRaised } from '../lib/colors'
@@ -21,6 +21,7 @@ import { NutritionReview } from '../components/nutrition/Review'
 import { NUTRITION_PANELS } from '../components/nutrition/panels'
 import { MACROS, inTargetStreak, nextStep, targetsOf, topFoods, type Targets } from '../lib/nutritionReview'
 import { useStickyState } from '../lib/useStickyState'
+import { useDevice } from '../components/shell/device'
 
 /**
  * NUTRITION · promoted from an accordion on Fitness to a page of its own.
@@ -115,6 +116,9 @@ export function Nutrition() {
      and the review takes its width). */
   const [panel, setPanel] = useStickyState<string>('nutrition.panel', 'today', NUTRITION_PANELS.map((p) => p.id))
   const logCol = useActColumn('nutrition')
+  // On a phone the two rings (a chart, 104px tall) become one row of figures,
+  // so "Log what you ate" starts under the sentence instead of mid-screen.
+  const phone = useDevice() === 'mobile'
 
   const m = data.metrics.find((x) => x.date === date)
   const kcal = m?.calories ?? 0
@@ -242,7 +246,15 @@ export function Nutrition() {
               />
             )
           })()}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          {phone ? (
+            <div className="mt-3 border-t border-line pt-2.5">
+              <StatBar facts={[
+                { label: 'Calories', value: `${kcal} / ${targets.calories}` },
+                { label: 'Protein', value: `${protein} / ${targets.protein} g` },
+              ]} />
+              <p className="mt-1 text-label text-fg-2">{calorieState(kcal, targets.calories).line}</p>
+            </div>
+          ) : <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Ring
               value={Math.min(kcal, targets.calories)}
               max={targets.calories}
@@ -270,7 +282,7 @@ export function Nutrition() {
                 </p>
               )}
             </div>
-          </div>
+          </div>}
         </div>
       }
       actTop

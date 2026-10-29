@@ -31,10 +31,18 @@ bottom bar remembers each section's last page (`shell/lastPage.ts`). The
 a11y gate opens that grid to reach a phone tab (`go()` in
 `scripts/a11y-axe.mjs`).
 
-**Then #466 (COD-488): Mind off the phone, and a grid door on Today.**
+**Then #466 (COD-487): Mind off the phone, and a grid door on Today.**
 `PHONE_SECTIONS` drops Mind from the bottom bar and the grid (deep links
 still open its pages; desktop unchanged). Today and section-less bars
 (Settings, Help) get a ⊞ "All pages" button.
+
+**Then #467 (COD-491): Body pages, phone review.** Judged from screenshots
+in the iPhone 13 Pro tab. `SectionRail` is one native select on a phone
+(Coaching's 8 chips were 3 lines); Nutrition's rings → a figures row and
+only its Today panel; Home workout's tiles + heatmap and Cycle's totals
+off the phone. Desktop DOM identical on 8 pages. Note: `a11y:panels`
+prints RAIL ROW NOT FOUND for Pickleball/Fitness/Strength on a phone —
+pre-existing, their phone shapes have no review rail by design.
 
 **Next:** COD-481 heading-order half still open (the chip name is fixed in #465). The
 owner asked what "improving duration of the video" meant — unanswered.

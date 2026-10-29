@@ -202,7 +202,18 @@ for (const vp of [
     }
 
     for (const label of rows) {
+      // A phone rail is one native select (`SectionRail`); pick the option the
+      // way the iOS wheel would, which fires the same change React listens to.
       const clicked = await page.evaluate((want) => {
+        const sel = document.querySelector('#main nav select')
+        if (sel) {
+          const opt = [...sel.options].find((o) => o.text.trim().startsWith(want))
+          if (!opt) return false
+          const set = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set
+          set.call(sel, opt.value)
+          sel.dispatchEvent(new Event('change', { bubbles: true }))
+          return true
+        }
         const hit = [...document.querySelectorAll('#main nav button')].find((b) => (b.textContent ?? '').trim().startsWith(want))
         if (!hit) return false
         hit.click()
