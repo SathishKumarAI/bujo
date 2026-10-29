@@ -88,13 +88,12 @@ export function Program() {
     { label: 'Block', value: `${s.totalDays - s.doneCount} days left` },
   ]
 
-  /* A PHONE GETS ITS OWN PAGE (COD-461): the day as rows you tick, weeks and
-     days as tiles — no body map. Same state, same hand-off, same timer. */
+  /* A PHONE GETS ITS OWN PAGE (COD-461, COD-464): week and day as steppers,
+     the day logged right here as set cards — no body map, no hand-off. */
   if (phone) {
     return (
       <ProgramPhone
         s={s}
-        onLoad={() => { setPendingSession(s.cur.exercises.map((e) => e.name)); navigate('gym') }}
         onCheck={startRest}
         rest={rest && <RestTimer key={rest.id} seconds={rest.seconds} exercise={rest.exercise} onDismiss={() => setRest(null)} />}
       />
