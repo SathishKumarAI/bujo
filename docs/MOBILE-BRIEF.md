@@ -46,6 +46,13 @@ on the desktop version: it must not change.
    form, `FieldGroup` and `styles/phone.css` (`.ios-form`, `.ios-row`,
    `.ios-bare`, `[data-chip-row]`, `.ios-range`), `phone: true` flags on review
    panels, and an early `if (phone) return` with the log as zone 1.
+   Since 2026-10-29 there is more to take (see `REUSABLE-PATTERNS.md` §28–33):
+   a 44px selection bar of native selects (Program), one row per item with a
+   tap counter that opens in place (Program lifts), a 7-chip day strip (Plan),
+   "last time" + − / + + a next-value hint (Program weight), a floating 44px
+   primary pill (`.cta-compact` in `.log-dock`), and `.phone-frame` for any
+   rule that must apply to every phone page. `useActColumn` now OPENS on a
+   phone, so a page that only needs its form visible may need nothing else.
 3. Put short choices on one line, label left (`className={phone ? 'ios-row' :
    undefined}`). Chip rows become one segmented row; pick-several rows wrap
    four to a line. Drop helper text the control already says.
@@ -69,7 +76,8 @@ on the desktop version: it must not change.
 
 <must_not>
 - MUST NOT stop or restart any server you did not start in this session.
-- MUST NOT route a phone form through `useActColumn` — it shuts on a phone.
+- MUST NOT hand-hide charts: flag them in the page's card registry
+  (`chart: true` / `phone: true`) and filter in the predicate the rail counts.
 - MUST NOT add a media query for phone styling; scope under `.ios-form`.
 - MUST NOT trust a screenshot for "empty" or "clipped" — measure the DOM.
 - MUST NOT drop below 44px tap height to save space; save it elsewhere.
@@ -83,6 +91,16 @@ decision you need from the owner, if any.
 ```
 
 ---
+
+## What the 2026-10-29 sweep measured, for scale
+
+| page | before | after |
+|---|---|---|
+| Program (Push day) | 4.13 screens | 1.16 |
+| Plan · Week | 5.21 | 2.12 |
+| Mindset | 11.32 | 2.98 |
+| Coaching | 4.48 | 2.95 |
+| Cycle | 4.03, no input visible | 2.88 |
 
 ## What Pickleball measured, for scale
 

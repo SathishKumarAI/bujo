@@ -14,6 +14,9 @@ pure question about it ("which day am I on", "is this day finished") live in
 | The rest countdown, its controls | `RestTimer.tsx` |
 | The body map under a day | `DayAnatomy.tsx` |
 | The one-card layout Pull-ups uses | `ProgramTracker.tsx` |
+| **Phone:** the selection bar, lift rows, set counter, Log dock, date chip | `phone/ProgramPhone.tsx` (styles: `src/styles/phone.css`, Program section) |
+| **Phone:** plan → set rows, last-time weight, next-weight hint, follow-on edits | `phone/programLog.ts` (tested in `programLog.test.ts`) |
+| What logging a whole day writes in one go | `useProgram.ts` `logDay` |
 | The three-zone layout the Program tab uses | `src/views/Program.tsx` |
 | The exercises themselves, rest rules, `resumeAt` | `src/lib/programs.ts` |
 

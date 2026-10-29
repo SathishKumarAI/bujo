@@ -839,15 +839,59 @@ button.cell:active {
 }
 
 /* Program's Log button, pinned above the bottom nav while the list scrolls. */
+/* Owner ask: a smaller Log button with room around it, not a full-width
+   slab — so the pair floats at the right, 44px tall, and the list shows
+   through the space beside and below it. */
 .log-dock {
   position: sticky;
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  bottom: calc(5rem + env(safe-area-inset-bottom));
   z-index: 30;
-  margin-inline: -0.5rem;
-  padding: 0.5rem;
-  border-radius: 1rem;
-  background: color-mix(in oklab, var(--color-ink-0) 88%, transparent);
-  backdrop-filter: blur(12px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.log-dock > * {
+  pointer-events: auto;
+}
+
+.log-dock > .round-btn {
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line), var(--shadow-lift);
+}
+
+/* The date the session is logged on, in the dock's left-hand space. */
+.dock-chip {
+  position: relative;
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line), var(--shadow-lift);
+  color: var(--color-fg-1);
+  font-size: var(--text-label);
+  font-weight: 600;
+  pointer-events: auto;
+}
+
+.dock-chip:focus-within {
+  outline: 2px solid var(--color-brand);
+}
+
+/* The primary button at a size that leaves the screen to the list. */
+.cta.cta-compact {
+  width: auto;
+  height: 2.75rem;
+  padding-inline: 1.125rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lift);
+  font-size: var(--text-body);
 }
 
 /* ONE ROW PER LIFT, opening to its set cards. */

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
+import { CalendarDot, ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { activityForSplit } from '../../../domain/activities'
 import { isNewPR, lastSetFor } from '../../../lib/fitness'
-import { todayISO } from '../../../lib/date'
+import { addDays, prettyDay, todayISO } from '../../../lib/date'
 import { notify } from '../../../lib/notify'
 import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
@@ -42,6 +42,9 @@ export function ProgramPhone({ s, onCheck, rest }: {
   const unit = data.settings.weightUnit
   const [drafts, setDrafts] = useState<Record<string, { rows: SetRow[]; done: string[] }>>({})
   const [editing, setEditing] = useState<string | null>(null)
+  // Which day the session is logged ON — today unless you are catching up a
+  // missed one. Before this Program could only ever log today.
+  const [date, setDate] = useState(todayISO())
   const k = `${s.pid}:${s.week}:${s.cur.day}`
   const draft = drafts[k]
   // Seeded during render, once per day — computing it per render would mint
@@ -84,11 +87,12 @@ export function ProgramPhone({ s, onCheck, rest }: {
     if (sets.length === 0) { notify.info('Nothing ticked yet', 'Tick the sets you did, then log.'); return }
     const pr = ticked.find((r) => r.kind !== 'warmup' && isNewPR(data, r.exercise.trim(), Number(r.weight), Number(r.reps)))
     const split = splitForFocus(s.cur.focus)
-    addWorkout({ date: todayISO(), activity: activityForSplit(split), split, sets, setRows, notes: `${s.p.name} · ${s.unit} ${s.week}, day ${s.cur.day}` })
+    addWorkout({ date, activity: activityForSplit(split), split, sets, setRows, notes: `${s.p.name} · ${s.unit} ${s.week}, day ${s.cur.day}` })
     s.logDay(s.cur.exercises
       .map((e, i) => ({ i, actual: actualOf(ticked.filter((r) => r.exercise === e.name), unit) }))
       .filter((x) => x.actual))
     setDrafts((d) => { const n = { ...d }; delete n[k]; return n })
+    setDate(todayISO())
     const next = s.days[at + 1]
     notify.success(
       pr ? `New PR · ${pr.exercise} ${pr.weight}${unit} × ${pr.reps}` : `${s.cur.focus} logged · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`,
@@ -99,6 +103,8 @@ export function ProgramPhone({ s, onCheck, rest }: {
   }
 
   const logged = s.dayComplete(s.week, s.cur.day)
+  const today = todayISO()
+  const dayLabel = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
   const sameDay = (w: (typeof s.p.weeks)[number]) => w.days.find((d) => d.day === s.cur.day)?.day ?? w.days[0].day
   return (
     <div className="flex flex-col gap-3 pb-4">
@@ -129,18 +135,17 @@ export function ProgramPhone({ s, onCheck, rest }: {
       </div>
 
       <section aria-label={`${s.cur.focus} · day ${s.cur.day}`} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1.5 px-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="min-w-0 truncate text-heading font-bold text-fg-1">{s.cur.focus}</h2>
-            <span className="shrink-0 text-label text-fg-2">
-              {logged ? <span className="inline-flex items-center gap-1 font-semibold text-fg-1"><Icon as={CheckCircle} size="sm" />Logged</span> : `${ticked.length}/${rows.length} sets`}
-              {s.browsing && <> · <button type="button" className="font-semibold text-brand-text" onClick={() => s.goTo(s.resume.week, s.resume.day)}>Back to today</button></>}
-            </span>
-          </div>
-          {/* Progress through THIS session — a status, not a chart. */}
-          <div className="h-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Sets ticked" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+        {/* The Day select above already says "Day 1 · Push", so the focus is
+            a heading for screen readers only and the row is just progress. */}
+        <div className="flex items-center gap-3 px-1">
+          <h2 className="sr-only">{s.cur.focus}</h2>
+          <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Sets ticked" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
             <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${pct}%` }} />
           </div>
+          <span className="shrink-0 text-label text-fg-2">
+            {logged ? <span className="inline-flex items-center gap-1 font-semibold text-fg-1"><Icon as={CheckCircle} size="sm" />Logged</span> : `${ticked.length}/${rows.length} sets`}
+            {s.browsing && <> · <button type="button" className="font-semibold text-brand-text" onClick={() => s.goTo(s.resume.week, s.resume.day)}>Back to today</button></>}
+          </span>
         </div>
 
         {/* ONE ROW PER LIFT. The round counter is tapped after each set; the
@@ -217,13 +222,20 @@ export function ProgramPhone({ s, onCheck, rest }: {
         {/* Docked above the bottom nav, so Log is always one thumb away however
             many lifts are open — and the rest timer docks INSIDE it, above
             the buttons, rather than as a second fixed layer on top of them. */}
-        <div className="log-dock grid grid-cols-[auto_1fr] gap-2">
-          {rest && <div className="col-span-2">{rest}</div>}
-          <button type="button" className="round-btn h-[3.25rem] w-[3.25rem]" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
+        <div className="log-dock">
+          {rest && <div className="w-full">{rest}</div>}
+          {/* The space left of the buttons holds the one thing the page could
+              not do: log a session on a day other than today. */}
+          <label className="dock-chip mr-auto">
+            <Icon as={CalendarDot} size="sm" className="text-fg-2" />
+            {dayLabel}
+            <input type="date" value={date} max={todayISO()} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Log on ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
+          </label>
+          <button type="button" className="round-btn" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
             onClick={() => patch({ done: allTicked ? [] : rows.map((r) => r.id) })}>
             <Icon as={ListChecks} size="md" />
           </button>
-          <button type="button" className="cta" onClick={log}>
+          <button type="button" className="cta cta-compact" onClick={log}>
             <Icon as={Check} size="md" />{ticked.length ? `Log workout · ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
           </button>
         </div>

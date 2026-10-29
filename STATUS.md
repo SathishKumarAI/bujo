@@ -1,73 +1,56 @@
 # STATUS
 
-**Stopped:** 2026-10-18, on `fix/act-column-consistency`.
-**One PR merged, two open.** Full session record:
-`docs/sessions/2026-10-18-cycle-and-the-act-column.md` — read that first, it
-is written to be read cold.
+**Stopped:** 2026-10-29, on `docs/phone-handoff` (top of the phone stack).
+**Full session record:** `docs/sessions/2026-10-29-phone-pages.md` — read it
+first, it is written to be read cold.
 
 ## Where it stands
 
+Every page has a phone shape now (no charts, the log first, desktop
+unchanged). Nothing in this stretch is merged yet. **Two blockers are the
+owner's, not code:** Supabase is unreachable (COD-434) and plaintext sync
+needs a decision (COD-436).
+
 | # | what | state |
 |---|---|---|
-| #436 | the month is a calendar beside the log, and three measured defects under it | **merged** |
-| #437 | four controls, the slow path in a window, the key in the manual | open, `feat/cycle-design-system` |
-| #438 | three logging columns that never collapsed on a phone, + one `ActHide` | open, this branch |
-
-**#437 and #438 do not overlap** — #437 is `ui/quickpick` plus the Cycle
-components, #438 is the act column across nine views. #438 was branched off
-`main` for that reason and the two will not conflict. Merge order does not
-matter.
+| #438 → #447 | Pickleball, Fitness, Strength, Program v1, primitives | open, stacked |
+| #439 | dev server pinned to 5199 | open, independent |
+| #448 | old shell PR | **close it** — replaced by #449 |
+| #449 → #457 | shell ☰ menu, Program log/bar/last weight, Plan, act column, Today, Mindset/Coaching/Home Workout, Focus/Reading | open, stacked |
+| `docs/phone-handoff` | these docs | open, on top of #457 |
 
 ## The next action
 
-1. **Cycle's zone 1 is still five bands** — banner, month stepper, four-up
-   fact row, three-up stat strip, privacy line, none of them the page's
-   answer. `docs/DESIGN-SYSTEM.md` §04 and the
-   [system comp](https://claude.ai/code/artifact/d06fa879-3c1a-452c-849b-8aff641d74eb)
-   rebuild it as one card with `20` at the `answer` step and the phase as a
-   band. **Largest remaining piece, most left in it.**
-2. **`ChartCard` has no `footer` slot** — every chart's key and sample size
-   sit loose in its body, which is how a band chart's right column ran off the
-   panel edge.
-3. **COD-364** — `--ctl-ring` leaves every input and select at **1.37–1.72**
-   against the card, the numbers the chip left behind. Not fixed because that
-   token is also the hairline inside `--shadow-raise`.
-4. **COD-360** — `intimacy` is write-only: every other optional day field has
-   an aggregator, that one has a single reader.
-5. **The rest of the app** inherits the primitives already; what remains per
-   page is whatever was hand-rolled instead of using them.
+1. **Merge the stack in order**, retargeting each child to `main` before its
+   parent is squash-merged (the auto-close trap in `CLAUDE.md`).
+2. **Run the full gate once on the merged result**:
+   `npx vite build && npx vite preview --port 4310 --strictPort &` then
+   `BUJO_URL=http://localhost:4310 node scripts/a11y-axe.mjs` (background it).
+   Last full run was #443 — 187/187.
+3. **Owner:** restore/recreate the Supabase project (COD-434); decide
+   encrypt-or-drop for sync (COD-436).
+4. **Then the audit tickets:** COD-435 (feedback email public), COD-437
+   (`/api/sync` auth + rate limit), COD-438, COD-455, COD-463.
+5. **Phone, if asked:** Program could fold a lift's row once all its sets are
+   ticked; Coaching's notes box sits below the open week by design.
 
-## The three live traps, in short
+## Live traps
 
-The session record has all of them. These are the ones that will bite again:
-
-- **A Tailwind v4 class can emit no CSS, exit 0, no warning.** Three did this
-  session (`@container/more`, `@3xl:max-w-5xl`, `w-[6ch]`). **The tell is a
-  tweak to a number having no effect.** Check with
-  `grep '<the class>' dist/assets/*.css`.
-- **A stale preview worker makes a fixed gate keep failing.** `clipped` kept
-  reporting a defect a fresh probe could not reproduce. Start a new preview on
-  a new port; compare `assets/index-*.js` against `dist/index.html` both ways.
-- **Read a gate's predicate before believing its noun.** `clipped` said "37px
-  shown of 39px" on a field — that is `scrollHeight`, a HEIGHT. Three guesses
-  went into widening something too short.
+- **A phone page decides by `useDevice()`, never CSS width.** Charts are
+  filtered by a flag in the page's card registry (`chart: true` in
+  `lib/cycleCards.ts`, `phone: true` in `lib/focusCards.ts`) through the SAME
+  predicate the rail counts with.
+- **`.phone-frame` is unlayered CSS on every phone page** (`App.tsx`
+  `ViewFrame`) — it beats Tailwind utilities. Scope new phone rules under it
+  or `.ios-form`, never a media query.
+- **A dev server serves the checkout it started in** — and a branch swap under
+  a running Vite can leave CSS stale (Program's bar drew stacked until a
+  restart). Restart only a server this session started.
 
 ## Environment
 
-**Preview on 4310, this worktree.** 4173 is also this worktree and was serving
-a stale worker mid-session.
-
-```
-npx vite build
-npx vite preview --port 4310 --strictPort &
-BUJO_URL=http://localhost:4310 node scripts/a11y-axe.mjs
-```
-
-`playwright` and `@axe-core/playwright` are installed here but still not in
-`package.json` (COD-273). A throwaway probe must live in the **repo root** —
-ESM resolves `playwright` relative to the script, so one in the scratchpad
-dies on `ERR_MODULE_NOT_FOUND`.
-
-`npm run design` and `npm run contrast` are **not** in `npm run verify` but
-are in CI. `a11y:panels` is minutes and not in CI. Run all of them before
-pushing, and never `vite build` while a gate is running.
+Dev: `127.0.0.1:5199` from the main checkout (`npm run dev`). Probes need
+`playwright` + `@axe-core/playwright` (`npm i -D --no-save …`, COD-273) and
+resolve them from the repo's `package.json` via `createRequire`.
+Gates before every push: `npm run verify`, `npm run design`,
+`npm run contrast`.

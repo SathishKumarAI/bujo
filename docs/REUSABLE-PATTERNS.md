@@ -1036,3 +1036,69 @@ name; the ends are labels on the ends.
 hue per step and a word per step, which this variant supports
 (`options[].tone`) but which needs its own before/after measurement on that
 page rather than a conversion in passing.
+
+---
+
+# Phone patterns — what the 2026-10-28/29 phone pass built
+
+Owner rule: a phone logs, a desktop reads (`CLAUDE.md`). Each pattern below
+was measured on a 390×664 iPhone 13 Pro viewport; the numbers are in
+`docs/sessions/2026-10-29-phone-pages.md`.
+
+## 28 · The selection bar — `program/phone/ProgramPhone.tsx`
+
+Two NATIVE `<select>`s side by side in one 44px row (`.select-bar`,
+`.select-pill`), each with its own caret. On iOS a native select opens the
+system wheel, which people already know and which costs no sheet of ours. It
+replaced two 175×60 steppers plus a title row — the owner's words: "side by
+side, like a selection bar … so that we have a lot of space remaining." Option
+text stays short ("Block 1", "Day 1 · Push"); a ✓ marks finished ones.
+
+## 29 · One row per item, a counter that ticks, opening in place
+
+A Program day was 22 set rows (4.13 screens). The unit a lifter thinks in is
+the LIFT, so each lift is one row: a round counter (`.set-count`, "2/3", a
+green ✓ when done, tap a done one to clear), the name, and a one-line summary
+("3 × 12 · 35 lb · last 35×12"). Tapping the row opens its detail IN PLACE
+(`SetCards bare` — no second card, no repeated name). Seven rows fit one
+screen. Use it for any list whose items have sub-steps.
+
+## 30 · Last time, − / +, and the next value — `programLog.ts`
+
+Pre-fill from last time (`lastSetFor`) AND say so on the row — a pre-filled
+number with no provenance reads as a default. The open row leads with "Last
+time 35 lb × 12", a − / + that moves every not-yet-done set one plate
+(`weightStep`: 5 lb / 2.5 kg), and a one-tap hint from `suggestWeight`
+(all reps hit last time → +1 plate, else the same). An edit to one set
+carries to later sets that still held the old value (`followOn`) — the set
+you changed by hand keeps its value. All three are pure and tested.
+
+## 31 · The day strip — `plan/PlanPhone.tsx`
+
+Seven 48px day chips in one row (`.day-chip`, `role="radio"`), open counts
+under the date, arrows stepping whole weeks, the chosen day's items below
+with add / tick / edit-sheet / delete-with-confirm. Replaced a seven-column
+table that showed 4.5 columns at 390px. Any "week of things" on a phone.
+
+## 32 · Charts are flagged in the registry, not hidden by hand
+
+`chart: true` in `lib/cycleCards.ts`, `phone: true` in `lib/focusCards.ts`,
+filtered in the page's `idsIn` — the SAME predicate the `SectionRail` counts
+with, so a rail never lists a group that draws nothing on a phone, and a
+sticky desktop group falls back to one that exists. A one-off chart outside a
+registry is `{!phone && <Chart/>}` with a comment saying why.
+
+## 33 · A small floating primary button, and `.phone-frame`
+
+The primary action is a 44px pill at the right (`.cta.cta-compact` inside a
+sticky `.log-dock`, `bottom: calc(5rem + safe-area)`), with the secondary
+round button beside it and nothing behind them — owner ask: "reduce the size
+… so that there is empty space beside or below." The space left of them is
+not wasted: it holds the date the session is logged on (`.dock-chip`, a native
+date input under a "Today ▾" chip), which closed the "can only log today"
+gap. Any docked panel (the rest timer) goes INSIDE the dock above the
+buttons, never as a second fixed layer. A heading that repeats a select's
+value goes `sr-only` — the Day select already says "Day 1 · Push".
+Every phone page is wrapped in `.phone-frame` (`App.tsx` `ViewFrame`): put a
+rule there when it must hold on every phone page (it tightened every card
+band 24 → 16px) — unlayered, so it beats utilities, and desktop never sees it.
