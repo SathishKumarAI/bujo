@@ -13,7 +13,7 @@ import { blankSession, carryOver, sessionPatch } from '../components/pickleball/
 import { TodayDrill } from '../components/pickleball/TodayDrill'
 import { PB_PANELS, panelsFor } from '../components/pickleball/panels'
 import { useDevice } from '../components/shell/device'
-import { QuickLog } from '../components/pickleball/QuickLog'
+import { PickleballPhone } from '../components/pickleball/phone/PickleballPhone'
 import { useStickyState } from '../lib/useStickyState'
 import { notify } from '../lib/notify'
 
@@ -253,20 +253,15 @@ export function Pickleball() {
      button at the end. Same `SessionFields`, same `log()`. */
   if (phone) {
     return (
-      <PageLayout
-        tier={1180}
-        zone1={(
-          <QuickLog
-            f={f}
-            set={set}
-            onLog={log}
-            recentPartners={recentPartners}
-            allPartners={allPartners}
-            recentVenues={recentVenues}
-            allVenues={allVenues}
-          />
-        )}
-        zone3={<>{atAGlance}<PickleballReview panel={panel} onPanel={setPanel} /></>}
+      <PickleballPhone
+        f={f}
+        set={set}
+        onLog={log}
+        sessions={sessions}
+        recentPartners={recentPartners}
+        allPartners={allPartners}
+        recentVenues={recentVenues}
+        allVenues={allVenues}
       />
     )
   }

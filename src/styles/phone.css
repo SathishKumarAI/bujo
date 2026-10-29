@@ -208,3 +208,304 @@
 .ios-range[data-unset] {
   opacity: 0.45;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PHONE APP SURFACES (COD-454) — the refresh. Rendered only on a phone; the
+   desktop never gets these classes. Tokens only, so all five themes follow.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* SEGMENTED CONTROL (`ui/seg.tsx`): one track, a raised thumb on the choice. */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 0.75rem;
+  background: var(--color-ink-2);
+}
+
+.seg > button {
+  min-height: 2.75rem;
+  border-radius: 0.5625rem;
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--color-fg-2);
+  white-space: nowrap;
+  transition: background-color 180ms, color 180ms, box-shadow 180ms;
+}
+
+/* The thumb must sit LIGHTER than its track in every theme, or it reads as
+   pressed in. Measured against --color-ink-2: the card colour is lighter in
+   the light themes (latte 1.11, dawn 1.18) and DARKER in the three dark ones
+   (mocha, neon, vscode); a 16% mix of the text colour is lighter in the dark
+   themes (1.41-1.49) and darker in the light ones. So one rule per side. */
+.seg > button[aria-checked='true'] {
+  background: color-mix(in oklab, var(--color-ink-2), var(--color-fg-1) 16%);
+  color: var(--color-fg-1);
+  font-weight: 600;
+  box-shadow: var(--shadow-raise);
+}
+
+:root[data-theme='latte'] .seg > button[aria-checked='true'],
+:root[data-theme='dawn'] .seg > button[aria-checked='true'] {
+  background: var(--color-ink-1);
+}
+
+.seg > button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+/* INSET GROUPED LIST (`ui/cells.tsx`): iOS Settings rows. */
+.cells {
+  overflow: hidden;
+  border-radius: 0.875rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+.cell {
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.cell.cell-stack {
+  /* Label above control. Set HERE, not with `flex-col items-stretch` at the
+     call site: `.cell` is unlayered, so its `align-items: center` beat the
+     utility and every stacked control shrank to its content, centred —
+     Energy drew as "12345" in a 180px box (measured). */
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cell + .cell {
+  box-shadow: inset 0 1px 0 var(--color-line);
+}
+
+button.cell:active {
+  background: var(--color-ink-2);
+}
+
+.cell-tile {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.5rem;
+}
+
+/* SCOREBOARD: two halves of one card, numerals large enough to read at arm's
+   length on court. */
+.scoreboard {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  border-radius: 1.125rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+.scoreboard > hr {
+  margin: 1rem 0;
+  border: 0;
+  background: var(--color-line);
+}
+
+.score-num {
+  font-size: calc(var(--text-answer) * 1.4);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.round-btn {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-ink-2);
+  color: var(--color-fg-1);
+  transition: transform 120ms, background-color 120ms;
+}
+
+.round-btn:active {
+  transform: scale(0.92);
+  background: var(--color-ink-3);
+}
+
+/* EFFORT: a native range with an easy→max track and a raised thumb. */
+.effort {
+  width: 100%;
+  height: 2.75rem;
+  appearance: none;
+  background: transparent;
+}
+
+.effort::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-teal), var(--color-yellow), var(--color-peach), var(--color-red));
+}
+
+.effort::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-teal), var(--color-yellow), var(--color-peach), var(--color-red));
+}
+
+.effort::-webkit-slider-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.625rem;
+  appearance: none;
+  border-radius: 999px;
+  /* Brand, ringed in the card colour: 5.1-8.5:1 against the page in all
+     five themes, where a card-coloured thumb vanished in the dark ones. */
+  background: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-ink-1), var(--shadow-lift);
+}
+
+.effort::-moz-range-thumb {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 999px;
+  /* Brand, ringed in the card colour: 5.1-8.5:1 against the page in all
+     five themes, where a card-coloured thumb vanished in the dark ones. */
+  background: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-ink-1), var(--shadow-lift);
+}
+
+.effort[data-unset]::-webkit-slider-runnable-track { opacity: 0.35; }
+.effort[data-unset]::-moz-range-track { opacity: 0.35; }
+
+/* THE MAIN ACTION: solid, full width, pressable. */
+.cta {
+  display: flex;
+  width: 100%;
+  height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  background: var(--color-brand);
+  color: var(--color-brand-ink);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  transition: transform 120ms, filter 120ms;
+}
+
+.cta:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seg > button, .round-btn, .cta { transition: none; }
+  .round-btn:active, .cta:active { transform: none; }
+}
+
+/* A control living INSIDE a row (the drill's "Drilled" tick) gets the same
+   44px floor as everything else on a phone — measured at 32px before. */
+.cells .cell button {
+  min-height: 2.75rem;
+}
+
+/* FORM ROWS inside `.cells` (`FieldCell`, `ControlCell`, `SessionFieldsPhone`).
+   The field has no box of its own: the row is the box, as in iOS Settings. */
+.cell-input {
+  min-width: 0;
+  flex: 1;
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-1);
+  font-size: var(--text-heading);
+  text-align: right;
+  outline: none;
+}
+
+.cell-input::placeholder {
+  color: var(--color-fg-2);
+}
+
+.cell-input:focus-visible {
+  box-shadow: inset 0 -2px 0 var(--color-brand);
+}
+
+.cell-textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-1);
+  font-size: var(--text-heading);
+  resize: vertical;
+  outline: none;
+}
+
+/* A one-tap suggestion under a field: the last few names you used. */
+.suggest {
+  flex: none;
+  min-height: 2.75rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  background: var(--color-ink-2);
+  color: var(--color-fg-1);
+  font-size: var(--text-body);
+  white-space: nowrap;
+}
+
+/* PICK-SEVERAL TOGGLES: pills that show a check when on. The tone travels in
+   `--tone` (a palette variable) so "worked" and "to work on" differ only in
+   colour; the text stays fg-1 on every state (the accent-on-wash trap). */
+.chip-toggle {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  background: var(--color-ink-2);
+  color: var(--color-fg-1);
+  font-size: var(--text-body);
+  transition: background-color 150ms, box-shadow 150ms;
+}
+
+.chip-toggle[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--tone) 22%, var(--color-ink-1));
+  box-shadow: inset 0 0 0 1.5px var(--tone);
+  font-weight: 600;
+}
+
+.chip-toggle > svg {
+  display: none;
+}
+
+.chip-toggle[aria-pressed='true'] > svg {
+  display: block;
+}
+
+/* Compact stepper for the edit sheet's score: − N + inside one row. */
+.mini-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mini-step > output {
+  min-width: 2ch;
+  text-align: center;
+  font-size: var(--text-title);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

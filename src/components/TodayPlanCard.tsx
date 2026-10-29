@@ -117,10 +117,14 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
             <button
               key={c.label}
               onClick={() => navigate(c.to)}
-              className="press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body"
-              style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22'), color: c.done ? cat('overlay1') : cat(c.color) }}
+              /* The accent lives in the border, the fill and the icon; the TEXT is
+                 fg-1 (fg-2 once done). Accent-on-its-own-wash measured 4.21:1 in
+                 latte on a phone — the CLAUDE.md calibration trap, hidden on
+                 desktop by the book cover's gradient leaving axe no ground. */
+              className={`press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body ${c.done ? 'text-fg-2' : 'text-fg-1'}`}
+              style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22') }}
             >
-              <AppIcon as={Icon} size="sm" /> {c.label}{c.done ? ' ✓' : ''}
+              <AppIcon as={Icon} size="sm" style={{ color: onRaised(c.color) }} /> {c.label}{c.done ? ' ✓' : ''}
             </button>
           )
         })}

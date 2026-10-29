@@ -166,10 +166,14 @@ describe('session skills', () => {
     for (const s of SESSION_SKILLS) expect(Object.keys(DRILL_FIXES), s.value).toContain(s.value)
     expect(SESSION_SKILLS.length).toBe(7)
   })
-  it('announce a name that contains the drawn label', () => {
+  /* As WHOLE WORDS, which is how axe compares them: "Dink" is inside the
+     letters of "Dinking" and still failed label-content-name-mismatch on a
+     phone, at all five themes. */
+  it('announce a name that contains the drawn label as whole words', () => {
+    const words = (t: string) => t.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
     for (const s of SESSION_SKILLS) {
-      const name = 'name' in s ? s.name : s.value
-      expect(name.toLowerCase(), s.label).toContain(s.label.toLowerCase())
+      const name = words('name' in s ? s.name : s.value)
+      for (const w of words(s.label)) expect(name, s.label).toContain(w)
     }
   })
 })
