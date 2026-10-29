@@ -115,6 +115,27 @@ Pickleball (COD-450). On a phone:
 | **iOS geometry**: 17px fields, 44px targets, inset groups, chips as one segmented row | `FieldGroup` + `styles/phone.css` (`.ios-form`) — scoped classes, no media query |
 | **Decided by screen width**, never a "desktop mode" | `useDevice()` (`shell/device.tsx`) — ≤767px, or touch under 1024px |
 | **Desktop does not change.** Prove it | `FieldGroup` renders the exact desktop wrapper it replaced; probe the page at 1440 before and after and diff the numbers |
+| **A chart in a rail registry is flagged, not hidden by hand** | `chart: true` (`lib/cycleCards.ts`) or `phone: true` (`lib/focusCards.ts`), filtered in the SAME `idsIn` predicate the rail counts with — so a rail row never promises a card that is not drawn |
+| **Choosing comes in one bar; a list item is one row** | Program (COD-464): week/day as two NATIVE selects in a 44px bar (iOS wheel for free), one row per lift with a tap-per-set counter, the row opening in place. Two 60px steppers + 22 set rows were rejected: "all fit in one space" |
+| **Pre-fill from last time and show it** | `lastSetFor` fills the weight AND the row says "last 35×12"; − / + move every unticked set one plate; `suggestWeight` offers +1 plate after a session that hit every rep |
+| **The primary button is small and floats** | owner ask: a 44px pill at the right (`.cta.cta-compact` in `.log-dock`), not a full-width slab — the list shows around it |
+| **Every phone page gets `.phone-frame`** | `App.tsx` `ViewFrame`; unlayered CSS under it tightens every card band (24 → 16px) without touching desktop |
+
+The full page-by-page record: `docs/sessions/2026-10-29-phone-pages.md`. The
+prompt for the next phone page: `docs/MOBILE-BRIEF.md`. The procedure, as a
+skill: `.claude/skills/phone-page/SKILL.md`.
+
+## Next up — queued by the owner
+
+**COD-479 · "watch how" on YouTube, on every named thing, phone AND desktop**
+— workouts first, then drills, movements, principles, recipes. Asked
+2026-10-29: *"I want to see YouTube videos … search in YouTube as well? For
+both mobile as well as the desktop versions, not only workouts."* Build ONE
+`VideoLink` on top of `lib/video.ts` (search links built from a name, never
+pinned ids), adopt it per page, and test each CALL SITE. **Links only, no
+embedded player**: an iframe reports every view to Google and needs CSP
+`frame-src`, against the "no user data collected" goal (COD-436). Plan and
+page list: `docs/NEXT-SESSION.md` §1.
 
 Trap (fixed, COD-467): `useActColumn` shut the act column whenever the page
 STACKED, which on a phone hid the form behind a strip — the measured "before"

@@ -26,6 +26,40 @@ Rules the three share:
 
 ---
 
+## 2026-10-28/29 — Every page on a phone, the shell, and a production audit (COD-434…468, 479 · PRs #438–#457)
+
+Owner direction: a phone logs, a desktop reads — no charts on a phone, the
+log first and on one screen, iOS look, desktop untouched. Full record:
+`docs/sessions/2026-10-29-phone-pages.md`.
+
+**Shipped (all open, stacked — merge in order):** Pickleball, Fitness,
+Strength and Program phone pages; the ☰ shell (no logo/search/mic, tabs
+scroll); Plan's day strip; `useActColumn` opening on a phone (fixed six pages
+at once); Today, Mindset, Coaching, Home Workout, Focus, Reading, Cycle
+trimmed to what you act on; Program rebuilt twice on owner feedback into a
+44px week/day selection bar + one row per lift + last-time weight with − / +
+and a next-weight hint + a small Log pill with a date chip.
+
+**Measured (390×664, `?demo=1`):** Program 4.13 → 1.13 screens; Plan 5.21 →
+2.12; Mindset 11.32 → 2.98; Coaching 4.48 → 2.95; Cycle 4.03 → 2.88 with its
+form visible (was none); Nutrition first input none → y527. axe 0 on every
+changed page at mocha + latte; desktop re-probed unchanged. Full `npm run
+a11y` last run on #443 (187/187) — re-run after merging.
+
+**Got wrong, and what replaced it:** Program as two 175×60 steppers + 22 set
+rows (rejected next morning: "all fit in one space"); a full-width Log slab
+("reduce the size … empty space beside"). Both are written into
+`REUSABLE-PATTERNS.md` §28–33 so the next page starts from the version that
+survived.
+
+**Found outside the ask:** Supabase NXDOMAIN (COD-434, owner), plaintext
+sync vs "no user data collected" (COD-436, owner), feedback email published
+(COD-435), `/api/sync` open (COD-437), desktop axe blind under the book
+cover (COD-455).
+
+**Queued by the owner:** COD-479 — YouTube "watch how" links on every named
+thing, phone and desktop, links only. Plan in `docs/NEXT-SESSION.md`.
+
 ## 2026-10-18 — Clearing the queue: five PRs, and three findings nobody reported (COD-336 · 348 · 349 · 350, PRs #429–#433)
 
 Asked to "complete all work" — the queue in `STATUS.md`, worked in dependency

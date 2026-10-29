@@ -23,6 +23,9 @@ table below is mostly "change what it says" rather than "change what it does".
 | The 3D body, and which muscles a lift highlights | `BodyView3D.tsx` |
 | The body's geometry — ribs, limbs, muscle groups | `bodyMesh.ts` |
 | What this directory exports | `index.ts` |
+| **Phone:** the Strength page (log, recent, edit sheet) | `phone/GymPhone.tsx` |
+| **Phone:** set rows grouped per exercise (`bare` = no frame, used inside Program's lift rows) | `phone/SetCards.tsx` |
+| **Phone:** form rows ⇄ stored sets, shared with desktop `finish()` | `phone/strengthHelpers.ts` |
 
 ## Things worth knowing before editing
 
