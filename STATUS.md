@@ -1,24 +1,26 @@
 # STATUS
 
-**Stopped:** 2026-10-29, on `feat/phone-section-sheet` (top of the phone stack, #463).
+**Stopped:** 2026-10-29, on `main` after #472. **The whole phone stack is
+merged** (#438 → #472, squash per PR; #448 closed as replaced by #449).
 **Full session record:** `docs/sessions/2026-10-29-phone-pages.md` — read it
 first, it is written to be read cold.
 
 ## Where it stands
 
-Every page has a phone shape now (no charts, the log first, desktop
-unchanged). Nothing in this stretch is merged yet. **Two blockers are the
-owner's, not code:** Supabase is unreachable (COD-434) and plaintext sync
-needs a decision (COD-436).
+Every page has a phone shape, reviewed page by page from screenshots at
+iPhone 13 Pro, and the desktop is unchanged (DOM-fingerprinted per change).
+**Two blockers are the owner's, not code:** Supabase is unreachable
+(COD-434) and plaintext sync needs a decision (COD-436).
 
-| # | what | state |
-|---|---|---|
-| #438 → #447 | Pickleball, Fitness, Strength, Program v1, primitives | open, stacked |
-| #439 | dev server pinned to 5199 | open, independent |
-| #448 | old shell PR | **close it** — replaced by #449 |
-| #449 → #457 | shell ☰ menu, Program log/bar/last weight, Plan, act column, Today, Mindset/Coaching/Home Workout, Focus/Reading | open, stacked |
-| `docs/phone-handoff` | these docs | open, on top of #457 |
-| #459 → #463 | demo clips (ChadMollickDotCom, 65 lifts), watch-how on drills/principles, sample-data notice → ☰ Notifications tab, Insights without charts on a phone, section sheet + bottom nav that stays | open, stacked on #458 |
+| # | what |
+|---|---|
+| #438 → #463 | Pickleball, Fitness, Strength, Program, shell ☰, Plan, Today, Mindset/Coaching/Home Workout, Focus/Reading, demo clips, watch-how, Notifications tab, Insights without charts, section sheet |
+| #439 | dev server pinned to 127.0.0.1:5199 |
+| #468 | Body polish: Effort "Optional", Strength Finish only with a set, Next up once |
+| #469 | Today's plan without its week chart and dead streak button (desktop half: COD-500) |
+| #470 | Insights says each figure once |
+| #471 | Settings tabs 2×2 — Data was off the edge |
+| #472 | Help: no heading repeating the select |
 
 **Then #464 (COD-486, COD-484):** the last six pages got a phone shape —
 Monthly, Collections, Challenges, Recovery, Pull-ups, Settings; desktop DOM
@@ -44,17 +46,18 @@ off the phone. Desktop DOM identical on 8 pages. Note: `a11y:panels`
 prints RAIL ROW NOT FOUND for Pickleball/Fitness/Strength on a phone —
 pre-existing, their phone shapes have no review rail by design.
 
-**Next:** COD-481 heading-order half still open (the chip name is fixed in #465). The
+**Next:** COD-500 (desktop streak button → nowhere). COD-481 heading-order half still open (the chip name is fixed in #465). The
 owner asked what "improving duration of the video" meant — unanswered.
 
 ## The next action
 
-1. **Merge the stack in order**, retargeting each child to `main` before its
-   parent is squash-merged (the auto-close trap in `CLAUDE.md`).
-2. **Run the full gate once on the merged result**:
+1. **Read `main`'s CI once** (`gh run list --branch main --limit 5`). At the
+   stop it was still queued behind 30 merges; every gate was green locally
+   (a11y 71/71, desktop mocha + phone mocha/latte, 0 serious).
+2. **Run the full five-theme gate once on `main`**:
    `npx vite build && npx vite preview --port 4310 --strictPort &` then
    `BUJO_URL=http://localhost:4310 node scripts/a11y-axe.mjs` (background it).
-   Last full run was #443 — 187/187.
+   This session ran one desktop theme and two phone themes per change.
 3. **Owner:** restore/recreate the Supabase project (COD-434); decide
    encrypt-or-drop for sync (COD-436).
 4. **Then the audit tickets:** COD-435 (feedback email public), COD-437
