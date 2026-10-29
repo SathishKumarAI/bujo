@@ -10,6 +10,7 @@ import { TagPages } from '../components/collections/TagPages'
 import { People } from '../components/collections/People'
 import { collectionBreakdown, inboxEntries, memoryBullets, tagIndex } from '../lib/bullets'
 import { todayISO } from '../lib/date'
+import { useDevice } from '../components/shell/device'
 
 /**
  * Collections — the journal's own pages: the Index, the inbox, your collections,
@@ -27,6 +28,9 @@ export function Collections() {
   const { data, addCollection, removeCollection, addEntry } = useJournal()
   const [openCollection, setOpenCollection] = useState<string | null>(null)
   const [openTag, setOpenTag] = useState<string | null>(null)
+  // On a phone the Index is a second copy of the Collections and Tag pages
+  // bands below it (with bars), so the page opens on the inbox instead.
+  const phone = useDevice() === 'mobile'
 
   const today = todayISO()
   const tags = tagIndex(data.entries)
@@ -41,7 +45,7 @@ export function Collections() {
 
   return (
     <Page width="wide" className="gap-0 sm:gap-0">
-      <IndexBand
+      {!phone && <IndexBand
         collections={index}
         tags={tags.map((t) => ({ tag: t.tag, count: t.entries.length }))}
         onOpenCollection={(id) => {
@@ -52,7 +56,7 @@ export function Collections() {
           setOpenTag(tag)
           scrollTo('bujo-tags')
         }}
-      />
+      />}
 
       {/* INBOX AND TAG PAGES SHARE A ROW.
 

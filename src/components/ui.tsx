@@ -284,7 +284,7 @@ export function Card({
                       <AppIcon as={Info} size="sm" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" className="max-w-xs text-body text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
+                  <PopoverContent aria-label={infoLabel} align="start" className="max-w-xs text-body text-fg-1" onClick={(e) => e.stopPropagation()}>{info}</PopoverContent>
                 </Popover>
               )}
             </div>

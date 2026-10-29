@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ArrowCounterClockwise, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { useDevice } from '../components/shell/device'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
 import { cat, onAccent } from '../lib/colors'
@@ -94,6 +95,9 @@ export function NoFap() {
     right. The sticky key means a choice, once made, holds.
   */
   const logCol = useActColumn('recovery')
+  // A phone logs, a desktop reads: the ring is a chart, so a phone gets its
+  // figures as one row and the log comes up under the sentence.
+  const phone = useDevice() === 'mobile'
 
   const s = data.nofap
   const plans = s.plans ?? []
@@ -252,7 +256,7 @@ export function NoFap() {
           to be reachable from anywhere on the page, which is exactly the case
           the three-zone rule is not about. */}
       <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 text-body font-medium shadow-lg transition-transform hover:scale-105"
+        className="fixed bottom-20 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 md:bottom-5 text-body font-medium shadow-lg transition-transform hover:scale-105"
         style={{ background: cat('red'), color: onAccent(cat('red')), boxShadow: `0 6px 24px ${cat('red')}55` }}>
         <Icon as={Lifebuoy} size="md" /> SOS
       </button>
@@ -342,7 +346,15 @@ export function NoFap() {
                 the duplication is exactly why the space was being wasted.
 
                 `bare`, because this block is already a card. */}
-            <StreakRingCard
+            {phone ? (
+              <div className="mt-3 border-t border-line pt-2.5">
+                <StatBar facts={[
+                  { label: 'Clean', value: `${stats.current}d` },
+                  { label: 'Personal best', value: `${stats.best}d` },
+                  { label: 'Urges logged', value: stats.urges },
+                ]} />
+              </div>
+            ) : <StreakRingCard
               stats={stats}
               relapsedToday={relapsedToday}
               startedOn={s.startedOn}
@@ -374,7 +386,7 @@ export function NoFap() {
                   ]} />
                 </div>
               }
-            />
+            />}
           </div>
         }
         zone2={logCol.shut ? (

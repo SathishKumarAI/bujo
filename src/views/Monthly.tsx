@@ -8,6 +8,7 @@ import { Page, useCursor } from '../components/shell/Page'
 import { useNav } from '../components/shell/nav'
 import { ImageUpload } from '../components/ImageUpload'
 import { QuietSection } from '../components/CollapsibleSection'
+import { useDevice } from '../components/shell/device'
 import { cat, onRaised } from '../lib/colors'
 import { bulletTypeBreakdown, entriesPerDay, journalingStreak, monthlyEntryCounts, parseTags, taskCompletion, weekdayActivity } from '../lib/bullets'
 import { habitDoneOn } from '../lib/stats'
@@ -17,6 +18,8 @@ export function Monthly() {
   const { data, setMonthly, setWeather } = useJournal()
   const { month: ym, setDay } = useCursor()
   const nav = useNav()
+  // A phone logs, a desktop reads: the analytics fold is charts only.
+  const phone = useDevice() === 'mobile'
   const [geoBusy, setGeoBusy] = useState(false)
 
   async function autoFill() {
@@ -204,7 +207,7 @@ export function Monthly() {
       </div>
 
       {/* Month analytics · deep charts, collapsed by default below the calendar + inputs */}
-      {(monthEntries.length > 0 || monthlyTotal > 0) && (
+      {!phone && (monthEntries.length > 0 || monthlyTotal > 0) && (
         <QuietSection title="Month analytics" subtitle={<>month pulse &amp; trailing-year rhythm</>} defaultOpen={false} stickyKey="monthly.analytics">
             <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}
