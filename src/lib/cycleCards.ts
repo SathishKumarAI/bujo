@@ -76,6 +76,8 @@ export interface CycleCardMeta {
   /** The card's own title, so a drifted heading is visible in one file. */
   title: string
   group: CycleGroup
+  /** A chart or diagram — not drawn on a phone (CLAUDE.md, "a phone logs"). */
+  chart?: true
   /**
    * Takes the whole row (`SPAN_2`) instead of one column.
    *
@@ -128,20 +130,20 @@ export const panelsIn = (c: CycleCardMeta): number => c.panels ?? 1
  * manual only summarises, and a credited source has to stay reachable.
  */
 export const CYCLE_CARDS: CycleCardMeta[] = [
-  { id: 'wheel', title: 'Where you are', group: 'cycle' },
+  { id: 'wheel', title: 'Where you are', group: 'cycle', chart: true },
   { id: 'phasefood', title: 'This phase', group: 'cycle' },
-  { id: 'length', title: 'Cycle length', group: 'cycle', wide: true },
+  { id: 'length', title: 'Cycle length', group: 'cycle', wide: true, chart: true },
 
   { id: 'feelings', title: 'Desire, mood, energy & cravings', group: 'feelings', wide: true },
-  { id: 'drivephase', title: 'Drive through the cycle', group: 'feelings' },
+  { id: 'drivephase', title: 'Drive through the cycle', group: 'feelings', chart: true },
   // Moved out of `patterns`: it is a feelings card by subject, and it was also
   // leaving `drivephase` alone on a two-column row with 381px of dead space
   // beside it. Measured at 1536 before the move.
-  { id: 'moodphase', title: 'Mood & energy by phase', group: 'feelings' },
+  { id: 'moodphase', title: 'Mood & energy by phase', group: 'feelings', chart: true },
 
   { id: 'fertile', title: 'Ovulation & the fertile window', group: 'fertility' },
   { id: 'luteal', title: 'Your luteal length', group: 'fertility' },
-  { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true },
+  { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true, chart: true },
 
   { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
   { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
