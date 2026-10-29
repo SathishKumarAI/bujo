@@ -55,3 +55,16 @@ export function followOn(old: SetRow[], edited: SetRow[]): SetRow[] {
   })
   return out
 }
+
+/** One plate jump: 5 lb, or 2.5 kg. */
+export const weightStep = (unit: string) => (unit === 'kg' ? 2.5 : 5)
+
+/**
+ * What to lift today, from last time. Hit every prescribed rep last time →
+ * one plate jump up (double progression); fell short → the same weight
+ * again. No history → nothing to suggest.
+ */
+export function suggestWeight(prev: { weight: number; reps: number } | null, targetReps: number, unit: string): number | null {
+  if (!prev || !(prev.weight > 0)) return null
+  return targetReps > 0 && prev.reps >= targetReps ? prev.weight + weightStep(unit) : prev.weight
+}

@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { CaretDown, Check, CheckCircle, ListChecks } from '@/components/icons'
+import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { activityForSplit } from '../../../domain/activities'
-import { isNewPR } from '../../../lib/fitness'
+import { isNewPR, lastSetFor } from '../../../lib/fitness'
 import { todayISO } from '../../../lib/date'
 import { notify } from '../../../lib/notify'
 import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
 import { storedSets } from '../../gym/phone/strengthHelpers'
 import type { ProgramState } from '../useProgram'
-import { actualOf, followOn, planRows, splitForFocus } from './programLog'
+import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep } from './programLog'
 
 /**
  * PROGRAM ON A PHONE — pick the day, log it, here (COD-461, COD-464).
@@ -71,6 +71,11 @@ export function ProgramPhone({ s, onCheck, rest }: {
     const old = rows.filter((r) => r.exercise === name)
     const others = rows.filter((r) => r.exercise !== name)
     patch({ rows: [...others.slice(0, at0), ...followOn(old, edited), ...others.slice(at0)] })
+  }
+  /** Every set of a lift not yet ticked, to one weight — the − / + buttons. */
+  function setLiftWeight(name: string, w: number) {
+    const v = String(Math.max(0, Math.round(w * 10) / 10))
+    patch({ rows: rows.map((r) => (r.exercise === name && !done.has(r.id) ? { ...r, weight: v } : r)) })
   }
   const allTicked = rows.length > 0 && ticked.length === rows.length
 
@@ -148,6 +153,11 @@ export function ProgramPhone({ s, onCheck, rest }: {
             const all = mine.length > 0 && n === mine.length
             const open = editing === e.name
             const first = mine[0]
+            // Last time you did this lift, and what that says to lift today.
+            const prev = lastSetFor(data, e.name)
+            const target = Number.parseInt(first?.reps || '', 10) || 0
+            const next = suggestWeight(prev, target, unit)
+            const cur = Number(first?.weight) || 0
             return (
               <div key={e.name} className="lift-row" data-done={all || undefined}>
                 <div className="flex items-center gap-3 px-3">
@@ -168,12 +178,34 @@ export function ProgramPhone({ s, onCheck, rest }: {
                     <span className={`block truncate text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</span>
                     <span className="block text-label text-fg-2">
                       {mine.length} × {first?.reps || e.qty} · {first?.weight ? `${first.weight} ${unit}` : 'add weight'}
+                      {prev && <span> · last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}
                     </span>
                   </button>
                   <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </div>
                 {open && (
                   <div className="ios-form pb-1">
+                    {/* WEIGHT FOR EVERY SET, against last time: − / + move all
+                        the sets you have not done yet by one plate, and the
+                        suggestion is one tap when last time earned it. */}
+                    <div className="flex flex-col gap-2 px-3 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex-1 text-label text-fg-2">
+                          {prev
+                            ? <>Last time <b className="text-fg-1">{prev.weight > 0 ? `${prev.weight} ${unit} × ${prev.reps}` : `${prev.reps} reps`}</b></>
+                            : 'First time — pick a weight'}
+                        </span>
+                        <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
+                        <span className="min-w-[4.5rem] text-center text-heading font-bold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
+                        <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
+                      </div>
+                      {next != null && next !== cur && (
+                        <button type="button" className="suggest inline-flex items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
+                          <Icon as={ArrowLineUp} size="sm" />
+                          {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
+                        </button>
+                      )}
+                    </div>
                     <SetCards bare rows={mine} onChange={(r) => replaceLift(e.name, r)} unit={unit} data={data} onRest={tick} done={done} />
                   </div>
                 )}
