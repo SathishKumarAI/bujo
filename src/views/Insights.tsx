@@ -20,7 +20,8 @@ import { WeeklyReview } from '../components/WeeklyReview'
 import { useStatsCards } from '../components/insights/StatsPanels'
 import { CorrelationMatrixCard, HabitConsistencyCard, JournalVolumeCard, TaskTrendCard } from '../components/insights/NewCharts'
 import { LapseLagCard, MoodBandRiskCard, MoodReasonsCard, MoodSwingCard } from '../components/insights/MoodPatterns'
-import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
+import { CARDS, DOMAINS, DOMAIN_BLURB, DOMAIN_LABEL, SORTS, forDevice, sortResults, visibleCards, type Domain, type Sort } from '../lib/insightsFilter'
+import { useDevice } from '../components/shell/device'
 
 /**
  * INSIGHTS · one page, everything on it, and a row of controls that decides
@@ -114,7 +115,8 @@ export function Insights() {
    * leaves a heading over nothing.
    */
   const stats = useStatsCards()
-  const all: Record<string, React.ReactNode> = {
+  const phone = useDevice() === 'mobile'
+  const built: Record<string, React.ReactNode> = {
     ...stats.cards,
     digest: (<Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
   <ul className="space-y-1.5 text-body">
@@ -254,6 +256,10 @@ export function Insights() {
     taskstrend: <TaskTrendCard />,
     habitgrids: <TrackerVisuals data={data} today={todayISO()} />,
   }
+  // On a phone, no charts or heatmaps (COD-483) — filtered HERE, once, so the
+  // rail's counts and the drawn cards read the same map and a row never
+  // promises a card that is not drawn.
+  const all = forDevice(built, phone)
 
   return (
     <PageLayout
@@ -442,7 +448,10 @@ export function Insights() {
           <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
           <SectionRail
             label="Insight domains"
-            groups={DOMAINS.map((d) => ({ id: d, label: DOMAIN_LABEL[d], count: countOf(d) }))}
+            // A phone drops Body and Tasks whole (both are charts only), and a
+            // row reading "Body 0" is a door to nothing. Desktop keeps its
+            // zeros: there they answer a search.
+            groups={DOMAINS.filter((d) => !phone || countOf(d) > 0).map((d) => ({ id: d, label: DOMAIN_LABEL[d], count: countOf(d) }))}
             value={active}
             onChange={(d) => { setActive(d as Domain | null); setQ('') }}
             allCount={CARDS.filter((c) => visibleCards(new Set<Domain>(), q).has(c.id) && all[c.id]).length}

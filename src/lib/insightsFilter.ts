@@ -77,17 +77,23 @@ export interface CardMeta {
   title: string
   domain: Domain
   words: string
+  /**
+   * Draws a chart or a heatmap grid — not drawn on a phone ("a phone logs, a
+   * desktop reads", COD-483). Measured per panel at 390px: an SVG wider than
+   * 60px, or a grid of tinted cells. Number-and-text panels stay.
+   */
+  chart?: true
 }
 
 export const CARDS: CardMeta[] = [
   { id: 'digest', title: 'Weekly digest', domain: 'overview', words: 'week digest summary streak tasks mood win slip' },
   { id: 'coach', title: 'Coach digest', domain: 'overview', words: 'coach next focus advice tip recommendation' },
   { id: 'patterns', title: 'Patterns', domain: 'overview', words: 'correlation r pattern link relationship' },
-  { id: 'matrix', title: 'Correlation matrix', domain: 'overview', words: 'correlation matrix heatmap r mood stress sleep' },
+  { id: 'matrix', title: 'Correlation matrix', domain: 'overview', words: 'correlation matrix heatmap r mood stress sleep', chart: true },
   { id: 'momentum', title: 'Momentum', domain: 'overview', words: 'momentum trend direction vs last week delta' },
-  { id: 'entryvolume', title: 'Journal volume', domain: 'overview', words: 'entries per week volume writing cadence bar' },
+  { id: 'entryvolume', title: 'Journal volume', domain: 'overview', words: 'entries per week volume writing cadence bar', chart: true },
 
-  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily heatmap lapse relapse ring' },
+  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily heatmap lapse relapse ring', chart: true },
   { id: 'moodanalytics', title: 'Mood analytics', domain: 'mood', words: 'mood weekday stability best worst variance' },
   /* The four mood/recovery panels (COD-252) live in `mood` rather than in a
      seventh `recovery` domain. Two reasons and one of them is measured: the
@@ -100,15 +106,15 @@ export const CARDS: CardMeta[] = [
      the count here keeps growing; at ten it is still the second-largest domain
      rather than the largest. */
   { id: 'moodreasons', title: 'What moved your mood', domain: 'mood', words: 'why reason cause mood lonely argument stress deadline money illness slept badly exercised good news no plans context' },
-  { id: 'moodswing', title: 'Level & swing', domain: 'mood', words: 'mood swing swinging volatility variance spread range steady weekly band deviation' },
-  { id: 'lapselag', title: 'The week around a lapse', domain: 'mood', words: 'lapse relapse mood before after lag nofap addiction recovery trigger urge week around' },
+  { id: 'moodswing', title: 'Level & swing', domain: 'mood', words: 'mood swing swinging volatility variance spread range steady weekly band deviation', chart: true },
+  { id: 'lapselag', title: 'The week around a lapse', domain: 'mood', words: 'lapse relapse mood before after lag nofap addiction recovery trigger urge week around', chart: true },
   { id: 'moodrisk', title: 'Urges by mood band', domain: 'mood', words: 'urge intensity mood band low bright lapse rate risk addiction recovery halt' },
-  { id: 'sleepmood', title: 'Sleep vs mood', domain: 'mood', words: 'sleep mood scatter correlation dots' },
-  { id: 'sleepdebt', title: 'Sleep debt', domain: 'mood', words: 'sleep debt deficit hours 8h running' },
+  { id: 'sleepmood', title: 'Sleep vs mood', domain: 'mood', words: 'sleep mood scatter correlation dots', chart: true },
+  { id: 'sleepdebt', title: 'Sleep debt', domain: 'mood', words: 'sleep debt deficit hours 8h running', chart: true },
   { id: 'focussleep', title: 'Focus vs sleep', domain: 'mood', words: 'focus deep work sleep correlation r' },
-  { id: 'weekradar', title: 'This week at a glance', domain: 'mood', words: 'radar week average mood stress sleep habits' },
+  { id: 'weekradar', title: 'This week at a glance', domain: 'mood', words: 'radar week average mood stress sleep habits', chart: true },
 
-  { id: 'activity', title: 'Activity', domain: 'habits', words: 'activity heatmap showed up days grid calendar' },
+  { id: 'activity', title: 'Activity', domain: 'habits', words: 'activity heatmap showed up days grid calendar', chart: true },
   { id: 'checkin', title: 'Check-in times', domain: 'habits', words: 'check in time of day habit when hour' },
   { id: 'habitanalytics', title: 'Habit analytics', domain: 'habits', words: 'habit consistency trend mood impact completion' },
   { id: 'consistency', title: 'Habit consistency', domain: 'habits', words: 'habit consistency 30 day rate bar ranking' },
@@ -118,13 +124,13 @@ export const CARDS: CardMeta[] = [
      deleted: its overlap with `activity` and `habitanalytics` is real and
      wants a consolidation pass, and deleting a chart on the suspicion that
      another covers it is how a feature goes quiet. */
-  { id: 'habitgrids', title: 'Habit grids', domain: 'habits', words: 'habit heatmap streak leaderboard perfect days monthly trend weekday grid' },
+  { id: 'habitgrids', title: 'Habit grids', domain: 'habits', words: 'habit heatmap streak leaderboard perfect days monthly trend weekday grid', chart: true },
 
-  { id: 'workoutmin', title: 'Workout minutes', domain: 'body', words: 'workout minutes week training volume bar' },
-  { id: 'workoutsplit', title: 'Workout split', domain: 'body', words: 'workout split type distribution donut push pull legs' },
+  { id: 'workoutmin', title: 'Workout minutes', domain: 'body', words: 'workout minutes week training volume bar', chart: true },
+  { id: 'workoutsplit', title: 'Workout split', domain: 'body', words: 'workout split type distribution donut push pull legs', chart: true },
 
-  { id: 'tasks', title: 'Task breakdown', domain: 'tasks', words: 'task done migrated open cancelled breakdown donut' },
-  { id: 'taskstrend', title: 'Task completion trend', domain: 'tasks', words: 'task completion rate per week trend line' },
+  { id: 'tasks', title: 'Task breakdown', domain: 'tasks', words: 'task done migrated open cancelled breakdown donut', chart: true },
+  { id: 'taskstrend', title: 'Task completion trend', domain: 'tasks', words: 'task completion rate per week trend line', chart: true },
 
   { id: 'pace', title: 'Pace', domain: 'records', words: 'pace days left month year week remaining' },
   { id: 'lifetime', title: 'Lifetime', domain: 'records', words: 'lifetime total year in review personal records month index' },
@@ -201,4 +207,11 @@ export function entriesPerWeek(data: JournalData, weeks = 12, today: string): { 
     })
   }
   return out
+}
+
+/** The cards a device draws: on a phone, everything but the charts (COD-483). */
+export function forDevice<T>(cards: Record<string, T>, phone: boolean): Record<string, T> {
+  if (!phone) return cards
+  const chart = new Set(CARDS.filter((c) => c.chart).map((c) => c.id))
+  return Object.fromEntries(Object.entries(cards).filter(([id]) => !chart.has(id)))
 }
