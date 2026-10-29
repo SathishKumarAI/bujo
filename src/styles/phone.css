@@ -818,3 +818,47 @@ button.cell:active {
 .ios-form .cell input.actual-input::placeholder {
   color: var(--color-fg-2);
 }
+
+/* THE PHONE BAR (`shell/PhoneTopBar.tsx`). Every control in it is a 44px
+   target. The date cursor is the desktop's `DateNav`, whose arrows are 28px
+   `icon-sm`; the floor is set on the bar rather than on a shared control.
+   Unlayered, so it beats those size utilities. */
+.phone-bar :is(button, a) {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+/* The notch inset, and nothing on top of it. `index.css` floors every
+   `.app-header` at 10px for the old two-row bar; this bar's row is already a
+   52px band with the 44px controls centred in it, so the floor only made it
+   63px. Two classes so it outranks that rule. */
+.app-header.phone-bar {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* A HORIZONTAL STRIP THAT SAYS IT SCROLLS (`.phone-strip`): the section tabs
+   in the phone bar, and Settings' tabs on a phone. Measured before: Body's
+   eleven tabs were 1019px in a 358px row and the clip fell exactly in the gap
+   after Pickleball, so the row looked complete — reported as "the tabs are not
+   scrollable". The edge fades plus the end padding mean a cut-off tab is
+   always showing when there is more, and the last tab clears the fade once you
+   reach it. The mask only reads alpha; the token is just an opaque colour. */
+.phone-strip > nav,
+.phone-strip[role='tablist'] {
+  flex-wrap: nowrap;
+  margin-left: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-inline: 0.5rem 1.5rem;
+  mask-image: linear-gradient(to right, transparent, var(--color-ink-0) 0.5rem, var(--color-ink-0) calc(100% - 1.5rem), transparent);
+}
+
+.phone-strip > nav::-webkit-scrollbar,
+.phone-strip[role='tablist']::-webkit-scrollbar {
+  display: none;
+}
+
+.phone-strip[role='tablist'] > [role='tab'] {
+  flex: none;
+  min-height: 2.75rem;
+}

@@ -17,6 +17,7 @@ and `shell/BottomNav.tsx` the sections.
 | The ⓘ blurb and the data-driven suggestions | `HelpMenu.tsx` — items only; they render inside the corner menu's **Help with this page** submenu, not a button of their own |
 | The suggestion count on the corner badge | `useSuggestionCount.ts` |
 | Name, share, ⌘K, Settings/Help, **page help, daily reminder, send feedback**, undo/redo, zoom | `../AccountMenu.tsx` — the one header menu, and now genuinely the only one |
+| The same, on a PHONE (no ⌘K, no per-page blurb) | `../PhoneMenu.tsx` — a bottom sheet behind the ☰ in `../PhoneTopBar.tsx` |
 | The feedback form itself | `../../feedback/FeedbackButton.tsx` — takes optional `open`/`onOpenChange`; the menu drives it |
 | Theme, paper, handwriting, book frame, text size | `../../views/Settings.tsx` → Appearance. **Not the header.** |
 | The theme list itself — names, hints, swatches | `../../lib/themes.ts`, read by Settings and ⌘K |

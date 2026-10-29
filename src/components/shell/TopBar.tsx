@@ -9,12 +9,16 @@ import { SectionTabs } from './SectionTabs'
 import { HeaderRail } from './topbar/HeaderRail'
 import { DateNav } from './topbar/DateNav'
 import { useHideOnScroll } from './useHideOnScroll'
+import { useDevice } from './device'
+import { PhoneTopBar } from './PhoneTopBar'
 import { sectionOf, tabsOf, type SectionGates } from './sections'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
 /**
  * The sticky header. **On desktop it no longer carries navigation** — `SideRail`
- * does. On a phone it still carries the tab row, and `BottomNav` the sections.
+ * does. **On a phone this file renders `PhoneTopBar` instead** (☰ · tab strip ·
+ * Quick add); everything below the hand-off, including its `md:hidden` phone
+ * rows, now only renders for a desktop-class device, where it is display:none.
  *
  * Two rows:
  *
@@ -78,6 +82,11 @@ export function TopBar({
   // each a filter over the same record. They belong on this row for the same
   // reason `SectionTabs` does; see `topbar/SurfaceTabs.tsx`.
   const collapsed = useHideOnScroll()
+  // A phone gets its own one-row bar (☰ · tabs · Quick add) — see
+  // `PhoneTopBar.tsx`. Hooks above stay unconditional; everything below is the
+  // unchanged desktop path.
+  const phone = useDevice() === 'mobile'
+  if (phone) return <PhoneTopBar view={view} gates={gates} onNavigate={onNavigate} onQuickAdd={onQuickAdd} />
 
   return (
     // Sticky, so content genuinely passes underneath it — which is the one
