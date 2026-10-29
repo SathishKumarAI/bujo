@@ -270,7 +270,7 @@ export function Insights() {
       /* Stacked: zone 3 is a full-width grid of read-backs. There is no narrow
          form here to justify the 62/38 split. */
       stacked
-      zone1={
+      zone1={phone ? undefined : (
         /* FOUR facts, and the cap is load-bearing rather than stylistic:
             `StatBar` slices to four and warns only in DEV, so the fifth is
             dropped on the floor of a production build with nothing on screen
@@ -323,7 +323,10 @@ export function Insights() {
             },
           ]}
         />
-      }
+      )}
+      /* Not on a phone: three of the four figures (streak, tasks, mood) are
+         the Weekly digest's first three rows, which also say what changed.
+         Measured at 390px, the same numbers twice, a screen apart. */
       zone2={<>
       <WeeklyReview />
 
@@ -469,7 +472,10 @@ export function Insights() {
               if (ids.length === 0) return null
               return (
                 <section key={d} data-domain={d} className="mb-6 last:mb-0">
-                  <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+                  {/* On a phone with one domain picked, the select above already
+                      says "Overview · 4", so this row is for screen readers —
+                      and its count no longer wraps onto a line of its own. */}
+                  <div className={phone && active ? 'sr-only' : 'mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5'}>
                     <h2 className="text-heading font-medium text-fg-1">{DOMAIN_LABEL[d]}</h2>
                     <p className="text-label text-fg-2">{DOMAIN_BLURB[d]}</p>
                     <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
