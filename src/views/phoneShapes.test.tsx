@@ -8,6 +8,7 @@ import { DeviceProvider } from '../components/shell/device'
 import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
 import { Nutrition } from './Nutrition'
+import { Challenges } from './Challenges'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -143,6 +144,34 @@ describe('Nutrition on a phone', () => {
     expect(usual()[0]).toMatch(/^Idli/)
     const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"metrics"'))!)
     expect(j.settings.pinnedFoods).toEqual(['Idli'])
+  })
+})
+
+describe('Challenges on a phone', () => {
+  const log = () => {
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"challenges"'))!)
+    return Object.values(j.challengeLog ?? {})[0] as Record<string, number[]> | undefined
+  }
+
+  it('keeps the desktop review: the summary strip and the calendar, no dock', async () => {
+    desktop()
+    wrap(<Challenges />)
+    expect(screen.queryByRole('button', { name: 'Manage challenge' })).toBeNull()
+  })
+
+  // The failure: the phone going back to cards, four facts and a folded
+  // calendar. Start from the sheet, tick from a row, tick the rest from the dock.
+  it('starts a challenge from a sheet, ticks one rule from its row and the rest from the dock', async () => {
+    phone()
+    wrap(<Challenges />)
+    await userEvent.click(screen.getByRole('button', { name: /New challenge/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Start challenge' }))
+    const ticks = screen.getAllByRole('button', { name: /: tap when done$/ })
+    await userEvent.click(ticks[0])
+    expect(Object.values(log()!)[0]).toEqual([0])
+    await userEvent.click(screen.getByRole('button', { name: /^Tick all/ }))
+    expect(Object.values(log()!)[0]).toHaveLength(ticks.length)
+    expect(screen.getByRole('button', { name: /^Day 1 done/ })).toBeTruthy()
   })
 })
 
