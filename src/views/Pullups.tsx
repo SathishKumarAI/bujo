@@ -1,6 +1,6 @@
 import { useStickyState } from '../lib/useStickyState'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowCounterClockwise, SlidersHorizontal } from '@/components/icons'
+import { ArrowCounterClockwise, Barbell, Target, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
@@ -9,8 +9,8 @@ import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quic
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import { useDevice } from '../components/shell/device'
-import { Cell, Cells } from '../components/ui/cells'
-import { Sheet } from '../components/ui/sheet'
+import { StatTiles } from '../components/ui/statTiles'
+import { PullupQuickLog } from '../components/pullups/QuickLog'
 import { buyingGuideUrl } from '../lib/video'
 import {
   ActHide,
@@ -139,6 +139,36 @@ export function Pullups() {
     () => sessions.map((s) => ({ date: s.date, value: repsOf(s.sets) })),
     [sessions],
   )
+  const phone = useDevice() === 'mobile'
+
+  /* ON A PHONE THE LOG IS THE PAGE — Pickleball's order (`PickleballPhone`):
+     the quick log first, the week in three tiles, then the manual's rail. No
+     `PageLayout`, no StatBar above the form, no act strip to open. */
+  if (phone) {
+    const weekSessions = sessions.filter((s) => { const d = dayDiff(s.date, today); return d >= 0 && d < 7 }).length
+    return (
+      <div className="flex flex-col gap-6 pb-4">
+        <h1 className="sr-only">Pull-ups</h1>
+        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close} />
+        <StatTiles label="This week" tiles={[
+          { k: 'Reps', v: `${weekReps}/${ability.weeklyLow}`, icon: Target, tone: 'sky' },
+          { k: 'Training set', v: String(ability.trainingSet), icon: Barbell, tone: 'green' },
+          { k: 'Sessions', v: String(weekSessions), icon: Timer, tone: 'mauve' },
+        ]} />
+        <Review
+          sessions={sessions}
+          history={history}
+          heat={heat}
+          totalReps={totalReps}
+          best={logged}
+          max={max}
+          maxInput={maxInput}
+          onMax={setMaxInput}
+          onRemove={removeWorkout}
+        />
+      </div>
+    )
+  }
 
   return (
     <PageLayout
@@ -385,12 +415,8 @@ function LogSessionCard({
   const [rpe, setRpe] = useState<number | undefined>(undefined)
   const [notes, setNotes] = useState('')
   const [justLogged, setJustLogged] = useState<string | null>(null)
-  // On a phone the optional half (effort, duration, notes) waits in a bottom
-  // sheet, the Pickleball QuickLog shape, so Log session is on the first screen.
+  // A phone draws the same draft as Pickleball's quick log (`PullupQuickLog`).
   const phone = useDevice() === 'mobile'
-  const [more, setMore] = useState(false)
-  const added = [rpe, duration, notes.trim() || undefined].filter((x) => x !== undefined).length
-
 
   const topN = top ?? defaultTop
   const flash = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -443,6 +469,19 @@ function LogSessionCard({
       notes: '',
     })
     done(`Repeated ${repsOf(last.sets)} reps`)
+  }
+
+  if (phone) {
+    return (
+      <PullupQuickLog
+        date={date} setDate={setDate} method={method} setMethod={setMethod}
+        top={topN} setTop={setTop} rounds={rounds} setRounds={setRounds}
+        duration={duration} setDuration={setDuration} rpe={rpe} setRpe={setRpe}
+        notes={notes} setNotes={setNotes} reps={reps} total={total} effort={EFFORT}
+        lastReps={last ? repsOf(last.sets) : undefined} onRepeat={repeatLast} onLog={save}
+        justLogged={justLogged}
+      />
+    )
   }
 
   return (
@@ -590,59 +629,6 @@ function LogSessionCard({
           `auto` track because it is the fixed one — three chips and an escape
           input — and Effort takes what is left.
         */}
-        {phone ? (<>
-          <Cells>
-            <Cell icon={SlidersHorizontal} tone="mauve" title="Effort, duration, notes" subtitle={added ? `${added} added` : 'Optional'} onPress={() => setMore(true)} />
-          </Cells>
-          <Sheet open={more} onOpenChange={setMore} title="How it went" description="All optional">
-            <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
-          <ChipPick
-            dense
-            label="Effort"
-            value={rpe ?? null}
-            onChange={setRpe}
-            options={EFFORT.map((e) => ({ value: e.value, label: e.label, name: e.name, hint: e.hint, tone: e.tone }))}
-            hint="Optional · the last set"
-          />
-
-          {/* `min` in the legend, so the chips can be bare numbers. Four `15m`
-              chips plus the escape input do not fit 204px; four `15`s do. */}
-          <ChipPick
-            dense
-            // `shrink-0`: a flex item with a wrapping row inside it will give
-            // up width before the row wraps, and the row wrapping is the thing
-            // being prevented.
-            className="shrink-0"
-            label="Duration · min"
-            value={duration ?? null}
-            onChange={setDuration}
-            options={[10, 20, 30].map((n) => ({ value: n, label: String(n), name: `${n} minutes` }))}
-            hint="Optional."
-            after={
-              <input
-                type="number"
-                min={1}
-                max={300}
-                inputMode="numeric"
-                aria-label="Duration in minutes, another number"
-                value={duration !== undefined && ![10, 20, 30].includes(duration) ? duration : ''}
-                placeholder="…"
-                onChange={(e) => setDuration(e.target.value === '' ? undefined : Number(e.target.value))}
-                className="w-10 rounded-pill border border-line-strong bg-ink-2 px-2 py-1 text-center text-label tabular-nums text-fg-1 placeholder:text-fg-3"
-              />
-            }
-          />
-        </div>
-
-        <label className="block text-body text-fg-1">
-          Notes
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Grip, how the last set felt…" className="mt-1" />
-        </label>
-
-            </div>
-          </Sheet>
-        </>) : (<>
         <FormRule>How it went · optional</FormRule>
 
         <div className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_auto]">
@@ -688,8 +674,6 @@ function LogSessionCard({
           Notes
           <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Grip, how the last set felt…" className="mt-1" />
         </label>
-
-        </>)}
 
         <Button onClick={save} disabled={reps.length === 0} className="press-3d w-full">Log session</Button>
         {/* What pressing it writes, before it is pressed. The card already had
