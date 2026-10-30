@@ -160,6 +160,7 @@ export const PersonSimpleRun = /* @__PURE__ */ glyph(GLYPH_PATHS.PersonSimpleRun
 export const PiggyBank = /* @__PURE__ */ glyph(GLYPH_PATHS.PiggyBank) // was PiggyBank
 export const Play = /* @__PURE__ */ glyph(GLYPH_PATHS.Play) // was Play
 export const Plus = /* @__PURE__ */ glyph(GLYPH_PATHS.Plus) // was Plus
+export const PushPin = /* @__PURE__ */ glyph(GLYPH_PATHS.PushPin) // new: pin a food to Your usual
 export const Prohibit = /* @__PURE__ */ glyph(GLYPH_PATHS.Prohibit) // was Ban
 export const Question = /* @__PURE__ */ glyph(GLYPH_PATHS.Question) // was HelpCircle
 export const RadioButton = /* @__PURE__ */ glyph(GLYPH_PATHS.RadioButton) // was CircleDot

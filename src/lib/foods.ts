@@ -67,6 +67,7 @@ export const FOODS: Food[] = [
   { name: 'Roti / chapati', serving: '1 medium', kcal: 120, protein: 3, carbs: 18, fat: 3, cuisine: 'indian' },
   { name: 'Plain dosa', serving: '1', kcal: 133, protein: 4, carbs: 18, fat: 5, cuisine: 'indian' },
   { name: 'Idli', serving: '2', kcal: 116, protein: 4, carbs: 24, fat: 1, cuisine: 'indian' },
+  { name: 'White rice (cooked)', serving: '1 cup', kcal: 205, protein: 4, carbs: 45, fat: 0, cuisine: 'indian' },
   { name: 'Basmati rice (cooked)', serving: '1 cup', kcal: 205, protein: 4, carbs: 45, fat: 0, cuisine: 'indian' },
   { name: 'Dal (lentil curry)', serving: '1 cup', kcal: 180, protein: 12, carbs: 27, fat: 3, cuisine: 'indian' },
   { name: 'Chicken curry', serving: '1 cup', kcal: 290, protein: 28, carbs: 8, fat: 16, cuisine: 'indian' },

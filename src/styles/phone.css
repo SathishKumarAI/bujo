@@ -1025,3 +1025,45 @@ button.cell:active {
   margin-top: 0;
   border-top: 0;
 }
+
+/* SEARCH IN A SHEET (`page/SearchField.tsx`). The box is the control, so the
+   field inside draws nothing: under `.ios-form` it picked up the app's focus
+   outline and its own ground, and focus showed two nested purple rings fading
+   in — reported as "an AI glow". One quiet state now: the border turns brand,
+   instantly, and nothing else moves. */
+.ios-form .search-field {
+  transition: none;
+}
+
+.ios-form .search-field:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: none;
+}
+
+.ios-form .search-field > input,
+.ios-form .search-field > input:focus-visible {
+  min-height: 2.75rem;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* PIN A FOOD (`nutrition/NutritionPhone.tsx` FoodRow): a quiet 44px target
+   beside the +, grey at rest, brand and duotone once pinned. */
+.pin-btn {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--color-fg-2);
+}
+
+.pin-btn[aria-pressed='true'] {
+  color: var(--color-brand-text);
+}
+
+.pin-btn:active {
+  background: var(--color-ink-2);
+}

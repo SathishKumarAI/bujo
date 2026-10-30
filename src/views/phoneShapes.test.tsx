@@ -133,6 +133,17 @@ describe('Nutrition on a phone', () => {
     await userEvent.click(screen.getByRole('button', { name: 'One more serving of Plain dosa' }))
     expect(today()).toMatchObject({ calories: 266, foodLog: [expect.objectContaining({ servings: 2 })] })
   })
+
+  it('pins a food to the top of Your usual and keeps the pin in the journal', async () => {
+    phone()
+    wrap(<Nutrition />)
+    const usual = () => [...screen.getByRole('region', { name: 'Your usual' }).querySelectorAll('.cell')].map((c) => c.textContent)
+    expect(usual()[0]).toMatch(/^Chicken curry/)
+    await userEvent.click(screen.getByRole('button', { name: 'Pin Idli to Your usual' }))
+    expect(usual()[0]).toMatch(/^Idli/)
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"metrics"'))!)
+    expect(j.settings.pinnedFoods).toEqual(['Idli'])
+  })
 })
 
 describe('a section rail on a phone', () => {
