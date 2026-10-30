@@ -15,7 +15,9 @@ near 300; it is **358** now, and everything that left is below.
 | The group someone lands on | `../../lib/recoveryCards.ts` (`DEFAULT_GROUP`) |
 | Zone layout, the rail, the panel filter, which numbers get derived | `../../views/NoFap.tsx` |
 | The hero ring, the milestone bar, the "reset today" note | `StreakRingCard.tsx` |
-| The urge form — the submit, chips, intensity, technique, HALT, the log list | `UrgeSurfingCard.tsx` |
+| The urge form's DRAWING on desktop — chips, intensity buttons, technique, HALT | `UrgeSurfingCard.tsx` |
+| The urge draft and its write, for both drawings — a new urge field goes HERE | `useUrgeDraft.ts` |
+| The whole phone page — scoreboard, urge card, I held / I gave in dock, today rows, reset sheet | `RecoveryPhone.tsx` |
 | The reset form | `LogResetCard.tsx` |
 | "How many times today", per tracked thing | `DayTallyCard.tsx` |
 | The in-crisis overlay: timer, breathing pacer, plan lookup — not mounted since the SOS button went | `SosOverlay.tsx` |
