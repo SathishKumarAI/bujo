@@ -896,6 +896,12 @@ export interface Settings {
    */
   customFoods?: { name: string; serving: string; kcal: number; protein: number; carbs: number; fat: number }[]
   /**
+   * Foods pinned to the top of "Your usual", by name, in the order pinned.
+   * A preference, not a log: last write wins on sync, so an unpin on one
+   * device is not undone by the other (`conflict.ts` unions only logs).
+   */
+  pinnedFoods?: string[]
+  /**
    * Rest in seconds per exercise, keyed by the lower-cased exercise name.
    *
    * "Some exercise needs 3 minutes, some needs 2" — so it is per exercise and

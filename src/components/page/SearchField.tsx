@@ -41,7 +41,7 @@ export function SearchField({ value, onChange, placeholder, label, className = '
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-control border border-ctl-ring bg-ink-2 px-2.5 transition-colors hover:bg-ink-3 focus-within:border-ring focus-within:bg-ink-2 focus-within:ring-1 focus-within:ring-ring ${className}`}
+      className={`search-field flex items-center gap-2 rounded-control border border-ctl-ring bg-ink-2 px-2.5 transition-colors hover:bg-ink-3 focus-within:border-ring focus-within:bg-ink-2 focus-within:ring-1 focus-within:ring-ring ${className}`}
     >
       <Icon as={MagnifyingGlass} size="sm" className="shrink-0 text-fg-2" />
       <input

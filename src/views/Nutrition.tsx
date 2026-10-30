@@ -9,7 +9,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
 import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
-import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
+import { SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { onRaised } from '../lib/colors'
 import { FoodSearch } from '../components/nutrition/FoodSearch'
@@ -20,7 +20,8 @@ import { CustomFoodForm } from '../components/nutrition/CustomFood'
 import { NutritionReview } from '../components/nutrition/Review'
 import { NUTRITION_PANELS } from '../components/nutrition/panels'
 import { NutritionPhone } from '../components/nutrition/NutritionPhone'
-import { MACROS, inTargetStreak, nextStep, targetsOf, topFoods, type Targets } from '../lib/nutritionReview'
+import { MACROS, inTargetStreak, nextStep, targetsOf, type Targets } from '../lib/nutritionReview'
+import { togglePin, usualFoods } from '../lib/usualFoods'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
 
@@ -200,7 +201,8 @@ export function Nutrition() {
   /* The custom chips, newest first — the ones you added are the ones you eat. */
   const mine: Food[] = [...(data.settings.customFoods ?? [])].reverse().map((f) => ({ ...f, cuisine: 'yours' as const }))
   /**
-   * YOUR USUAL · the foods you actually log, as the first row of the picker.
+   * YOUR USUAL · pinned, then the foods you actually log, then Indian staples
+   * (`lib/usualFoods.ts`) — the first row of the picker on both drawings.
    *
    * "Eggs are my most favourite" needs no setting: `topFoods` already knows
    * what the fortnight was made of, and the row is built from the journal
@@ -208,9 +210,7 @@ export function Nutrition() {
    * library (or to your own foods) by name, because the log stores the numbers
    * it was logged with and the chip has to carry a servable `Food`.
    */
-  const usual: Food[] = topFoods(data, 14, today, 8)
-    .map((t) => FOODS.concat(mine).find((f) => f.name.toLowerCase() === t.name.toLowerCase()))
-    .filter((f): f is Food => !!f)
+  const usual: Food[] = usualFoods(data, { today, extra: mine })
 
   /* The one sentence at the top, and the streak under the rings. */
   const step = nextStep(data, { date, targets, today })
@@ -295,6 +295,8 @@ export function Nutrition() {
         onRemove={removeFood}
         onServings={setServings}
         mine={mine}
+        pinned={data.settings.pinnedFoods ?? []}
+        onPin={(name) => setSettings({ pinnedFoods: togglePin(data.settings.pinnedFoods, name) })}
         extras={
           <div className="@container/act flex flex-col gap-3">
             <FoodSearch onAdd={addFood} />

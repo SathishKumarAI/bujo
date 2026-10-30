@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { CaretDown, Minus, PencilSimple, Plus, SlidersHorizontal, Trash } from '@/components/icons'
+import { CaretDown, Minus, PushPin, PencilSimple, Plus, SlidersHorizontal, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
@@ -30,7 +30,7 @@ type Patch = Pick<LoggedFood, 'name' | 'kcal' | 'protein' | 'carbs' | 'fat'>
  * Charts (trend, calendar, patterns) are desktop-only: a phone logs.
  */
 export function NutritionPhone({
-  date, setDate, today, metricOn, targets, setTargets, usual, mine, calorie, streak,
+  date, setDate, today, metricOn, targets, setTargets, usual, mine, pinned, onPin, calorie, streak,
   onAdd, onEdit, onRemove, onServings, extras,
 }: {
   date: string
@@ -43,6 +43,9 @@ export function NutritionPhone({
   usual: Food[]
   /** Foods the person added themselves. */
   mine: Food[]
+  /** Names pinned to the top of Your usual, and the toggle. */
+  pinned: string[]
+  onPin: (name: string) => void
   /** The view's one verdict on the calories: tone and sentence together. */
   calorie: { color: string; line: string }
   streak: number
@@ -66,7 +69,7 @@ export function NutritionPhone({
   const dayName = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
   const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
   const countOf = (f: Food) => foods.filter((x) => x.name === f.name).reduce((s, x) => s + (x.servings ?? 1), 0)
-  const row = (f: Food) => <FoodRow key={f.name} food={f} n={countOf(f)} to={dayName} onAdd={onAdd} />
+  const row = (f: Food) => <FoodRow key={f.name} food={f} n={countOf(f)} to={dayName} onAdd={onAdd} pinned={pinned.includes(f.name)} onPin={onPin} />
   const list = q.trim() ? FOODS.concat(mine).filter((f) => foodMatches(f, q)) : sourceList(source, usual, mine)
   const pct = (had: number, target: number) => (target > 0 ? Math.min(100, (had / target) * 100) : 0)
 
@@ -122,8 +125,8 @@ export function NutritionPhone({
 
       {/* ONE TAP LOGS IT: what you actually eat, from the fortnight. */}
       {usual.length > 0 && (
-        <Cells title="Your usual" aside="tap + to log">
-          {usual.slice(0, 5).map(row)}
+        <Cells title="Your usual" aside={pinned.length ? `${pinned.length} pinned` : "pin what you eat most"}>
+          {usual.map(row)}
         </Cells>
       )}
 
@@ -224,14 +227,20 @@ const SOURCES: { id: Source; label: string }[] = [
 const sourceList = (id: Source, usual: Food[], mine: Food[]): Food[] =>
   id === 'usual' ? usual : id === 'mine' ? mine : FOODS.filter((f) => f.cuisine === id)
 
-/** One food: name, what a serving is, and + to log it. `n` is how many are already on the day. */
-function FoodRow({ food: f, n, to, onAdd }: { food: Food; n: number; to: string; onAdd: (f: Food) => void | Promise<void> }) {
+/** One food: name, what a serving is, a pin, and + to log it. `n` is how many are already on the day. */
+function FoodRow({ food: f, n, to, onAdd, pinned, onPin }: {
+  food: Food; n: number; to: string; onAdd: (f: Food) => void | Promise<void>; pinned: boolean; onPin: (name: string) => void
+}) {
   return (
     <div className="cell">
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-medium text-fg-1">{f.name}{n > 0 && <span className="font-normal text-fg-2"> · ×{n}</span>}</span>
         <span className="block truncate text-label text-fg-2">{f.kcal} kcal · {f.protein} g protein · {f.serving}</span>
       </span>
+      {/* Pinned foods stay at the top of Your usual whatever the fortnight says. */}
+      <button type="button" className="pin-btn" aria-pressed={pinned} aria-label={`Pin ${f.name} to Your usual`} onClick={() => onPin(f.name)}>
+        <Icon as={PushPin} size="sm" active={pinned} />
+      </button>
       <button type="button" className="round-btn" style={{ color: 'var(--color-brand-text)' }} aria-label={`Add ${f.name}, ${f.kcal} kcal, to ${to}`} onClick={() => onAdd(f)}>
         <Icon as={Plus} size="md" />
       </button>
