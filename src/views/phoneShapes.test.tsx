@@ -51,14 +51,27 @@ describe('Pull-ups log on a phone', () => {
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
   })
 
-  it('puts them behind one row on a phone, and the row opens them', async () => {
+  it('puts duration and notes behind one row on a phone, and the row opens them', async () => {
     phone()
     wrap(<Pullups />)
     expect(screen.queryByPlaceholderText(/Grip, how the last set felt/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Log session' })).toBeTruthy()
-    await userEvent.click(screen.getByRole('button', { name: /Effort, duration, notes/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Duration, notes/ }))
     expect(screen.getByRole('dialog', { name: 'How it went' })).toBeTruthy()
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
+  })
+
+  // The failure: the phone going back to the desktop's stacked form, where Log
+  // session sat under the bottom nav. Pickleball's shape is a scoreboard.
+  it('steps the top set and rounds on a scoreboard and logs what it shows', async () => {
+    phone()
+    wrap(<Pullups />)
+    await userEvent.click(screen.getByRole('button', { name: 'Rounds, one more' }))
+    const rounds = screen.getByRole('status', { name: 'Rounds' })
+    expect(rounds.textContent).toBe('4')
+    await userEvent.click(screen.getByRole('button', { name: 'Log session' }))
+    const journal = Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))
+    expect(journal).toContain('"activity":"pullups"')
   })
 })
 
