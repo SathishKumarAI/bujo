@@ -18,7 +18,7 @@ near 300; it is **358** now, and everything that left is below.
 | The urge form — the submit, chips, intensity, technique, HALT, the log list | `UrgeSurfingCard.tsx` |
 | The reset form | `LogResetCard.tsx` |
 | "How many times today", per tracked thing | `DayTallyCard.tsx` |
-| The in-crisis overlay: timer, breathing pacer, plan lookup | `SosOverlay.tsx` |
+| The in-crisis overlay: timer, breathing pacer, plan lookup — not mounted since the SOS button went | `SosOverlay.tsx` |
 | Urges per week, with resets marked on the line | `UrgeTrendCard.tsx` |
 | Streak against best, comeback, pace, record-approach copy | `StreakVsBestCard.tsx` |
 | Urges resisted as a rate | `SelfEfficacyCard.tsx` |
@@ -109,12 +109,11 @@ and `LogResetCard` own mutations and their own form state, so they call
 function of props, which is what keeps `lib/` the only place the arithmetic
 happens.
 
-**`SosOverlay` is why folding the coping list was ever allowed.** The in-urge
-version of those techniques is in the overlay, behind a fixed floating button
-reachable from any scroll position and outside the three zones for exactly that
-reason. A page someone opens mid-urge must not put its coping list behind a
-click — so if the overlay ever goes, `techniques` has to come out of the rail and
-onto the page.
+**The SOS button is gone (owner ask, 2026-10-30), so `SosOverlay` is mounted
+nowhere.** It was the in-urge version of the coping techniques, behind a fixed
+floating button, and it was the reason `techniques` was allowed to sit in a rail
+group behind a pick. That trade no longer holds: if Recovery is meant to be
+opened mid-urge, `techniques` belongs on the page rather than in the rail.
 
 **One `datalist#urge-presets` for the page, and two zones use it.**
 `UrgeSurfingCard` renders it in zone 2; `TriggerPlansCard` lists against it by

@@ -1,10 +1,8 @@
 import { useMemo } from 'react'
 import { ArrowCounterClockwise, Clock, Flame, Heart, Lifebuoy, Target, Trophy, Warning } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useDevice } from '../components/shell/device'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
-import { cat, onAccent } from '../lib/colors'
 import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
@@ -47,7 +45,6 @@ import {
   TechniquesBlock,
   LadderBlock,
   ResetHistoryBlock,
-  SosOverlay,
   type DayTallyRow,
 } from '../components/recovery'
 
@@ -73,7 +70,6 @@ import {
 export function NoFap() {
   const { data, logLapseDay, setStreakCost } = useJournal()
   const currency = data.settings.currencySymbol || '$'
-  const [sosOpen, setSosOpen] = useState(false)
   const [hoursPerDay, setHoursPerDay] = useState(1) // #344 reclaimed-time rate (view-local)
   const [q, setQ] = useState('')
   /* Sticky, because the three folds this replaces each carried a `stickyKey`
@@ -251,17 +247,6 @@ export function NoFap() {
 
   return (
     <>
-      {/* Panic / SOS · floating button + full-screen ride-it-out overlay.
-          Outside the zones on purpose: it is a fixed-position lifeline that has
-          to be reachable from anywhere on the page, which is exactly the case
-          the three-zone rule is not about. */}
-      <button onClick={() => setSosOpen(true)} aria-label="Panic, open urge SOS"
-        className="fixed bottom-20 right-5 z-40 inline-flex items-center gap-2 rounded-pill px-4 py-3 md:bottom-5 text-body font-medium shadow-lg transition-transform hover:scale-105"
-        style={{ background: cat('red'), color: onAccent(cat('red')), boxShadow: `0 6px 24px ${cat('red')}55` }}>
-        <Icon as={Lifebuoy} size="md" /> SOS
-      </button>
-      {sosOpen && <SosOverlay plans={plans} onClose={() => setSosOpen(false)} />}
-
       <PageLayout
         /* **1180 and split, measured against Insights' 1440 + `stacked`.**
            The obvious reading of "make it look like Insights" is to copy its

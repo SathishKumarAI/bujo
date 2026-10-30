@@ -29,11 +29,8 @@ export const TECHNIQUES: { term: string; how: ReactNode }[] = [
 /**
  * Beat the urge · the coping techniques, as reference.
  *
- * The in-crisis version of this list lives in `SosOverlay`, behind a fixed
- * floating button reachable from any scroll position — which is the only reason
- * it is allowed to sit in a rail group you have to pick rather than on the page
- * at all times. A page someone opens mid-urge must not put its coping list
- * behind a click; this one does not.
+ * Its in-crisis twin, `SosOverlay`, lost its floating button (owner ask,
+ * 2026-10-30), so this rail group is now the only copy of the list.
  *
  * **Seven objects, not seven lines.** This was an `<ol>` of `space-y-2` rows,
  * which is the shape `docs/PAGE-SHAPE.md` calls out: "a list of
