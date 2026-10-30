@@ -52,9 +52,27 @@ describe('Pull-ups log on a phone', () => {
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
   })
 
-  it('puts effort, duration and notes behind one dock button on a phone', async () => {
+  // The failure the owner named: the free-form log above the program. On a
+  // phone the program's day is the page; a free session is one row away.
+  it('opens on the Starting From Zero day, and a tick plus your max logs both', async () => {
     phone()
     wrap(<Pullups />)
+    expect(screen.getByRole('region', { name: /Starting From Zero/ })).toBeTruthy()
+    expect(screen.queryByRole('combobox', { name: 'Method' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /^Hollow Rocks: 0\/\d+ sets done/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Pull-up assessment/, expanded: false }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Pull-up assessment, what you did' }), '3')
+    await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
+    const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
+    expect(journal.settings.programDone).toEqual(expect.arrayContaining(['pullup-zero-w1d1-e0', 'pullup-zero-w1d1-e1']))
+    const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')
+    expect(logged.map((w: { sets: string[] }) => repsOf(w.sets))).toEqual([3])
+  })
+
+  it('puts effort, duration and notes behind one dock button in the free session', async () => {
+    phone()
+    wrap(<Pullups />)
+    await userEvent.click(screen.getByRole('button', { name: /Log a free session/ }))
     expect(screen.queryByPlaceholderText(/Grip, how the last set felt/)).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: /^Effort, duration, notes/ }))
     expect(screen.getByRole('dialog', { name: 'How it went' })).toBeTruthy()
@@ -67,6 +85,7 @@ describe('Pull-ups log on a phone', () => {
   it('says what the method means, and logs only the rounds you ticked', async () => {
     phone()
     wrap(<Pullups />)
+    await userEvent.click(screen.getByRole('button', { name: /Log a free session/ }))
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Method' }), 'ladder')
     expect(screen.getByText(/1,2,…,top per round/)).toBeTruthy()
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Rounds' }), '2')

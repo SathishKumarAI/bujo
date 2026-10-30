@@ -12,7 +12,8 @@ const DURATIONS = [10, 20, 30, 45] as const
 const ROUND_CHOICES = Array.from({ length: 12 }, (_, i) => i + 1)
 
 /**
- * PULL-UPS' PHONE LOG — Program's shape: choose at the top, read what to do,
+ * PULL-UPS' FREE-SESSION LOG, phone — opened from a row under the program
+ * (`PullupProgramDay` is the page's main log). Program's shape: choose at the top, read what to do,
  * tick it off, log from a dock.
  *
  * OWNS: the phone layout — Method and Rounds as one bar of native selects, a
@@ -149,8 +150,9 @@ export function PullupQuickLog({
         })}
       </div>
 
-      {/* The dock: date, the optional fields, and Log, above the bottom nav. */}
-      <div className="log-dock">
+      {/* The dock: date, the optional fields, and Log. This log lives in a
+          sheet, so it pins to the sheet's bottom, not above the nav. */}
+      <div className="log-dock" style={{ bottom: 0 }}>
         <label className="dock-chip mr-auto">
           <Icon as={CalendarDot} size="sm" className="text-fg-2" />
           {dayLabel}
