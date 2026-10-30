@@ -1,6 +1,6 @@
 import { useStickyState } from '../lib/useStickyState'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowCounterClockwise } from '@/components/icons'
+import { ArrowCounterClockwise, Barbell } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
@@ -10,6 +10,9 @@ import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import { useDevice } from '../components/shell/device'
 import { PullupQuickLog } from '../components/pullups/QuickLog'
+import { PullupProgramDay } from '../components/pullups/ProgramDay'
+import { Cell, Cells } from '../components/ui/cells'
+import { Sheet } from '../components/ui/sheet'
 import { buyingGuideUrl } from '../lib/video'
 import {
   ActHide,
@@ -139,18 +142,28 @@ export function Pullups() {
     [sessions],
   )
   const phone = useDevice() === 'mobile'
+  const [free, setFree] = useState(false)
 
-  /* ON A PHONE THE LOG IS THE PAGE — Pickleball's order (`PickleballPhone`):
-     the quick log first, the week in three tiles, then the manual's rail. No
-     `PageLayout`, no StatBar above the form, no act strip to open. */
+  /* ON A PHONE THE PROGRAM IS THE PAGE (owner, 2026-10-30): Starting From
+     Zero's day first (`PullupProgramDay`), a free session one row away in a
+     sheet, then the manual's rail without its own copy of the program. No
+     `PageLayout`, no StatBar, no act strip. */
   if (phone) {
     return (
       <div className="flex flex-col gap-6 pb-4">
         <h1 className="sr-only">Pull-ups</h1>
-        <LogSessionCard
-          defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close}
-          guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
-        />
+        <PullupProgramDay />
+        {/* A session outside the program — straight sets, a ladder, EMOM —
+            is the second thing you log here, so it is one row away. */}
+        <Cells title="Not on the program today?">
+          <Cell icon={Barbell} tone="sky" title="Log a free session" subtitle="Straight, ladder, pyramid or EMOM" onPress={() => setFree(true)} />
+        </Cells>
+        <Sheet open={free} onOpenChange={setFree} title="Free session" description="Pull-ups outside the program">
+          <LogSessionCard
+            defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setFree(false)}
+            guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
+          />
+        </Sheet>
         <Review
           sessions={sessions}
           history={history}
@@ -161,6 +174,7 @@ export function Pullups() {
           maxInput={maxInput}
           onMax={setMaxInput}
           onRemove={removeWorkout}
+          skipProgram
         />
       </div>
     )
@@ -778,7 +792,7 @@ const PU_PANELS = [
 ] as const
 
 function Review({
-  sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove,
+  sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove, skipProgram,
 }: {
   sessions: Workout[]
   history: CappedList<Workout>
@@ -789,11 +803,15 @@ function Review({
   maxInput: string
   onMax: (v: string) => void
   onRemove: (id: string) => void
+  /** Phone: the program is the top of the page, so it is not a rail row too. */
+  skipProgram?: boolean
 }) {
-  const [chapter, setChapter] = useStickyState<string>(
+  const [stored, setChapter] = useStickyState<string>(
     'pullups.chapter', 'program', PU_PANELS.map((c) => c.id),
   )
-  const current = PU_PANELS.find((c) => c.id === chapter) ?? PU_PANELS[0]
+  const panels = skipProgram ? PU_PANELS.filter((c) => c.id !== 'program') : PU_PANELS
+  const current = panels.find((c) => c.id === stored) ?? panels[0]
+  const chapter = current.id
 
   return (
     <section>
@@ -807,9 +825,9 @@ function Review({
         <SectionRail
           label="Pull-up sections"
           railAt="never"
-          groups={PU_PANELS.map((c) => ({ id: c.id, label: c.label }))}
+          groups={panels.map((c) => ({ id: c.id, label: c.label }))}
           value={chapter}
-          onChange={(id: string | null) => setChapter(id ?? 'program')}
+          onChange={(id: string | null) => setChapter(id ?? panels[0].id)}
         />
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
