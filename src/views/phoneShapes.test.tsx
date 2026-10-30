@@ -9,6 +9,7 @@ import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
 import { Nutrition } from './Nutrition'
 import { Challenges } from './Challenges'
+import { NoFap } from './NoFap'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -174,6 +175,32 @@ describe('Challenges on a phone', () => {
     // Done is a state: the button that says it cannot untick the day.
     expect((screen.getByRole('button', { name: /^Day 1 done/ }) as HTMLButtonElement).disabled).toBe(true)
   })
+})
+
+describe('Recovery on a phone', () => {
+  const nofap = () => JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"nofap"'))!).nofap
+
+  it('keeps the desktop log card, no dock', () => {
+    desktop()
+    wrap(<NoFap />)
+    expect(screen.queryByRole('button', { name: 'I held' })).toBeNull()
+  })
+
+  // The failure: the phone going back to twenty-five chips above the two
+  // endings. An urge is a select and a strength, and "I gave in" also counts
+  // the day — the same write the desktop form makes (useUrgeDraft).
+  it('logs an urge with what it was for and how strong, and I gave in counts the day', async () => {
+    phone()
+    wrap(<NoFap />)
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'What was the urge for?' }), 'Nicotine')
+    await userEvent.click(screen.getByRole('radio', { name: /^4 of 5/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'I held' }))
+    expect(nofap().urgeLog.at(-1)).toMatchObject({ trigger: 'Nicotine', intensity: 4 })
+    await new Promise((r) => setTimeout(r, 3100)) // the double-tap guard
+    await userEvent.click(screen.getByRole('button', { name: 'I gave in' }))
+    expect(nofap().urgeLog.at(-1)).toMatchObject({ outcome: 'followed' })
+    expect(nofap().relapses).toHaveLength(1)
+  }, 10000)
 })
 
 describe('a section rail on a phone', () => {

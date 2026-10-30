@@ -13,6 +13,7 @@ import { GROUPS, GROUP_LABEL, DEFAULT_GROUP, type Group } from '../lib/recoveryC
 import { feedbackLedger } from '../lib/recoveryFeedback'
 import { recoveryStep } from '../lib/recoveryStep'
 import { RecoveryReview } from '../components/recovery/Review'
+import { RecoveryPhone } from '../components/recovery/RecoveryPhone'
 import { CopingChapter, LapseTruthCard } from '../components/recovery/CopingChapter'
 import {
   StreakRingCard,
@@ -91,8 +92,8 @@ export function NoFap() {
     right. The sticky key means a choice, once made, holds.
   */
   const logCol = useActColumn('recovery')
-  // A phone logs, a desktop reads: the ring is a chart, so a phone gets its
-  // figures as one row and the log comes up under the sentence.
+  // A phone logs, a desktop reads: it gets `RecoveryPhone`, returned below
+  // after every hook.
   const phone = useDevice() === 'mobile'
 
   const s = data.nofap
@@ -245,6 +246,25 @@ export function NoFap() {
   }
 
 
+  // A phone gets its own drawing (`RecoveryPhone`): a scoreboard, the urge as
+  // one card with I held / I gave in in a dock, today's counts as rows. The
+  // urge draft is shared with the desktop form (`useUrgeDraft`).
+  if (phone) {
+    return (
+      <RecoveryPhone
+        current={stats.current}
+        best={stats.best}
+        totalClean={stats.totalClean}
+        urges={stats.urges}
+        sentence={step.text}
+        tally={tallyRows}
+        onStep={logLapseDay}
+        resetForm={<LogResetCard best={stats.best} totalClean={stats.totalClean} bare />}
+        review={<RecoveryReview group={group} onGroup={setGroup} q={q} onQ={setQ} cards={all} />}
+      />
+    )
+  }
+
   return (
     <>
       <PageLayout
@@ -331,15 +351,7 @@ export function NoFap() {
                 the duplication is exactly why the space was being wasted.
 
                 `bare`, because this block is already a card. */}
-            {phone ? (
-              <div className="mt-3 border-t border-line pt-2.5">
-                <StatBar facts={[
-                  { label: 'Clean', value: `${stats.current}d` },
-                  { label: 'Personal best', value: `${stats.best}d` },
-                  { label: 'Urges logged', value: stats.urges },
-                ]} />
-              </div>
-            ) : <StreakRingCard
+            <StreakRingCard
               stats={stats}
               relapsedToday={relapsedToday}
               startedOn={s.startedOn}
@@ -371,7 +383,7 @@ export function NoFap() {
                   ]} />
                 </div>
               }
-            />}
+            />
           </div>
         }
         zone2={logCol.shut ? (
