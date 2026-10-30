@@ -992,6 +992,19 @@ button.cell:active {
   color: var(--color-brand-text);
 }
 
+/* A day outside the range (before a challenge starts, after today): drawn so
+   the week keeps its shape, flat so it does not read as a control. The arrows
+   at the end of the range go quiet the same way. */
+.day-chip:disabled {
+  background: transparent;
+  box-shadow: none;
+}
+
+.round-btn:disabled {
+  box-shadow: none;
+  color: var(--color-fg-3);
+}
+
 .day-chip[aria-checked='true'] {
   background: color-mix(in oklab, var(--color-brand) 12%, var(--color-ink-1));
   box-shadow: 0 0 0 2px var(--color-brand);

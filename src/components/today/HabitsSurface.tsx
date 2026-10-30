@@ -20,6 +20,8 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
 import { dayHabitSummary } from '../../lib/streak'
+import { DayStrip } from '../ui/dayStrip'
+import { useDevice } from '../shell/device'
 import { addDays, monthDays, prettyMonth, todayISO, weekColumn } from '../../lib/date'
 import { Card, Empty, Segmented } from '../ui'
 import { Button } from '../ui/button'
@@ -119,7 +121,12 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
     list.splice(to, 0, moved)
     list.forEach((h, i) => { if ((h.order ?? 0) !== i) updateHabit(h.id, { order: i }) })
   }
-  const { month: ym } = useCursor()
+  // `day` is the page's date cursor — the day every other Today card writes
+  // to. The tick list used to read `todayISO()` instead, so stepping the top
+  // bar to yesterday moved mood and notes to yesterday and left a habit tap
+  // landing on today. The month grid below keeps its own month (`ym`).
+  const { month: ym, day, setDay } = useCursor()
+  const phone = useDevice() === 'mobile'
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   // Polarity for the habit about to be added. The PRESETS below have carried
@@ -208,7 +215,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   // Both halves now live in `dayHabitSummary`, because Today's masthead prints
   // the same ratio and a third independent count was exactly how the first two
   // came to disagree.
-  const { due: dueToday, done: todayDone, pct: donePct } = dayHabitSummary(data, today, { includeArchived: s.trackerShowArchived })
+  const { due: dueToday, done: todayDone, pct: donePct } = dayHabitSummary(data, day, { includeArchived: s.trackerShowArchived })
 
   return (
     <>
@@ -253,7 +260,16 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
               />
             </div>
           )}
-          <HabitRows habits={visibleHabits} data={data} today={today} onToggle={toggleHabit} onSetValue={setHabitValue} />
+          {/* A phone picks the day here as well as in the top bar — the same
+              cursor, with each day's done count — so backfilling yesterday is
+              one tap, not the month grid. */}
+          {phone && (
+            <div className="mb-3">
+              <DayStrip value={day} onChange={setDay} today={today} label="Day to mark"
+                mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: s.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> done</span></> : <span aria-hidden>·</span> }} />
+            </div>
+          )}
+          <HabitRows habits={visibleHabits} data={data} today={day} onToggle={toggleHabit} onSetValue={setHabitValue} />
           <DisclosureRow label="Add a habit">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <span className="text-label text-fg-2">Quick add:</span>

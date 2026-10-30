@@ -37,7 +37,7 @@ And the desktop contract at 1440×900: the same numbers, saved, to diff after.
 | charts on the phone | flag in the card registry (`chart: true` / `phone: true`), filter in the rail's `idsIn` | `lib/cycleCards.ts`, `lib/focusCards.ts` |
 | stacked pickers eating the top | one 44px bar of native `<select>`s | `.select-bar` / `.select-pill`, Program |
 | a long list of sub-rows | one row per item + tap counter, opening in place | `.lift-row` / `.set-count`, `SetCards bare` |
-| a week of anything | 7-chip day strip + that day below | `.day-chip`, `plan/PlanPhone.tsx` |
+| a page logged daily | `DayStrip` (each page's mark per day) + that day below; session pages keep the dock date chip | `ui/dayStrip.tsx`, REUSABLE-PATTERNS §31 |
 | numbers the user repeats | pre-fill from last time AND say "last …", − / +, a next-value hint | `program/phone/programLog.ts` |
 | optional fields | a bottom `Sheet` | `ui/sheet.tsx`, Pickleball `QuickLog` |
 | a big primary slab | 44px pill at the right in a sticky dock; use the space left of it | `.cta-compact`, `.log-dock`, `.dock-chip` |

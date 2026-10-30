@@ -3,9 +3,10 @@ import { Archive, CaretDown, Check, ListChecks, Plus, SlidersHorizontal, Trash, 
 import { Icon } from '@/components/Icon'
 import { Cells, Cell } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
+import { DayStrip } from '../ui/dayStrip'
 import { useConfirm } from '../ConfirmDialog'
 import { useJournal } from '../../store'
-import { addDays, dayDiff, prettyDay, WEEKDAYS } from '../../lib/date'
+import { addDays, dayDiff, prettyDay } from '../../lib/date'
 import { cat } from '../../lib/colors'
 import type { Challenge } from '../../lib/types'
 import {
@@ -17,8 +18,8 @@ import {
  * CHALLENGES ON A PHONE — Nutrition's and Program's shape.
  *
  * OWNS: the phone drawing. A select for the challenge when more than one is
- * running; Plan's 7-day strip for the day being ticked (each chip says if it
- * was complete); one scoreboard (day n of N, the next-step sentence, done /
+ * running; the shared `DayStrip` for the day being ticked (each chip says if
+ * it was complete; arrows reach any past week); one scoreboard (day n of N, the next-step sentence, done /
  * missed / streak); one row per rule with a tap-to-tick circle and its record
  * so far ("8 of 10 days"), opening in place to "what was it"; a dock with
  * Manage (archive, delete, every past day, a new challenge) and "Tick all".
@@ -75,9 +76,9 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
   const streak = streakBeforeToday(data, c, today) + (isDayComplete(data, c, today) ? 1 : 0)
   const n = dayDiff(start, d) + 1
   const dayName = d === today ? 'Today' : d === addDays(today, -1) ? 'Yesterday' : prettyDay(d)
-  // The last seven days of the challenge up to today — the ones you correct.
-  const strip = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6)).filter((x) => dayDiff(start, x) >= 0 && dayDiff(x, end) >= 0)
-  const tickAll = () => c.rules.forEach((_, i) => { if (allDone || !done.includes(i)) toggleChallengeRule(c.id, d, i) })
+  // Ticks only. At "Day n done" it is a state, not a toggle: one tap on a
+  // button saying done must not untick five rules — a rule's own circle does that.
+  const tickAll = () => c.rules.forEach((_, i) => { if (!done.includes(i)) toggleChallengeRule(c.id, d, i) })
   const pick = (x: string) => { setDay(x); setOpen(null) }
 
   return (
@@ -94,23 +95,11 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
         </label>
       )}
 
-      {strip.length > 0 && (
-        <div role="radiogroup" aria-label="Day to tick" className="grid grid-cols-7 gap-1">
-          {strip.map((x) => {
-            const dt = new Date(x + 'T00:00')
-            const ok = isDayComplete(data, c, x)
-            return (
-              <button key={x} type="button" role="radio" aria-checked={x === d} className="day-chip" data-today={x === today || undefined} onClick={() => pick(x)}>
-                <span className="text-label text-fg-2">{WEEKDAYS[dt.getDay()]}</span>
-                <span className="text-heading font-bold">{dt.getDate()}</span>
-                <span className="text-micro" style={{ color: ok ? cat('green') : undefined }}>
-                  {ok ? <Icon as={Check} size="sm" /> : <span className="text-fg-2">{rulesDoneOn(data, c.id, x).length}/{c.rules.length}</span>}
-                  <span className="sr-only">{ok ? ' every rule ticked' : ' rules ticked'}</span>
-                </span>
-              </button>
-            )
-          })}
-        </div>
+      {!notStarted && (
+        <DayStrip value={d} onChange={pick} today={today} label="Day to tick" min={start} max={dayDiff(end, today) > 0 ? end : today}
+          mark={(x) => isDayComplete(data, c, x)
+            ? <span style={{ color: cat('green') }}><Icon as={Check} size="sm" /><span className="sr-only"> every rule ticked</span></span>
+            : <>{rulesDoneOn(data, c.id, x).length}/{c.rules.length}<span className="sr-only"> rules ticked</span></>} />
       )}
 
       {/* THE SCOREBOARD: where you are, what to do, and the three counts that
@@ -172,7 +161,7 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
           <Icon as={SlidersHorizontal} size="md" />
         </button>
         {!notStarted && c.rules.length > 0 && (
-          <button type="button" className="cta cta-compact" aria-pressed={allDone} onClick={tickAll}>
+          <button type="button" className="cta cta-compact" disabled={allDone} onClick={tickAll}>
             <Icon as={allDone ? Check : ListChecks} size="md" />{allDone ? `Day ${n} done` : `Tick all · ${done.length}/${c.rules.length}`}
           </button>
         )}

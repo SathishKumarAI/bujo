@@ -1082,12 +1082,23 @@ time 35 lb × 12", a − / + that moves every not-yet-done set one plate
 carries to later sets that still held the old value (`followOn`) — the set
 you changed by hand keeps its value. All three are pure and tested.
 
-## 31 · The day strip — `plan/PlanPhone.tsx`
+## 31 · The day strip — `ui/dayStrip.tsx`
 
-Seven 48px day chips in one row (`.day-chip`, `role="radio"`), open counts
-under the date, arrows stepping whole weeks, the chosen day's items below
-with add / tick / edit-sheet / delete-with-confirm. Replaced a seven-column
-table that showed 4.5 columns at 390px. Any "week of things" on a phone.
+Seven 48px day chips in one row (`.day-chip`, `role="radio"`), week arrows
+either side, and a third line each page supplies through `mark(day)`: Plan
+its open tasks, Nutrition its calories, Challenges its rules ticked, Habits
+its done count. `mode="week"` is the calendar week (planning ahead);
+`mode="trailing"` is seven days ending today (logging — nothing to tick in
+the future). `min`/`max` draw out-of-range days flat and unpickable. Which
+seven days show is `lib/dayStrip.ts`, derived from the selection, so a strip
+has no paging state of its own. First drawn on Plan, where it replaced a
+seven-column table that showed 4.5 columns at 390px; hand-copied twice before
+it became one component.
+
+**Where it goes:** pages you log DAILY get the strip; session pages
+(Pull-ups, Program, Pickleball) keep the dock's date chip — a week of mostly
+empty days is noise. On Today it moves the page's own date cursor, never a
+second date.
 
 ## 32 · Charts are flagged in the registry, not hidden by hand
 
