@@ -8,7 +8,7 @@ import { ForkKnife, Gauge, NotePencil, Plus, Target, Trophy } from '@/components
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui'
 import { Ring } from '../components/ui/ring'
-import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, StatBar, useActColumn, NextStepBlock } from '../components/page'
+import { ActHide, ActStrip, DisclosureRow, EmptyFrame, PageLayout, useActColumn, NextStepBlock } from '../components/page'
 import { FOODS, SAMPLE_DAY, sumFoods, withFoodAdded, withFoodEdited, withFoodRemoved, withFoodServings, type CustomFood, type Food } from '../lib/foods'
 import type { LoggedFood } from '../lib/types'
 import { onRaised } from '../lib/colors'
@@ -19,6 +19,7 @@ import { DayLog } from '../components/nutrition/DayLog'
 import { CustomFoodForm } from '../components/nutrition/CustomFood'
 import { NutritionReview } from '../components/nutrition/Review'
 import { NUTRITION_PANELS } from '../components/nutrition/panels'
+import { NutritionPhone } from '../components/nutrition/NutritionPhone'
 import { MACROS, inTargetStreak, nextStep, targetsOf, topFoods, type Targets } from '../lib/nutritionReview'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
@@ -116,8 +117,8 @@ export function Nutrition() {
      and the review takes its width). */
   const [panel, setPanel] = useStickyState<string>('nutrition.panel', 'today', NUTRITION_PANELS.map((p) => p.id))
   const logCol = useActColumn('nutrition')
-  // On a phone the two rings (a chart, 104px tall) become one row of figures,
-  // so "Log what you ate" starts under the sentence instead of mid-screen.
+  // A phone gets its own drawing (`NutritionPhone`): a scoreboard, food as
+  // rows and Add in a dock — returned below, after every hook.
   const phone = useDevice() === 'mobile'
 
   const m = data.metrics.find((x) => x.date === date)
@@ -215,6 +216,96 @@ export function Nutrition() {
   const step = nextStep(data, { date, targets, today })
   const streak = inTargetStreak(data, targets, today)
 
+  const totalsFold = (
+    <>
+      {/* THE TYPED HALF, FOLDED. Five number fields and a demo button are
+          the fallback for a food the library does not have — used once in a
+          while, 280px tall, and they sat between the chips and nothing.
+          `DisclosureRow` rather than `<details>`, because it renders
+          `aria-expanded`, which is what `npm run a11y` clicks before it
+          scans; a raw `<details>` would keep these five controls out of the
+          gate entirely (the COD-93 trap). It is also the page's only
+          disclosure, which is that component's stated rule. */}
+      <DisclosureRow label="Or set the day’s totals directly">
+        {/*
+          FOUR FIELDS SIDE BY SIDE, with the unit OUTSIDE the box.
+
+          Reported as "this total formatted well, it's going out of the
+          screen size and it's overflowing … keep everything side by side,
+          all in four, and show the calories outside of it, taking only
+          input — like you did in add a food of your own". Measured before:
+          four `NumField`s, each a full-width 416px row holding a 144px
+          input with its unit laid INSIDE the box on a `pr-12` — 272px of
+          that row empty, four times, and the number typed into whatever
+          was left of a padded field.
+
+          `@min-[24rem]/act`, NOT `sm:`. The act column is **424px at a
+          1440 viewport**, where `sm` has been true for 200px — the exact
+          trap CLAUDE.md records from Strength's set row, and the one the
+          custom-food form below had too (five columns at 77px each on a
+          desktop, two at 158px on a phone, i.e. worse the bigger the
+          screen). The container is declared on this `<section>`.
+        */}
+        <div className="grid grid-cols-2 gap-2 @min-[24rem]/act:grid-cols-4">
+          {([
+            { key: 'calories' as const, label: 'Calories', unit: 'kcal', step: '10', hint: '450' },
+            ...MACROS.map((mac) => ({ key: mac.key, label: mac.label, unit: 'g', step: '1', hint: '30' })),
+          ]).map((f) => (
+            <label key={f.key} className="block min-w-0 text-micro text-fg-2">
+              {/* The unit lives HERE, in the label, where it is read once
+                  and costs the input nothing. */}
+              {f.label} <span className="text-fg-3">{f.unit}</span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={f.step}
+                value={m?.[f.key] != null ? String(m[f.key]) : ''}
+                placeholder={f.hint}
+                aria-label={`${f.label} for this day, in ${f.unit === 'g' ? 'grams' : 'kcal'}`}
+                onChange={(e) => setMetric(date, { [f.key]: e.target.value ? Number(e.target.value) : undefined })}
+                className="num mt-0.5 w-full py-1 text-right"
+              />
+            </label>
+          ))}
+        </div>
+        <Button
+          variant="ghost"
+          className="text-label"
+          onClick={() => setMetric(date, sumFoods(SAMPLE_DAY))}
+        >Fill a typical day</Button>
+      </DisclosureRow>
+    </>
+  )
+
+  if (phone) {
+    return (
+      <NutritionPhone
+        date={date}
+        setDate={setDate}
+        today={today}
+        metricOn={(d) => data.metrics.find((x) => x.date === d)}
+        targets={targets}
+        setTargets={setTargets}
+        usual={usual}
+        calorie={calorieState(kcal, targets.calories)}
+        streak={streak}
+        onAdd={addFood}
+        onEdit={editFood}
+        onRemove={removeFood}
+        onServings={setServings}
+        mine={mine}
+        extras={
+          <div className="@container/act flex flex-col gap-3">
+            <FoodSearch onAdd={addFood} />
+            <CustomFoodForm onAdd={addCustomFood} />
+            {totalsFold}
+          </div>
+        }
+      />
+    )
+  }
+
   return (
     <PageLayout
       tier={1180}
@@ -246,15 +337,7 @@ export function Nutrition() {
               />
             )
           })()}
-          {phone ? (
-            <div className="mt-3 border-t border-line pt-2.5">
-              <StatBar facts={[
-                { label: 'Calories', value: `${kcal} / ${targets.calories}` },
-                { label: 'Protein', value: `${protein} / ${targets.protein} g` },
-              ]} />
-              <p className="mt-1 text-label text-fg-2">{calorieState(kcal, targets.calories).line}</p>
-            </div>
-          ) : <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Ring
               value={Math.min(kcal, targets.calories)}
               max={targets.calories}
@@ -282,7 +365,7 @@ export function Nutrition() {
                 </p>
               )}
             </div>
-          </div>}
+          </div>
         </div>
       }
       actTop
@@ -351,63 +434,7 @@ export function Nutrition() {
           {/* A food the library has never heard of, kept for next time. */}
           <CustomFoodForm onAdd={addCustomFood} />
 
-          {/* THE TYPED HALF, FOLDED. Five number fields and a demo button are
-              the fallback for a food the library does not have — used once in a
-              while, 280px tall, and they sat between the chips and nothing.
-              `DisclosureRow` rather than `<details>`, because it renders
-              `aria-expanded`, which is what `npm run a11y` clicks before it
-              scans; a raw `<details>` would keep these five controls out of the
-              gate entirely (the COD-93 trap). It is also the page's only
-              disclosure, which is that component's stated rule. */}
-          <DisclosureRow label="Or set the day’s totals directly">
-            {/*
-              FOUR FIELDS SIDE BY SIDE, with the unit OUTSIDE the box.
-
-              Reported as "this total formatted well, it's going out of the
-              screen size and it's overflowing … keep everything side by side,
-              all in four, and show the calories outside of it, taking only
-              input — like you did in add a food of your own". Measured before:
-              four `NumField`s, each a full-width 416px row holding a 144px
-              input with its unit laid INSIDE the box on a `pr-12` — 272px of
-              that row empty, four times, and the number typed into whatever
-              was left of a padded field.
-
-              `@min-[24rem]/act`, NOT `sm:`. The act column is **424px at a
-              1440 viewport**, where `sm` has been true for 200px — the exact
-              trap CLAUDE.md records from Strength's set row, and the one the
-              custom-food form below had too (five columns at 77px each on a
-              desktop, two at 158px on a phone, i.e. worse the bigger the
-              screen). The container is declared on this `<section>`.
-            */}
-            <div className="grid grid-cols-2 gap-2 @min-[24rem]/act:grid-cols-4">
-              {([
-                { key: 'calories' as const, label: 'Calories', unit: 'kcal', step: '10', hint: '450' },
-                ...MACROS.map((mac) => ({ key: mac.key, label: mac.label, unit: 'g', step: '1', hint: '30' })),
-              ]).map((f) => (
-                <label key={f.key} className="block min-w-0 text-micro text-fg-2">
-                  {/* The unit lives HERE, in the label, where it is read once
-                      and costs the input nothing. */}
-                  {f.label} <span className="text-fg-3">{f.unit}</span>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step={f.step}
-                    value={m?.[f.key] != null ? String(m[f.key]) : ''}
-                    placeholder={f.hint}
-                    aria-label={`${f.label} for this day, in ${f.unit === 'g' ? 'grams' : 'kcal'}`}
-                    onChange={(e) => setMetric(date, { [f.key]: e.target.value ? Number(e.target.value) : undefined })}
-                    className="num mt-0.5 w-full py-1 text-right"
-                  />
-                </label>
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              className="text-label"
-              onClick={() => setMetric(date, sumFoods(SAMPLE_DAY))}
-            >Fill a typical day</Button>
-          </DisclosureRow>
+          {totalsFold}
         </section>
       )}
       zone3={
