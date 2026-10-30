@@ -1067,3 +1067,10 @@ button.cell:active {
 .pin-btn:active {
   background: var(--color-ink-2);
 }
+
+/* A SWITCH IN A SHEET keeps its own 20px track. `.ios-form`'s 44px floor on
+   every button stretched it into a tall purple pill (Challenges' "Strict"
+   toggle, measured in the New-challenge sheet); its row label is the target. */
+.ios-form button[role='switch'] {
+  min-height: 0;
+}

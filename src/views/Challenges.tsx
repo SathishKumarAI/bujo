@@ -1,4 +1,4 @@
-import { Archive, CaretLeft, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
+import { Archive, CaretDown, CaretLeft, CheckCircle, Clock, Plus, Target, Trash, Trophy, Warning, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../store'
@@ -16,6 +16,7 @@ import { useConfirm } from '../components/ConfirmDialog'
 import { QuietSection } from '../components/CollapsibleSection'
 import { notify } from '../lib/notify'
 import { useDevice } from '../components/shell/device'
+import { ChallengesPhone } from '../components/challenges/ChallengesPhone'
 import {
   CHALLENGE_PRESETS, isDayComplete, percentComplete, missedDays,
   streakBeforeToday, completedDays, isFinished, rulesDoneOn, longestStreak, elapsedDay,
@@ -92,9 +93,42 @@ export function Challenges() {
      "Start a challenge" would put the only thing to do behind a tap. */
   const logCol = useActColumn('challenges')
   const today = todayISO()
-  // A phone logs, a desktop reads: the stat tiles repeat zone 1's facts, and
-  // the 75-cell calendar is a picker for past days, so it folds away.
+  // A phone gets its own drawing (`ChallengesPhone`): a day strip, a
+  // scoreboard, rule rows and a dock — the calendar moves into its Manage sheet.
   const phone = useDevice() === 'mobile'
+
+  const archivedList = archived.length > 0 && (
+    <QuietSection
+      title={<>Completed &amp; archived</>}
+      subtitle={`${archived.length} past challenge${archived.length === 1 ? '' : 's'}`}
+    >
+      <ul className="space-y-2 text-body">
+        {archived.map((c) => (
+          <li key={c.id} className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2">
+            <span className="text-fg-1">
+              <Icon as={Trophy} size="sm" className="mr-1 inline text-fg-2" />{c.name} · {c.durationDays} days
+            </span>
+            <span className="text-label text-fg-2">{completedDays(data, c, today)} days done</span>
+          </li>
+        ))}
+      </ul>
+    </QuietSection>
+  )
+
+  if (phone) {
+    return (
+      <ChallengesPhone
+        active={active}
+        focused={focused}
+        onFocus={setFocusId}
+        today={today}
+        note={(index, day) => focused && <RuleNote challengeId={focused.id} day={day} index={index} />}
+        calendar={(at, onPick) => focused && <ChallengeCalendar challenge={focused} today={today} picked={at} onPick={onPick} />}
+        newForm={(done) => <NewChallengeForm onCreate={(c) => { addChallenge(c); done() }} />}
+        archived={archivedList}
+      />
+    )
+  }
 
   return (
     <PageLayout
@@ -166,7 +200,7 @@ export function Challenges() {
         )
       }
       zone3={<>
-        {!phone && <SummaryStrip items={reviewTiles(data, focused, today)} />}
+        <SummaryStrip items={reviewTiles(data, focused, today)} />
 
         {focused ? (
           /* THE REVIEW IS TWO COLUMNS, because it was one 262px calendar in a
@@ -182,11 +216,7 @@ export function Challenges() {
              in. */
           <div className="@container/review">
             <div className="grid items-start gap-4 @min-[38rem]/review:grid-cols-[auto_minmax(0,1fr)]">
-              {phone ? (
-                <QuietSection title="Past days" subtitle="tap a day to read or fix it" defaultOpen={false} stickyKey="challenges.calendar">
-                  <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />
-                </QuietSection>
-              ) : <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />}
+              <ChallengeCalendar challenge={focused} today={today} picked={picked} onPick={setPicked} />
               <DayPanel challenge={focused} today={today} picked={picked} onClear={() => setPicked(null)} />
             </div>
           </div>
@@ -202,23 +232,7 @@ export function Challenges() {
           </div>
         )}
 
-        {archived.length > 0 && (
-          <QuietSection
-            title={<>Completed &amp; archived</>}
-            subtitle={`${archived.length} past challenge${archived.length === 1 ? '' : 's'}`}
-          >
-            <ul className="space-y-2 text-body">
-              {archived.map((c) => (
-                <li key={c.id} className="flex items-center justify-between rounded-card bg-ink-2 px-3 py-2">
-                  <span className="text-fg-1">
-                    <Icon as={Trophy} size="sm" className="mr-1 inline text-fg-2" />{c.name} · {c.durationDays} days
-                  </span>
-                  <span className="text-label text-fg-2">{completedDays(data, c, today)} days done</span>
-                </li>
-              ))}
-            </ul>
-          </QuietSection>
-        )}
+        {archivedList}
       </>}
     />
   )
@@ -642,6 +656,7 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
   const [strict, setStrict] = useState(preset.strict)
   const [rules, setRules] = useState(preset.rules.join('\n'))
   const [startDate, setStartDate] = useState(todayISO())
+  const phone = useDevice() === 'mobile'
 
   function choosePreset(pn: string) {
     const p = CHALLENGE_PRESETS.find((x) => x.name === pn)!
@@ -665,11 +680,21 @@ function NewChallengeForm({ onCreate }: { onCreate: (c: Omit<Challenge, 'id'>) =
     <div className="space-y-3">
       <div>
         <p className="mb-1.5 text-label text-fg-2">Preset</p>
-        <Segmented
+        {/* Five presets are 430px of segments — off the edge of a phone
+            sheet, so there they are the phone's picker: a native select. */}
+        {phone ? (
+          <label className="select-pill">
+            <span className="sr-only">Preset</span>
+            <select value={presetName} onChange={(e) => choosePreset(e.target.value)}>
+              {CHALLENGE_PRESETS.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
+            </select>
+            <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
+          </label>
+        ) : <Segmented
           value={presetName}
           onChange={choosePreset}
           options={CHALLENGE_PRESETS.map((p) => ({ value: p.name, label: p.name }))}
-        />
+        />}
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-body text-fg-1">Name<Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My challenge" className="mt-1" /></label>
