@@ -3,7 +3,7 @@ import { ArrowRight, CalendarPlus, Check, Plus, ArrowsClockwise, Trash } from '@
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
-import { addDays, prettyDay, weekDaysOf, WEEKDAYS } from '../../lib/date'
+import { addDays, prettyDay, WEEKDAYS } from '../../lib/date'
 import type { Entry } from '../../lib/types'
 import { Cell, Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
@@ -37,12 +37,10 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
   const [editing, setEditing] = useState<Entry | null>(null)
   const [rules, setRules] = useState(false)
   const [allOverdue, setAllOverdue] = useState(false)
-  const week = weekDaysOf(sel, data.settings.weekStart)
   const onDay = (iso: string) => data.entries.filter((e) => e.date === iso)
   const items = onDay(sel)
   const openOn = (iso: string) => onDay(iso).filter((e) => e.type === 'task' && e.status === 'open').length
   const dayName = sel === today ? 'Today' : sel === addDays(today, 1) ? 'Tomorrow' : prettyDay(sel)
-  const first = new Date(week[0] + 'T00:00')
   const shownOverdue = allOverdue ? overdue : overdue.slice(0, 5)
 
   function add() {
@@ -56,7 +54,6 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
       <h1 className="sr-only">Plan · week</h1>
 
       <DayStrip mode="week" weekStart={data.settings.weekStart ?? 0} value={sel} onChange={setSel} today={today} label="Days"
-        title={`Week of ${first.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`}
         mark={(d) => { const n = openOn(d); return n ? <>{n}<span className="sr-only"> open</span></> : <span aria-hidden>·</span> }} />
 
       <section aria-label={dayName} className="ios-form flex flex-col gap-2">

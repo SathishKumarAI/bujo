@@ -1084,8 +1084,9 @@ you changed by hand keeps its value. All three are pure and tested.
 
 ## 31 · The day strip — `ui/dayStrip.tsx`
 
-Seven 48px day chips in one row (`.day-chip`, `role="radio"`), week arrows
-either side, and a third line each page supplies through `mark(day)`: Plan
+Seven 56px-tall day chips and a week arrow at each END of the same row
+(`.day-chip`, `.strip-arrow`) — one 56px row, not a header above it (it was
+120px with a "This week" line, reported as a waste of space), and a third line each page supplies through `mark(day)`: Plan
 its open tasks, Nutrition its calories, Challenges its rules ticked, Habits
 its done count. `mode="week"` is the calendar week (planning ahead);
 `mode="trailing"` is seven days ending today (logging — nothing to tick in

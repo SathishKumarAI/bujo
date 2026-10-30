@@ -4,10 +4,8 @@ import { Icon } from '@/components/Icon'
 import { dayDiff, WEEKDAYS } from '../../lib/date'
 import { stepWeek, stripDays } from '../../lib/dayStrip'
 
-const short = (iso: string) => new Date(iso + 'T00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-
 /**
- * THE PHONE'S DAY PICKER — seven days in one row, a week arrow either side.
+ * THE PHONE'S DAY PICKER — seven days and a week arrow at each end, one row.
  *
  * OWNS: the strip's look (`.day-chip` in `styles/phone.css`), which seven days
  * show (`lib/dayStrip.ts`), the arrows, and that a day outside [min, max] is
@@ -20,7 +18,7 @@ const short = (iso: string) => new Date(iso + 'T00:00').toLocaleDateString(undef
  * component; the arrows came with the merge, so any past day is two taps away
  * on every page that has one.
  */
-export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart = 0, min, max, label, title, mark }: {
+export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart = 0, min, max, label, mark }: {
   value: string
   onChange: (day: string) => void
   today: string
@@ -32,8 +30,6 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
   max?: string
   /** The radiogroup's name, e.g. "Day to log". */
   label: string
-  /** Replaces the date range between the arrows. */
-  title?: string
   /** The third line of a chip; include an `sr-only` word if it is a glyph. */
   mark: (day: string) => ReactNode
 }) {
@@ -42,33 +38,32 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
   const inRange = (d: string) => (!min || dayDiff(min, d) >= 0) && (!hi || dayDiff(d, hi) >= 0)
   const canBack = !min || dayDiff(min, days[0]) > 0
   const canOn = !hi || dayDiff(days[6], hi) > 0
-  const heading = title ?? (mode === 'trailing' && days[6] === today ? 'This week' : `${short(days[0])} – ${short(days[6])}`)
 
   return (
-    <section aria-label={label} className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <button type="button" className="round-btn" aria-label="Previous week" disabled={!canBack} onClick={() => onChange(stepWeek(value, -1, min, hi))}>
-          <Icon as={CaretLeft} size="sm" />
-        </button>
-        <span className="text-body font-semibold text-fg-1">{heading}</span>
-        <button type="button" className="round-btn" aria-label="Next week" disabled={!canOn} onClick={() => onChange(stepWeek(value, 1, min, hi))}>
-          <Icon as={CaretRight} size="sm" />
-        </button>
-      </div>
-      <div role="radiogroup" aria-label={label} className="grid grid-cols-7 gap-1">
+    /* ONE ROW: the arrows are the strip's two ends, not a header above it.
+       A "This week" line between two round buttons was 52px saying nothing
+       the chips do not — reported as "a waste of space" (120px → 56px). */
+    <section aria-label={label} className="grid grid-cols-[1.75rem_repeat(7,minmax(0,1fr))_1.75rem] gap-1">
+      <button type="button" className="strip-arrow" aria-label="Previous week" disabled={!canBack} onClick={() => onChange(stepWeek(value, -1, min, hi))}>
+        <Icon as={CaretLeft} size="sm" />
+      </button>
+      <div role="radiogroup" aria-label={label} className="col-span-7 grid grid-cols-7 gap-1">
         {days.map((d) => {
           const dt = new Date(d + 'T00:00')
           const ok = inRange(d)
           return (
             <button key={d} type="button" role="radio" aria-checked={d === value} className="day-chip" disabled={!ok}
               data-today={d === today || undefined} onClick={() => onChange(d)}>
-              <span className="text-label text-fg-2">{WEEKDAYS[dt.getDay()]}</span>
-              <span className="text-heading font-bold">{dt.getDate()}</span>
-              <span className="text-micro text-fg-2 tabular-nums">{ok ? mark(d) : <span aria-hidden>·</span>}</span>
+              <span className="text-micro text-fg-2">{WEEKDAYS[dt.getDay()]}</span>
+              <span className="text-body font-bold leading-tight">{dt.getDate()}</span>
+              <span className="text-micro leading-tight text-fg-2 tabular-nums">{ok ? mark(d) : <span aria-hidden>·</span>}</span>
             </button>
           )
         })}
       </div>
+      <button type="button" className="strip-arrow" aria-label="Next week" disabled={!canOn} onClick={() => onChange(stepWeek(value, 1, min, hi))}>
+        <Icon as={CaretRight} size="sm" />
+      </button>
     </section>
   )
 }

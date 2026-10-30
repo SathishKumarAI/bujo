@@ -978,7 +978,7 @@ button.cell:active {
    the brand colour. */
 .day-chip {
   display: flex;
-  min-height: 4.25rem;
+  min-height: 3.5rem;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -998,6 +998,23 @@ button.cell:active {
 .day-chip:disabled {
   background: transparent;
   box-shadow: none;
+}
+
+/* The strip's week arrows: the full chip height, a quiet glyph, no ring —
+   two 44px circles in a header row are what this replaced. */
+.strip-arrow {
+  display: grid;
+  place-items: center;
+  border-radius: 0.75rem;
+  color: var(--color-fg-2);
+}
+
+.strip-arrow:active {
+  background: var(--color-ink-2);
+}
+
+.strip-arrow:disabled {
+  color: var(--color-fg-3);
 }
 
 .round-btn:disabled {
