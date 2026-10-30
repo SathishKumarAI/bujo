@@ -48,7 +48,7 @@ on the desktop version: it must not change.
    panels, and an early `if (phone) return` with the log as zone 1.
    Since 2026-10-29 there is more to take (see `REUSABLE-PATTERNS.md` §28–33):
    a 44px selection bar of native selects (Program), one row per item with a
-   tap counter that opens in place (Program lifts), a 7-chip day strip (Plan),
+   tap counter that opens in place (Program lifts), the shared day strip (`ui/dayStrip.tsx`),
    "last time" + − / + + a next-value hint (Program weight), a floating 44px
    primary pill (`.cta-compact` in `.log-dock`), and `.phone-frame` for any
    rule that must apply to every phone page. `useActColumn` now OPENS on a

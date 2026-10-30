@@ -3,9 +3,10 @@ import { CaretDown, Minus, PushPin, PencilSimple, Plus, SlidersHorizontal, Trash
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
+import { DayStrip } from '../ui/dayStrip'
 import { SearchField } from '../page'
 import { useConfirm } from '../ConfirmDialog'
-import { addDays, prettyDay, WEEKDAYS } from '../../lib/date'
+import { addDays, prettyDay } from '../../lib/date'
 import { cat, onRaised } from '../../lib/colors'
 import { MACROS, type Targets } from '../../lib/nutritionReview'
 import { FOODS, foodMatches, type Food } from '../../lib/foods'
@@ -17,7 +18,7 @@ type Patch = Pick<LoggedFood, 'name' | 'kcal' | 'protein' | 'carbs' | 'fat'>
 /**
  * NUTRITION ON A PHONE — the day as a scoreboard, food as rows, Add in a dock.
  *
- * OWNS: the phone drawing. A 7-day strip (Plan's) picks the day; one card
+ * OWNS: the phone drawing. The shared `DayStrip` picks the day; one card
  * shows calories against the ceiling and the three macros against theirs;
  * "Your usual" is one row per food with a + (one tap logs it); the day's
  * foods are rows that open in place to servings, edit and remove (Program's
@@ -67,7 +68,6 @@ export function NutritionPhone({
   const foods = m?.foodLog ?? []
   const kcal = m?.calories ?? 0
   const dayName = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
-  const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
   const countOf = (f: Food) => foods.filter((x) => x.name === f.name).reduce((s, x) => s + (x.servings ?? 1), 0)
   const row = (f: Food) => <FoodRow key={f.name} food={f} n={countOf(f)} to={dayName} onAdd={onAdd} pinned={pinned.includes(f.name)} onPin={onPin} />
   const list = q.trim() ? FOODS.concat(mine).filter((f) => foodMatches(f, q)) : sourceList(source, usual, mine)
@@ -77,21 +77,9 @@ export function NutritionPhone({
     <div className="flex flex-col gap-4 pb-2">
       <h1 className="sr-only">Nutrition</h1>
 
-      {/* THE DAY, as Plan's strip: the last seven, each with its calories. */}
-      <div role="radiogroup" aria-label="Day to log" className="grid grid-cols-7 gap-1">
-        {week.map((d) => {
-          const dt = new Date(d + 'T00:00')
-          const c = metricOn(d)?.calories ?? 0
-          return (
-            <button key={d} type="button" role="radio" aria-checked={d === date} className="day-chip" data-today={d === today || undefined}
-              onClick={() => { setDate(d); setOpen(null); setEditing(null) }}>
-              <span className="text-label text-fg-2">{WEEKDAYS[dt.getDay()]}</span>
-              <span className="text-heading font-bold">{dt.getDate()}</span>
-              <span className="text-micro text-fg-2 tabular-nums">{c ? <>{c >= 1000 ? `${(c / 1000).toFixed(1)}k` : c}<span className="sr-only"> kcal</span></> : <span aria-hidden>·</span>}</span>
-            </button>
-          )
-        })}
-      </div>
+      {/* THE DAY: the shared strip, each chip with that day's calories. */}
+      <DayStrip value={date} onChange={(d) => { setDate(d); setOpen(null); setEditing(null) }} today={today} label="Day to log"
+        mark={(d) => { const c = metricOn(d)?.calories ?? 0; return c ? <>{c >= 1000 ? `${(c / 1000).toFixed(1)}k` : c}<span className="sr-only"> kcal</span></> : <span aria-hidden>·</span> }} />
 
       {/* THE SCOREBOARD: the ceiling, big, then the three macros under it. */}
       <section aria-label={`${dayName} so far`} className="cells px-4 py-3">

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CalendarPlus, CaretLeft, CaretRight, Check, Plus, ArrowsClockwise, Trash } from '@/components/icons'
+import { ArrowRight, CalendarPlus, Check, Plus, ArrowsClockwise, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
@@ -7,6 +7,7 @@ import { addDays, prettyDay, weekDaysOf, WEEKDAYS } from '../../lib/date'
 import type { Entry } from '../../lib/types'
 import { Cell, Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
+import { DayStrip } from '../ui/dayStrip'
 
 const GLYPH: Record<Entry['type'], string> = { task: '·', event: '○', note: '–' }
 const RULE_PRESETS = ['Take vitamins', 'Journal', 'Stretch 10 min']
@@ -54,28 +55,9 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
     <div className="flex flex-col gap-6 pb-4">
       <h1 className="sr-only">Plan · week</h1>
 
-      <section aria-label="Choose a day" className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <button type="button" className="round-btn" aria-label="Previous week" onClick={() => setSel(addDays(sel, -7))}><Icon as={CaretLeft} size="sm" /></button>
-          <span className="text-body font-semibold text-fg-1">
-            Week of {first.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-          </span>
-          <button type="button" className="round-btn" aria-label="Next week" onClick={() => setSel(addDays(sel, 7))}><Icon as={CaretRight} size="sm" /></button>
-        </div>
-        <div role="radiogroup" aria-label="Days" className="grid grid-cols-7 gap-1">
-          {week.map((d) => {
-            const dt = new Date(d + 'T00:00')
-            const n = openOn(d)
-            return (
-              <button key={d} type="button" role="radio" aria-checked={d === sel} className="day-chip" data-today={d === today || undefined} onClick={() => setSel(d)}>
-                <span className="text-label text-fg-2">{WEEKDAYS[dt.getDay()]}</span>
-                <span className="text-heading font-bold">{dt.getDate()}</span>
-                <span className="text-label text-fg-2">{n ? <>{n}<span className="sr-only"> open</span></> : <span aria-hidden>·</span>}</span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
+      <DayStrip mode="week" weekStart={data.settings.weekStart ?? 0} value={sel} onChange={setSel} today={today} label="Days"
+        title={`Week of ${first.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`}
+        mark={(d) => { const n = openOn(d); return n ? <>{n}<span className="sr-only"> open</span></> : <span aria-hidden>·</span> }} />
 
       <section aria-label={dayName} className="ios-form flex flex-col gap-2">
         <h2 className="px-1 text-title font-bold text-fg-1">{dayName}</h2>

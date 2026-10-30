@@ -171,7 +171,8 @@ describe('Challenges on a phone', () => {
     expect(Object.values(log()!)[0]).toEqual([0])
     await userEvent.click(screen.getByRole('button', { name: /^Tick all/ }))
     expect(Object.values(log()!)[0]).toHaveLength(ticks.length)
-    expect(screen.getByRole('button', { name: /^Day 1 done/ })).toBeTruthy()
+    // Done is a state: the button that says it cannot untick the day.
+    expect((screen.getByRole('button', { name: /^Day 1 done/ }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
 

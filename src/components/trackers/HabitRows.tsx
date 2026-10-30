@@ -1,4 +1,4 @@
-import { addDays } from '../../lib/date'
+import { addDays, prettyDay, todayISO } from '../../lib/date'
 import { habitDoneOn, habitTarget, habitValueOn, isNumericHabit, isSteppableHabit, limitStatus, nextHabitValue } from '../../lib/stats'
 import { isScheduledOn } from '../../lib/schedule'
 import { cat, onAccent, onRaised } from '../../lib/colors'
@@ -51,6 +51,9 @@ export function HabitRows({
   if (todays.length === 0) return null
 
   const days = Array.from({ length: WINDOW }, (_, i) => addDays(today, -(WINDOW - 1 - i)))
+  // `today` is the day being marked — Today's date cursor, not always the
+  // calendar's today — so the control names the day it writes to.
+  const when = today === todayISO() ? 'today' : `on ${prettyDay(today)}`
 
   return (
     <ul className="divide-y divide-line">
@@ -158,7 +161,7 @@ export function HabitRows({
               <button
                 onClick={() => (numeric ? onSetValue(today, h.id, nextHabitValue(type, target, val)) : onToggle(today, h.id))}
                 aria-pressed={on}
-                aria-label={h.avoid ? `${h.name} — mark a slip today` : `${h.name} — mark done today`}
+                aria-label={h.avoid ? `${h.name} — mark a slip ${when}` : `${h.name} — mark done ${when}`}
                 className="grid size-7 shrink-0 place-items-center rounded-pill border transition-colors"
                 style={{
                   borderColor: on ? accent : cat('surface1'),
@@ -171,7 +174,7 @@ export function HabitRows({
                   // once accounted for seven of sixteen contrast failures.
                   color: on ? onAccent(h.avoid ? cat('red') : accent) : cat('overlay0'),
                 }}
-                title={h.avoid ? (on ? 'Slipped today · tap to clear' : 'Clean today') : undefined}
+                title={h.avoid ? (on ? `Slipped ${when} · tap to clear` : `Clean ${when}`) : undefined}
               >
                 {h.avoid ? (on ? '!' : '✓') : on ? '✓' : ''}
               </button>
