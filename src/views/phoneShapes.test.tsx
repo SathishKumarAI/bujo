@@ -7,6 +7,7 @@ import { NavProvider } from '../components/shell/nav'
 import { DeviceProvider } from '../components/shell/device'
 import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
+import { Nutrition } from './Nutrition'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -100,6 +101,37 @@ describe('Pull-ups log on a phone', () => {
     const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')
     expect(logged).toHaveLength(1)
     expect(repsOf(logged[0].sets)).toBe(perRound)
+  })
+})
+
+describe('Nutrition on a phone', () => {
+  const today = () => {
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"metrics"'))!)
+    return j.metrics.find((m: { foodLog?: unknown[] }) => m.foodLog?.length)
+  }
+
+  it('keeps the desktop act: date field and chip picker, no dock', () => {
+    desktop()
+    wrap(<Nutrition />)
+    expect(screen.queryByRole('button', { name: 'Add food' })).toBeNull()
+    expect(screen.queryByRole('radiogroup', { name: 'Day to log' })).toBeNull()
+  })
+
+  // The failure: the phone going back to a page of chips and charts. The
+  // log is a day strip, a scoreboard and rows; adding goes through the sheet
+  // and lands as a row whose servings change in place.
+  it('adds a food from the sheet, and + on its row is a second serving', async () => {
+    phone()
+    wrap(<Nutrition />)
+    expect(screen.getByRole('radiogroup', { name: 'Day to log' })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Add food' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Search every food' }), 'plain dosa')
+    await userEvent.click(screen.getByRole('button', { name: /^Add Plain dosa, 133 kcal/ }))
+    expect(today()).toMatchObject({ calories: 133 })
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Plain dosa/, expanded: false }))
+    await userEvent.click(screen.getByRole('button', { name: 'One more serving of Plain dosa' }))
+    expect(today()).toMatchObject({ calories: 266, foodLog: [expect.objectContaining({ servings: 2 })] })
   })
 })
 

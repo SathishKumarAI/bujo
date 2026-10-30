@@ -142,7 +142,7 @@ export function DayLog({ date, today, foods, onEdit, onRemove, onServings }: {
 }
 
 /** The four numbers and the name, in the row itself. */
-function FoodEditor({ entry, onSave, onCancel }: {
+export function FoodEditor({ entry, onSave, onCancel }: {
   entry: LoggedFood
   onSave: (patch: Pick<LoggedFood, 'name' | 'kcal' | 'protein' | 'carbs' | 'fat'>) => void
   onCancel: () => void

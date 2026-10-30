@@ -157,6 +157,13 @@ it — the e2e did exactly that and logged a session with no duration. `Seg`'s
 `allowNone` is for optional answers that start empty, never for a carried-over
 value.
 
+Trap: **a `Sheet` is `.ios-form`, and `ChipPick` inside one draws as a
+squashed segmented row.** The phone form rules restyle every chip button, so
+Nutrition's food chips rendered as eight 44px circles cutting their own names
+("Chic", "Gril", "Bro") when the desktop picker was dropped into the Add-food
+sheet. A phone list is rows anyway: `NutritionPhone`'s `FoodRow` (name,
+serving, + ) is the shape — do not put a desktop chip picker in a sheet.
+
 Trap: **axe's `label-content-name-mismatch` compares WHOLE WORDS.** "Dink"
 inside the letters of "Dinking" still failed, at every theme; so does an
 `aria-label` that replaces a row's visible text. Say extra words BEFORE the
