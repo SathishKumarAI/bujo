@@ -7,6 +7,7 @@ import { NavProvider } from '../components/shell/nav'
 import { DeviceProvider } from '../components/shell/device'
 import { PhonePoints } from '../components/PhonePoints'
 import { Pullups } from './Pullups'
+import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
 
@@ -51,27 +52,35 @@ describe('Pull-ups log on a phone', () => {
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
   })
 
-  it('puts duration and notes behind one row on a phone, and the row opens them', async () => {
+  it('puts effort, duration and notes behind one dock button on a phone', async () => {
     phone()
     wrap(<Pullups />)
     expect(screen.queryByPlaceholderText(/Grip, how the last set felt/)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Log session' })).toBeTruthy()
-    await userEvent.click(screen.getByRole('button', { name: /Duration, notes/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Effort, duration, notes/ }))
     expect(screen.getByRole('dialog', { name: 'How it went' })).toBeTruthy()
     expect(screen.getByPlaceholderText(/Grip, how the last set felt/)).toBeTruthy()
   })
 
-  // The failure: the phone going back to the desktop's stacked form, where Log
-  // session sat under the bottom nav. Pickleball's shape is a scoreboard.
-  it('steps the top set and rounds on a scoreboard and logs what it shows', async () => {
+  // The failures: the method left unexplained above the form (owner: "how
+  // will I know what is straight and ladder"), and Log writing the plan when
+  // only some rounds were ticked.
+  it('says what the method means, and logs only the rounds you ticked', async () => {
     phone()
     wrap(<Pullups />)
-    await userEvent.click(screen.getByRole('button', { name: 'Rounds, one more' }))
-    const rounds = screen.getByRole('status', { name: 'Rounds' })
-    expect(rounds.textContent).toBe('4')
-    await userEvent.click(screen.getByRole('button', { name: 'Log session' }))
-    const journal = Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))
-    expect(journal).toContain('"activity":"pullups"')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Method' }), 'ladder')
+    expect(screen.getByText(/1,2,…,top per round/)).toBeTruthy()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Rounds' }), '2')
+    await userEvent.click(screen.getByRole('button', { name: /^Round 1, tap when done/ }))
+    const log = screen.getByRole('button', { name: /^Log · \d+ reps$/ })
+    const perRound = Number(/(\d+)/.exec(log.textContent ?? '')![1])
+    await userEvent.click(screen.getByRole('button', { name: /^Round 2, tap when done/ }))
+    expect(log.textContent).toContain(`${perRound * 2} reps`)
+    await userEvent.click(screen.getByRole('button', { name: /^Round 2, done/ }))
+    await userEvent.click(log)
+    const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
+    const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')
+    expect(logged).toHaveLength(1)
+    expect(repsOf(logged[0].sets)).toBe(perRound)
   })
 })
 

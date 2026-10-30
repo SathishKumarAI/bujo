@@ -1,6 +1,6 @@
 import { useStickyState } from '../lib/useStickyState'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowCounterClockwise, Barbell, Target, Timer } from '@/components/icons'
+import { ArrowCounterClockwise } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
@@ -9,7 +9,6 @@ import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quic
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import { useDevice } from '../components/shell/device'
-import { StatTiles } from '../components/ui/statTiles'
 import { PullupQuickLog } from '../components/pullups/QuickLog'
 import { buyingGuideUrl } from '../lib/video'
 import {
@@ -145,16 +144,13 @@ export function Pullups() {
      the quick log first, the week in three tiles, then the manual's rail. No
      `PageLayout`, no StatBar above the form, no act strip to open. */
   if (phone) {
-    const weekSessions = sessions.filter((s) => { const d = dayDiff(s.date, today); return d >= 0 && d < 7 }).length
     return (
       <div className="flex flex-col gap-6 pb-4">
         <h1 className="sr-only">Pull-ups</h1>
-        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close} />
-        <StatTiles label="This week" tiles={[
-          { k: 'Reps', v: `${weekReps}/${ability.weeklyLow}`, icon: Target, tone: 'sky' },
-          { k: 'Training set', v: String(ability.trainingSet), icon: Barbell, tone: 'green' },
-          { k: 'Sessions', v: String(weekSessions), icon: Timer, tone: 'mauve' },
-        ]} />
+        <LogSessionCard
+          defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close}
+          guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
+        />
         <Review
           sessions={sessions}
           history={history}
@@ -395,9 +391,11 @@ function FormRule({ children }: { children: React.ReactNode }) {
 }
 
 function LogSessionCard({
-  defaultTop, onSave, last, onShut,
+  defaultTop, onSave, last, onShut, guide,
 }: {
   defaultTop: number
+  /** Phone only: what the ability table says to do this day and week. */
+  guide?: { group: string; daily: string; weekly: string; weekReps: number }
   /** Fold the act column to its rail. The VIEW owns it — shut, the page grid
    *  gives the act's width to the review, and a card cannot collapse a column
    *  it does not own. */
@@ -437,14 +435,15 @@ function LogSessionCard({
     flash.current = setTimeout(() => setJustLogged(null), 2600)
   }
 
-  function save() {
-    if (reps.length === 0) return
+  /** `sets` defaults to the whole plan; the phone passes the rounds you ticked. */
+  function save(sets: number[] = reps) {
+    if (sets.length === 0) return
     onSave({
       date,
       activity: 'pullups',
       durationMin: duration,
       rpe,
-      sets: setLines(reps),
+      sets: setLines(sets),
       notes: notes.trim(),
     })
     // Reset what describes THIS session; keep method and rounds, which are how
@@ -454,7 +453,7 @@ function LogSessionCard({
     setRpe(undefined)
     setNotes('')
     setDate(today)
-    done(`${total} reps in ${reps.length} sets`)
+    done(`${sets.reduce((a, n) => a + n, 0)} reps in ${sets.length} sets`)
   }
 
   /** The previous session again, on today. The most common log, as one tap. */
@@ -471,14 +470,14 @@ function LogSessionCard({
     done(`Repeated ${repsOf(last.sets)} reps`)
   }
 
-  if (phone) {
+  if (phone && guide) {
     return (
       <PullupQuickLog
         date={date} setDate={setDate} method={method} setMethod={setMethod}
-        top={topN} setTop={setTop} rounds={rounds} setRounds={setRounds}
+        top={topN} defaultTop={defaultTop} setTop={setTop} rounds={rounds} setRounds={setRounds}
         duration={duration} setDuration={setDuration} rpe={rpe} setRpe={setRpe}
-        notes={notes} setNotes={setNotes} reps={reps} total={total} effort={EFFORT}
-        lastReps={last ? repsOf(last.sets) : undefined} onRepeat={repeatLast} onLog={save}
+        notes={notes} setNotes={setNotes} effort={EFFORT} guide={guide}
+        last={last ? { reps: repsOf(last.sets), date: last.date } : undefined} onRepeat={repeatLast} onLog={save}
         justLogged={justLogged}
       />
     )
@@ -675,7 +674,7 @@ function LogSessionCard({
           <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Grip, how the last set felt…" className="mt-1" />
         </label>
 
-        <Button onClick={save} disabled={reps.length === 0} className="press-3d w-full">Log session</Button>
+        <Button onClick={() => save()} disabled={reps.length === 0} className="press-3d w-full">Log session</Button>
         {/* What pressing it writes, before it is pressed. The card already had
             a confirmation AFTER the fact (`justLogged`) and nothing before —
             and the home logger's equivalent line is the thing that makes a
