@@ -1,128 +1,96 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowCounterClockwise, CaretDown, HandFist, Minus, Plus, SlidersHorizontal } from '@/components/icons'
+import { ArrowCounterClockwise, HandFist, Minus, Plus, SlidersHorizontal, CaretDown } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cell, Cells } from '../ui/cells'
 import { Seg } from '../ui/seg'
 import { Sheet } from '../ui/sheet'
+import { useJournal } from '../../store'
 import { cat, onRaised } from '../../lib/colors'
-import { URGE_PRESETS, HALT_STATES, type HaltState } from '../../lib/streak'
+import { HALT_STATES, type HaltState } from '../../lib/streak'
 import { LONELY_KINDS } from '../../lib/recoveryFeedback'
 import { formatAmount, unitOf } from '../../lib/addictionUnits'
-import { INTENSITY_WORD, TECHNIQUES, useUrgeDraft } from './useUrgeDraft'
+import { frequentUrges, type FrequentUrge } from '../../lib/frequentUrges'
+import { TECHNIQUES, useUrgeDraft } from './useUrgeDraft'
 import type { DayTallyRow } from './DayTallyCard'
 
-const OTHER = '__other__'
-
 /**
- * RECOVERY ON A PHONE — Pickleball's quick log and Program's rows.
+ * RECOVERY ON A PHONE — Nutrition's "Your usual", for urges.
  *
- * OWNS: the phone drawing. A scoreboard (days clean big, against your best);
- * the urge as one card — what it was for in a native select, how strong as a
- * segmented row — with "I held" and "I gave in" in the dock and everything
- * optional (what helped, HALT, which kind of lonely, your own words) in a
- * sheet; today's count per tracked thing as rows with − / +; a reset behind
- * one row and a sheet; the read-only review below.
- * DOES NOT OWN: the urge draft or its write (`useUrgeDraft`, shared with the
- * desktop's `UrgeSurfingCard`), the reset form or the review (handed in).
+ * OWNS: the phone drawing. One line of where you are (days clean against
+ * your best); then your frequent urges as rows (`lib/frequentUrges.ts`:
+ * tracked first, then what you log most, then presets), each with **Held**
+ * and **Gave in** — one tap logs it; "Something else" for a new one; what
+ * helped and HALT in an optional sheet; today's count per tracked thing as
+ * rows with − / +; a reset behind one row; the read-only review below.
+ * DOES NOT OWN: the urge write (`useUrgeDraft`, shared with the desktop's
+ * `UrgeSurfingCard`), the reset form or the review (handed in).
  *
- * Measured before: 2,124px at 390 — the urge form alone was about twenty-five
- * chips in four rows, and the two outcome buttons sat above all of them.
- * Owner ask, 2026-10-30: "work on this as for the pickleball and program".
+ * Owner asks, 2026-10-30: "give me options like frequent options, just like
+ * nutrition … not use [the strength]" and "the top one … redundant, taking a
+ * lot of space; the focus is the data entry". So no intensity on a phone (an
+ * urge stores none rather than a default) and the scoreboard is one line.
  */
-export function RecoveryPhone({ current, best, totalClean, urges, sentence, tally, onStep, resetForm, review }: {
+export function RecoveryPhone({ current, best, tally, onStep, resetForm, review }: {
   current: number
   best: number
-  totalClean: number
-  urges: number
-  /** Zone 1's one sentence (`recoveryStep`). */
-  sentence: string
   tally: DayTallyRow[]
   onStep: (id: string | null, step: number) => void
   resetForm: ReactNode
   review: ReactNode
 }) {
+  const { data } = useJournal()
   const d = useUrgeDraft()
   const [more, setMore] = useState(false)
+  const [other, setOther] = useState(false)
   const [resetting, setResetting] = useState(false)
-  const [typing, setTyping] = useState(false)
-  const presets = URGE_PRESETS.filter((u) => !d.addictions.some((a) => a.name.toLowerCase() === u.toLowerCase()))
-  const known = d.addictions.some((a) => a.name === d.urge) || presets.includes(d.urge)
+  const [name, setName] = useState('')
+  const frequent = frequentUrges(data)
   const extras = (d.technique ? 1 : 0) + d.halt.length
   const pct = best > 0 ? Math.min(100, (current / best) * 100) : 100
-
-  function pick(v: string) {
-    if (v === OTHER) { setTyping(true); d.setUrge(''); d.setAddictionId(''); return }
-    setTyping(false)
-    const own = d.addictions.find((a) => a.name === v)
-    d.setUrge(v)
-    d.setAddictionId(own ? own.id : '')
-  }
-  function log(outcome: 'resisted' | 'followed') { d.logUrge(outcome); setTyping(false) }
   const toggleHalt = (id: HaltState) => d.setHalt(d.halt.includes(id) ? d.halt.filter((x) => x !== id) : [...d.halt, id])
+  const log = (outcome: 'resisted' | 'followed', u: Pick<FrequentUrge, 'name' | 'addictionId'>) => d.logUrge(outcome, u)
 
   return (
     <div className="flex flex-col gap-4 pb-2">
       <h1 className="sr-only">Recovery</h1>
 
-      {/* THE SCOREBOARD: the run, against the record it is chasing. */}
-      <section aria-label="Your streak" className="cells px-4 py-3">
-        <div className="flex items-baseline gap-2">
-          <span className="score-num text-fg-1">{current}</span>
-          <span className="text-label text-fg-2">{current === 1 ? 'day' : 'days'} clean · best {best}</span>
+      {/* WHERE YOU ARE, in one line: the run and the record it is chasing. */}
+      <section aria-label="Your streak" className="cells px-4 py-2.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-title font-bold text-fg-1 tabular-nums">{current} <span className="text-body font-medium text-fg-2">{current === 1 ? 'day' : 'days'} clean</span></span>
+          <span className="text-label text-fg-2">best {best}{current < best && ` · ${best - current} to go`}</span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Days clean against your best" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
-          <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${pct}%` }} />
-        </div>
-        <p className="mt-1.5 text-label text-fg-2">{sentence}</p>
-        <div className="mt-3 grid grid-cols-3 gap-3 border-t border-line pt-3">
-          {([['Best', `${best}d`], ['Total clean', `${totalClean}d`], ['Urges', urges]] as const).map(([k, v]) => (
-            <div key={k}>
-              <span className="block text-label text-fg-2">{k}</span>
-              <span className="block text-heading font-semibold text-fg-1 tabular-nums">{v}</span>
-            </div>
-          ))}
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Days clean against your best" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+          <div className="h-full rounded-pill bg-green" style={{ width: `${pct}%` }} />
         </div>
       </section>
 
-      {/* THE URGE, ONE CARD: what for, how strong. The two endings are in the dock. */}
-      <section aria-label="Feeling an urge?" className="flex flex-col gap-2">
-        <h2 className="px-1 text-heading font-semibold text-fg-1">Feeling an urge?</h2>
-        <div className="cells flex flex-col gap-3 px-4 py-3">
-          <label className="select-pill">
-            <span className="sr-only">What was the urge for?</span>
-            <select value={typing ? OTHER : known ? d.urge : ''} onChange={(e) => pick(e.target.value)}>
-              <option value="" disabled>What is it for?</option>
-              {d.addictions.length > 0 && (
-                <optgroup label="You track">
-                  {d.addictions.map((a) => <option key={a.id} value={a.name}>{d.label(a.name)}</option>)}
-                </optgroup>
-              )}
-              <optgroup label={d.addictions.length ? 'Others' : 'Urges'}>
-                {presets.map((u) => <option key={u} value={u}>{d.label(u)}</option>)}
-              </optgroup>
-              <option value={OTHER}>Something else…</option>
-            </select>
-            <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-          </label>
-          {typing && (
-            <input value={d.urge} onChange={(e) => { d.setUrge(e.target.value); d.setAddictionId('') }} placeholder="Name it" aria-label="Your own words for the urge"
-              className="min-h-11 rounded-[0.75rem] bg-ink-2 px-3 text-body text-fg-1" autoFocus />
-          )}
-          {d.matchedPlan && (
-            <p className="text-label text-fg-2">
-              <span className="font-medium" style={{ color: onRaised('teal') }}>Your plan for “{d.matchedPlan.trigger}”:</span>{' '}
-              {d.matchedPlan.coping || 'name it and let it pass.'}
-            </p>
-          )}
-          <div>
-            <div className="mb-1 flex items-baseline justify-between px-1">
-              <span className="text-label text-fg-2">How strong</span>
-              <span className="text-label font-medium text-fg-1">{INTENSITY_WORD[d.intensity - 1]}</span>
+      {/* THE URGE, ONE TAP: a row each for what you usually log. */}
+      <section aria-label="Log an urge" className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-heading font-semibold text-fg-1">Log an urge</h2>
+          <button type="button" className="inline-flex min-h-11 items-center gap-1.5 text-label font-semibold" style={{ color: 'var(--color-brand-text)' }}
+            onClick={() => setMore(true)} aria-label={`Details${extras ? ` · ${extras}` : ''}: what helped and HALT, for the next urge`}>
+            <Icon as={SlidersHorizontal} size="sm" />Details{extras ? ` · ${extras}` : ''}
+          </button>
+        </div>
+        <div className="cells">
+          {frequent.map((u) => (
+            <div key={u.name} className="cell gap-2">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body font-medium text-fg-1">{d.label(u.name)}</span>
+                <span className="block truncate text-label text-fg-2">
+                  {u.held + u.gaveIn ? `held ${u.held} · gave in ${u.gaveIn} · 30 days` : u.addictionId ? 'Tracked' : 'Not logged yet'}
+                </span>
+              </span>
+              <button type="button" className="urge-gave" aria-label={`${d.label(u.name)}: Gave in`} onClick={() => log('followed', u)}>Gave in</button>
+              <button type="button" className="urge-held" aria-label={`${d.label(u.name)}: Held`} onClick={() => log('resisted', u)}><Icon as={HandFist} size="sm" />Held</button>
             </div>
-            {/* Starts at 3 every time — a carried value, so no tap-to-clear. */}
-            <Seg label="Intensity" value={d.intensity} onChange={(v) => v && d.setIntensity(v)}
-              options={[1, 2, 3, 4, 5].map((n) => ({ value: n, label: String(n), name: `${n} of 5 · ${INTENSITY_WORD[n - 1]}` }))} />
-          </div>
+          ))}
+          <button type="button" className="cell" onClick={() => setOther(true)}>
+            <span className="flex-1 text-body text-fg-2">Something else…</span>
+            <Icon as={Plus} size="sm" className="text-fg-2" />
+          </button>
         </div>
       </section>
 
@@ -147,27 +115,28 @@ export function RecoveryPhone({ current, best, totalClean, urges, sentence, tall
         })}
       </Cells>
 
-      {/* After Today, not at the foot: it rides the screen bottom while the
-          urge and the counts are above it, then settles here and scrolls away
-          — the review below is for reading and nothing floats over it. */}
-      <div className="log-dock">
-        <button type="button" className="round-btn" onClick={() => setMore(true)} aria-label={`What helped and HALT${extras ? `, ${extras} added` : ''}`}>
-          <Icon as={SlidersHorizontal} size="md" />
-        </button>
-        <button type="button" className="dock-chip" onClick={() => log('followed')}>I gave in</button>
-        <button type="button" className="cta cta-compact" onClick={() => log('resisted')}>
-          <Icon as={HandFist} size="md" />I held
-        </button>
-      </div>
-
       <Cells>
-        <Cell icon={ArrowCounterClockwise} tone="red" title="Log a reset" subtitle={`Restarts the count · best ${best}d and total kept`} onPress={() => setResetting(true)} />
+        <Cell icon={ArrowCounterClockwise} tone="red" title="Log a reset" subtitle={`Restarts the count · best ${best}d kept`} onPress={() => setResetting(true)} />
       </Cells>
 
       {review}
 
+      <Sheet open={other} onOpenChange={setOther} title="Something else" description="It joins your list once you log it">
+        <div className="flex flex-col gap-3">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name it" aria-label="What the urge was for"
+            className="min-h-11 rounded-[0.75rem] bg-ink-2 px-3 text-body text-fg-1" />
+          <div className="flex gap-2">
+            {(['followed', 'resisted'] as const).map((o) => (
+              <button key={o} type="button" disabled={!name.trim()} className={o === 'resisted' ? 'urge-held flex-1' : 'urge-gave flex-1'}
+                onClick={() => { log(o, { name: name.trim() }); setName(''); setOther(false) }}>
+                {o === 'resisted' ? <><Icon as={HandFist} size="sm" />Held</> : 'Gave in'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Sheet>
 
-      <Sheet open={more} onOpenChange={setMore} title="About this urge" description="All optional">
+      <Sheet open={more} onOpenChange={setMore} title="Details" description="Optional · added to the next urge you log">
         <div className="flex flex-col gap-4">
           <div>
             <p className="mb-1 px-1 text-label text-fg-2">What helped</p>

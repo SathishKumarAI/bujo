@@ -246,17 +246,14 @@ export function NoFap() {
   }
 
 
-  // A phone gets its own drawing (`RecoveryPhone`): a scoreboard, the urge as
-  // one card with I held / I gave in in a dock, today's counts as rows. The
-  // urge draft is shared with the desktop form (`useUrgeDraft`).
+  // A phone gets its own drawing (`RecoveryPhone`): one line of days clean,
+  // your frequent urges as one-tap Held / Gave in rows, today's counts. The
+  // urge write is shared with the desktop form (`useUrgeDraft`).
   if (phone) {
     return (
       <RecoveryPhone
         current={stats.current}
         best={stats.best}
-        totalClean={stats.totalClean}
-        urges={stats.urges}
-        sentence={step.text}
         tally={tallyRows}
         onStep={logLapseDay}
         resetForm={<LogResetCard best={stats.best} totalClean={stats.totalClean} bare />}

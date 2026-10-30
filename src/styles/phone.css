@@ -1104,3 +1104,42 @@ button.cell:active {
 .ios-form button[role='switch'] {
   min-height: 0;
 }
+
+/* RECOVERY'S URGE ROWS (`recovery/RecoveryPhone.tsx`): two endings per row.
+   Held is the brand pill — the outcome worth aiming at; Gave in is a
+   quiet outline of the same size, deliberately not styled as a failure. */
+.urge-held,
+.urge-gave {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding-inline: 0.875rem;
+  border-radius: 999px;
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+
+.urge-held {
+  /* Tonal, not filled: six filled pills down a list shout over each other.
+     brand-text on brand-wash is the app's one solved accent pair. */
+  background: var(--color-brand-wash);
+  color: var(--color-brand-text);
+}
+
+.urge-gave {
+  box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
+  color: var(--color-fg-1);
+}
+
+.urge-held:active,
+.urge-gave:active {
+  transform: scale(0.96);
+}
+
+.urge-held:disabled,
+.urge-gave:disabled {
+  opacity: 0.45;
+}

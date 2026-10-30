@@ -64,17 +64,22 @@ export function useUrgeDraft() {
    * STREAK and the occurrence count still come from `Relapse` — one number, one
    * source, no double counting.
    */
-  function logUrge(outcome: 'resisted' | 'followed') {
+  /**
+   * `pick`: the phone's one-tap row — its name and streak replace the form's
+   * "what for", and no intensity is written, because the phone never asks for
+   * one and a default would be a number nobody chose.
+   */
+  function logUrge(outcome: 'resisted' | 'followed', pick?: { name: string; addictionId?: string }) {
     const now = Date.now()
     if (now - lastUrgeAt.current < 3000) return
     lastUrgeAt.current = now
     // Falls back to the only addiction when there is exactly one: asking
     // "which?" of someone tracking a single thing is a question with one
     // answer, and a required field with one option is friction.
-    const forId = addictionId || (addictions.length === 1 ? addictions[0].id : undefined)
+    const forId = pick ? pick.addictionId : addictionId || (addictions.length === 1 ? addictions[0].id : undefined)
     resistUrge({
-      trigger: urge.trim() || undefined,
-      intensity: intensity as 1 | 2 | 3 | 4 | 5,
+      trigger: pick ? pick.name : urge.trim() || undefined,
+      intensity: pick ? undefined : intensity as 1 | 2 | 3 | 4 | 5,
       technique,
       halt: halt.length ? halt : undefined,
       addictionId: forId,
