@@ -24,6 +24,8 @@ import {
 } from '../lib/cycleCards'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import { useDevice } from '../components/shell/device'
+import { DayStrip } from '../components/ui/dayStrip'
+import { cat } from '../lib/colors'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
   CycleMonth, DayEditor, DayMore, DriveByPhase, FertileWindow, FlagLegend, FoodCard, PhasesCard,
@@ -582,7 +584,36 @@ export function Cycle() {
       actTop
       onSplitChange={logCol.onSplitChange}
       actShut={logCol.shut}
-      zone1={
+      zone1={phone ? (
+        /* ON A PHONE, ONE LINE OF WHERE YOU ARE — the day, the phase, the
+           countdown — over a thin bar, then the promise. The four-fact box with
+           four ⓘ and a month switcher was ~330px above the log; the month
+           moves with the day strip now, and the sentence shows only when it
+           asks for something (late or due). Owner: "show the data from the
+           top, the focus is the data entry". */
+        <div className="cells px-4 py-2.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-title font-bold text-fg-1 tabular-nums">
+              {day ?? '—'} <span className="text-body font-medium text-fg-2">{day != null ? `of ~${length ?? 28} days` : 'not started'}</span>
+            </span>
+            {phase && <Pill color={phase.color} size="micro" className="px-2">{phase.label} · {analysis.current.confidence}</Pill>}
+          </div>
+          {day != null && (
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Cycle day against your average" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100, (day / (length ?? 28)) * 100))}>
+              <div className="h-full rounded-pill" style={{ width: `${Math.min(100, (day / (length ?? 28)) * 100)}%`, background: cat(phase?.color ?? 'mauve') }} />
+            </div>
+          )}
+          <p className="mt-1 text-label text-fg-2">
+            {nextPeriod && untilNext != null
+              ? untilNext === 0 ? 'Period due today' : untilNext > 0 ? `Next period in ${untilNext} days · ~${prettyDay(nextPeriod)}` : `${-untilNext} days late`
+              : 'Next period needs two logged periods'}
+          </p>
+          {(step.id === 'late' || step.id === 'due') && (
+            <div className="mt-2"><NextStepBlock text={step.text} tone={STEP_TONE[step.id]} icon={STEP_ICON[step.id]} destination="Log a day" onPick={() => logCol.open()} /></div>
+          )}
+          <CyclePrivacyLine />
+        </div>
+      ) : (
         /* Not `StatBar`: three of these four are estimates and the phase is a
            coloured pill, and a bar that renders every value in the mono face
            would spell "Luteal · estimate" in the typewriter. The shape is the
@@ -736,7 +767,7 @@ export function Cycle() {
             saw before they had any data; this is where it stays true. */}
         <CyclePrivacyLine />
         </div>
-      }
+      )}
       zone2={logCol.shut ? (
         /* Shut, the act is a 40px rail and the review takes the width back —
            and stacked, `layout.css` lays the same button down into a 44px bar
@@ -759,7 +790,7 @@ export function Cycle() {
              here is what makes the two honest together, and it is half of the
              "it still needs to be saved for every month" report: the entries
              were always saved, and nothing said which month you were in. */
-          subtitle={thisMonth
+          subtitle={phone ? undefined : thisMonth
             ? 'Tap a day, set a temperature, flag what happened, rate the drive'
             : `Writing to ${prettyMonth(ym)} — not this month`}
           hideInfo
@@ -784,6 +815,19 @@ export function Cycle() {
             </div>
           }
         >
+          {/* THE DAY, picked where it is logged: the shared strip, a period dot
+              or the temperature under each day. It was the calendar under
+              "Your log" in the review — a scroll away from this editor. */}
+          {phone && (
+            <div className="mb-3">
+              <DayStrip value={sel} onChange={(d) => { setMonth(d.slice(0, 7)); setSelected(d) }} today={today} label="Day to log"
+                mark={(d) => {
+                  const e = log.find((x) => x.date === d)
+                  if (e?.flags.includes('period')) return <span style={{ color: cat('red') }}>●<span className="sr-only"> period</span></span>
+                  return e?.temp != null ? <>{e.temp}<span className="sr-only"> degrees</span></> : <span aria-hidden>·</span>
+                }} />
+            </div>
+          )}
           <DayEditor
             date={sel}
             entry={selEntry}
@@ -826,7 +870,8 @@ export function Cycle() {
 
               Real buttons and not links: they move the rail, which is state
               on this page rather than a destination. */}
-          <p className="mt-3 border-t border-line pt-2 text-label text-fg-2">
+          {/* The strip above picks the day on a phone; this says where the days are on a desktop. */}
+          {!phone &&           <p className="mt-3 border-t border-line pt-2 text-label text-fg-2">
             {/* "Tap any day below to edit it" went when the calendar did.
                 There is nothing below this line to tap any more, and the
                 sentence now says where the days ARE — which is the half of
@@ -849,7 +894,7 @@ export function Cycle() {
               the manual
             </button>{' '}
             says how the page works.
-          </p>
+          </p>}
 
           {/* THE CALENDAR IS NOT HERE, AND THAT IS THE POINT.
               It shipped at the BOTTOM of this column, under the editor, the
