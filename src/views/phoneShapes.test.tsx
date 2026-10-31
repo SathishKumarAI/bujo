@@ -13,6 +13,7 @@ import { NoFap } from './NoFap'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
+import { STORAGE_KEY, emptyJournal } from '../lib/storage'
 
 /**
  * The phone shapes of the last pages to get one, each test named for the way
@@ -257,5 +258,16 @@ describe("Today's plan on a phone", () => {
     phone()
     wrap(<TodayPlanCard />)
     expect(screen.queryByRole('img', { name: /^Coverage this week/ })).toBeNull()
+  })
+
+  // The failure: "9 habits left" under a Habits card saying "0 of 8 done" —
+  // dayCompletion counted an AVOID habit as one still to do. The chip reads
+  // the same helper as the Habits card (dayHabitSummary).
+  it('counts habits left the way the Habits card does — an avoid habit is not one to do', () => {
+    desktop()
+    const h = (id: string, avoid?: boolean) => ({ id, name: id, category: 'custom', color: 'mauve', startedOn: '2020-01-01', avoid })
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...emptyJournal(), habits: [h('Read'), h('Water'), h('Doomscrolling', true)] }))
+    wrap(<TodayPlanCard />)
+    expect(screen.getByText('2 habits left')).toBeTruthy()
   })
 })

@@ -132,7 +132,10 @@ function TodayFocused() {
         {/* A future day has no fast to run, and the column simply ends. */}
         <div className="lg:col-start-3 lg:row-start-2">
           {!future && <FastingCard date={date} />}
-          <StatusStrip date={date} onNavigate={nav} />
+          {/* Not on a phone: "No fast running" is the fasting card's own
+              state and "No training logged" is Today's plan's "No workout
+              yet" — two strips saying the same two things, a screen apart. */}
+          {!phone && <StatusStrip date={date} onNavigate={nav} />}
         </div>
       </div>
 

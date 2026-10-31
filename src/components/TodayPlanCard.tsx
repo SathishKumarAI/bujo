@@ -4,8 +4,7 @@ import { useJournal } from '../store'
 import { useNav } from './shell/nav'
 import { cardSurface, cat, onRaised, over } from '../lib/colors'
 import { todayISO, prettyDay, WEEKDAYS } from '../lib/date'
-import { dayCompletion } from '../lib/stats'
-import { atRiskHabits } from '../lib/streak'
+import { atRiskHabits, dayHabitSummary } from '../lib/streak'
 import { weekCoverage } from '../lib/coverage'
 import { PROGRAMS } from '../lib/programs'
 import { Card } from './ui'
@@ -28,8 +27,11 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   const navigate = useNav()
   const isToday = day === todayISO()
 
-  const cov = dayCompletion(data, day)
-  const habitsLeft = cov.total - cov.done
+  // `dayHabitSummary`, the reader the Habits card and the masthead use — not
+  // `dayCompletion`, which counts an AVOID habit as one still to do, so this
+  // card said "9 habits left" under a Habits card saying "0 of 8 done".
+  const cov = dayHabitSummary(data, day, { includeArchived: data.settings.trackerShowArchived })
+  const habitsLeft = cov.due - cov.done
 
   // Streaks at risk that day: `atRiskHabits`, not a second opinion of it.
   //
@@ -76,7 +78,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   }).filter(({ dayDone, dayTotal }) => dayDone > 0 && dayDone < dayTotal)
 
   const chips: { label: string; color: string; icon: typeof CheckSquare; to: Parameters<typeof navigate>[0]; done: boolean }[] = [
-    { label: habitsLeft > 0 ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} left` : 'Habits done', color: 'green', icon: CheckSquare, to: 'trackers', done: cov.total > 0 && habitsLeft === 0 },
+    { label: habitsLeft > 0 ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} left` : 'Habits done', color: 'green', icon: CheckSquare, to: 'trackers', done: cov.due > 0 && habitsLeft === 0 },
     { label: workedOut ? 'Workout logged' : 'No workout yet', color: 'teal', icon: Barbell, to: 'fitness', done: workedOut },
     { label: tasksDue > 0 ? `${tasksDue} task${tasksDue === 1 ? '' : 's'} due` : 'Tasks clear', color: 'mauve', icon: ListChecks, to: 'plan', done: tasksDue === 0 },
   ]
