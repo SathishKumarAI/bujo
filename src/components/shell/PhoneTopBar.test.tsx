@@ -19,6 +19,7 @@ vi.mock('../../lib/supabase', () => ({
 
 const { PhoneTopBar } = await import('./PhoneTopBar')
 const { JournalProvider } = await import('../../store')
+const { CursorProvider } = await import('./cursor')
 
 function mount(onNavigate = vi.fn()) {
   render(
@@ -86,5 +87,27 @@ describe('PhoneTopBar notifications', () => {
     await userEvent.click(screen.getByRole('button', { name: /^Menu/ }))
     await userEvent.click(screen.getByRole('radio', { name: 'Menu' }))
     expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy()
+  })
+})
+
+describe('PhoneTopBar date picker', () => {
+  // Today draws the shared DayStrip pinned under this bar, so a ‹ date ›
+  // stepper here was a second picker for the same day, stacked on the first.
+  // A month view keeps its stepper: nothing below it picks the month.
+  const at = (view: 'today' | 'monthly') => render(
+    <JournalProvider><CursorProvider>
+      <PhoneTopBar view={view} gates={{ cycle: true, nofap: true }} onNavigate={() => {}} onQuickAdd={() => {}} />
+    </CursorProvider></JournalProvider>,
+  )
+
+  it('shows the title, not a day stepper, on Today', () => {
+    at('today')
+    expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Today' })).toBeTruthy()
+  })
+
+  it('keeps the month stepper on Monthly', () => {
+    at('monthly')
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeTruthy()
   })
 })

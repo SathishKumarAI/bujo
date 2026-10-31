@@ -14,6 +14,12 @@ import { stepWeek, stripDays } from '../../lib/dayStrip'
  * its open tasks, Nutrition its calories, Challenges its rules, Habits its
  * done count. One shape, one meaning per page.
  *
+ * ON THE TOP BAR: on a phone it pins under the header (`.day-strip` in
+ * `styles/phone.css`) with the bar's own ground, so the day you are on stays
+ * in reach while you scroll — owner ask, 2026-10-31: "the log-a-day calendar
+ * should be placed on the top nav bar". Sticky only works against the
+ * element's parent, so a page puts it at PAGE level, never inside a card.
+ *
  * It was three hand-copied grids (Plan, Nutrition, Challenges) before it was a
  * component; the arrows came with the merge, so any past day is two taps away
  * on every page that has one.
@@ -43,7 +49,7 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
     /* ONE ROW: the arrows are the strip's two ends, not a header above it.
        A "This week" line between two round buttons was 52px saying nothing
        the chips do not — reported as "a waste of space" (120px → 56px). */
-    <section aria-label={label} className="grid grid-cols-[1.75rem_repeat(7,minmax(0,1fr))_1.75rem] gap-1">
+    <section aria-label={label} className="day-strip grid grid-cols-[1.75rem_repeat(7,minmax(0,1fr))_1.75rem] gap-1">
       <button type="button" className="strip-arrow" aria-label="Previous week" disabled={!canBack} onClick={() => onChange(stepWeek(value, -1, min, hi))}>
         <Icon as={CaretLeft} size="sm" />
       </button>

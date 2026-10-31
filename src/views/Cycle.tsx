@@ -565,7 +565,22 @@ export function Cycle() {
     )
   }
 
+  /* THE DAY, on the top bar (a phone): the shared strip pinned under the
+     header — a period dot or the temperature under each day; picking one
+     moves the month and the editor. Page level, not in the log card, because
+     sticky only holds inside its parent. */
+  const strip = phone && (
+    <DayStrip value={sel} onChange={(d) => { setMonth(d.slice(0, 7)); setSelected(d) }} today={today} label="Day to log"
+      mark={(d) => {
+        const e = log.find((x) => x.date === d)
+        if (e?.flags.includes('period')) return <span style={{ color: cat('red') }}>●<span className="sr-only"> period</span></span>
+        return e?.temp != null ? <>{e.temp}<span className="sr-only"> degrees</span></> : <span aria-hidden>·</span>
+      }} />
+  )
+
   return (
+    <>
+    {strip}
     <PageLayout
       tier={1180}
       /* `actTop` · THE LOG STARTS AT THE TOP, beside zone 1.
@@ -815,19 +830,6 @@ export function Cycle() {
             </div>
           }
         >
-          {/* THE DAY, picked where it is logged: the shared strip, a period dot
-              or the temperature under each day. It was the calendar under
-              "Your log" in the review — a scroll away from this editor. */}
-          {phone && (
-            <div className="mb-3">
-              <DayStrip value={sel} onChange={(d) => { setMonth(d.slice(0, 7)); setSelected(d) }} today={today} label="Day to log"
-                mark={(d) => {
-                  const e = log.find((x) => x.date === d)
-                  if (e?.flags.includes('period')) return <span style={{ color: cat('red') }}>●<span className="sr-only"> period</span></span>
-                  return e?.temp != null ? <>{e.temp}<span className="sr-only"> degrees</span></> : <span aria-hidden>·</span>
-                }} />
-            </div>
-          )}
           <DayEditor
             date={sel}
             entry={selEntry}
@@ -848,7 +850,9 @@ export function Cycle() {
               exactly where PAGE-SHAPE says to put the thing you need while
               doing the thing. Not folded — the report was that the colours are
               undecipherable, and a closed fold is the same page. */}
-          <FlagLegend />
+          {/* Reference, not logging: the flags carry their own colours, and the
+              manual explains every mark. Desktop only. */}
+          {!phone && <FlagLegend />}
 
           {/* COD-230 · the month list is 956px of a 3,703px phone page — two
               15-row columns that stack below `sm`, because the rows cannot be
@@ -955,7 +959,9 @@ export function Cycle() {
                   measure the panel they are actually laying out. */}
               <div className="@container/page min-w-0">
                 <section data-domain={group}>
-                  <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+                  {/* On a phone the section select above already names the group; its
+                      blurb describes charts a phone does not draw. Kept for screen readers. */}
+                  <div className={phone ? 'sr-only' : 'mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5'}>
                     <h2 className="text-heading font-medium text-fg-1">{GROUP_LABEL[group]}</h2>
                     <p className="text-label text-fg-2">{GROUP_BLURB[group]}</p>
                     <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
@@ -1024,6 +1030,7 @@ export function Cycle() {
         </>
       }
     />
+    </>
   )
 }
 

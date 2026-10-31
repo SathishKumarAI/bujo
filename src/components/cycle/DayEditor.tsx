@@ -4,6 +4,8 @@ import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
 import { glossaryTerm } from '../../lib/glossary'
 import { FLAGS, FLAG_COLOR } from './flags'
+import { cat } from '../../lib/colors'
+import { useDevice } from '../shell/device'
 
 /**
  * The one place on the page that writes. Zone 2 of the contract.
@@ -66,6 +68,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
 }) {
   const today = new Date().toISOString().slice(0, 10)
   const flags = entry?.flags ?? []
+  const phone = useDevice() === 'mobile'
 
   return (
     <div className="rounded-card bg-ink-2 p-3">
@@ -112,7 +115,31 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
           inside a button is invalid markup and unusable with a keyboard. A
           flag with no glossary entry keeps its bare name rather than
           inventing one. */}
-      <ChipPick
+      {phone ? (
+        /* ONE ROW ON A PHONE. At chip size the five need 368px of a 334px
+           column (measured) and wrapped 4 + 1; as 13px toggles with 8px sides
+           they need ~311px. Same flags, same colours (border when on, `fg-1`
+           text — the accent-on-wash trap in CLAUDE.md), 44px tall. At rest an
+           outline, not a fill: the log card is `ink-2` already, and an `ink-2`
+           toggle on it read as plain words (screenshot). */
+        <fieldset className="mt-3">
+          <legend className="mb-1.5 text-body font-medium text-fg-1">What happened</legend>
+          <div className="flex gap-1">
+            {FLAGS.map((f) => {
+              const on = flags.includes(f)
+              return (
+                <button key={f} type="button" aria-pressed={on} title={glossaryTerm(f)?.expansion} onClick={() => onToggleFlag(f)}
+                  className="min-h-11 flex-auto rounded-[0.75rem] px-2 text-label font-medium"
+                  style={on
+                    ? { background: `${cat(FLAG_COLOR[f])}22`, boxShadow: `inset 0 0 0 1.5px ${cat(FLAG_COLOR[f])}`, color: 'var(--color-fg-1)' }
+                    : { boxShadow: 'inset 0 0 0 1px var(--color-line-strong)', color: 'var(--color-fg-1)' }}>
+                  {f}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
+      ) : <ChipPick
         className="mt-3"
         label="What happened"
         /* `dense`, and the measurement with its limit stated.
@@ -139,7 +166,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
             name: meaning ? `${meaning.term} — ${meaning.expansion}` : undefined,
           }
         })}
-      />
+      />}
 
       {/* DRIVE · the same segmented track as Mood and Energy.
           It is a SCALE and the flags are booleans, so it is its own row: five
@@ -152,7 +179,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
         value={entry?.drive ?? null}
         onChange={(n) => onDrive(entry?.drive === n ? undefined : n)}
         scale={{ low: '1 none', high: '5 high', words: DRIVE_WORDS }}
-        hint="Optional — press the current number again to clear it"
+        hint={phone ? undefined : 'Optional — press the current number again to clear it'}
         options={DRIVE_SCALE.map((n) => ({ value: n, label: String(n) }))}
       />
     </div>

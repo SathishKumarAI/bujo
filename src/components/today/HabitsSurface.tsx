@@ -20,8 +20,6 @@ import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
 import { dayHabitSummary } from '../../lib/streak'
-import { DayStrip } from '../ui/dayStrip'
-import { useDevice } from '../shell/device'
 import { addDays, monthDays, prettyMonth, todayISO, weekColumn } from '../../lib/date'
 import { Card, Empty, Segmented } from '../ui'
 import { Button } from '../ui/button'
@@ -125,8 +123,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   // to. The tick list used to read `todayISO()` instead, so stepping the top
   // bar to yesterday moved mood and notes to yesterday and left a habit tap
   // landing on today. The month grid below keeps its own month (`ym`).
-  const { month: ym, day, setDay } = useCursor()
-  const phone = useDevice() === 'mobile'
+  const { month: ym, day } = useCursor()
   const [newHabit, setNewHabit] = useState('')
   const [cat0, setCat0] = useState<HabitCategory>('custom')
   // Polarity for the habit about to be added. The PRESETS below have carried
@@ -258,15 +255,6 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
                 className="h-full rounded-pill transition-[width] duration-300"
                 style={{ width: `${donePct}%`, background: cat('mauve') }}
               />
-            </div>
-          )}
-          {/* A phone picks the day here as well as in the top bar — the same
-              cursor, with each day's done count — so backfilling yesterday is
-              one tap, not the month grid. */}
-          {phone && (
-            <div className="mb-3">
-              <DayStrip value={day} onChange={setDay} today={today} label="Day to mark"
-                mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: s.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> done</span></> : <span aria-hidden>·</span> }} />
             </div>
           )}
           <HabitRows habits={visibleHabits} data={data} today={day} onToggle={toggleHabit} onSetValue={setHabitValue} />
