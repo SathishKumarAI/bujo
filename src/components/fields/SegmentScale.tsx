@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { cat } from '../../lib/colors'
+import { useDevice } from '../shell/device'
 import { cn } from '../../lib/cn'
 
 /**
@@ -65,6 +66,11 @@ export function SegmentScale({
    */
   const parts = hint?.split('·').map((t) => t.trim().replace(/^\d+\s*/, '')) ?? []
   const anchors = parts.length === 2 ? parts : null
+  // A phone puts the two ends beside the label ("Mood  low → great") instead
+  // of on their own line under the bar: three scales on Today's check-in were
+  // ~22px each of a line that only names the ends. The bar keeps its full
+  // width, so each of the eleven targets stays ~29px wide at 390.
+  const phone = useDevice() === 'mobile'
 
   return (
     <div>
@@ -76,7 +82,10 @@ export function SegmentScale({
           pair. */}
       <div className="max-w-[26rem]">
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span id={scaleId} className="text-body text-fg-1">{label}</span>
+        <span id={scaleId} className="text-body text-fg-1">
+          {label}
+          {phone && anchors && <span className="ml-2 text-label text-fg-2">{anchors[0]} → {anchors[1]}</span>}
+        </span>
         {/* The value is the thing you are setting, so it is the biggest thing
             in the row rather than a footnote beside the label. Unset stays a
             quiet em dash — the null state this control exists to tell the
@@ -152,7 +161,7 @@ export function SegmentScale({
           )
         })}
       </div>
-      {anchors ? (
+      {phone && anchors ? null : anchors ? (
         <div className="mt-1 flex justify-between text-micro text-fg-3">
           <span>{anchors[0]}</span>
           <span>{anchors[1]}</span>

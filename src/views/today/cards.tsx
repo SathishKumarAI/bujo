@@ -10,6 +10,8 @@ import { EntryRow } from '../../components/EntryRow'
 import { ImageUpload } from '../../components/ImageUpload'
 import { Field } from '../../components/fields/Field'
 import { Stepper } from '../../components/fields/Stepper'
+import { Seg } from '../../components/ui/seg'
+import { useDevice } from '../../components/shell/device'
 import { ChipPick } from '../../components/ui/quickpick'
 import { MOOD_REASONS, MOOD_REASON_LABEL } from '../../lib/moodPatterns'
 import type { MoodReason } from '../../lib/types'
@@ -265,6 +267,7 @@ export function DayLogCard({ date, sticky = false }: { date: string; sticky?: bo
  */
 export function WellbeingCard({ date }: { date: string }) {
   const { data, setMetric } = useJournal()
+  const phone = useDevice() === 'mobile'
   const metric = data.metrics.find((m) => m.date === date)
   const answered = [metric?.mood, metric?.stress, metric?.energy, metric?.sleep].filter((v) => v != null).length
   const complete = answered === 4
@@ -356,7 +359,21 @@ export function WellbeingCard({ date }: { date: string }) {
             asked for up to sixteen taps to say "seven and a half". The chips
             cover the common answers in one, and the stepper stays beside them
             for the 4am night and the half hours. */}
-        <ChipPick
+        {phone ? (
+          /* ONE ROW on a phone: the five common nights as a segmented row,
+             and the stepper for half hours on the label's line — the chip row
+             plus a stepper wrapped to two lines (measured 110px). Starts empty
+             each day, so a second tap clearing it is safe (`allowNone`). */
+          <div>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="text-body text-fg-1">Hours slept</span>
+              <Stepper value={metric?.sleep} onChange={(v) => setMetric(date, { sleep: v })} step={0.5} min={0} max={24} suffix="h" aria-label="Hours slept, any value" />
+            </div>
+            <Seg label="Hours slept" allowNone value={[5, 6, 7, 8, 9].includes(metric?.sleep ?? -1) ? metric!.sleep! : null}
+              onChange={(v) => setMetric(date, { sleep: v ?? undefined })}
+              options={[5, 6, 7, 8, 9].map((h) => ({ value: h, label: `${h}h`, name: `${h} hours` }))} />
+          </div>
+        ) : <ChipPick
           label="Hours slept"
           tone="teal"
           value={metric?.sleep ?? null}
@@ -373,7 +390,7 @@ export function WellbeingCard({ date }: { date: string }) {
               aria-label="Hours slept, any value"
             />
           }
-        />
+        />}
       </div>
       {/* WHAT SHAPED THE DAY · the field that makes "why is my mood changing"
           answerable at all.

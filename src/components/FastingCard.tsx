@@ -5,9 +5,10 @@ import { useJournal } from '../store'
 import { Card } from './ui'
 import { Stepper } from './fields/Stepper'
 import { cat, onRaised } from '../lib/colors'
-import { todayISO } from '../lib/date'
+import { toISODay, todayISO } from '../lib/date'
 import { DEFAULT_FAST_TARGET, elapsedHours, fastHours, fmtDuration, fastingStreak, recentFasts } from '../lib/fasting'
 import { Button } from './ui/button'
+import { useDevice } from './shell/device'
 
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 const dayLabel = (iso: string) => new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
@@ -45,6 +46,12 @@ export function FastingCard({ date = todayISO() }: {
   const last = recent[0]
 
   const metric = data.metrics.find((m) => m.date === date)
+  // A phone logs: the five-fast history is a read-back (desktop), the tip is
+  // for a first visit, and "what broke it" only means something once a fast
+  // has run on this day — asked with nothing running, it was two buttons
+  // about a fast that never happened.
+  const phone = useDevice() === 'mobile'
+  const brokeToday = !!active || fasts.some((f) => toISODay(new Date(f.end)) === date) || !!metric?.fastBreak
 
   return (
     <Card band
@@ -86,11 +93,11 @@ export function FastingCard({ date = todayISO() }: {
               </span>
             )}
           </div>
-          <p className="mt-2 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Timer} size="sm" /> Tap when you stop eating; end it at your first meal.</p>
+          {!phone && <p className="mt-2 inline-flex items-center gap-1 text-label text-fg-2"><Icon as={Timer} size="sm" /> Tap when you stop eating; end it at your first meal.</p>}
         </div>
       )}
 
-      {recent.length > 0 && (
+      {!phone && recent.length > 0 && (
         <ul className="mt-4 space-y-1 border-t border-line pt-3">
           {recent.map((f) => {
             const h = fastHours(f)
@@ -114,7 +121,7 @@ export function FastingCard({ date = todayISO() }: {
           one. It is the same `metrics.fastBreak` field and the same writer —
           only the card it is asked on changed, so nothing about the record
           moves and Insights reads it exactly as before. */}
-      <div className="mt-4 border-t border-line pt-3">
+      {(!phone || brokeToday) && <div className="mt-4 border-t border-line pt-3">
         <p className="mb-2 text-body text-fg-1">What broke your fast</p>
         {/* These record a choice, so the selected one gets the accent wash
             rather than the accent fill — a filled pill here read as the
@@ -132,7 +139,7 @@ export function FastingCard({ date = todayISO() }: {
             </Button>
           ))}
         </div>
-      </div>
+      </div>}
     </Card>
   )
 }
