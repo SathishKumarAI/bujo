@@ -24,10 +24,9 @@ Monthly reviewed and left (the calendar is the page).
 
 ## The next action
 
-1. **Owner decision pending — Insights on a phone.** It is text-only by the
-   "a phone logs, a desktop reads" rule, and was reported as "not able to see
-   the insights". Options offered: key charts back on Insights only
-   (recommended), all charts, or keep text-only. Nothing built yet.
+1. **Insights on a phone (COD-531, done):** the one key chart per domain is
+   back (`phone: true` in `lib/insightsFilter.ts`): mood calendar, sleep debt,
+   workout minutes, task trend. Every logging page stays chart-free.
 2. **COD-518** (backlog): a tracked addiction's lapse day cannot be removed
    (only the main streak's can); needs `removeAddictionRelapse` + restartFrom.
 3. **COD-511** (backlog): `scripts/build-icons.mjs` reads a registry format

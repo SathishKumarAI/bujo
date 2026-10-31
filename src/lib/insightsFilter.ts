@@ -83,6 +83,14 @@ export interface CardMeta {
    * 60px, or a grid of tinted cells. Number-and-text panels stay.
    */
   chart?: true
+  /**
+   * A chart the phone DOES draw: the one per domain that answers its main
+   * question at 358px. Owner, 2026-10-31: "why am I not able to see the
+   * insights" — the phone had been text-only since COD-483. Insights is the
+   * page you READ, so it gets its key charts back; every logging page stays
+   * chart-free.
+   */
+  phone?: true
 }
 
 export const CARDS: CardMeta[] = [
@@ -93,7 +101,7 @@ export const CARDS: CardMeta[] = [
   { id: 'momentum', title: 'Momentum', domain: 'overview', words: 'momentum trend direction vs last week delta' },
   { id: 'entryvolume', title: 'Journal volume', domain: 'overview', words: 'entries per week volume writing cadence bar', chart: true },
 
-  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily heatmap lapse relapse ring', chart: true },
+  { id: 'moodcal', title: 'Mood calendar', domain: 'mood', words: 'mood calendar month year pixels tint daily heatmap lapse relapse ring', chart: true, phone: true },
   { id: 'moodanalytics', title: 'Mood analytics', domain: 'mood', words: 'mood weekday stability best worst variance' },
   /* The four mood/recovery panels (COD-252) live in `mood` rather than in a
      seventh `recovery` domain. Two reasons and one of them is measured: the
@@ -110,7 +118,7 @@ export const CARDS: CardMeta[] = [
   { id: 'lapselag', title: 'The week around a lapse', domain: 'mood', words: 'lapse relapse mood before after lag nofap addiction recovery trigger urge week around', chart: true },
   { id: 'moodrisk', title: 'Urges by mood band', domain: 'mood', words: 'urge intensity mood band low bright lapse rate risk addiction recovery halt' },
   { id: 'sleepmood', title: 'Sleep vs mood', domain: 'mood', words: 'sleep mood scatter correlation dots', chart: true },
-  { id: 'sleepdebt', title: 'Sleep debt', domain: 'mood', words: 'sleep debt deficit hours 8h running', chart: true },
+  { id: 'sleepdebt', title: 'Sleep debt', domain: 'mood', words: 'sleep debt deficit hours 8h running', chart: true, phone: true },
   { id: 'focussleep', title: 'Focus vs sleep', domain: 'mood', words: 'focus deep work sleep correlation r' },
   { id: 'weekradar', title: 'This week at a glance', domain: 'mood', words: 'radar week average mood stress sleep habits', chart: true },
 
@@ -126,11 +134,11 @@ export const CARDS: CardMeta[] = [
      another covers it is how a feature goes quiet. */
   { id: 'habitgrids', title: 'Habit grids', domain: 'habits', words: 'habit heatmap streak leaderboard perfect days monthly trend weekday grid', chart: true },
 
-  { id: 'workoutmin', title: 'Workout minutes', domain: 'body', words: 'workout minutes week training volume bar', chart: true },
+  { id: 'workoutmin', title: 'Workout minutes', domain: 'body', words: 'workout minutes week training volume bar', chart: true, phone: true },
   { id: 'workoutsplit', title: 'Workout split', domain: 'body', words: 'workout split type distribution donut push pull legs', chart: true },
 
   { id: 'tasks', title: 'Task breakdown', domain: 'tasks', words: 'task done migrated open cancelled breakdown donut', chart: true },
-  { id: 'taskstrend', title: 'Task completion trend', domain: 'tasks', words: 'task completion rate per week trend line', chart: true },
+  { id: 'taskstrend', title: 'Task completion trend', domain: 'tasks', words: 'task completion rate per week trend line', chart: true, phone: true },
 
   { id: 'pace', title: 'Pace', domain: 'records', words: 'pace days left month year week remaining' },
   { id: 'lifetime', title: 'Lifetime', domain: 'records', words: 'lifetime total year in review personal records month index' },
@@ -209,9 +217,9 @@ export function entriesPerWeek(data: JournalData, weeks = 12, today: string): { 
   return out
 }
 
-/** The cards a device draws: on a phone, everything but the charts (COD-483). */
+/** The cards a device draws: on a phone, everything but the charts not flagged `phone` (COD-483). */
 export function forDevice<T>(cards: Record<string, T>, phone: boolean): Record<string, T> {
   if (!phone) return cards
-  const chart = new Set(CARDS.filter((c) => c.chart).map((c) => c.id))
+  const chart = new Set(CARDS.filter((c) => c.chart && !c.phone).map((c) => c.id))
   return Object.fromEntries(Object.entries(cards).filter(([id]) => !chart.has(id)))
 }

@@ -148,9 +148,11 @@ describe('entriesPerWeek', () => {
 describe('forDevice (COD-483)', () => {
   const every = Object.fromEntries(CARDS.map((c) => [c.id, c.id]))
 
-  it('drops every chart on a phone and nothing else', () => {
+  it('drops every chart on a phone except the key one per domain, and nothing else', () => {
     const phone = forDevice(every, true)
-    for (const c of CARDS) expect(c.id in phone, c.id).toBe(!c.chart)
+    for (const c of CARDS) expect(c.id in phone, c.id).toBe(!c.chart || !!c.phone)
+    // The key charts the phone keeps (owner, 2026-10-31): one per question.
+    expect(CARDS.filter((c) => c.phone).map((c) => c.id)).toEqual(['moodcal', 'sleepdebt', 'workoutmin', 'taskstrend'])
     // Measured at 390px when this landed: 14 panels draw an SVG or a tinted grid.
     expect(CARDS.filter((c) => c.chart)).toHaveLength(14)
   })
