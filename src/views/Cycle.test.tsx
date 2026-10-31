@@ -539,5 +539,9 @@ describe('Cycle on a phone', () => {
     const temp = withTemp.lastElementChild!.textContent!.match(/(\d+\.\d+)/)![1]
     await user.click(withTemp)
     expect(screen.getAllByDisplayValue(temp).length).toBeGreaterThan(0)
+    // The optional half opens as a sheet, and the reference legend is off.
+    expect(screen.queryByText('Flag colours & day marks')).toBeNull()
+    await user.click(screen.getByRole('button', { name: /Mood, mucus, LH/ }))
+    expect(screen.getByRole('dialog', { name: 'Mood, mucus, LH & more' })).toBeTruthy()
   })
 })

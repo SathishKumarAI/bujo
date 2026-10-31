@@ -1,6 +1,9 @@
 import { CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { useState } from 'react'
 import { ChipPick } from '../ui/quickpick'
+import { Sheet } from '../ui/sheet'
+import { useDevice } from '../shell/device'
 import { CommitField } from '../CommitField'
 import { useStickyState } from '../../lib/useStickyState'
 import type { CyclePoint } from '../../lib/types'
@@ -38,7 +41,11 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
   fertilityFirst?: boolean
 }) {
   const [open, setOpen] = useStickyState<'1' | '0'>('cycle.more', fertilityFirst ? '1' : '0', ['1', '0'])
-  const isOpen = open === '1'
+  // A phone opens these in a bottom sheet (the optional half, as on every
+  // phone page) — never remembered open, or the page would load under a sheet.
+  const phone = useDevice() === 'mobile'
+  const [sheet, setSheet] = useState(false)
+  const isOpen = phone ? sheet : open === '1'
 
   const flags = entry?.flags ?? []
   const chips = CHIP_FIELDS
@@ -54,7 +61,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
       <button
         type="button"
         aria-expanded={isOpen}
-        onClick={() => setOpen(isOpen ? '0' : '1')}
+        onClick={() => (phone ? setSheet(true) : setOpen(isOpen ? '0' : '1'))}
         className="flex min-h-11 w-full items-center gap-3 text-left"
       >
         {/* THE SAME CARET AS THE ROW UNDER IT, on the same side. These two
@@ -86,13 +93,14 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
             the summary, so it is the one word that costs nothing to drop. */}
         <span className="shrink-0 text-body font-medium text-fg-1">Mood, mucus, LH &amp; more</span>
         <span className="ml-auto min-w-0 truncate text-label text-fg-2">
-          {isOpen ? 'tap to close' : (summary(entry) || 'tap to add')}
+          {isOpen && !phone ? 'tap to close' : (summary(entry) || 'tap to add')}
         </span>
 
       </button>
 
-      {isOpen && (
-        <div className="collapse-in mt-3 space-y-5">
+      {isOpen && (() => {
+        const body = (
+        <div className={phone ? 'space-y-5' : 'collapse-in mt-3 space-y-5'}>
           {/* THREE QUESTIONS, NOT NINE FIELDS.
               Nine chip groups at one weight with nothing between them is
               ~900px of flat stack in a 424px column — a list you scan rather
@@ -213,7 +221,11 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
             </span>
           </label>
         </div>
-      )}
+        )
+        return phone
+          ? <Sheet open={sheet} onOpenChange={setSheet} title="Mood, mucus, LH & more" description="All optional — saved as you tap">{body}</Sheet>
+          : body
+      })()}
     </div>
   )
 }

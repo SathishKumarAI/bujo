@@ -12,12 +12,13 @@ import { TodayHabits } from '../components/TodayHabits'
 import { CoachCard } from '../components/CoachCard'
 import { habitTarget, habitValueOn, habitDoneOn, isNumericHabit, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/schedule'
-import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
+import { atRiskHabits, dayHabitSummary, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
 import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useDevice } from '../components/shell/device'
+import { DayStrip } from '../components/ui/dayStrip'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -76,7 +77,8 @@ export function Today() {
  * card drags every sibling off the right edge. See the trap in CLAUDE.md.
  */
 function TodayFocused() {
-  const { day: date } = useCursor()
+  const { day: date, setDay } = useCursor()
+  const { data } = useJournal()
   const nav = useNav()
   const future = isFutureDay(date)
   // A phone logs (CLAUDE.md, COD-468): the goal rings and the review fold's
@@ -97,6 +99,13 @@ function TodayFocused() {
           and Evening printed no date at all and the day cursor could be walked
           with nothing on screen to say so. It spans all three columns because
           zone 1 orients the whole page, not the left of it. */}
+      {/* THE WEEK ON THE TOP BAR (a phone): the shared strip, pinned under the
+          header, each day marked with its habits done. It moves the same
+          cursor every card on Today reads. */}
+      {phone && (
+        <DayStrip value={date} onChange={setDay} today={todayISO()} label="Day"
+          mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: data.settings.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> habits done</span></> : <span aria-hidden>·</span> }} />
+      )}
       <DayHeader date={date} />
 
       <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[340px_minmax(0,1fr)_380px]">

@@ -97,6 +97,13 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   // no section (Settings, Help). Owner, 2026-10-29: "not able to navigate from
   // today to other pages" — Today was the one page with no door to the grid,
   // so Nutrition or Coaching meant landing on another Body page first.
+  /* A DAY view draws the shared DayStrip pinned right under this bar (Today,
+     2026-10-31: "the log-a-day calendar should be placed on the top nav
+     bar"), so a ‹ date › stepper here was a second picker for the same day,
+     stacked on the first. The strip does everything it did — any day, a week
+     at a time, today marked — so the bar shows the title instead. */
+  const stripBelow = chrome.dateNav === 'day'
+
   const gridButton = (
     <Button
       variant="ghost"
@@ -136,7 +143,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
 
         {current && (hasTabs || !chrome.dateNav) ? (
           titleButton
-        ) : chrome.dateNav ? (
+        ) : chrome.dateNav && !stripBelow ? (
           /* Today: the bottom nav already says "Today", so the row spends its
              width on the date you are logging, not on the word. A second tap
              on the Today tab opens every page. */
