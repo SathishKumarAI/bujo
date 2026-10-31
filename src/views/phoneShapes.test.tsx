@@ -202,6 +202,23 @@ describe('Recovery on a phone', () => {
     expect(nofap().urgeLog.at(-1)).toMatchObject({ trigger: 'Nicotine', outcome: 'followed' })
     expect(nofap().relapses).toHaveLength(1)
   }, 10000)
+
+  // The duplicate that went: a second "Today" list writing the same count
+  // Gave in writes. Today's count lives on the streak line and opens to fix.
+  it('has one list, and the streak line opens the day count to fix a mis-tap', async () => {
+    phone()
+    wrap(<NoFap />)
+    expect(screen.queryByRole('region', { name: 'Today' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /tap to fix today/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^More Main streak today/ }))
+    expect(nofap().relapses.at(-1)).toMatchObject({ count: 1 })
+    // A minus never deletes a logged day (it would undo a reset silently)…
+    expect((screen.getByRole('button', { name: 'Less Main streak today' }) as HTMLButtonElement).disabled).toBe(true)
+    // …the explicit remove does, after asking (no provider: window.confirm).
+    vi.stubGlobal('confirm', () => true)
+    await userEvent.click(screen.getByRole('button', { name: 'Remove today’s slip' }))
+    expect(nofap().relapses).toHaveLength(0)
+  })
 })
 
 describe('a section rail on a phone', () => {
