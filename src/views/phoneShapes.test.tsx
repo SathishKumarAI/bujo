@@ -11,6 +11,7 @@ import { Nutrition } from './Nutrition'
 import { Challenges } from './Challenges'
 import { NoFap } from './NoFap'
 import { Goals } from './Goals'
+import { HomeWorkout } from './HomeWorkout'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -237,6 +238,22 @@ describe('Goals on a phone', () => {
     await userEvent.click(screen.getByRole('button', { name: 'One more on Read books' }))
     const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"customGoals"'))!)
     expect(j.customGoals).toMatchObject([{ label: 'Read books', target: 12, value: 1 }])
+  })
+})
+
+describe('Home workout on a phone', () => {
+  // The failure: a session of six typed "3×12" fields and a full-width Log
+  // slab. A routine is one select, an exercise is a row you tick set by set,
+  // and Log writes what you ticked (all of it when you ticked nothing).
+  it('loads a routine into rows and logs only the exercises you ticked', async () => {
+    phone()
+    wrap(<HomeWorkout />)
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Routine' }), 'fullbody')
+    await userEvent.click(screen.getByRole('button', { name: /^Push-ups: 0\/3 sets done/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Log · 1/ }))
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
+    const logged = j.workouts.filter((w: { activity: string }) => w.activity === 'homeWorkout')
+    expect(logged.map((w: { sets: string[] }) => w.sets)).toEqual([['Push-ups 3×12']])
   })
 })
 

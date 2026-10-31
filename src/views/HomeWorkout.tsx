@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useJournal } from '../store'
 import { PageLayout, StatBar, ActStrip, useActColumn } from '../components/page'
 import { ProgressionNudge, Review, SessionCard, type SessionItem } from '../components/homeworkout'
+import { SessionPhone } from '../components/homeworkout/SessionPhone'
 import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import { homeSetRows, type HomeExercise } from '../lib/homeExercises'
 import { readyToProgress } from '../lib/homeProgress'
@@ -96,20 +97,21 @@ export function HomeWorkout() {
     setItems((cur) => (cur.some((i) => i.id === ex.id) ? cur : [...cur, { id: ex.id, name: ex.name, reps: ex.reps }]))
   }
 
-  function logSession() {
-    if (items.length === 0) { notify.info('Nothing in this session', 'Pick a routine, or tap Add on an exercise.'); return }
+  /** `sel`: the phone logs only the exercises you ticked, when you ticked any. */
+  function logSession(sel: SessionItem[] = items) {
+    if (sel.length === 0) { notify.info('Nothing in this session', 'Pick a routine, or tap Add on an exercise.'); return }
     addWorkout({
       date,
       activity: 'homeWorkout',
       durationMin: dur ? Number(dur) : undefined,
-      sets: items.map((i) => `${i.name} ${i.reps}`),
+      sets: sel.map((i) => `${i.name} ${i.reps}`),
       /* The strings stay exactly as they were — the history list below renders
          them verbatim and three counters on this page read `sets.length` as an
          exercise count, so expanding them into one line per set would silently
          relabel "exercises" as "sets". `setRows` is the structured path every
          analytic in `lib/fitness.ts` prefers, and this logger was the only one
          in the app writing neither it nor a weight-bearing line. */
-      setRows: homeSetRows(items),
+      setRows: homeSetRows(sel),
       notes: notes.trim(),
     })
     setItems([]); setDur(''); setNotes(''); setDate(today)
@@ -118,7 +120,14 @@ export function HomeWorkout() {
   return (
     <PageLayout
       tier={1180}
-      zone1={<StatBar facts={[
+      zone1={phone ? (
+        /* One line on a phone: the week against the guideline and the last
+           session. "In this session" is the session itself, right below. */
+        <p className="px-1 text-label text-fg-2">
+          <b className="text-fg-1">{weekDays} day{weekDays === 1 ? '' : 's'}</b> this week · {weekDays >= 2 ? 'guideline met' : `${2 - weekDays} more for the guideline`}
+          {last && <> · last {prettyDay(last.date)}</>}
+        </p>
+      ) : <StatBar facts={[
         { label: 'Trained this week', value: `${weekDays} day${weekDays === 1 ? '' : 's'}` },
         { label: 'Guideline', value: weekDays >= 2 ? 'Met — 2+ days' : `${2 - weekDays} more to reach 2`, prose: true },
         { label: 'In this session', value: items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'}` : 'Empty', prose: true },
@@ -139,7 +148,18 @@ export function HomeWorkout() {
             from your own history. The builder below is where you act on it, and
             it keeps the one primary button — these are secondary. */}
         {!phone && <ProgressionNudge rows={progress} onAdd={add} />}
-        <SessionCard
+        {phone ? (
+          <SessionPhone
+            items={items}
+            onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
+            onDrop={(id) => setItems((cur) => cur.filter((i) => i.id !== id))}
+            onLoadRoutine={setItems}
+            date={date} onDate={setDate} today={today}
+            dur={dur} onDur={setDur}
+            notes={notes} onNotes={setNotes}
+            onLog={logSession}
+          />
+        ) : <SessionCard
           items={items}
           onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
           onDrop={(id) => setItems((cur) => cur.filter((i) => i.id !== id))}
@@ -147,9 +167,9 @@ export function HomeWorkout() {
           date={date} onDate={setDate} today={today}
           dur={dur} onDur={setDur}
           notes={notes} onNotes={setNotes}
-          onLog={logSession}
+          onLog={() => logSession()}
           onShut={logCol.close}
-        />
+        />}
         {/* A phone logs first (COD-468): the nudges were 452px between the
             page top and the session builder. Same card, one slot lower. */}
         {phone && <ProgressionNudge rows={progress} onAdd={add} />}
