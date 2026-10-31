@@ -13,6 +13,7 @@ import { NoFap } from './NoFap'
 import { Goals } from './Goals'
 import { HomeWorkout } from './HomeWorkout'
 import { Coaching } from './Coaching'
+import { Collections } from './Collections'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -272,6 +273,22 @@ describe('Coaching on a phone', () => {
     expect(j.settings.coachingWeeksDone).toEqual([1])
     await userEvent.click(screen.getByRole('button', { name: /Week 1 done · next/ }))
     expect((screen.getByRole('combobox', { name: 'Week' }) as HTMLSelectElement).value).toBe('2')
+  })
+})
+
+describe('Collections on a phone', () => {
+  // The failures: three always-open add forms (one wrapped into a jumble
+  // around its heading), and deletes that removed on the first tap.
+  it('adds a collection from a sheet, and deleting it asks first', async () => {
+    phone()
+    vi.stubGlobal('confirm', () => false)
+    wrap(<Collections />)
+    expect(screen.queryByRole('textbox', { name: 'Collection name' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'New collection' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Collection name' }), 'Packing list{Enter}')
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Packing list' }))
+    // The confirm said no, so it is still there.
+    expect(screen.getByRole('button', { name: /Packing list/, expanded: false })).toBeTruthy()
   })
 })
 
