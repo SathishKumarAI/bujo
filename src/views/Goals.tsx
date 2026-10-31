@@ -17,6 +17,8 @@ import { weeklyHabitCount } from '../lib/stats'
 import { PROGRAMS } from '../lib/programs'
 import type { ViewId } from '../components/shell/viewChrome'
 import { notify } from '../lib/notify'
+import { useDevice } from '../components/shell/device'
+import { GoalsPhone } from '../components/goals/GoalsPhone'
 
 interface Goal {
   label: string
@@ -49,6 +51,7 @@ interface Goal {
 export function Goals() {
   const { data } = useJournal()
   const navigate = useNav()
+  const phone = useDevice() === 'mobile'
   const today = todayISO()
   const goals: Goal[] = []
   // How far through the current week and year we are. A "this week" goal at 2 of
@@ -213,6 +216,12 @@ export function Goals() {
     if (!label || !target || target <= 0) { notify.info('A goal needs a name and a target', 'The target has to be more than zero.'); return }
     addCustomGoal({ label, target, value: 0, unit: form.unit.trim() || undefined, color: 'mauve' })
     setForm({ label: '', target: '', unit: '' })
+  }
+
+  // A phone logs: your own goals first as rows you move, the derived ones as
+  // rows you read (`GoalsPhone`). Returned after every hook.
+  if (phone) {
+    return <GoalsPhone goals={goals} summary={`${met} of ${goals.length} met${closeToCap ? ` · ${closeToCap} near the cap` : ''}`} />
   }
 
   return (
