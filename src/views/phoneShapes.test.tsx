@@ -12,6 +12,7 @@ import { Challenges } from './Challenges'
 import { NoFap } from './NoFap'
 import { Goals } from './Goals'
 import { HomeWorkout } from './HomeWorkout'
+import { Coaching } from './Coaching'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -254,6 +255,23 @@ describe('Home workout on a phone', () => {
     const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
     const logged = j.workouts.filter((w: { activity: string }) => w.activity === 'homeWorkout')
     expect(logged.map((w: { sets: string[] }) => w.sets)).toEqual([['Push-ups 3×12']])
+  })
+})
+
+describe('Coaching on a phone', () => {
+  // The failure: the program as a roadmap card with its own stepper, a
+  // template of timed paragraphs and the record, all open (1,685px). One week
+  // from a select, drills as rows, and a dock that marks it done — then offers
+  // the next week rather than unticking this one.
+  it('starts the program, marks the week done from the dock, and moves on', async () => {
+    phone()
+    wrap(<Coaching />)
+    await userEvent.click(screen.getByRole('button', { name: /Start the program/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mark week 1 done' }))
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"coachingWeeksDone"'))!)
+    expect(j.settings.coachingWeeksDone).toEqual([1])
+    await userEvent.click(screen.getByRole('button', { name: /Week 1 done · next/ }))
+    expect((screen.getByRole('combobox', { name: 'Week' }) as HTMLSelectElement).value).toBe('2')
   })
 })
 

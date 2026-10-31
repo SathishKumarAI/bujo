@@ -11,6 +11,7 @@ import { Button } from '../components/ui/button'
 import { PageLayout, SectionRail, StatBar } from '../components/page'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
+import { CoachingPhone } from '../components/coaching/CoachingPhone'
 import { cat, onAccent, onRaised } from '../lib/colors'
 import { dayDiff, prettyDay, todayISO, WEEKDAYS } from '../lib/date'
 import { coachingResetPatch, coachingWeekRange, rowsInCoachingWeek, weekPlay } from '../lib/coachingWeek'
@@ -186,7 +187,8 @@ export function Coaching() {
        * one column, which is the variant `stacked` exists for.
        */
       stacked
-      zone1={<StatBar facts={facts} />}
+      /* A phone says where you are in CoachingPhone's own one line. */
+      zone1={phone ? undefined : <StatBar facts={facts} />}
       zone2={
         <>
           {/*
@@ -271,7 +273,28 @@ export function Coaching() {
               </ul>
             </div>
           )}
-          {section !== 'program' ? <Manual chapter={section} /> : <>
+          {section !== 'program' ? <Manual chapter={section} /> : phone ? (
+            /* A phone: the program as the Pull-ups program day — one week at a
+               time from a select, drills as rows, the record, a dock. */
+            <CoachingPhone
+              started={!!start}
+              current={week}
+              done={done}
+              week={phoneWeek}
+              onWeek={setOpenWeek}
+              onToggle={toggleWeek}
+              onStart={() => setSettings({ coachingStart: today })}
+              onRestart={resetProgram}
+              start={start}
+              onStartDate={(d) => setSettings({ coachingStart: d })}
+              today={today}
+              dow={todayDow}
+              record={(w) => (
+                <WeekRecord week={w} start={start} played={start ? rowsInCoachingWeek(sessions, start, w) : []}
+                  note={weekNotes[String(w)] ?? ''} onNote={setWeekNote} />
+              )}
+            />
+          ) : <>
           <TodaySession slot={todaySlot} dow={todayDow} />
           <Card
             band
