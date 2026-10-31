@@ -1,87 +1,60 @@
 # STATUS
 
-**Stopped:** 2026-10-29, on `main` after #472. **The whole phone stack is
-merged** (#438 → #472, squash per PR; #448 closed as replaced by #449).
-**Full session record:** `docs/sessions/2026-10-29-phone-pages.md` — read it
-first, it is written to be read cold.
+**Stopped:** 2026-10-31, on `main` after #491. Every page you LOG on has its
+phone pass in the Program / Pickleball shape; desktop unchanged on each
+(DOM element count + `#main` text diffed against main's build per PR).
 
 ## Where it stands
 
-Every page has a phone shape, reviewed page by page from screenshots at
-iPhone 13 Pro, and the desktop is unchanged (DOM-fingerprinted per change).
-**Two blockers are the owner's, not code:** Supabase is unreachable
-(COD-434) and plaintext sync needs a decision (COD-436).
+| # | page | phone shape |
+|---|---|---|
+| #476 | Pull-ups | Starting From Zero day first; free session in a sheet |
+| #477, #478 | Nutrition | day strip · scoreboard · Your usual (pins, usage, Indian staples) · Add-food sheet |
+| #479, #480, #481 | Challenges, shared `DayStrip` | strip with week arrows (one 56px row) |
+| #482–#484 | Recovery | one-line streak · frequent urges (Held / Gave in) · today's count on the rows |
+| #485 | Today | trimmed check-in, fasting, no duplicate status strip; plan card's habits-left count fixed |
+| #486, #489 | Cycle | one-line orientation · flags in one row · extras in a sheet |
+| #487 | Goals | your goals first as rows with − / + |
+| #488 | Home workout | routine select · tap-per-set rows · log dock |
+| #489 | all strip pages | `DayStrip` pinned under the top bar; Today's bar drops its date stepper |
+| #490 | Coaching | week select · drill rows · dock (done → next) |
+| #491 | Collections | add forms in sheets; deletes ask first |
 
-| # | what |
-|---|---|
-| #438 → #463 | Pickleball, Fitness, Strength, Program, shell ☰, Plan, Today, Mindset/Coaching/Home Workout, Focus/Reading, demo clips, watch-how, Notifications tab, Insights without charts, section sheet |
-| #439 | dev server pinned to 127.0.0.1:5199 |
-| #468 | Body polish: Effort "Optional", Strength Finish only with a set, Next up once |
-| #469 | Today's plan without its week chart and dead streak button (desktop half: COD-500) |
-| #470 | Insights says each figure once |
-| #471 | Settings tabs 2×2 — Data was off the edge |
-| #472 | Help: no heading repeating the select |
-
-**Then #464 (COD-486, COD-484):** the last six pages got a phone shape —
-Monthly, Collections, Challenges, Recovery, Pull-ups, Settings; desktop DOM
-identical on all six.
-
-**Then #465 (COD-487, COD-481): phone navigation, the third pass.** The phone bar's
-tab strip is gone: the title ("Body" over "Nutrition ▾") opens a 3-column
-grid of all 20 pages, in the bottom bar's order, fitting one screen. The
-bottom bar remembers each section's last page (`shell/lastPage.ts`). The
-a11y gate opens that grid to reach a phone tab (`go()` in
-`scripts/a11y-axe.mjs`).
-
-**Then #466 (COD-487): Mind off the phone, and a grid door on Today.**
-`PHONE_SECTIONS` drops Mind from the bottom bar and the grid (deep links
-still open its pages; desktop unchanged). Today and section-less bars
-(Settings, Help) get a ⊞ "All pages" button.
-
-**Then #467 (COD-491): Body pages, phone review.** Judged from screenshots
-in the iPhone 13 Pro tab. `SectionRail` is one native select on a phone
-(Coaching's 8 chips were 3 lines); Nutrition's rings → a figures row and
-only its Today panel; Home workout's tiles + heatmap and Cycle's totals
-off the phone. Desktop DOM identical on 8 pages. Note: `a11y:panels`
-prints RAIL ROW NOT FOUND for Pickleball/Fitness/Strength on a phone —
-pre-existing, their phone shapes have no review rail by design.
-
-**Next:** COD-500 (desktop streak button → nowhere). COD-481 heading-order half still open (the chip name is fixed in #465). The
-owner asked what "improving duration of the video" meant — unanswered.
+Monthly reviewed and left (the calendar is the page).
 
 ## The next action
 
-1. **Read `main`'s CI once** (`gh run list --branch main --limit 5`). At the
-   stop it was still queued behind 30 merges; every gate was green locally
-   (a11y 71/71, desktop mocha + phone mocha/latte, 0 serious).
-2. **Run the full five-theme gate once on `main`**:
-   `npx vite build && npx vite preview --port 4310 --strictPort &` then
-   `BUJO_URL=http://localhost:4310 node scripts/a11y-axe.mjs` (background it).
-   This session ran one desktop theme and two phone themes per change.
-3. **Owner:** restore/recreate the Supabase project (COD-434); decide
-   encrypt-or-drop for sync (COD-436).
-4. **Then the audit tickets:** COD-435 (feedback email public), COD-437
-   (`/api/sync` auth + rate limit), COD-438, COD-455, COD-463.
-5. **Phone, if asked:** Program could fold a lift's row once all its sets are
-   ticked; Coaching's notes box sits below the open week by design.
+1. **Owner decision pending — Insights on a phone.** It is text-only by the
+   "a phone logs, a desktop reads" rule, and was reported as "not able to see
+   the insights". Options offered: key charts back on Insights only
+   (recommended), all charts, or keep text-only. Nothing built yet.
+2. **COD-518** (backlog): a tracked addiction's lapse day cannot be removed
+   (only the main streak's can); needs `removeAddictionRelapse` + restartFrom.
+3. **COD-511** (backlog): `scripts/build-icons.mjs` reads a registry format
+   that no longer exists and rewrites `icons.tsx` (drops the `// was` notes).
+4. Left: Help and Settings phone passes (reading / settings pages).
+5. Older: COD-500 (desktop streak button), COD-481 heading-order half;
+   Supabase project (COD-434) and sync encryption decision (COD-436).
 
 ## Live traps
 
-- **A phone page decides by `useDevice()`, never CSS width.** Charts are
-  filtered by a flag in the page's card registry (`chart: true` in
-  `lib/cycleCards.ts`, `phone: true` in `lib/focusCards.ts`) through the SAME
-  predicate the rail counts with.
-- **`.phone-frame` is unlayered CSS on every phone page** (`App.tsx`
-  `ViewFrame`) — it beats Tailwind utilities. Scope new phone rules under it
-  or `.ios-form`, never a media query.
-- **A dev server serves the checkout it started in** — and a branch swap under
-  a running Vite can leave CSS stale (Program's bar drew stacked until a
-  restart). Restart only a server this session started.
+- **Chrome DevTools MCP needs Chrome on 9333** after a reboot — see memory
+  `chrome-devtools-mcp-port`. Re-emulate the phone after any reconnect (the
+  emulation is per-connection; a fresh one reads 767px wide).
+- **Compare bundles before a desktop diff**: the app reloads once after a new
+  build (`controllerchange`), so read after two reloads and check the served
+  `index-*.js` against `dist/index.html` — one "identical" diff this session
+  was two reads of the same old bundle.
+- **`.cell` is unlayered**: `flex-col` utilities lose to its
+  `align-items: center` — use `cell cell-stack`.
+- **A `Sheet` is `.ios-form`**: single-choice chip rows become segmented,
+  multi-choice wrap four to a line (long labels now take their width).
+- **Sticky works against the parent**: the day strip must sit at page level.
 
 ## Environment
 
-Dev: `127.0.0.1:5199` from the main checkout (`npm run dev`). Probes need
-`playwright` + `@axe-core/playwright` (`npm i -D --no-save …`, COD-273) and
-resolve them from the repo's `package.json` via `createRequire`.
-Gates before every push: `npm run verify`, `npm run design`,
-`npm run contrast`.
+Preview: `npx vite preview --port 4180 --strictPort` (this session's).
+Dev: `127.0.0.1:5199`. Gates before every push: `npm run verify`,
+`npm run design`, `npm run contrast`; a11y with
+`BUJO_URL=http://localhost:4180 BUJO_THEMES=mocha BUJO_PHONE_THEMES=mocha,latte node scripts/a11y-axe.mjs`
+(backgrounded; never build while it runs).
