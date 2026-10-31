@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
@@ -465,13 +465,19 @@ describe('Cycle · the month calendar', () => {
   })
 
   it('draws the days still to come as dated and inert, not as empty days', async () => {
+    // Pinned mid-month: on a month's last day there are no days still to come,
+    // and this went red on 2026-10-31 with no change to the code. Only Date is
+    // faked, so userEvent's timers are untouched.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-15T12:00:00'))
+    onTestFinished(() => { vi.useRealTimers() })
     const user = userEvent.setup()
     const { container } = mount()
     const card = await logCard(user, container)
     const notYet = [...card.querySelectorAll('.sr-only')]
       .map((s) => s.textContent ?? '')
       .filter((t) => t.endsWith('not yet'))
-    // The demo's today is mid-month, so there are always some; and none of
+    // With today mid-month there are always some; and none of
     // them says "nothing logged", which is a claim about a day that happened.
     expect(notYet.length).toBeGreaterThan(0)
     for (const t of notYet) expect(t).not.toContain('nothing logged')
