@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Band, Eyebrow } from '../mod'
 import { Button } from '../ui/button'
+import { Sheet } from '../ui/sheet'
+import { useDevice } from '../shell/device'
+import { useConfirm } from '../ConfirmDialog'
 import { EntryRow } from '../EntryRow'
 import { collectionProgress } from '../../lib/bullets'
 import type { Collection, Entry } from '../../lib/types'
@@ -35,9 +38,42 @@ export function CustomCollections({
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📚')
   const [text, setText] = useState('')
+  const phone = useDevice() === 'mobile'
+  const confirm = useConfirm()
+  const [creating, setCreating] = useState(false)
+  /* On a phone the create form is a sheet behind "New collection" — inline
+     it wrapped into a swatch, a field and a button around the heading. */
+  const create = () => {
+    if (!name.trim()) return
+    onCreate(name.trim(), icon || '📄')
+    setName('')
+    setCreating(false)
+  }
 
   const items = openId ? entries.filter((e) => e.collection === openId) : []
   const progress = openId ? collectionProgress(entries, openId) : null
+
+  const createForm = (
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+      <input
+        value={icon}
+        onChange={(e) => setIcon(e.target.value.slice(0, 2))}
+        aria-label="Collection icon"
+        className="w-10 border-0 border-b border-line bg-transparent py-1 text-center text-body text-fg-1 focus-visible:border-brand focus-visible:outline-none"
+      />
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') create() }}
+        placeholder="Collection name"
+        aria-label="Collection name"
+        className="min-w-[10rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+      />
+      <Button variant="secondary" className="shrink-0" onClick={create}>
+        New collection
+      </Button>
+    </div>
+  )
 
   return (
     // Measured header clearance, not a literal — see the note on the same class
@@ -45,37 +81,9 @@ export function CustomCollections({
     <Band id="bujo-collections" className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] py-6">
       <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
         <h2 className="text-heading font-medium text-fg-1">Collections</h2>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-          <input
-            value={icon}
-            onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-            aria-label="Collection icon"
-            className="w-10 border-0 border-b border-line bg-transparent py-1 text-center text-body text-fg-1 focus-visible:border-brand focus-visible:outline-none"
-          />
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter' || !name.trim()) return
-              onCreate(name.trim(), icon || '📄')
-              setName('')
-            }}
-            placeholder="Collection name"
-            aria-label="Collection name"
-            className="min-w-[10rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
-          />
-          <Button
-            variant="secondary"
-            className="shrink-0"
-            onClick={() => {
-              if (!name.trim()) return
-              onCreate(name.trim(), icon || '📄')
-              setName('')
-            }}
-          >
-            New collection
-          </Button>
-        </div>
+        {phone ? (
+          <Button variant="secondary" className="ml-auto shrink-0" onClick={() => setCreating(true)}>New collection</Button>
+        ) : createForm}
       </div>
 
       {collections.length === 0 ? (
@@ -98,7 +106,9 @@ export function CustomCollections({
                     <span className="num shrink-0 text-fg-2">{count}</span>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      // It deleted the collection on the first tap.
+                      if (!(await confirm({ title: `Delete “${c.name}”?`, description: `${count} entr${count === 1 ? 'y stays' : 'ies stay'} in your journal; the collection page goes.`, confirmLabel: 'Delete', destructive: true }))) return
                       onRemove(c.id)
                       if (open) onOpen(null)
                     }}
@@ -161,6 +171,11 @@ export function CustomCollections({
             )
           })}
         </ul>
+      )}
+      {phone && (
+        <Sheet open={creating} onOpenChange={setCreating} title="New collection" description="A free-form page — a project, a packing list, a book list">
+          {createForm}
+        </Sheet>
       )}
     </Band>
   )

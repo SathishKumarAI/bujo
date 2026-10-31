@@ -7,6 +7,9 @@ import { Band, BandCell, BandRow } from '../mod'
 import { Button } from '../ui/button'
 import { fetchGithubProfile } from '../../lib/enrich'
 import { MONTHS } from '../../lib/date'
+import { Sheet } from '../ui/sheet'
+import { useDevice } from '../shell/device'
+import { useConfirm } from '../ConfirmDialog'
 
 /**
  * People — friends and birthdays, as one band with two cells.
@@ -27,6 +30,10 @@ export function People() {
   const [bday, setBday] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const phone = useDevice() === 'mobile'
+  const confirm = useConfirm()
+  const [addingFriend, setAddingFriend] = useState(false)
+  const [addingBday, setAddingBday] = useState(false)
   const [bName, setBName] = useState('')
   const [month, setMonth] = useState(1)
   const [day, setDay] = useState(1)
@@ -58,6 +65,7 @@ export function People() {
       setName('')
       setGh('')
       setBday('')
+      setAddingFriend(false)
     } finally {
       setBusy(false)
     }
@@ -85,47 +93,103 @@ export function People() {
     .filter((b, i, all) => all.findIndex((o) => key(o) === key(b)) === i)
     .sort((a, b) => a.month - b.month || a.day - b.day)
 
+  /* On a phone each add form lives in a sheet behind an Add beside its
+     heading — two always-open forms were most of this page's phone height. */
+  const friendForm = (
+    <>
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Name"
+        aria-label="Friend name"
+        className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+      />
+      <div className="flex min-w-[9rem] flex-1 items-center gap-1.5 border-b border-line">
+        <Icon as={At} size="sm" className="shrink-0 text-fg-3" />
+        <input
+          value={gh}
+          onChange={(e) => setGh(e.target.value)}
+          placeholder="github (optional)"
+          aria-label="GitHub username"
+          className="w-full border-0 bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:outline-none"
+        />
+      </div>
+      <Button variant="secondary" onClick={add} className="shrink-0">
+        <Icon as={UserPlus} size="sm" /> {busy ? '…' : 'Add'}
+      </Button>
+    </div>
+    <label className="mt-2 flex items-center gap-2 text-label text-fg-2">
+      Birthday
+      <input
+        type="date"
+        value={bday}
+        onChange={(e) => setBday(e.target.value)}
+        className="border-0 border-b border-line bg-transparent py-1 text-fg-1 focus-visible:border-brand focus-visible:outline-none"
+      />
+    </label>
+    <p className="mt-2 text-label text-fg-3">
+      The GitHub pull uses the official public API and only data they have made public.
+    </p>
+    </>
+  )
+  const bdayForm = (
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        value={bName}
+        onChange={(e) => setBName(e.target.value)}
+        placeholder="Name"
+        aria-label="Birthday name"
+        className="min-w-[7rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
+      />
+      <select
+        aria-label="Birthday month"
+        value={month}
+        onChange={(e) => setMonth(Number(e.target.value))}
+        className="border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 focus-visible:border-brand focus-visible:outline-none"
+      >
+        {MONTHS.map((m, i) => (
+          <option key={m} value={i + 1}>
+            {m.slice(0, 3)}
+          </option>
+        ))}
+      </select>
+      <input
+        type="number"
+        min={1}
+        max={31}
+        value={day}
+        onChange={(e) => setDay(Number(e.target.value))}
+        aria-label="Birthday day"
+        className="w-14 border-0 border-b border-line bg-transparent py-1 text-right text-label text-fg-1 focus-visible:border-brand focus-visible:outline-none"
+      />
+      <Button
+        variant="secondary"
+        className="shrink-0"
+        onClick={() => {
+          if (!bName.trim()) return
+          addBirthday({ name: bName.trim(), month, day })
+          setBName('')
+        }}
+      >
+        Add
+      </Button>
+    </div>
+  )
+
   return (
     <Band className="border-b-0">
       <BandRow>
         <BandCell className="basis-[24rem]">
-          <h2 className="text-heading font-medium text-fg-1">Friends</h2>
+          {phone ? (
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-heading font-medium text-fg-1">Friends</h2>
+              <Button variant="secondary" onClick={() => setAddingFriend(true)} className="shrink-0"><Icon as={UserPlus} size="sm" /> Add</Button>
+            </div>
+          ) : <h2 className="text-heading font-medium text-fg-1">Friends</h2>}
           <p className="mt-1 mb-3 text-label text-pretty text-fg-2">Manual contacts, with an optional public GitHub pull.</p>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
-              aria-label="Friend name"
-              className="min-w-[8rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
-            />
-            <div className="flex min-w-[9rem] flex-1 items-center gap-1.5 border-b border-line">
-              <Icon as={At} size="sm" className="shrink-0 text-fg-3" />
-              <input
-                value={gh}
-                onChange={(e) => setGh(e.target.value)}
-                placeholder="github (optional)"
-                aria-label="GitHub username"
-                className="w-full border-0 bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:outline-none"
-              />
-            </div>
-            <Button variant="secondary" onClick={add} className="shrink-0">
-              <Icon as={UserPlus} size="sm" /> {busy ? '…' : 'Add'}
-            </Button>
-          </div>
-          <label className="mt-2 flex items-center gap-2 text-label text-fg-2">
-            Birthday
-            <input
-              type="date"
-              value={bday}
-              onChange={(e) => setBday(e.target.value)}
-              className="border-0 border-b border-line bg-transparent py-1 text-fg-1 focus-visible:border-brand focus-visible:outline-none"
-            />
-          </label>
-          <p className="mt-2 text-label text-fg-3">
-            The GitHub pull uses the official public API and only data they have made public.
-          </p>
+          {phone ? <Sheet open={addingFriend} onOpenChange={setAddingFriend} title="Add a friend" description="Name, and an optional public GitHub"><div className="flex flex-col gap-3">{friendForm}</div></Sheet> : friendForm}
 
           {friends.length === 0 ? (
             <p className="mt-4 text-label text-fg-3">No friends added yet.</p>
@@ -163,7 +227,10 @@ export function People() {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeFriend(f.id)}
+                      onClick={async () => {
+                        // It removed on the first tap, with the birthday and profile.
+                        if (await confirm({ title: `Remove ${f.name}?`, description: 'Their birthday and profile go with them.', confirmLabel: 'Remove', destructive: true })) removeFriend(f.id)
+                      }}
                       aria-label={`Remove ${f.name}`}
                       className="shrink-0 text-fg-2 reveal hover:text-danger-text"
                     >
@@ -177,50 +244,15 @@ export function People() {
         </BandCell>
 
         <BandCell className="basis-[18rem]">
-          <h2 className="text-heading font-medium text-fg-1">Birthdays</h2>
+          {phone ? (
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-heading font-medium text-fg-1">Birthdays</h2>
+              <Button variant="secondary" onClick={() => setAddingBday(true)} className="shrink-0">Add</Button>
+            </div>
+          ) : <h2 className="text-heading font-medium text-fg-1">Birthdays</h2>}
           <p className="mt-1 mb-3 text-label text-fg-2">Friends' dates and anyone else you add.</p>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              value={bName}
-              onChange={(e) => setBName(e.target.value)}
-              placeholder="Name"
-              aria-label="Birthday name"
-              className="min-w-[7rem] flex-1 border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 placeholder:text-fg-3 focus-visible:border-brand focus-visible:outline-none"
-            />
-            <select
-              aria-label="Birthday month"
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              className="border-0 border-b border-line bg-transparent py-1 text-label text-fg-1 focus-visible:border-brand focus-visible:outline-none"
-            >
-              {MONTHS.map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m.slice(0, 3)}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={1}
-              max={31}
-              value={day}
-              onChange={(e) => setDay(Number(e.target.value))}
-              aria-label="Birthday day"
-              className="w-14 border-0 border-b border-line bg-transparent py-1 text-right text-label text-fg-1 focus-visible:border-brand focus-visible:outline-none"
-            />
-            <Button
-              variant="secondary"
-              className="shrink-0"
-              onClick={() => {
-                if (!bName.trim()) return
-                addBirthday({ name: bName.trim(), month, day })
-                setBName('')
-              }}
-            >
-              Add
-            </Button>
-          </div>
+          {phone ? <Sheet open={addingBday} onOpenChange={setAddingBday} title="Add a birthday" description="It comes back every year">{bdayForm}</Sheet> : bdayForm}
 
           {birthdays.length === 0 ? (
             <p className="mt-4 text-label text-fg-3">Add a birthday and it comes back every year.</p>
@@ -236,7 +268,9 @@ export function People() {
                     <span className="shrink-0 text-caption text-fg-3">friend</span>
                   ) : (
                     <button
-                      onClick={() => removeBirthday(b.id)}
+                      onClick={async () => {
+                        if (await confirm({ title: `Remove ${b.name}'s birthday?`, description: `${MONTHS[b.month - 1]} ${b.day} stops coming back each year.`, confirmLabel: 'Remove', destructive: true })) removeBirthday(b.id)
+                      }}
                       aria-label={`Remove ${b.name}`}
                       className="shrink-0 text-fg-2 reveal hover:text-danger-text"
                     >
