@@ -5,6 +5,7 @@ import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
 import { CursorProvider } from '../components/shell/cursor'
+import { DeviceProvider } from '../components/shell/device'
 import { Cycle } from './Cycle'
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import { CYCLE_CARDS, CYCLE_GROUPS, DEFAULT_GROUP, GROUP_LABEL, panelsIn } from '../lib/cycleCards'
@@ -513,5 +514,30 @@ describe('Cycle · the month calendar', () => {
     const act = container.querySelector('.zone-act')!
     const dayLabels = (act.textContent ?? '').match(/day \d+/g) ?? []
     expect(dayLabels.length, 'the cycle day is drawn more than once').toBe(1)
+  })
+})
+
+describe('Cycle on a phone', () => {
+  // The failure: the phone opening on a four-fact box with four ⓘ and a month
+  // switcher (~330px) above the log, and the day picked in a calendar a scroll
+  // below the editor. One line of where you are, and the day strip on the log.
+  it('picks the day to log in the strip above the editor, under one line of where you are', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    onTestFinished(() => { vi.unstubAllGlobals() })
+    const demo = generateDemoData()
+    localStorage.setItem('bujo:data', JSON.stringify(demo))
+    const user = userEvent.setup()
+    render(
+      <DeviceProvider><NavProvider navigate={() => {}}><CursorProvider><ConfirmProvider><JournalProvider>
+        <Cycle />
+      </JournalProvider></ConfirmProvider></CursorProvider></NavProvider></DeviceProvider>,
+    )
+    expect(screen.queryByText('Your average')).toBeNull()
+    const strip = await screen.findByRole('radiogroup', { name: 'Day to log' })
+    const withTemp = within(strip).getAllByRole('radio').find((r) => / degrees$/.test(r.textContent ?? ''))!
+    // The mark is the chip's last line; the whole chip runs "Sun", "25", "97.39" together.
+    const temp = withTemp.lastElementChild!.textContent!.match(/(\d+\.\d+)/)![1]
+    await user.click(withTemp)
+    expect(screen.getAllByDisplayValue(temp).length).toBeGreaterThan(0)
   })
 })
