@@ -10,6 +10,7 @@ import { Pullups } from './Pullups'
 import { Nutrition } from './Nutrition'
 import { Challenges } from './Challenges'
 import { NoFap } from './NoFap'
+import { Goals } from './Goals'
 import { repsOf } from '../lib/pullups'
 import { SectionRail } from '../components/page'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -219,6 +220,23 @@ describe('Recovery on a phone', () => {
     vi.stubGlobal('confirm', () => true)
     await userEvent.click(screen.getByRole('button', { name: 'Remove today’s slip' }))
     expect(nofap().relapses).toHaveLength(0)
+  })
+})
+
+describe('Goals on a phone', () => {
+  // The failure: the only input on the page at y 924, a four-field form under
+  // fifteen derived bars. Your own goals come first, added from a sheet and
+  // moved with + in their row.
+  it('adds a goal from the sheet and moves it with + in its row', async () => {
+    phone()
+    wrap(<Goals />)
+    await userEvent.click(screen.getByRole('button', { name: /Add a goal/ }))
+    await userEvent.type(screen.getByPlaceholderText('Save $500'), 'Read books')
+    await userEvent.type(screen.getByPlaceholderText('500'), '12')
+    await userEvent.click(screen.getByRole('button', { name: 'Add goal' }))
+    await userEvent.click(screen.getByRole('button', { name: 'One more on Read books' }))
+    const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"customGoals"'))!)
+    expect(j.customGoals).toMatchObject([{ label: 'Read books', target: 12, value: 1 }])
   })
 })
 
