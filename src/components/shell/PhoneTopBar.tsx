@@ -8,6 +8,7 @@ import { Button } from '../ui/button'
 import { PhoneMenu } from './PhoneMenu'
 import { SectionSheet } from './SectionSheet'
 import { DateNav } from './topbar/DateNav'
+import { setBarSlot } from './barSlot'
 import { useSuggestionCount } from './topbar/useSuggestionCount'
 import { useSampleData } from '../useSampleData'
 import { SECTIONS, sectionOf, tabsOf, type SectionGates } from './sections'
@@ -79,7 +80,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
         onClick={() => setAllOpen(true)}
         aria-haspopup="dialog"
         aria-expanded={allOpen}
-        className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-control px-2 text-left transition-colors active:bg-ink-2"
+        className="bar-title flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-control px-2 text-left transition-colors active:bg-ink-2"
       >
         {/* `{' '}` so the name reads "Plan Month", not "PlanMonth" — two spans
             with nothing between them are one word to a screen reader. */}
@@ -97,11 +98,11 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   // no section (Settings, Help). Owner, 2026-10-29: "not able to navigate from
   // today to other pages" — Today was the one page with no door to the grid,
   // so Nutrition or Coaching meant landing on another Body page first.
-  /* A DAY view draws the shared DayStrip pinned right under this bar (Today,
-     2026-10-31: "the log-a-day calendar should be placed on the top nav
-     bar"), so a ‹ date › stepper here was a second picker for the same day,
-     stacked on the first. The strip does everything it did — any day, a week
-     at a time, today marked — so the bar shows the title instead. */
+  /* A DAY view puts the shared DayStrip IN this bar (`.bar-days`, COD-537;
+     first under it, 2026-10-31: "the log-a-day calendar should be placed on
+     the top nav bar"), so a ‹ date › stepper here would be a second picker
+     for the same day. The strip does everything it did — any day (tap the
+     chosen one), today marked — so the bar shows the title instead. */
   const stripBelow = chrome.dateNav === 'day'
 
   const gridButton = (
@@ -163,6 +164,10 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
             {gridButton}
           </>
         )}
+
+        {/* The gap a day page fills with its few days (`DayStrip` portals in,
+            COD-537); empty and hidden on every other page. */}
+        <div ref={setBarSlot} className="bar-days" />
 
         {/* `primaryScope`: mounts once for every view — see `lib/onePrimary.ts`. */}
         <Button variant="primary" primaryScope={SHELL_SCOPE} size="icon-lg" onClick={onQuickAdd} aria-label="Quick add" className="shrink-0">

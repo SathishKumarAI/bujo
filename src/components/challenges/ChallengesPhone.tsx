@@ -99,7 +99,7 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
         <DayStrip value={d} onChange={pick} today={today} label="Day to tick" min={start} max={dayDiff(end, today) > 0 ? end : today}
           mark={(x) => isDayComplete(data, c, x)
             ? <span style={{ color: cat('green') }}><Icon as={Check} size="sm" /><span className="sr-only"> every rule ticked</span></span>
-            : <>{rulesDoneOn(data, c.id, x).length}/{c.rules.length}<span className="sr-only"> rules ticked</span></>} />
+            : rulesDoneOn(data, c.id, x).length ? <>{rulesDoneOn(data, c.id, x).length}/{c.rules.length}<span className="sr-only"> rules ticked</span></> : null} />
       )}
 
       {/* THE SCOREBOARD: where you are, what to do, and the three counts that

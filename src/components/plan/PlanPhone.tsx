@@ -54,7 +54,7 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
       <h1 className="sr-only">Plan · week</h1>
 
       <DayStrip mode="week" weekStart={data.settings.weekStart ?? 0} value={sel} onChange={setSel} today={today} label="Days"
-        mark={(d) => { const n = openOn(d); return n ? <>{n}<span className="sr-only"> open</span></> : <span aria-hidden>·</span> }} />
+        mark={(d) => { const n = openOn(d); return n ? <>{n}<span className="sr-only"> open</span></> : null }} />
 
       <section aria-label={dayName} className="ios-form flex flex-col gap-2">
         <h2 className="px-1 text-title font-bold text-fg-1">{dayName}</h2>
