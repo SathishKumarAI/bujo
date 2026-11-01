@@ -83,6 +83,12 @@ const VIEW_ALIASES: Record<string, string> = {
      complaint. Bookmarks, the guide's "Open account" buttons and anything that
      ever shared a `?view=account` link land on Settings. */
   account: 'settings',
+  /* The page was always titled Recovery; only its URL said `nofap`. Renamed
+     2026-10-31 at the owner's ask ("a better way to organize it") — every
+     bookmark and shared `?view=nofap` link still lands on it. The STORED data
+     keeps its `nofap` key: renaming a journal field is a migration, and the
+     URL was the only part a person reads. */
+  nofap: 'recovery',
 }
 
 /**

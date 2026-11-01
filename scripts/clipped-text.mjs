@@ -47,7 +47,7 @@ const BASE = process.env.BUJO_URL ?? 'http://localhost:4173'
 const VIEWS = [
   'today', 'monthly', 'trackers', 'fitness', 'nutrition', 'gym', 'pullups',
   'pickleball', 'homeworkout', 'challenges', 'focus', 'plan', 'collections',
-  'reading', 'goals', 'insights', 'stats', 'cycle', 'nofap', 'mindset',
+  'reading', 'goals', 'insights', 'stats', 'cycle', 'recovery', 'mindset',
   'coaching', 'help', 'settings',
   // `account` is retired — its content is Settings' first tab now (COD-297), and
   // `settings` above opens on it, so this list lost an id and no coverage.

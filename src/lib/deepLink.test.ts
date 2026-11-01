@@ -45,6 +45,8 @@ describe('readDeepLink — retired destinations', () => {
     expect(readDeepLink('?view=settings&tab=sync').tab).toBe('sync')
     expect(readDeepLink('?view=settings').tab).toBeNull()
     expect(readDeepLink('?view=account&tab=data')).toMatchObject({ view: 'settings', tab: 'data' })
+    // Recovery's old URL — every bookmark and shared `?view=nofap` link.
+    expect(readDeepLink('?view=nofap').view).toBe('recovery')
   })
 
   it('passes an explicit ?activity= through untouched', () => {

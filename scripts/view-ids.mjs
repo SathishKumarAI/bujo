@@ -17,7 +17,7 @@
 export const VIEW_IDS = [
   'today', 'plan', 'trackers', 'fitness', 'nutrition', 'gym', 'program',
   'pullups', 'pickleball', 'coaching', 'homeworkout', 'challenges', 'focus',
-  'cycle', 'nofap', 'monthly', 'collections', 'reading', 'goals', 'mindset',
+  'cycle', 'recovery', 'monthly', 'collections', 'reading', 'goals', 'mindset',
   'insights', 'help', 'settings',
 ]
 

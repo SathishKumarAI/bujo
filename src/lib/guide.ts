@@ -169,7 +169,7 @@ export const ENTRIES: Partial<Record<ViewId, GuideEntry>> = {
     ],
     keywords: ['75 hard', '90 day', 'discipline', 'streak', 'challenge'],
   },
-  nofap: {
+  recovery: {
     why: 'A streak counter with nowhere to write the relapse is a counter you stop opening after the first bad day.',
     how: [
       'Turn it on in Settings → Profile. It is off unless you ask for it.',
