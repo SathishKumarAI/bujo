@@ -24,7 +24,7 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
   const hidden = s.hideToday ?? []
 
   return (
-    <>
+    <div className="flex flex-col gap-5">
       <Cells title="Theme">
         {THEMES.map((t) => {
           const active = (s.theme ?? 'mocha') === t.value
@@ -42,7 +42,7 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
           )
         })}
         <ControlCell label="Accent color">
-          <div className="grid grid-cols-4 justify-items-center gap-2">
+          <div className="grid grid-cols-4 justify-items-center gap-2 sm:flex sm:gap-3">
             {ACCENTS.map((c) => {
               const active = (s.accent ?? 'mauve') === c
               return (
@@ -85,6 +85,6 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
           <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults
         </button>
       </div>
-    </>
+    </div>
   )
 }
