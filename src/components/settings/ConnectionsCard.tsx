@@ -4,6 +4,8 @@ import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
 import { cachedFoodCount, clearFoodCache } from '../../lib/food/lookup'
 import { Row, Toggle } from './shared'
+import { useDevice } from '../shell/device'
+import { Cells, FieldCell, ToggleCell } from '../ui/cells'
 
 /**
  * Everything that may reach outside this device — the half of it that is not
@@ -25,6 +27,24 @@ export function ConnectionsCard() {
   const { data, setSettings } = useJournal()
   const s = data.settings
   const [foodCache, setFoodCache] = useState(() => cachedFoodCount())
+  const phone = useDevice() === 'mobile'
+
+  // Phone: the same two switches as iOS rows, the paragraphs cut to one line each.
+  if (phone) return (
+    <Cells title="Weather & food lookup" aside="off by default">
+      <ToggleCell title="Auto-log weather & location" subtitle="open-meteo · your browser location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
+      <ToggleCell title="Look food up online" subtitle="Only the words you type are sent" on={s.foodLookup === true} onChange={(v) => setSettings({ foodLookup: v })} />
+      {s.foodLookup && (
+        <>
+          <FieldCell label="USDA key" value={s.usdaKey ?? ''} onChange={(v) => setSettings({ usdaKey: v })} placeholder="optional" />
+          <button type="button" className="cell" onClick={() => { clearFoodCache(); setFoodCache(0) }}>
+            <span className="flex-1 text-body text-fg-1">Clear food cache</span>
+            <span className="text-body text-fg-2">{foodCache} cached</span>
+          </button>
+        </>
+      )}
+    </Cells>
+  )
 
   return (
     <Card band title="Weather & food lookup" subtitle="Both off until you turn them on">

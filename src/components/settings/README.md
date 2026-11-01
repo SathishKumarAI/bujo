@@ -31,6 +31,16 @@ tab-shell rule below.
 | Importing an Apple Health `export.zip` | `AppleHealthCard.tsx` |
 | Demo data, erase, back to start screen | `DemoResetCard.tsx` |
 | `Row`, `Toggle`, `Disclosure` | `shared.tsx` |
+| About you / Units on a PHONE (iOS rows) | `AccountPhone.tsx` |
+| Appearance on a PHONE | `AppearancePhone.tsx` |
+| Passcode, Weather & food, Demo & reset on a PHONE | the `if (phone)` branch in their own file |
+| How the phone rows look (switch size, group titles, action rows) | `../../styles/phone-settings.css` |
+
+**A phone draws these fields a second time.** A setting added to a desktop
+card goes in its phone drawing too (`AccountPhone`, `AppearancePhone`, or the
+`if (phone)` branch); `SettingsPhone.test.tsx` asserts the writes land in the
+journal. Destructive rows call the desktop's own handler, so they still ask
+first (COD-562).
 | Handing the browser a file | `download.ts` |
 
 ## Rules this layout is holding up

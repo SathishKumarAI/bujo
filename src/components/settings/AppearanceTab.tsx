@@ -5,8 +5,10 @@ import { Card, Segmented } from '../ui'
 import { Button } from '../ui/button'
 import { useConfirm } from '../ConfirmDialog'
 import { cat } from '../../lib/colors'
-import { THEMES } from '../../lib/themes'
+import { ACCENTS, THEMES, TODAY_CARDS } from '../../lib/themes'
 import { Row, Toggle } from './shared'
+import { useDevice } from '../shell/device'
+import { AppearancePhone } from './AppearancePhone'
 
 /**
  * How the app looks. Four bands and one reset, all of which write `settings`
@@ -17,6 +19,18 @@ export function AppearanceTab() {
   const confirm = useConfirm()
   const { data, setSettings } = useJournal()
   const s = data.settings
+  const phone = useDevice() === 'mobile'
+
+  async function reset() {
+    if (await confirm({
+      title: 'Reset appearance to defaults?',
+      description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
+      confirmLabel: 'Reset appearance', destructive: true,
+    })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] })
+  }
+
+  // The same fields as iOS grouped rows (`AppearancePhone.tsx`).
+  if (phone) return <AppearancePhone onReset={reset} />
 
   return (
     <>
@@ -58,7 +72,7 @@ export function AppearanceTab() {
         <div className="mt-3 border-t border-line pt-3">
           <p className="mb-2 text-body text-fg-1">Accent color</p>
           <div className="flex flex-wrap gap-2">
-            {['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'].map((c) => {
+            {ACCENTS.map((c) => {
               const active = (s.accent ?? 'mauve') === c
               return (
                 <button key={c} onClick={() => setSettings({ accent: c })} aria-label={c} title={c} className="h-7 w-7 rounded-control transition-transform hover:scale-110" style={{ background: cat(c), outline: active ? `2px solid ${cat('text')}` : 'none', outlineOffset: 2 }} />
@@ -117,7 +131,7 @@ export function AppearanceTab() {
 
       <Card band title="Today dashboard cards" subtitle="What the Today page offers you unasked">
         <div className="space-y-2">
-          {([['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Make-up work'], ['onThisDay', 'On this day']] as const).map(([key, label]) => {
+          {TODAY_CARDS.map(([key, label]) => {
             const hidden = s.hideToday ?? []
             return (
               <Toggle
@@ -137,11 +151,7 @@ export function AppearanceTab() {
           <div className="mt-5 border-t border-line pt-4">
             <Button
               variant="danger"
-              onClick={async () => { if (await confirm({
-                title: 'Reset appearance to defaults?',
-                description: 'Restores the theme, accent, text size, paper and dashboard toggles. Your journal data is untouched.',
-                confirmLabel: 'Reset appearance', destructive: true,
-              })) setSettings({ theme: 'mocha', accent: undefined, fontScale: 1, bookMode: false, paperMode: false, handwriting: false, reflectionPrompts: true, penaltyLevel: 'beginner', hideToday: [] }) }}
+              onClick={reset}
               className="inline-flex items-center gap-1.5"
             >
               <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults

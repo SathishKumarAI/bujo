@@ -1,0 +1,108 @@
+/* SETTINGS ON A PHONE — iOS Settings' inset grouped rows.
+ *
+ * OWNS: what `.settings-phone` (added by `views/Settings.tsx` on a phone only)
+ * and the row pieces Settings introduced look like — the iOS-sized switch in a
+ * `ToggleCell`, a value select at a row's right, a short segment at a row's
+ * right, action and destructive rows. The rows themselves (`.cells`, `.cell`,
+ * `.seg`) are `phone.css`.
+ * DOES NOT OWN: desktop. Nothing here can match on a desktop: `.cell-*` rows
+ * render only in the phone drawings, and the rest is under `.settings-phone`.
+ *
+ * Unlayered on purpose, like phone.css: it has to beat Tailwind's utilities on
+ * the switch and the Cells heading.
+ */
+
+/* Group titles: small and quiet above the group, indented to the row text, as
+   iOS Settings draws them. Weighted to out-rank touch-motion.css's
+   `#main .phone-frame h2:is(.text-heading…):not(.sr-only)` (1,3,1), which
+   promotes every phone h2 to a 20px section title — right for a page section,
+   wrong for a group of five switches (measured: "THEME" drew at 20/700). */
+#main .phone-frame .settings-phone h2.cells-title:not(.sr-only) {
+  padding-inline: 0.75rem;
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--color-fg-2);
+}
+
+/* iOS switch geometry: 51×31 with a 27px thumb. Out-ranks `.cells .cell
+   button` (phone.css), which would otherwise stretch it to 44px tall. The row
+   is the <label>, so the tap target is the 52px row, not this. Tailwind v4's
+   `translate-x-*` sets the `translate` PROPERTY, so that is what is overridden. */
+.cells .cell button.cell-switch,
+.settings-phone button[data-slot='switch'] {
+  width: 3.1875rem;
+  height: 1.9375rem;
+  min-height: 0;
+}
+
+.cells .cell button.cell-switch > span,
+.settings-phone button[data-slot='switch'] > span {
+  width: 1.6875rem;
+  height: 1.6875rem;
+  translate: 1px 0;
+}
+
+.cells .cell button.cell-switch[data-state='checked'] > span,
+.settings-phone button[data-slot='switch'][data-state='checked'] > span {
+  translate: 1.3125rem 0;
+}
+
+/* A desktop `Toggle` row in a card Settings still draws as a card on a phone
+   (auto-sync, the local model): the row is the label, so make it 44px. */
+.settings-phone label:has(> button[data-slot='switch']) {
+  min-height: 2.75rem;
+}
+
+/* A value at the row's right edge (Gender, reminder time): no box, the row is
+   the box — the iOS "detail" value. */
+.cell-select {
+  min-height: 2.75rem;
+  max-width: 60%;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-2);
+  font-size: var(--text-body);
+  text-align: right;
+  text-align-last: right;
+}
+
+.cell-select:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+/* A short choice at the right edge of a labelled row (`SegRow`). */
+.seg.cell-seg {
+  flex: none;
+  min-width: 6.5rem;
+}
+
+.seg.cell-seg > button {
+  min-width: 2.75rem;
+  padding-inline: 0.75rem;
+}
+
+/* The four section tabs: 40px pills by default, a 44px floor here. */
+.settings-tabs [role='tab'] {
+  min-height: 2.75rem;
+}
+
+/* An action row: centred words in the brand colour, no chevron. */
+.cell.cell-action,
+.cell.cell-danger {
+  justify-content: center;
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--color-brand-text);
+}
+
+.cell.cell-danger {
+  color: var(--color-red);
+}
+
+/* The cards Settings still draws as cards on a phone (sign-in, exports, tags)
+   get the same 44px floor as every other phone control. */
+.settings-phone [data-slot='button'] {
+  min-height: 2.75rem;
+}

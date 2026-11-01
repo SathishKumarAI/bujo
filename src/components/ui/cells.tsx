@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { CaretRight, type Icon as IconGlyph } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { cat, onAccent } from '../../lib/colors'
+import { Switch } from './switch'
 
 /**
  * An inset grouped list — iOS Settings' rows — for a phone.
@@ -16,7 +17,7 @@ export function Cells({ title, aside, children }: { title?: string; aside?: Reac
     <section aria-label={title} className="flex flex-col gap-1.5">
       {title && (
         <div className="flex items-baseline justify-between px-1">
-          <h2 className="text-heading font-semibold text-fg-1">{title}</h2>
+          <h2 className="cells-title text-heading font-semibold text-fg-1">{title}</h2>
           {aside && <span className="text-label text-fg-2">{aside}</span>}
         </div>
       )}
@@ -107,6 +108,29 @@ export function FieldCell({ label, value, onChange, placeholder, type = 'text', 
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * An on/off row: the words on the left, an iOS-sized switch at the right edge.
+ * The whole row is the `<label>`, so the 52px row is the tap target and the
+ * switch takes its accessible name from the visible title. The switch's size
+ * is `styles/phone-settings.css` (`.cell-switch`).
+ */
+export function ToggleCell({ title, subtitle, on, onChange }: {
+  title: string
+  subtitle?: ReactNode
+  on: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <label className="cell cursor-pointer">
+      <span className="min-w-0 flex-1">
+        <span className="block text-body text-fg-1">{title}</span>
+        {subtitle && <span className="block text-label text-fg-2">{subtitle}</span>}
+      </span>
+      <Switch checked={on} onCheckedChange={onChange} className="cell-switch" />
+    </label>
   )
 }
 
