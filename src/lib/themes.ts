@@ -42,3 +42,10 @@ export const THEMES: ThemeOption[] = [
 
 /** "Mocha · Dark · default" — for a one-line surface with no room for a swatch. */
 export const themeLabel = (t: ThemeOption): string => `${t.label} · ${t.hint}`
+
+/** The accent swatches Settings offers, in the order drawn. Both Settings
+ *  drawings (desktop `AppearanceTab`, phone `AppearancePhone`) read this. */
+export const ACCENTS = ['mauve', 'blue', 'green', 'pink', 'peach', 'teal', 'sky', 'lavender'] as const
+
+/** The Today cards `settings.hideToday` can switch off, with their names. */
+export const TODAY_CARDS = [['plan', "Today's plan"], ['habits', "Today's habits"], ['penalty', 'Make-up work'], ['onThisDay', 'On this day']] as const

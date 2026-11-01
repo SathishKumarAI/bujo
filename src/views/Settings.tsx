@@ -130,7 +130,7 @@ export function Settings() {
             the fourth was off the edge with nothing to say so (the
             `.phone-strip` trap, in its own comment). Four tabs fit two-up
             with their whole labels, "Sync & privacy" included. */}
-        <TabsList ref={listRef} className={`${phone ? 'grid grid-cols-2' : 'flex flex-wrap justify-start'} mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
+        <TabsList ref={listRef} className={`${phone ? 'settings-tabs grid grid-cols-2' : 'flex flex-wrap justify-start'} mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
           {/* "Account", not "Profile". There were two destinations answering
               "who is this journal for" — a whole `views/Account.tsx` holding
               the Google sign-in and a card titled "You", and this tab holding
@@ -153,7 +153,9 @@ export function Settings() {
             set of things", not "the page reloaded"). Reduced-motion users get
             the same instant swap: `bujo-rise` lives inside a
             `prefers-reduced-motion: no-preference` block. */}
-        <div key={tab} className="min-w-0">
+        {/* `.settings-phone` scopes `styles/phone-settings.css`: the iOS
+            grouped-row look the tabs draw on a phone (COD-562). */}
+        <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0'}>
           <TabsContent value="account">
             <SectionScreen label={LABEL.account}><AccountTab /></SectionScreen>
           </TabsContent>

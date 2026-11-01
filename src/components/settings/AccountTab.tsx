@@ -5,6 +5,8 @@ import { AccountCard } from '../account/AccountCard'
 import { LocalAccountCard } from '../account/LocalAccountCard'
 import { PhonePoints } from '../PhonePoints'
 import type { Gender } from '../../lib/types'
+import { useDevice } from '../shell/device'
+import { AboutYouCells, UnitsCells } from './AccountPhone'
 
 /**
  * Who this journal belongs to — the verified account, the name on it, what it
@@ -54,6 +56,7 @@ import type { Gender } from '../../lib/types'
 export function AccountTab() {
   const { data, setSettings } = useJournal()
   const s = data.settings
+  const phone = useDevice() === 'mobile'
 
   function setGender(gender: Gender) {
     // Auto-surface the relevant wellbeing tool, but let the user override after.
@@ -64,9 +67,20 @@ export function AccountTab() {
     })
   }
 
+  // A phone draws the last two cards as iOS grouped rows (`AccountPhone.tsx`);
+  // the account and the name keep their cards — they hold forms, not settings.
+  if (phone) return (
+    <>
+      <AccountCard />
+      <LocalAccountCard />
+      <AboutYouCells setGender={setGender} />
+      <UnitsCells />
+    </>
+  )
+
   return (
     <>
-      {/* The act zone, and the only full-bleed card on the tab: it is the one
+      {/* The act zone,and the only full-bleed card on the tab: it is the one
           thing you came here to do. It used to carry a second button — "Set a
           sync passphrase", a tab switch — because signing in alone did not
           start a sync. COD-309 removed the need, and the button with it: the
