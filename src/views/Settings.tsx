@@ -155,10 +155,10 @@ export function Settings() {
             `prefers-reduced-motion: no-preference` block. */}
         {/* `.settings-phone` scopes `styles/phone-settings.css`: the iOS
             grouped-row look (COD-562) — on every device now, so a desktop
-            reads the same rows in one 42rem column instead of three columns
-            of cards. The section scrolls down like any page; the old
+            reads the same rows, packed into two balanced columns
+            (`.settings-cols`) so a section stays on one screen. The section scrolls down like any page; the old
             fixed-height sideways-packing `SectionScreen` was for cards. */}
-        <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0 max-w-[42rem] flex-1 settings-phone'}>
+        <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0 flex-1 settings-phone settings-cols'}>
           {!phone && <h2 className="mb-5 text-title font-semibold text-fg-1">{LABEL[tab]}</h2>}
           <TabsContent value="account"><section aria-label={LABEL.account}><AccountTab /></section></TabsContent>
           <TabsContent value="feel"><section aria-label={LABEL.feel}><AppearanceTab /></section></TabsContent>

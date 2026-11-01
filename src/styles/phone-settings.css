@@ -122,3 +122,18 @@
 .settings-phone [data-slot='button'] {
   min-height: 2.75rem;
 }
+
+/* DESKTOP: the same groups in two balanced columns, so a section fits one
+   screen (owner, 2026-11-01: "two columns … to stay on page"). Each tab's
+   body is a flex column of groups; as CSS columns a group never splits. Only
+   `.settings-cols` (desktop, views/Settings.tsx) opts in. */
+.settings-cols [role='tabpanel'] > section > div {
+  display: block;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+
+.settings-cols [role='tabpanel'] > section > div > * {
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+}
