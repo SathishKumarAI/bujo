@@ -1305,6 +1305,7 @@ button.cell:active {
   min-width: 2.75rem;
   place-items: center;
   color: var(--color-fg-2);
+}
 
 /* ── Focus (COD-554) ───────────────────────────────────────────────────────
    `focus/FocusPhone.tsx`. Project names are words of any length on a
