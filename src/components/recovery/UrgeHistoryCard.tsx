@@ -5,6 +5,7 @@ import { Card, Empty, Input, Pill } from '../ui'
 import { Button } from '../ui/button'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
+import { useDevice } from '../shell/device'
 import { onRaised } from '../../lib/colors'
 import { prettyDay } from '../../lib/date'
 import { useCappedList } from '../../lib/useCappedList'
@@ -45,6 +46,7 @@ export function UrgeHistoryCard() {
   const { data, updateUrge, removeUrge } = useJournal()
   const confirm = useConfirm()
   const [editing, setEditing] = useState<string | null>(null)
+  const phone = useDevice() === 'mobile'
 
   const techRank = techniqueRanking(data.nofap.urgeLog ?? [])
   const haltRank = haltTally(data)
@@ -57,6 +59,16 @@ export function UrgeHistoryCard() {
   const list = useCappedList(urges, 6)
   const fmtTime = (iso?: string) => {
     try { return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '' } catch { return '' }
+  }
+  /* Delete asks first and names what it removes — `USER-CONTROL.md`. One
+     handler for both drawings, so the phone row cannot drift from it. */
+  const remove = async (u: (typeof urges)[number]) => {
+    if (await confirm({
+      title: 'Delete this urge?',
+      description: `“${u.trigger || 'Urge'}” on ${prettyDay(u.date)} comes off the record, and off the technique and HALT tallies with it.`,
+      confirmLabel: 'Delete urge',
+      destructive: true,
+    })) { setEditing(null); removeUrge(u.id) }
   }
   const before = data.nofap.urgesResisted ?? 0
   const label = discreetly(data.settings)
@@ -107,6 +119,39 @@ export function UrgeHistoryCard() {
                   the whole row is about, lost to a date and two buttons
                   sharing one line. The row wraps instead, so the second line
                   is the timestamp rather than a guess at what the word was. */}
+              {phone ? (
+                /* ON A PHONE, ONE LINE (COD-552): the name and score left, the
+                   day over its time right, × as a trailing 44px target. The
+                   desktop row below wrapped here — "Doomscrolling 2/5 · Fri,
+                   Oct 30 · 10:10 PM · Edit" filled 390px and put × alone on a
+                   second line. The row itself is the edit (iOS: tap a row to
+                   open it), so "Edit" stops costing width and stays named. */
+                <div className="urge-row">
+                  <button
+                    type="button"
+                    className="urge-row-main"
+                    onClick={() => setEditing(editing === u.id ? null : u.id)}
+                    aria-expanded={editing === u.id}
+                  >
+                    <span className="sr-only">{editing === u.id ? 'Close the editor for' : 'Edit'} </span>
+                    <Icon as={HandFist} size="sm" style={{ color: onRaised(u.outcome === 'followed' ? 'peach' : 'green') }} className="shrink-0" />
+                    <span className="min-w-0 flex-1 text-fg-1">
+                      {label(u.trigger || 'Urge')}
+                      {u.intensity && <span className="num text-label text-fg-2"> {u.intensity}/5</span>}
+                    </span>
+                    <span className="urge-row-when">
+                      <span>{prettyDay(u.date)}</span>
+                      {fmtTime(u.at) && <span>{fmtTime(u.at)}</span>}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="urge-row-del"
+                    onClick={() => remove(u)}
+                    aria-label={`Delete the urge on ${prettyDay(u.date)}`}
+                  >×</button>
+                </div>
+              ) : (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Icon as={HandFist} size="sm" style={{ color: onRaised(u.outcome === 'followed' ? 'peach' : 'green') }} className="shrink-0" />
                 <span className="min-w-0 text-fg-1">{label(u.trigger || 'Urge')}</span>
@@ -128,18 +173,12 @@ export function UrgeHistoryCard() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={async () => {
-                    if (await confirm({
-                      title: 'Delete this urge?',
-                      description: `“${u.trigger || 'Urge'}” on ${prettyDay(u.date)} comes off the record, and off the technique and HALT tallies with it.`,
-                      confirmLabel: 'Delete urge',
-                      destructive: true,
-                    })) { setEditing(null); removeUrge(u.id) }
-                  }}
+                  onClick={() => remove(u)}
                   aria-label={`Delete the urge on ${prettyDay(u.date)}`}
                   className="shrink-0 text-fg-2 reveal hover:text-red"
                 >×</Button>
               </div>
+              )}
 
               {editing === u.id && (
                 <div className="mt-2 grid grid-cols-1 gap-2 @min-[22rem]/urge:grid-cols-[1fr_auto_auto]">

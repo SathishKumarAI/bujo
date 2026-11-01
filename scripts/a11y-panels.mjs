@@ -103,15 +103,24 @@ const settle = async (page) => {
 async function deckCards(page) {
   return await page.evaluate(() => {
     const decks = [...document.querySelectorAll('#main [role="group"][aria-label$="cards"]')]
-    return decks.reduce((n, d) => n + d.children.length, 0)
+    const n = decks.reduce((n, d) => n + d.children.length, 0)
+    // No deck, but an optgroup select (Recovery on a phone): its group's panels.
+    const og = document.querySelector('#main nav select')?.selectedOptions[0]?.parentElement
+    return n || (og?.tagName === 'OPTGROUP' ? og.children.length : 0)
   })
 }
 
 async function stepDecks(page, onEach) {
   const next = () => page.evaluate(() => {
     const b = [...document.querySelectorAll('#main button[aria-label^="Next card"]')].find((x) => !x.disabled)
-    if (!b) return false
-    b.click()
+    if (b) { b.click(); return true }
+    // The optgroup select's next panel IN THE SAME GROUP — the deck, as a wheel.
+    const sel = document.querySelector('#main nav select')
+    const o = sel?.selectedOptions[0]
+    const nx = o?.parentElement?.tagName === 'OPTGROUP' ? o.nextElementSibling : null
+    if (!nx) return false
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(sel, nx.value)
+    sel.dispatchEvent(new Event('change', { bubbles: true }))
     return true
   })
   // A hard cap, because a deck that never disables its Next button would
@@ -207,7 +216,11 @@ for (const vp of [
       const clicked = await page.evaluate((want) => {
         const sel = document.querySelector('#main nav select')
         if (sel) {
-          const opt = [...sel.options].find((o) => o.text.trim().startsWith(want))
+          // Recovery's phone select holds a group per `<optgroup>` and a
+          // panel per option (COD-552): the row is the group, and its first
+          // panel is where the scan starts; `stepDecks` walks the rest.
+          const grp = [...sel.querySelectorAll('optgroup')].find((g) => g.label.startsWith(want))
+          const opt = grp ? grp.querySelector('option') : [...sel.options].find((o) => o.text.trim().startsWith(want))
           if (!opt) return false
           const set = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set
           set.call(sel, opt.value)
@@ -256,6 +269,9 @@ for (const vp of [
       const cards = await deckCards(page)
       if (win) { await page.keyboard.press('Escape'); await settle(page) }
       const stepped = await stepDecks(page, async () => {
+        // A panel the phone select just mounted has its folds shut — the
+        // desktop deck had every card in the DOM when `openFolds` ran above.
+        if (await openFolds(page)) await settle(page)
         const r = await new AxeBuilder({ page }).include('#main').analyze()
         const b = r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
         serious += b.length

@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { CaretDown } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { Empty, Input } from '../ui'
+import { useDevice } from '../shell/device'
 import { CardDeck, SectionRail } from '../page'
 import {
   CARDS, FACETS, FACET_LABEL, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP,
@@ -74,6 +77,55 @@ export function RecoveryReview({ group, onGroup, q, onQ, cards, signature }: {
     to, which is why that one is sticky and this is not.
   */
   const [facet, setFacet] = useState<Facet | null>(null)
+  const [cardId, setCardId] = useState<string | null>(null)
+  const phone = useDevice() === 'mobile'
+
+  /*
+    ON A PHONE, ONE SELECT PICKS THE PANEL (COD-552).
+
+    It was three navigations stacked for one panel: the rail's group select
+    ("Win or loss · 2"), the filter box, then the group heading over the deck's
+    "1 of 2 · Urges you logged" pager — 4 controls and a paragraph before the
+    first card. Group and card are two levels of ONE choice, so the select
+    holds both: an `<optgroup>` per group, an option per panel, and the iOS
+    wheel draws the group as a header. The filter goes (twenty-five panels are
+    a wheel, not a search) and so do the facet chips and the deck — the wheel
+    reaches every panel those reached. Choosing a panel still writes the
+    group, so the sticky rail row the desktop reads stays in step.
+  */
+  if (phone) {
+    const byGroup = GROUPS
+      .map((g) => [g, CARDS.filter((c) => c.group === g && cards[c.id])] as const)
+      .filter(([, ids]) => ids.length > 0)
+    const inGroup = byGroup.find(([g]) => g === group)?.[1] ?? byGroup[0]?.[1] ?? []
+    const pick = inGroup.find((c) => c.id === cardId) ?? inGroup[0]
+    return (<>
+      {signature}
+      <nav aria-label="Recovery panels" className="recovery-pick">
+        <label className="select-pill">
+          <span className="sr-only">Recovery panel</span>
+          <select
+            value={pick?.id ?? ''}
+            onChange={(e) => {
+              const c = CARDS.find((x) => x.id === e.target.value)
+              if (!c) return
+              setCardId(c.id)
+              onGroup(c.group)
+            }}
+          >
+            {byGroup.map(([g, ids]) => (
+              <optgroup key={g} label={GROUP_LABEL[g]}>
+                {ids.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </optgroup>
+            ))}
+          </select>
+          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
+        </label>
+      </nav>
+      {pick && <section data-domain={pick.group} data-card={pick.id} className="min-w-0">{cards[pick.id]}</section>}
+    </>)
+  }
+
   const filtering = q.trim().length > 0
   const visible = visibleCards(filtering ? null : group, q)
   const show = (id: string) => visible.has(id)
