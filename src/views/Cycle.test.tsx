@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -216,7 +216,7 @@ describe('Cycle · the registry is the review zone', () => {
       await user.click(railRow(GROUP_LABEL[g]))
       // It sits outside the rail on purpose: a disclaimer behind a row you have
       // to select is one most readers never meet.
-      expect(screen.getByText(CYCLE_DISCLAIMER)).toBeInTheDocument()
+      for (const p of CYCLE_DISCLAIMER) expect(screen.getByText(p)).toBeInTheDocument()
     }
   })
 })
@@ -542,6 +542,22 @@ describe('Cycle on a phone', () => {
     // The optional half opens as a sheet, and the reference legend is off.
     expect(screen.queryByText('Flag colours & day marks')).toBeNull()
     await user.click(screen.getByRole('button', { name: /Mood, mucus, LH/ }))
-    expect(screen.getByRole('dialog', { name: 'Mood, mucus, LH & more' })).toBeTruthy()
+    const sheet = screen.getByRole('dialog', { name: 'Mood, mucus, LH & more' })
+    // The phone drawing (DayMorePhone): a sign is ONE tap on a segmented
+    // row (a native select was two, and its list was reported slow).
+    const mucus = within(sheet).getByRole('radiogroup', { name: 'Cervical mucus' })
+    const current = within(mucus).queryByRole('radio', { checked: true })?.textContent
+    // A value this day does not already hold, or the count below cannot move.
+    const pick = current === 'dry' ? 'sticky' : 'dry'
+    const count = () => (JSON.parse(localStorage.getItem('bujo:data')!) as { cycle: { mucus?: string }[] })
+      .cycle.filter((p) => p.mucus === pick).length
+    const before = count()
+    await user.click(within(mucus).getByRole('radio', { name: pick }))
+    // The JOURNAL, not the DOM: a no-op onChange must fail this (canary).
+    await waitFor(() => expect(count()).toBe(before + 1))
+    expect(within(mucus).getByRole('radio', { name: pick }).getAttribute('aria-checked')).toBe('true')
+    // A scale is one radiogroup row whose options carry the words.
+    expect(within(sheet).getByRole('radiogroup', { name: /^Mood, 1 low to 5 great$/ })).toBeTruthy()
+    expect(within(sheet).getByRole('radio', { name: '5 great' })).toBeTruthy()
   })
 })

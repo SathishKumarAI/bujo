@@ -141,7 +141,10 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
           )}
         </Button>
 
-        {current && (hasTabs || !chrome.dateNav) ? (
+        {/* `stripBelow`: Today's date lives in the strip now, so it takes the
+            same "Section · Page ⌄" button as every other page — owner,
+            2026-10-31: "why can't I have all same navigation style?". */}
+        {current && (hasTabs || !chrome.dateNav || stripBelow) ? (
           titleButton
         ) : chrome.dateNav && !stripBelow ? (
           /* Today: the bottom nav already says "Today", so the row spends its

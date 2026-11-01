@@ -1,4 +1,5 @@
 import { ChipPick } from '../ui/quickpick'
+import { Seg } from '../ui/seg'
 import { Input } from '../ui'
 import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
@@ -90,9 +91,11 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
           vanishes on the first keystroke. `text-heading` and `num` because
           this is the page's primary measurement and it was rendering at the
           same weight as a chip's caption. */}
-      <label className="block">
-        <span className="text-label text-fg-2">Waking temperature</span>
-        <span className="mt-1 flex items-center gap-2">
+      {/* Side by side on a phone — the label left, the field and unit right,
+          one 44px row like every other row in the log. */}
+      <label className={phone ? 'flex items-center gap-3' : 'block'}>
+        <span className={phone ? 'text-body font-medium text-fg-1' : 'text-label text-fg-2'}>Waking temperature</span>
+        <span className={phone ? 'ml-auto flex items-center gap-2' : 'mt-1 flex items-center gap-2'}>
           <Input
             type="number"
             step="0.1"
@@ -172,7 +175,18 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
           It is a SCALE and the flags are booleans, so it is its own row: five
           numbers inside the flag row would read as five more things that are
           either on or off. */}
-      <ChipPick
+      {phone ? (
+        /* On a phone, Mood's row in the sheet: the name left, five segments
+           right, the words in each segment's name instead of two anchor
+           lines under the track. Outlined, as the flags above are — the card
+           is `ink-2`, the same colour as a bare track. */
+        <div className="mt-3 flex items-center gap-3">
+          <span className="w-16 shrink-0 text-body font-medium text-fg-1">Drive</span>
+          <Seg label="Drive, 1 none to 5 high" className="seg-on-card min-w-0 flex-1"
+            value={entry?.drive ?? null} onChange={(n) => onDrive(n ?? undefined)}
+            options={DRIVE_SCALE.map((n) => ({ value: n, label: String(n), name: `${n} ${DRIVE_WORDS[n - 1]}` }))} allowNone />
+        </div>
+      ) : <ChipPick
         className="mt-3"
         label="Drive"
         tone="peach"
@@ -181,7 +195,7 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
         scale={{ low: '1 none', high: '5 high', words: DRIVE_WORDS }}
         hint={phone ? undefined : 'Optional — press the current number again to clear it'}
         options={DRIVE_SCALE.map((n) => ({ value: n, label: String(n) }))}
-      />
+      />}
     </div>
   )
 }

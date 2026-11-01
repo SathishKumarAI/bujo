@@ -39,8 +39,13 @@ describe('cycle guide holds what the page promises', () => {
   })
 
   it('never ships without the medical disclaimer', () => {
-    expect(CYCLE_DISCLAIMER).toMatch(/not medical advice/i)
-    expect(CYCLE_DISCLAIMER).toMatch(/not contraception/i)
+    expect(CYCLE_DISCLAIMER.join(' ')).toMatch(/not medical advice/i)
+    expect(CYCLE_DISCLAIMER.join(' ')).toMatch(/not contraception/i)
+  })
+
+  it('draws the disclaimer as real points, not a split sentence', () => {
+    expect(CYCLE_DISCLAIMER.length).toBeGreaterThanOrEqual(2)
+    for (const p of CYCLE_DISCLAIMER) expect(p.length, p).toBeGreaterThanOrEqual(12)
   })
 })
 
