@@ -31,7 +31,7 @@ import { todayISO } from './lib/date'
  * has to survive a later relapse, which is asserted below.
  */
 function NofapProbe() {
-  const { data, logRelapse, resistUrge, addTriggerPlan, addAddiction, setStreakCost, setCommitment, logLapseDay } = useJournal()
+  const { data, logRelapse, resistUrge, addTriggerPlan, addAddiction, setStreakCost, setCommitment, logLapseDay, removeRelapse } = useJournal()
   const s = data.nofap
   const today = todayISO()
   const ad = (s.addictions ?? [])[0]
@@ -46,6 +46,7 @@ function NofapProbe() {
       <button onClick={() => logLapseDay(null)}>tap</button>
       <button onClick={() => logLapseDay(null, -1)}>untap</button>
       <button onClick={() => logLapseDay(ad?.id ?? null)}>tap addiction</button>
+      <button onClick={() => { const r = ad?.relapses.find((x) => x.date === today); if (r) removeRelapse(r.id, ad!.id) }}>clear addiction</button>
 
       <div data-testid="urges">{(s.urgeLog ?? []).length}</div>
       <div data-testid="plans">{(s.plans ?? []).length}</div>
@@ -56,6 +57,7 @@ function NofapProbe() {
       <div data-testid="startedOn">{s.startedOn}</div>
       <div data-testid="count">{String(s.relapses.find((r) => r.date === today)?.count ?? 0)}</div>
       <div data-testid="ad-resets">{ad?.relapses.length ?? 0}</div>
+      <div data-testid="ad-started">{ad?.startedOn ?? ''}</div>
       <div data-testid="ad-count">{String(ad?.relapses.find((r) => r.date === today)?.count ?? 0)}</div>
     </div>
   )
@@ -163,6 +165,19 @@ describe('logLapseDay', () => {
     await user.click(screen.getByText('tap addiction'))
     expect(read('ad-resets')).toBe('1')
     expect(read('ad-count')).toBe('2')
+    expect(read('relapses')).toBe('0')
+  })
+
+  it('takes a tracked addiction slip back off, and its streak with it (COD-518)', async () => {
+    const { user } = mount()
+    await user.click(screen.getByText('addiction'))
+    const started = read('ad-started')
+    await user.click(screen.getByText('tap addiction'))
+    expect(read('ad-resets')).toBe('1')
+    await user.click(screen.getByText('clear addiction'))
+    expect(read('ad-resets')).toBe('0')
+    // restartFrom: no reset left, so the streak runs from when tracking began.
+    expect(read('ad-started')).toBe(started)
     expect(read('relapses')).toBe('0')
   })
 })

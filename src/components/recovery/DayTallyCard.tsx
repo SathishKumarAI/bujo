@@ -48,9 +48,16 @@ export interface DayTallyRow {
  * silently wins, which is what had been eating `text-label` on the Reset button
  * one card over.
  */
-export function DayTallyCard({ rows, onStep, bare = false }: {
+export function DayTallyCard({ rows, onStep, onClear, bare = false }: {
   rows: DayTallyRow[]
   onStep: (id: string | null, step: number) => void
+  /**
+   * Take today's row off entirely. The store floors a logged day at one (a
+   * minus never undoes a reset), so without this the − stopped at "1 today"
+   * and the day could not be removed at all for a tracked addiction (COD-518).
+   * The − at the floor calls this instead; the host asks first.
+   */
+  onClear?: (id: string | null) => void
   /** Render without the `Card` wrapper, for a host that already is one. */
   bare?: boolean
 }) {
@@ -80,9 +87,10 @@ export function DayTallyCard({ rows, onStep, bare = false }: {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
-                {r.count > 0 && (
-                  <Button variant="ghost" size="icon-lg" onClick={() => onStep(r.id, -unitOf(r.unit).step)}
-                    aria-label={`Less ${r.name} today`}>
+                {r.count > 0 && (r.count > unitOf(r.unit).step || onClear) && (
+                  <Button variant="ghost" size="icon-lg"
+                    onClick={() => (r.count > unitOf(r.unit).step ? onStep(r.id, -unitOf(r.unit).step) : onClear?.(r.id))}
+                    aria-label={r.count > unitOf(r.unit).step ? `Less ${r.name} today` : `Remove ${r.name} today`}>
                     <Icon as={Minus} size="sm" />
                   </Button>
                 )}

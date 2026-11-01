@@ -3,6 +3,7 @@ import { ArrowCounterClockwise, Clock, Flame, Heart, Lifebuoy, Target, Trophy, W
 import { useDevice } from '../components/shell/device'
 import { useState, type ReactNode } from 'react'
 import { useJournal } from '../store'
+import { useConfirm } from '../components/ConfirmDialog'
 import { todayISO } from '../lib/date'
 import { streakStats, urgesByType, moneySaved } from '../lib/streak'
 import { streakVsBest, comebackStatus, urgeHourHistogram, peakUrgeHour, relapseWeekdayPattern, peakRelapseWeekday, urgeConversion, paceToRecord, urgeFrequencyTrend, streaksSaved, intensityStats, cleanRollup, timeReclaimed, recordApproach, urgeQuietStretch, urgesLabelled, urgeLabelCoverage } from '../lib/urge'
@@ -69,7 +70,8 @@ import {
  * was **929 lines**; the ceiling in `CLAUDE.md` is 500 and the target ~300.
  */
 export function NoFap() {
-  const { data, logLapseDay, setStreakCost } = useJournal()
+  const { data, logLapseDay, setStreakCost, removeRelapse } = useJournal()
+  const confirm = useConfirm()
   const currency = data.settings.currencySymbol || '$'
   const [hoursPerDay, setHoursPerDay] = useState(1) // #344 reclaimed-time rate (view-local)
   const [q, setQ] = useState('')
@@ -147,6 +149,17 @@ export function NoFap() {
    * did — and `hasLapseQuantity` is the one gate that keeps it off the page.
    * `flatMap` rather than `filter`, so `peak` narrows instead of being asserted.
    */
+  // The − at "1 today" removes the day, after asking (COD-518).
+  const clearToday = async (id: string | null) => {
+    const a = id == null ? undefined : addictions.find((x) => x.id === id)
+    const r = (a ?? s).relapses.find((x) => x.date === today)
+    if (!r || !(await confirm({
+      title: 'Remove today’s slip?',
+      description: `Today comes off your history and the ${a?.name ?? 'main'} streak runs from the reset before it.`,
+      confirmLabel: 'Remove it', destructive: true,
+    }))) return
+    removeRelapse(r.id, id ?? undefined)
+  }
   const countedStreaks = [
     // Keyed by id, not name: nothing stops an addiction being called "Main
     // streak", and two cards under one React key is a silent render bug.
@@ -418,7 +431,7 @@ export function NoFap() {
             costing a scroll to get past. */}
         <LogCard
           urge={<UrgeSurfingCard bare />}
-          tally={<DayTallyCard rows={tallyRows} onStep={logLapseDay} bare />}
+          tally={<DayTallyCard rows={tallyRows} onStep={logLapseDay} onClear={clearToday} bare />}
           reset={<LogResetCard best={stats.best} totalClean={stats.totalClean} bare />}
         />
         </>)}
