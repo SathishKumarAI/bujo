@@ -151,3 +151,27 @@ describe('Settings on a phone · Sync and Data as rows', () => {
     expect(Number(records!.textContent!.replace('Records', ''))).toBeGreaterThan(100)
   })
 })
+
+describe('Settings · Import JSON (COD-569)', () => {
+  // The failure: picking a file replaced the whole journal with no question.
+  // Asserted on the journal: Cancel keeps every entry, confirming swaps them.
+  it('asks before replacing the journal, and Cancel keeps it', async () => {
+    const user = userEvent.setup()
+    mount('data')
+    const before = JSON.parse(localStorage.getItem('bujo:data')!).entries.length
+    const small = generateDemoData()
+    small.entries = small.entries.slice(0, 2)
+    const file = new File([JSON.stringify(small)], 'old-backup.json', { type: 'application/json' })
+    const input = document.querySelector<HTMLInputElement>('input[type="file"][accept="application/json"]')!
+
+    await user.upload(input, file)
+    const dialog = await screen.findByRole('alertdialog')
+    expect(dialog.textContent).toContain('old-backup.json')
+    await user.click(screen.getByRole('button', { name: /cancel/i }))
+    expect(JSON.parse(localStorage.getItem('bujo:data')!).entries.length).toBe(before)
+
+    await user.upload(input, file)
+    await user.click(await screen.findByRole('button', { name: 'Replace journal' }))
+    expect(JSON.parse(localStorage.getItem('bujo:data')!).entries.length).toBe(2)
+  })
+})
