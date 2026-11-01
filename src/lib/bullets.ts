@@ -34,6 +34,30 @@ export const BULLET_LEGEND: { glyph: string; label: string }[] = [
   { glyph: '~', label: 'Dropped (struck through)' },
 ]
 
+/**
+ * The quick-capture prefixes, in the order Help lists them. One list, read by
+ * the desktop's inline sentence and the phone's rows.
+ */
+export const QUICK_CAPTURE: { key: string; meaning: string }[] = [
+  { key: 't', meaning: 'task' },
+  { key: 'e', meaning: 'event' },
+  { key: 'n', meaning: 'note' },
+  { key: '*', meaning: 'important' },
+  { key: '^', meaning: 'memory' },
+  { key: '#tag', meaning: 'to tag' },
+]
+
+/**
+ * How rapid logging works, as points — the phone's drawing of the paragraph
+ * the desktop's "The bullets" card opens with. Sequence order: type, pick the
+ * kind, then change the status later.
+ */
+export const RAPID_LOG_HOW: string[] = [
+  'On Today, type into the add bar and press Enter.',
+  'Start a line with a letter to choose the kind.',
+  'Tap the glyph on any task to cycle its status.',
+]
+
 /** Cycle a task through its lifecycle on click: open → done → migrated → open. */
 export function nextStatus(status: EntryStatus): EntryStatus {
   const cycle: EntryStatus[] = ['open', 'done', 'migrated', 'dropped']

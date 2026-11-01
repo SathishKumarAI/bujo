@@ -1,6 +1,6 @@
 import { ArrowRight, MagnifyingGlass } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Card, Empty, Input, Pill } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout } from '../components/page/PageLayout'
@@ -8,10 +8,11 @@ import { StatBar } from '../components/page/StatBar'
 import { SectionRail } from '../components/page/SectionRail'
 import { useNav } from '../components/shell/nav'
 import { useDevice } from '../components/shell/device'
-import { BULLET_LEGEND } from '../lib/bullets'
+import { BULLET_LEGEND, QUICK_CAPTURE } from '../lib/bullets'
 import { onRaised } from '../lib/colors'
 import { GUIDE, TUTORIALS, guideByGroup, searchGuide, type GuideCard, type Tutorial } from '../lib/guide'
 import { glossaryByDomain, GLOSSARY } from '../lib/glossary'
+import { HelpPhone } from '../components/help/HelpPhone'
 
 /**
  * GUIDE · the page a stuck user opens.
@@ -42,9 +43,8 @@ export function Help() {
   /* One group at a time, `null` for All. Defaults to the first — landing on
      all twenty-five features is the 10.9-screen page this replaces. */
   const [group, setGroup] = useState<string | null>(guideByGroup()[0]?.id ?? null)
-  // On a phone the rail is a select that already reads "Today · 1"; with one
-  // group shown, its "TODAY · 1" heading said it again, and the fold under it
-  // said "Today" a third time. The heading stays for screen readers.
+  // A phone gets its own drawing of this page (`components/help/HelpPhone.tsx`):
+  // one select for everything, rows that open in place. Decided after every hook.
   const phone = useDevice() === 'mobile'
   /* A query crosses groups. Searching "backup" while the rail sits on Body
      must find it — the whole reason the search exists is to reach a feature
@@ -55,6 +55,7 @@ export function Help() {
   )
   const tutorial = TUTORIALS.find((t) => t.id === track) ?? TUTORIALS[0]
 
+  if (phone) return <HelpPhone />
   return (
     <PageLayout
       /* Stays split at 1180, and that is a measured choice against the
@@ -137,7 +138,7 @@ export function Help() {
                 <div className="min-w-0 space-y-5">
                   {groups.map((g) => (
                     <section key={g.id} data-guide-group={g.id} aria-label={g.label}>
-                      <h3 className={phone && groups.length === 1 ? 'sr-only' : 'mb-2 text-micro tracking-wider text-fg-2 uppercase'}>
+                      <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
                         {g.label} · {g.cards.length}
                       </h3>
                       <div className="space-y-2">
@@ -216,7 +217,7 @@ function StartHere({
             </span>
             <div className="min-w-0">
               <p className="text-body font-medium text-fg-1">{s.title}</p>
-              <p className="mt-0.5 text-label leading-relaxed text-fg-2">{s.body}</p>
+              <p className="mt-0.5 text-label leading-relaxed text-fg-2">{s.body.join(' ')}</p>
               {s.to && (
                 <Button
                   variant="ghost"
@@ -290,8 +291,11 @@ function Bullets() {
       <div className="mt-3 rounded-card bg-ink-0 p-3 text-body text-fg-2">
         <p className="font-medium text-fg-1">Quick-capture prefixes</p>
         <p className="mt-1">
-          <code>t</code> task · <code>e</code> event · <code>n</code> note · <code>*</code> important ·{' '}
-          <code>^</code> memory · <code>#tag</code> to tag.
+          {QUICK_CAPTURE.map((q, i) => (
+            <Fragment key={q.key}>
+              <code>{q.key}</code> {q.meaning}{i < QUICK_CAPTURE.length - 1 ? ' · ' : '.'}
+            </Fragment>
+          ))}
         </p>
         <p className="mt-1 text-fg-2">
           So <code>* t book the campsite #travel</code> logs an important task tagged travel.
@@ -325,9 +329,6 @@ function Glossary() {
      to put on a rail. Defaults to Cycle because that is the domain that produced
      the request — landing on all twenty is landing on the wall. */
   const [domain, setDomain] = useState<string | null>(all[0]?.domain ?? null)
-  // Same as the guide above: one domain picked on a phone, and the select
-  // already names it.
-  const phone = useDevice() === 'mobile'
   const groups = domain ? all.filter((g) => g.domain === domain) : all
   return (
     <Card
@@ -354,7 +355,7 @@ function Glossary() {
       <div className="min-w-0 space-y-4">
         {groups.map((g) => (
           <section key={g.domain} aria-label={g.label}>
-            <h3 className={phone && groups.length === 1 ? 'sr-only' : 'mb-2 text-micro tracking-wider text-fg-2 uppercase'}>
+            <h3 className="mb-2 text-micro tracking-wider text-fg-2 uppercase">
               {g.label} · {g.terms.length}
             </h3>
             {/* A definition list, because that is what this is: `dt`/`dd` gives a
