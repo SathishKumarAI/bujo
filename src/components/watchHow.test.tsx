@@ -52,7 +52,7 @@ function DeskDay() {
 describe('Program shows "Watch" beside every lift without opening it', () => {
   it('phone: every closed lift row carries its own Watch link', () => {
     render(<NavProvider navigate={() => {}}><JournalProvider><PhoneDay /></JournalProvider></NavProvider>)
-    const toggles = screen.getAllByRole('button', { expanded: false })
+    const toggles = screen.getAllByRole('button', { expanded: false }).filter((b) => b.closest('.lift-row'))
     expect(toggles.length).toBeGreaterThan(0)
     for (const t of toggles) {
       const name = t.textContent!.trim()
