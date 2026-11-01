@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { CaretDown, Minus, PushPin, PencilSimple, Plus, SlidersHorizontal, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
+import { Seg } from '../ui/seg'
 import { Sheet } from '../ui/sheet'
 import { DayStrip } from '../ui/dayStrip'
 import { SearchField } from '../page'
@@ -173,13 +174,14 @@ export function NutritionPhone({
         <div className="flex flex-col gap-3">
           <SearchField value={q} onChange={setQ} label="Search every food" placeholder={`Search ${FOODS.length + mine.length} foods`} />
           {!q.trim() && (
-            <label className="select-pill">
-              <span className="sr-only">Show</span>
-              <select value={source} onChange={(e) => setSource(e.target.value as Source)}>
-                {SOURCES.filter((x) => x.id !== 'mine' || mine.length).map((x) => <option key={x.id} value={x.id}>{x.label} · {sourceList(x.id, usual, mine).length}</option>)}
-              </select>
-              <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-            </label>
+            /* One tap, not a native picker: four short lists. `source` is never
+               empty (it starts on Your usual), so no `allowNone` — a tap on the
+               lit option would otherwise blank the list. The count lives in the
+               name; the name starts with the drawn word (WCAG 2.5.3). */
+            <Seg label="Show" value={source} onChange={(v) => v && setSource(v)}
+              options={SOURCES.filter((x) => x.id !== 'mine' || mine.length).map((x) => ({
+                value: x.id, label: x.short, name: `${x.short}, ${sourceList(x.id, usual, mine).length} foods`,
+              }))} />
           )}
           <div className="cells">
             {list.length ? list.map(row) : <p className="cell text-label text-fg-2">Nothing matches “{q.trim()}”. Add it as a food of your own below.</p>}
@@ -206,11 +208,11 @@ export function NutritionPhone({
 }
 
 type Source = 'usual' | 'mine' | 'indian' | 'american'
-const SOURCES: { id: Source; label: string }[] = [
-  { id: 'usual', label: 'Your usual' },
-  { id: 'mine', label: 'Your own foods' },
-  { id: 'indian', label: 'Indian' },
-  { id: 'american', label: 'American' },
+const SOURCES: { id: Source; short: string }[] = [
+  { id: 'usual', short: 'Usual' },
+  { id: 'mine', short: 'Mine' },
+  { id: 'indian', short: 'Indian' },
+  { id: 'american', short: 'American' },
 ]
 const sourceList = (id: Source, usual: Food[], mine: Food[]): Food[] =>
   id === 'usual' ? usual : id === 'mine' ? mine : FOODS.filter((f) => f.cuisine === id)

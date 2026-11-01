@@ -141,6 +141,21 @@ describe('Nutrition on a phone', () => {
     expect(today()).toMatchObject({ calories: 266, foodLog: [expect.objectContaining({ servings: 2 })] })
   })
 
+  // The failure: the source switch going back to a native picker (two taps
+  // and a wheel), or a tap on it that does not change the list. Whey is
+  // American and not in a fresh journal's usual, so it can only be logged if
+  // the tap really switched the list.
+  it('switches the food list in one tap and logs from the new list', async () => {
+    phone()
+    wrap(<Nutrition />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add food' }))
+    expect(screen.queryByRole('combobox', { name: 'Show' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Add Whey protein/ })).toBeNull()
+    await userEvent.click(screen.getByRole('radio', { name: /^American, \d+ foods$/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Add Whey protein, 126 kcal/ }))
+    expect(today()).toMatchObject({ calories: 126, foodLog: [expect.objectContaining({ name: 'Whey protein' })] })
+  })
+
   it('pins a food to the top of Your usual and keeps the pin in the journal', async () => {
     phone()
     wrap(<Nutrition />)
