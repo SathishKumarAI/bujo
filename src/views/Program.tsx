@@ -139,7 +139,7 @@ export function Program() {
           )}
 
           {s.p.note && (
-            <p className="mt-3 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">{s.p.note}</p>
+            <p className="mt-3 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">{s.p.note.join(' · ')}</p>
           )}
 
           {/* The map is in the ACT column because choosing the day *is* the act

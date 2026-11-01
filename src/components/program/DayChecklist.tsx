@@ -55,8 +55,13 @@ export function DayChecklist({ s, onCheck }: { s: ProgramState; onCheck?: (name:
                   className="accent-green"
                   aria-label={`Did ${e.name}`}
                 />
-                <span className={`min-w-0 flex-1 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>
-                <VideoLink name={e.name} label="" size="sm" quiet />
+                <span className={`min-w-0 ${checked ? 'text-fg-2 line-through' : 'text-fg-1'}`}>{e.name}</span>
+                {/* Right after the name, worded (COD-541). It was an unlabelled
+                    16px glyph pushed to the far edge of the name column, which
+                    read as decoration — the owner asked for "watch how" beside
+                    the workout name. `mr-auto` keeps the rest of the line where
+                    it was. */}
+                <VideoLink name={e.name} label="Watch" size="sm" className="mr-auto shrink-0" />
               </span>
               <span className="num shrink-0 text-label text-fg-2">{e.qty}</span>
               <span className="num w-7 shrink-0 text-right text-label text-fg-2">×{e.sets}</span>
