@@ -91,11 +91,12 @@ export function DayEditor({ date, entry, unit, cycleDay, onTemp, onToggleFlag, o
           vanishes on the first keystroke. `text-heading` and `num` because
           this is the page's primary measurement and it was rendering at the
           same weight as a chip's caption. */}
-      {/* Side by side on a phone — the label left, the field and unit right,
-          one 44px row like every other row in the log. */}
-      <label className={phone ? 'flex items-center gap-3' : 'block'}>
-        <span className={phone ? 'text-body font-medium text-fg-1' : 'text-label text-fg-2'}>Waking temperature</span>
-        <span className={phone ? 'ml-auto flex items-center gap-2' : 'mt-1 flex items-center gap-2'}>
+      {/* Side by side — the label left, the field and unit right, one row
+          like every other row in the log. Phone first (COD-533), then desktop
+          on the owner's ask: a stacked label spent a line on a 424px column. */}
+      <label className="flex items-center gap-3">
+        <span className="text-body font-medium text-fg-1">Waking temperature</span>
+        <span className="ml-auto flex items-center gap-2">
           <Input
             type="number"
             step="0.1"
