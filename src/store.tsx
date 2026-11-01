@@ -184,8 +184,9 @@ interface Store {
   logRelapse: (r: Omit<Relapse, 'id'>) => void
   /** Correct a logged reset — its day, its reason, its note or its count. */
   updateRelapse: (id: string, patch: Partial<Omit<Relapse, 'id'>>) => void
-  /** Take a reset off the record entirely, with undo. */
-  removeRelapse: (id: string) => void
+  /** Take a reset off the record entirely, with undo — the main streak's, or
+   *  `addictionId`'s (COD-518: a tracked addiction's slip had no way off). */
+  removeRelapse: (id: string, addictionId?: string) => void
   resistUrge: (entry?: { trigger?: string; note?: string; intensity?: 1 | 2 | 3 | 4 | 5; technique?: 'surf' | 'delay' | 'halt' | 'reach-out'; halt?: ('hungry' | 'angry' | 'lonely' | 'tired')[]; addictionId?: string; stress?: 1 | 2 | 3 | 4 | 5; outcome?: 'resisted' | 'followed'; lonelyKind?: 'alone' | 'unseen' | 'no-one-close' | 'disconnected' | 'bored' }) => void
   removeUrge: (id: string) => void
   /** Correct a logged urge — what it was, the day, the intensity. */
@@ -792,10 +793,17 @@ export function JournalProvider({ children }: { children: ReactNode }) {
           return { ...d, nofap: { ...d.nofap, relapses, startedOn: restartFrom(d.nofap, relapses) } }
         }),
 
-      removeRelapse: (id) =>
+      removeRelapse: (id, addictionId) =>
         removeWithUndo('Reset', (d) => {
-          const relapses = d.nofap.relapses.filter((r) => r.id !== id)
-          return { ...d, nofap: { ...d.nofap, relapses, startedOn: restartFrom(d.nofap, relapses) } }
+          // Same rule for either stream: drop the row, then `restartFrom` moves
+          // the streak's start back to the reset before it.
+          const drop = <T extends { startedOn: string; firstStartedOn?: string; relapses: Relapse[] }>(s: T): T => {
+            const relapses = s.relapses.filter((r) => r.id !== id)
+            return { ...s, relapses, startedOn: restartFrom(s, relapses) }
+          }
+          return addictionId == null
+            ? { ...d, nofap: drop(d.nofap) }
+            : { ...d, nofap: { ...d.nofap, addictions: (d.nofap.addictions ?? []).map((a) => (a.id === addictionId ? drop(a) : a)) } }
         }),
 
       /**

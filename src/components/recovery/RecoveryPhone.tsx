@@ -195,15 +195,17 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
                 </output>
                 <button type="button" className="round-btn" aria-label={`More ${fix.name} today, ${formatAmount(u.step, fix.unit)}`} onClick={() => onStep(fix.id, u.step)}><Icon as={Plus} size="sm" /></button>
               </div>
-              {fix.count > 0 && fix.id === null && (
+              {fix.count > 0 && (
                 <button type="button" className="self-center text-label font-semibold" style={{ color: onRaised('red') }}
                   onClick={async () => {
-                    const r = data.nofap.relapses.find((x) => x.date === todayISO())
+                    // Every row, not only the main streak (COD-518).
+                    const stream = fix.id == null ? data.nofap : data.nofap.addictions?.find((a) => a.id === fix.id)
+                    const r = stream?.relapses.find((x) => x.date === todayISO())
                     if (r && await confirm({
                       title: 'Remove today’s slip?',
-                      description: 'Today comes off your history and the main streak runs from the reset before it.',
+                      description: `Today comes off your history and the ${fix.id == null ? 'main' : fix.name} streak runs from the reset before it.`,
                       confirmLabel: 'Remove it', destructive: true,
-                    })) { removeRelapse(r.id); setFixing(undefined) }
+                    })) { removeRelapse(r.id, fix.id ?? undefined); setFixing(undefined) }
                   }}>Remove today’s slip</button>
               )}
               {u.quick.length > 1 && (
