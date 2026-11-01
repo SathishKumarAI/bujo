@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
@@ -62,26 +62,26 @@ describe('the section switcher', () => {
   })
 })
 
-describe('the open section is one screen, and reachable without a pointer', () => {
-  it('is a labelled, focusable scrollport', () => {
-    // It scrolls sideways when a section outgrows one screen, and a scrollport
-    // reachable only by pointer is unreachable for a keyboard — axe's
-    // `scrollable-region-focusable`. Horizontal is also the direction a
-    // browser will not scroll for you on arrow keys unless the element has
-    // focus.
+describe('the open section, drawn as rows on every device', () => {
+  // Owner, 2026-11-01: the desktop follows the phone — grouped rows in one
+  // column, not three columns of cards packed into a sideways scrollport.
+  // The failure: a desktop tab falling back to its old card drawing.
+  it('draws the Account and Appearance tabs as grouped rows on a desktop', () => {
     mount()
-    const box = screen.getByRole('group', { name: 'Account' })
-    expect(box.tabIndex).toBe(0)
-    expect(box.className).toContain('section-screen')
+    expect(screen.getByRole('region', { name: 'Account' }).querySelectorAll('.cells').length).toBeGreaterThan(0)
+    cleanup()
+    window.history.replaceState(null, '', '/?view=settings&tab=feel')
+    mount()
+    expect(screen.getByRole('region', { name: 'Appearance' }).querySelectorAll('.cells').length).toBeGreaterThan(0)
   })
 
-  it('names the box after the section it is showing', () => {
+  it('names the region after the section it is showing', () => {
     // The name has to follow the tab, or a screen reader hears "Account" over
     // the Data panel. `LABEL` in the view is the single source for both.
     window.history.replaceState(null, '', '/?view=settings&tab=data')
     mount()
-    const box = screen.getByRole('group', { name: 'Data' })
-    expect(within(box).getByText(/everything stored on this device/i)).toBeTruthy()
+    const box = screen.getByRole('region', { name: 'Data' })
+    expect(within(box).getByText('Records')).toBeTruthy()
   })
 })
 

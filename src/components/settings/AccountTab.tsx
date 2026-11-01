@@ -1,11 +1,5 @@
 import { useJournal } from '../../store'
-import { Card, Segmented } from '../ui'
-import { Row, Toggle } from './shared'
-import { AccountCard } from '../account/AccountCard'
-import { LocalAccountCard } from '../account/LocalAccountCard'
-import { PhonePoints } from '../PhonePoints'
 import type { Gender } from '../../lib/types'
-import { useDevice } from '../shell/device'
 import { AboutYouCells, UnitsCells } from './AccountPhone'
 import { SyncAccountCells, YouCells } from '../account/AccountPhoneCells'
 
@@ -33,31 +27,24 @@ import { SyncAccountCells, YouCells } from '../account/AccountPhoneCells'
  * the merits: "which account" and "what do we call you" are the same question
  * asked of a verified and an unverified identity.
  *
- * ── Order, and why it is not alphabetical ──────────────────────────────────
+ * ── Order ─────────────────────────────────────────────────────────────────
  *
- * Act first: `AccountCard` carries this tab's single primary button (sign in,
- * or sign out). Then review, narrowing from checked identity to pure
- * formatting:
+ * Grouped rows on every device (`account/AccountPhoneCells.tsx`,
+ * `AccountPhone.tsx`), narrowing from identity to pure formatting:
  *
- *   1. the Google account — verified, and what syncing actually means
- *   2. the local name and emoji — a label, nothing checked
- *   3. what the app tracks about you — gender, the wellbeing gates, the nudge
- *   4. how numbers read — units and week start
+ *   1. You — the local name and face, a label, nothing checked
+ *   2. Sync across devices — the Google account; renders nothing when the
+ *      build has no Supabase project, so a clone opens on (1) and still works
+ *   3. About you — gender, the wellbeing gates, the nudge
+ *   4. Units & week
  *
- * `AccountCard` renders nothing when the build has no Supabase project, so a
- * clone of this public repo opens on (2) and the tab is still coherent: a local
- * account is an account.
- *
- * Cards 3 and 4 are moved markup, not retyped — including their comments, which
- * record measurements (the 44%-fill reminder band, the 500px of empty wide tier)
- * that would otherwise be re-litigated. The reminder's switch is also in the
- * header menu because whether you want a nudge is a decision you revisit; the
- * *time* is set once, so it is only here.
+ * The desktop cards (`AccountCard`, `LocalAccountCard`) drew the same hooks
+ * in three columns of prose until the owner asked the desktop to follow the
+ * phone (2026-11-01).
  */
 export function AccountTab() {
   const { data, setSettings } = useJournal()
   const s = data.settings
-  const phone = useDevice() === 'mobile'
 
   function setGender(gender: Gender) {
     // Auto-surface the relevant wellbeing tool, but let the user override after.
@@ -68,134 +55,15 @@ export function AccountTab() {
     })
   }
 
-  // A phone draws the whole tab as iOS grouped rows: who you are first, then
-  // the account that syncs it (`account/AccountPhoneCells.tsx`, the same hooks
-  // as the desktop cards), then the settings (`AccountPhone.tsx`).
-  if (phone) return (
-    <div className="flex flex-col gap-5">
+  // Every device draws the tab as grouped rows (phone since COD-562, desktop
+  // since the owner asked it to "follow the mobile version"): who you are
+  // first, then the account that syncs it, then the settings.
+  return (
+    <>
       <YouCells />
       <SyncAccountCells />
       <AboutYouCells setGender={setGender} />
       <UnitsCells />
-    </div>
-  )
-
-  return (
-    <>
-      {/* The act zone,and the only full-bleed card on the tab: it is the one
-          thing you came here to do. It used to carry a second button — "Set a
-          sync passphrase", a tab switch — because signing in alone did not
-          start a sync. COD-309 removed the need, and the button with it: the
-          act is now one button, which is what an act zone is for. */}
-      <AccountCard />
-
-      {/* No grid wrapper. `SectionScreen` packs this section into
-          height-filling columns, so a grid here would be a second layout
-          competing with the first — and the one that loses is the one that
-          cannot see the viewport height. Cards are siblings; source order is
-          the reading order, down each column then right. */}
-          <LocalAccountCard />
-
-          <Card band title="About you" subtitle="What this journal tracks, and when it nudges you">
-            <Row label="Gender">
-              {/* `Row` renders its label as a <span>, so it names nothing — hence
-                  the `aria-label` below. Settings IS scanned: it is in the gate's
-                  COMPANIONS list (that is how COD-94 was found), and the note here
-                  claiming otherwise had gone stale. */}
-              <select
-                value={s.gender}
-                onChange={(e) => setGender(e.target.value as Gender)}
-                aria-label="Gender"
-                className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
-              >
-                <option value="prefer-not">Prefer not to say</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="nonbinary">Non-binary</option>
-              </select>
-            </Row>
-            <div className="mt-3 space-y-2 border-t border-line pt-3">
-              <Toggle label="Cycle / fertility tracker" on={s.cycleTrackerEnabled} onChange={(v) => setSettings({ cycleTrackerEnabled: v })} />
-              <Toggle label="Abstinence / NoFap journal" on={s.nofapEnabled} onChange={(v) => setSettings({ nofapEnabled: v })} />
-              {/* NESTED UNDER THE THING IT AFFECTS, and only while that thing
-                  is on — a discreet-mode switch on a page you do not have is a
-                  setting about nothing.
-
-                  The hint says what it is AND what it is not, because a
-                  privacy control that oversells itself is worse than none: it
-                  is a display swap for a glance over your shoulder, the
-                  passcode is the actual lock, and your own names stay your
-                  own because this file has no business renaming them. */}
-              {s.nofapEnabled && (
-                <div className="border-l-2 border-line pl-3">
-                  <Toggle
-                    label="Discreet labels on Recovery"
-                    on={s.discreetRecovery === true}
-                    onChange={(v) => setSettings({ discreetRecovery: v })}
-                  />
-                  <PhonePoints
-                    className="mt-1 text-label text-fg-2"
-                    prose={<p className="mt-1 text-label text-fg-2">
-                      Shows “Pattern A”, “Habit N” and the like instead of the explicit words. Display only —
-                      nothing stored changes and your exports keep the real names. Addictions you named
-                      yourself are left alone. For a real lock, use the passcode under Privacy.
-                    </p>}
-                    points={[
-                      'Shows “Pattern A”, “Habit N” instead of the explicit words',
-                      'Display only — your data and exports keep the real names',
-                      'Addictions you named yourself are left alone',
-                      'For a real lock, use the passcode under Privacy',
-                    ]}
-                  />
-                </div>
-              )}
-            </div>
-            {/* One switch cannot pay for a card's padding: on its own this was a
-                324×95 band at 44% fill on the phone, the only card the space
-                audit flagged as thin on this view. A block inside a card, not a
-                card — the opposite conclusion to units below, for the opposite
-                reason: units are four controls that fill a band, this is one. */}
-            <div className="mt-3 space-y-2 border-t border-line pt-3">
-              <Toggle label="Daily journaling reminder" on={s.reminderEnabled} onChange={(v) => setSettings({ reminderEnabled: v })} />
-              {s.reminderEnabled && (
-                <Row label="Remind me at">
-                  {/* `Row` renders its label as a <span>, which names nothing — and
-                      this field only exists once the toggle above is on, a branch
-                      the demo seed never takes (`reminderEnabled: false`), so no
-                      rendering gate had ever seen it. Same shape as the yellow that
-                      sat at 2.02:1 behind a count the seed never produced. */}
-                  <input
-                    type="time"
-                    value={s.reminderTime}
-                    onChange={(e) => setSettings({ reminderTime: e.target.value })}
-                    aria-label="Reminder time"
-                    className="rounded-control border border-ctl-ring bg-ink-2 px-2 py-1.5 text-body text-fg-1"
-                  />
-                </Row>
-              )}
-            </div>
-          </Card>
-
-          {/* Units were once the third rule-separated block inside Profile and
-              are not a fact about you at all — they are how every number in the
-              app is spelled. Their own band, so the grid's two columns fill
-              instead of one 672px column leaving ~500px of the wide tier empty. */}
-          <Card band title="Units & week" subtitle="How numbers and dates are spelled everywhere">
-            <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-              <Row label="Weight">
-                <Segmented value={s.weightUnit} onChange={(v) => setSettings({ weightUnit: v })} options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]} />
-              </Row>
-              <Row label="Distance">
-                <Segmented value={s.distanceUnit} onChange={(v) => setSettings({ distanceUnit: v })} options={[{ value: 'km', label: 'km' }, { value: 'mi', label: 'mi' }]} />
-              </Row>
-              <Row label="Week starts">
-                <Segmented value={s.weekStart ?? 0} onChange={(v) => setSettings({ weekStart: v })} options={[{ value: 0, label: 'Sun' }, { value: 1, label: 'Mon' }]} />
-              </Row>
-              <Row label="Temperature">
-                <Segmented value={s.tempUnit} onChange={(v) => setSettings({ tempUnit: v })} options={[{ value: 'F', label: '°F' }, { value: 'C', label: '°C' }]} />
-              </Row>
-            </div>
-          </Card>
     </>
   )
 }

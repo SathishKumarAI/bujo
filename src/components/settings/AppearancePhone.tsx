@@ -42,7 +42,7 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
           )
         })}
         <ControlCell label="Accent color">
-          <div className="grid grid-cols-4 justify-items-center gap-2">
+          <div className="grid grid-cols-4 justify-items-center gap-2 sm:flex sm:gap-3">
             {ACCENTS.map((c) => {
               const active = (s.accent ?? 'mauve') === c
               return (

@@ -1,12 +1,15 @@
-/* SETTINGS ON A PHONE — iOS Settings' inset grouped rows.
+/* SETTINGS — iOS Settings' inset grouped rows, on every device.
  *
- * OWNS: what `.settings-phone` (added by `views/Settings.tsx` on a phone only)
- * and the row pieces Settings introduced look like — the iOS-sized switch in a
+ * OWNS: what `.settings-phone` (added by `views/Settings.tsx` on every device
+ * since 2026-11-01, when the desktop was asked to follow the phone) and the
+ * row pieces Settings introduced look like — the iOS-sized switch in a
  * `ToggleCell`, a value select at a row's right, a short segment at a row's
- * right, action and destructive rows. The rows themselves (`.cells`, `.cell`,
- * `.seg`) are `phone.css`.
- * DOES NOT OWN: desktop. Nothing here can match on a desktop: `.cell-*` rows
- * render only in the phone drawings, and the rest is under `.settings-phone`.
+ * right, action and destructive rows; the desktop's two-column packing
+ * (`.settings-cols`, `.settings-body`); a sheet as a centred desktop panel.
+ * The rows themselves (`.cells`, `.cell`, `.seg`) are `phone.css`.
+ * DOES NOT OWN: any page but Settings — `.sheet-up` is the one shared hook;
+ * at 1024px and up only Settings opens a sheet (every other caller is a
+ * phone drawing, and a phone is under 1024px by `useDevice`'s definition).
  *
  * Unlayered on purpose, like phone.css: it has to beat Tailwind's utilities on
  * the switch and the Cells heading.
@@ -121,4 +124,43 @@
    tabs since COD-567; a future card would be) gets the 44px phone floor. */
 .settings-phone [data-slot='button'] {
   min-height: 2.75rem;
+}
+
+/* A tab's body: its groups, one under another (`views/Settings.tsx`). */
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* DESKTOP: the same groups in two balanced columns, so a section fits one
+   screen (owner, 2026-11-01: "two columns … to stay on page"). A group never
+   splits across the columns. Only `.settings-cols` (desktop) opts in. */
+.settings-cols .settings-body {
+  display: block;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+
+.settings-cols .settings-body > * {
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+}
+
+/* A strip that reads across (Sync's four facts) takes both columns. */
+.settings-cols .settings-body > .settings-span {
+  column-span: all;
+}
+
+/* A sheet opened from Settings on a desktop: a centred panel, not a
+   full-width slab along the bottom of a 1440px window. */
+@media (min-width: 64rem) {
+  .sheet-up {
+    left: 50%;
+    bottom: 1.5rem;
+    max-width: 36rem;
+    translate: -50% 0;
+    border-radius: var(--radius-card);
+    border-width: 1px;
+  }
 }

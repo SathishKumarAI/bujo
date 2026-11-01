@@ -3,9 +3,8 @@ import { Icon } from '@/components/Icon'
 import { useEffect, useRef, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
-import { SectionScreen } from '../components/panes/SectionScreen'
 import { readDeepLink } from '../lib/deepLink'
-import { useDevice } from '../components/shell/device'
+import { AsPhone, useDevice } from '../components/shell/device'
 import {
   AccountTab, AppearanceTab, DataTab, SyncTab,
 } from '../components/settings'
@@ -98,11 +97,11 @@ export function Settings() {
     if (ar.left < lr.left || ar.right > lr.right) list.scrollLeft += ar.left - lr.left - (lr.width - ar.width) / 2
   }, [phone, tab])
 
-  // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
-  // these pills to 209px each across the wide tier. They are labels, not a
-  // segmented control — they should be as wide as their text.
-  // A phone's tabs are `.seg` segments: the segment rule draws them.
-  const tabClass = phone ? '' : 'flex-none gap-1.5 whitespace-nowrap rounded-card border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  // A phone's tabs are `.seg` segments: the segment rule draws them. A
+  // desktop's are a quiet vertical list, one row per section, the open one on
+  // a tinted ground — the settings shape of every AI app (owner, 2026-11-01:
+  // "follow the mobile version" on desktop too).
+  const tabClass = phone ? '' : 'h-10 flex-none gap-2.5 rounded-control px-3 text-body text-fg-2 hover:bg-ink-2 hover:text-fg-1 data-[state=active]:bg-ink-2 data-[state=active]:text-fg-1 data-[state=active]:shadow-none dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-ink-2'
 
   return (
     // `gap-0` and no page header: the top bar already renders `Settings ·
@@ -110,7 +109,7 @@ export function Settings() {
     // designed header repeated the word 110px lower and gave the document two
     // h1s — the only view in the app that did.
     <Page width="wide" className="gap-0 sm:gap-0">
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={setTab} orientation={phone ? 'horizontal' : 'vertical'} className={phone ? undefined : 'items-start gap-8'}>
         {/* Horizontal pill bar — every section visible at once, wraps on
             narrow screens. No sidebar rail, no clipped scroller.
 
@@ -131,7 +130,7 @@ export function Settings() {
             be "all in one line". Not a scrolling strip either: that clipped
             Data off the edge with nothing to say so (the `.phone-strip`
             trap). */}
-        <TabsList ref={listRef} className={phone ? 'seg settings-tabs mb-4 w-full group-data-[orientation=horizontal]/tabs:h-auto' : 'flex flex-wrap justify-start mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto'}>
+        <TabsList ref={listRef} className={phone ? 'seg settings-tabs mb-4 w-full group-data-[orientation=horizontal]/tabs:h-auto' : 'sticky top-4 w-52 shrink-0 items-stretch gap-0.5 bg-transparent p-0'}>
           {/* "Account", not "Profile". There were two destinations answering
               "who is this journal for" — a whole `views/Account.tsx` holding
               the Google sign-in and a card titled "You", and this tab holding
@@ -142,7 +141,7 @@ export function Settings() {
           {/* "& privacy" is hidden below `sm`: with it, this row wrapped onto a
               third line at 390px, and those overflowing rows drew on top of
               the panel. It is a clarifier, not the name. */}
-          <TabsTrigger value="sync" className={tabClass} aria-label={phone ? 'Sync & privacy' : undefined}>{phone ? 'Sync' : <><Icon as={Cloud} size="sm" /> Sync<span className="hidden sm:inline">&nbsp;&amp; privacy</span></>}</TabsTrigger>
+          <TabsTrigger value="sync" className={tabClass} aria-label={phone ? 'Sync & privacy' : undefined}>{phone ? 'Sync' : <><Icon as={Cloud} size="sm" /> Sync &amp; privacy</>}</TabsTrigger>
           <TabsTrigger value="data" className={tabClass}>{!phone && <Icon as={Database} size="sm" />} Data</TabsTrigger>
         </TabsList>
 
@@ -155,20 +154,20 @@ export function Settings() {
             the same instant swap: `bujo-rise` lives inside a
             `prefers-reduced-motion: no-preference` block. */}
         {/* `.settings-phone` scopes `styles/phone-settings.css`: the iOS
-            grouped-row look the tabs draw on a phone (COD-562). */}
-        <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0'}>
-          <TabsContent value="account">
-            <SectionScreen label={LABEL.account}><AccountTab /></SectionScreen>
-          </TabsContent>
-          <TabsContent value="feel">
-            <SectionScreen label={LABEL.feel}><AppearanceTab /></SectionScreen>
-          </TabsContent>
-          <TabsContent value="sync">
-            <SectionScreen label={LABEL.sync}><SyncTab /></SectionScreen>
-          </TabsContent>
-          <TabsContent value="data">
-            <SectionScreen label={LABEL.data}><DataTab /></SectionScreen>
-          </TabsContent>
+            grouped-row look (COD-562) — on every device now, so a desktop
+            reads the same rows, packed into two balanced columns
+            (`.settings-cols`) so a section stays on one screen. The section scrolls down like any page; the old
+            fixed-height sideways-packing `SectionScreen` was for cards. */}
+        <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0 flex-1 settings-phone settings-cols'}>
+          {!phone && <h2 className="mb-5 text-title font-semibold text-fg-1">{LABEL[tab]}</h2>}
+          {/* `AsPhone`: each card already has a grouped-row drawing for a
+              phone, and this makes every one of them choose it here. */}
+          <AsPhone>
+            <TabsContent value="account"><section aria-label={LABEL.account} className="settings-body"><AccountTab /></section></TabsContent>
+            <TabsContent value="feel"><section aria-label={LABEL.feel} className="settings-body"><AppearanceTab /></section></TabsContent>
+            <TabsContent value="sync"><section aria-label={LABEL.sync} className="settings-body"><SyncTab /></section></TabsContent>
+            <TabsContent value="data"><section aria-label={LABEL.data} className="settings-body"><DataTab /></section></TabsContent>
+          </AsPhone>
         </div>
       </Tabs>
     </Page>

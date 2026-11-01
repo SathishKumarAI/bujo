@@ -32,7 +32,8 @@ export function SyncTab() {
               Four facts, each of which changes what you do in the next thirty
               seconds — see `SyncStatusBar` for why "what is withheld" is
               deliberately not one of them. */}
-          <SyncStatusBar />
+          {/* Spans both desktop columns: four facts read across, not wrapped. */}
+          <div className="settings-span"><SyncStatusBar /></div>
           {/* No grid of its own any more. `SectionScreen` packs this whole
               section into height-filling columns, so a grid here would be a
               second layout competing with it — and the thing a grid was for
