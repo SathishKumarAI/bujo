@@ -1,0 +1,97 @@
+/* TOUCH FEEDBACK AND MOTION — every control answers the finger (COD-547).
+ *
+ * OWNS: what a tap feels like on a touch screen, and how content that a tap
+ * reveals arrives. Owner, 2026-11-01: "animations … when I click them".
+ * DOES NOT OWN: any one control's colours (`phone.css`), the sheet's slide
+ * (`.sheet-up`), the page fade (`index.css`).
+ *
+ * WHY THIS EXISTS: `body` turns the browser's tap highlight off (no grey
+ * flash), and only a handful of controls — `.cta`, `.round-btn`, `button.cell`
+ * — drew a pressed state of their own. Every other button, chip, link and
+ * radio did nothing visible under the finger until the next render, which
+ * reads as "did that register?".
+ *
+ * Gated on a coarse pointer, not a width: it is about fingers, and a desktop
+ * mouse keeps exactly what it had. The press uses the `scale` PROPERTY, not
+ * `transform`, so it composes with a control's own translate/rotate instead
+ * of replacing it (a centred `-translate-x-1/2` button would jump).
+ */
+
+@media (hover: none) and (pointer: coarse) {
+  :is(button, a[href], [role='radio'], [role='checkbox'], [role='switch'], [role='tab'], summary, label:has(> input[type='checkbox'])) {
+    transition-property: scale, background-color, color, box-shadow, border-color, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* The press: small things sink, a little. Rows are excluded — a 360px
+     row shrinking 4% moves its edges 7px and reads as a glitch; rows get a
+     tint instead (below). */
+  :is(button, a[href], [role='radio'], [role='checkbox'], [role='switch'], [role='tab']):not(:disabled, .cell, .lift-row *, [aria-disabled='true']):active {
+    scale: 0.95;
+    transition-duration: 60ms;
+  }
+
+  /* A full-width row: the iOS list tint, on every row, not only `button.cell`. */
+  :is(.cell, a.cell, label.cell, [role='button'].cell):active,
+  .lift-row button:active {
+    background-color: var(--color-ink-2);
+    transition-duration: 60ms;
+  }
+
+  /* WHAT A TAP REVEALS settles in instead of popping: the content right after
+     an opened disclosure, and after a heading whose button opened it. The
+     animation starts the moment the selector begins to match — i.e. when the
+     toggle flips to open — so no component has to opt in. */
+  #main [aria-expanded='true'] + *,
+  #main :is(h2, h3, h4):has(> [aria-expanded='true']) + * {
+    animation: reveal-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  /* A choice that just became THE choice gives a small settle, so a one-tap
+     row shows which tap it took. Plays on mount too, once, which is the same
+     settle the page already does. */
+  :is([role='radio'], [aria-pressed]):is([aria-checked='true'], [aria-pressed='true']) {
+    animation: pick-in 200ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+}
+
+@keyframes reveal-in {
+  /* No opacity: a mid-fade colour is what axe once measured as a contrast
+     failure that existed nowhere (CLAUDE.md, the settle trap). */
+  from { translate: 0 -8px; }
+  to { translate: 0 0; }
+}
+
+@keyframes pick-in {
+  from { scale: 0.92; }
+  to { scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #main [aria-expanded='true'] + *,
+  #main :is(h2, h3, h4):has(> [aria-expanded='true']) + *,
+  :is([role='radio'], [aria-pressed]):is([aria-checked='true'], [aria-pressed='true']) { animation: none; }
+  :is(button, a[href], [role='radio'], [role='checkbox'], [role='switch'], [role='tab']):active { scale: none; }
+}
+
+/* SECTION HEADINGS ON A PHONE (COD-547). Measured before: Today's "Habits",
+   "How is today going?", "Intermittent fasting" at 15px/500 — SMALLER than
+   the 17px rows under them, so a section start read as one more row, and
+   Recovery/Pickleball/Goals drew theirs at 17px/600 for the same job. One
+   step now, everywhere: a section is iOS's Title 3 (20/700), a subsection a
+   semibold subhead. Only headings sized as body/heading are promoted — an
+   eyebrow drawn deliberately at label size, a display title and anything
+   `sr-only` keep what they chose. Phone only: `.phone-frame` is never on a
+   desktop page. */
+#main .phone-frame h2:is(.text-heading, .text-body):not(.sr-only) {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+#main .phone-frame h3:is(.text-heading, .text-body):not(.sr-only) {
+  font-size: var(--text-body);
+  font-weight: 600;
+}

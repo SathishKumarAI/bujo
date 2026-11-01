@@ -346,6 +346,16 @@ a name of `All — 24 panels` cannot contain it. The rail's own comment describe
 that exact concatenation and fixed the *reading* with an em dash, which is what
 created the mismatch.
 
+Trap (fixed, COD-547): **`cn()` silently dropped every size token beside a
+colour.** tailwind-merge knows Tailwind's own sizes only, so it read
+`text-heading`/`text-label` as COLOURS and kept the last "colour":
+`cn('text-heading text-fg-1')` returned `text-fg-1`. Every `Card` title and
+`ChipPick` chip rendered at an inherited 15px on every device, for as long as
+both existed, while the class list in the source read correctly. `lib/cn.ts`
+now declares the size tokens; **a new `--text-*` in `tokens.css` goes in that
+list too**, or it starts vanishing the same way. The tell: a size class that is
+in the source and missing from the element's rendered `class`.
+
 Trap: **`npx tsc --noEmit` typechecks nothing here** — the root `tsconfig.json`
 is solution-style (`"files": []` + project references), so it has no root files
 and always exits 0. Always use `npx tsc -b`.
