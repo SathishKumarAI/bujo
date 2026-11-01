@@ -10,6 +10,7 @@ import { SessionHistory } from '../components/focus/SessionHistory'
 import { TypingDrill, TypingStats } from '../components/focus/TypingBand'
 import { FindingsList, InterruptionCost } from '../components/focus/Findings'
 import { useDevice } from '../components/shell/device'
+import { FocusPhone } from '../components/focus/FocusPhone'
 import {
   CumulativeLine, DayBars, DeepWorkGrid, DurationBars, InterruptionBars, ShareBars,
   TagQualityBars, WeekBars, WeekdayBars,
@@ -208,6 +209,66 @@ export function Focus() {
   const at = groups.includes(group) ? group : (groups.find((g) => g === 'log') ?? groups[0] ?? group)
   const shown = idsIn(at)
 
+  /* `@container/page` on the OUTER div and the grid on the inner one: an
+     element cannot query itself, so putting both on one div means the
+     two-column rail layout never fires. And the phone column is spelled
+     out because a grid with no `grid-template-columns` gets a single
+     implicit `auto` track sized to its widest item's min-content — a
+     chip row makes that wider than the viewport and scrolls the whole
+     page sideways. Both traps are in docs/PAGE-SHAPE.md and both were
+     hit on the first call site of every rail so far. */
+  const rail = (
+    <div className="@container/page mt-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
+        {/* No "All" row: the six groups do not overlap and there is no
+            search on this page to cross them, so All could only offer the
+            5.7-screen phone page this replaces. */}
+        <SectionRail
+          label="Focus sections"
+          groups={groups.map((g) => ({ id: g, label: FOCUS_GROUP_LABEL[g], count: idsIn(g).length }))}
+          value={at}
+          onChange={(id) => setGroup((id as FocusGroup | null) ?? FOCUS_DEFAULT_GROUP)}
+        />
+        <div className="min-w-0">
+          <section data-domain={at}>
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+              <h2 className="text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[at]}</h2>
+              <p className="text-label text-fg-2">{FOCUS_GROUP_BLURB[at]}</p>
+              <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
+            </div>
+            {/* Two columns is the ceiling, and it is a correction rather
+                than a preference: `CardGrid` asks the *viewport*, so at
+                1600 its `2xl:grid-cols-3` fires inside this 722px split
+                column and resolves to three tracks of ~227px. `MasonryGrid`
+                is not the alternative — it breaks on its container at
+                768px, so at 722 it silently draws one column. */}
+            <CardGrid className="2xl:grid-cols-2">
+              {shown.map((c) => (
+                <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>
+                  {cards[c.id]}
+                </div>
+              ))}
+            </CardGrid>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+
+  // A phone logs, a desktop reads: the timer and a one-screen log
+  // (`FocusPhone`), with the same rail below holding what a phone keeps.
+  if (phone) {
+    return (
+      <FocusPhone
+        sessions={sessions}
+        recentProjects={byProject.map((p) => p.project).filter((p) => p !== '(no project)')}
+        recentTags={tags.map((t) => t.tag)}
+        onLog={addDevSession}
+        review={rail}
+      />
+    )
+  }
+
   return (
     <PageLayout
       tier={1180}
@@ -257,49 +318,7 @@ export function Focus() {
             { label: 'Avg stress', value: sessions.length ? `${avgWeighted(data, 'stress')}/10` : '—', empty: sessions.length === 0 },
           ]} />
 
-          {/* `@container/page` on the OUTER div and the grid on the inner one: an
-              element cannot query itself, so putting both on one div means the
-              two-column rail layout never fires. And the phone column is spelled
-              out because a grid with no `grid-template-columns` gets a single
-              implicit `auto` track sized to its widest item's min-content — a
-              chip row makes that wider than the viewport and scrolls the whole
-              page sideways. Both traps are in docs/PAGE-SHAPE.md and both were
-              hit on the first call site of every rail so far. */}
-          <div className="@container/page mt-4">
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 gap-y-3 @4xl/page:grid-cols-[11rem_minmax(0,1fr)]">
-              {/* No "All" row: the six groups do not overlap and there is no
-                  search on this page to cross them, so All could only offer the
-                  5.7-screen phone page this replaces. */}
-              <SectionRail
-                label="Focus sections"
-                groups={groups.map((g) => ({ id: g, label: FOCUS_GROUP_LABEL[g], count: idsIn(g).length }))}
-                value={at}
-                onChange={(id) => setGroup((id as FocusGroup | null) ?? FOCUS_DEFAULT_GROUP)}
-              />
-              <div className="min-w-0">
-                <section data-domain={at}>
-                  <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-                    <h2 className="text-heading font-medium text-fg-1">{FOCUS_GROUP_LABEL[at]}</h2>
-                    <p className="text-label text-fg-2">{FOCUS_GROUP_BLURB[at]}</p>
-                    <span className="num ml-auto text-label text-fg-3">{shown.length}</span>
-                  </div>
-                  {/* Two columns is the ceiling, and it is a correction rather
-                      than a preference: `CardGrid` asks the *viewport*, so at
-                      1600 its `2xl:grid-cols-3` fires inside this 722px split
-                      column and resolves to three tracks of ~227px. `MasonryGrid`
-                      is not the alternative — it breaks on its container at
-                      768px, so at 722 it silently draws one column. */}
-                  <CardGrid className="2xl:grid-cols-2">
-                    {shown.map((c) => (
-                      <div key={c.id} data-card={c.id} className={c.wide ? `min-w-0 ${SPAN_2}` : 'min-w-0'}>
-                        {cards[c.id]}
-                      </div>
-                    ))}
-                  </CardGrid>
-                </section>
-              </div>
-            </div>
-          </div>
+          {rail}
 
           {/* Outside the rail. Mood and sleep are the other half of every finding
               on this page and they live on another one; a pointer behind a row

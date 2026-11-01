@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
@@ -10,6 +10,10 @@ import {
   FOCUS_CARDS, FOCUS_DEFAULT_GROUP, FOCUS_GROUPS, FOCUS_GROUP_LABEL,
 } from '../lib/focusCards'
 import { generateDemoData } from '../lib/demo'
+import { DeviceProvider } from '../components/shell/device'
+import { lastSession, shortMin } from '../lib/focusDraft'
+import { addDays, todayISO } from '../lib/date'
+import type { DevSession } from '../lib/types'
 
 /**
  * The registry and the review zone must hold the same cards — Insights' contract
@@ -148,5 +152,65 @@ describe('Focus · the registry is the review zone', () => {
     expect(stats.textContent).not.toMatch(/No typing sessions yet/)
     // The Recharts trend is behind `wpmCount >= 2`; `role="img"` is its wrapper.
     expect(stats.querySelector('[role="img"][aria-label^="Best WPM per practised day"]')).not.toBeNull()
+  })
+})
+
+/**
+ * THE PHONE LOG (`FocusPhone`) — asserted on the JOURNAL, not on the DOM: a
+ * segmented control reads back whatever React last rendered, so a tap that
+ * never reached the draft can still look selected (the controlled-input trap
+ * in CLAUDE.md). Each value tapped is one the carried-over draft does NOT
+ * already hold, or a seeded match would pass for us.
+ */
+describe('Focus · on a phone', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function mountPhone() {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    localStorage.setItem('bujo:data', JSON.stringify(generateDemoData()))
+    return render(
+      <DeviceProvider>
+        <NavProvider navigate={() => {}}>
+          <CursorProvider>
+            <ConfirmProvider>
+              <JournalProvider>
+                <Focus />
+              </JournalProvider>
+            </ConfirmProvider>
+          </CursorProvider>
+        </NavProvider>
+      </DeviceProvider>,
+    )
+  }
+  const stored = (): DevSession[] => JSON.parse(localStorage.getItem('bujo:data')!).devSessions
+  const unpicked = (group: string) =>
+    within(screen.getByRole('radiogroup', { name: group })).getAllByRole('radio', { checked: false })[0]
+
+  it('logs a session from taps alone, carrying the rest from the last one', async () => {
+    const user = userEvent.setup()
+    mountPhone()
+    // The desktop form is not drawn — one log, not two.
+    expect(screen.queryByRole('button', { name: 'Log session' })).toBeNull()
+    const before = stored()
+    const last = lastSession(before)!
+
+    const minutes = unpicked('Minutes')
+    const project = unpicked('Project')
+    const tag = within(screen.getByRole('group', { name: 'Tags' })).getAllByRole('button', { pressed: false })[0]
+    await user.click(minutes)
+    await user.click(project)
+    await user.click(tag)
+    await user.click(screen.getByRole('radio', { name: 'Yesterday' }))
+    await user.click(screen.getByRole('button', { name: 'Log' }))
+
+    const after = stored()
+    expect(after).toHaveLength(before.length + 1)
+    const s = after.find((x) => !before.some((y) => y.id === x.id))!
+    expect(shortMin(s.durationMin)).toBe(minutes.textContent)
+    expect(s.project).toBe(project.textContent)
+    expect(s.date).toBe(addDays(todayISO(), -1))
+    // The tapped tag joins the ones carried over from last time.
+    expect(s.tags).toEqual([...(last.tags ?? []), tag.textContent])
+    expect([s.focus, s.stress, s.interruptions]).toEqual([last.focus, last.stress, undefined])
   })
 })

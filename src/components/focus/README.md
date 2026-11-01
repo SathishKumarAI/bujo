@@ -8,7 +8,10 @@ renders.
 | Change | File |
 |---|---|
 | The countdown ring, its size, presets, the auto-logged block | `FocusTimer.tsx` |
-| The log form and its validation | `LogSession.tsx` |
+| The log form and its validation (desktop) | `LogSession.tsx` |
+| The phone page: one-screen log, dock, optional sheet — a new session field goes here AND in `LogSession.tsx` | `FocusPhone.tsx` |
+| The phone's timer card | `TimerPhone.tsx` |
+| What a phone log carries over from last time, its bar choices, draft → session | `../../lib/focusDraft.ts` |
 | A bar, a column series, and every mark the review zone draws | `FocusCharts.tsx` |
 | The findings sentences and the interruption cost | `Findings.tsx` |
 | Typing form + goal bar (`TypingDrill`), stats + trend + drills (`TypingStats`) | `TypingBand.tsx` |
