@@ -29,8 +29,9 @@ Monthly reviewed and left (the calendar is the page).
    workout minutes, task trend. Every logging page stays chart-free.
 2. **COD-518** (backlog): a tracked addiction's lapse day cannot be removed
    (only the main streak's can); needs `removeAddictionRelapse` + restartFrom.
-3. **COD-511** (backlog): `scripts/build-icons.mjs` reads a registry format
-   that no longer exists and rewrites `icons.tsx` (drops the `// was` notes).
+3. **COD-511** (in review, `fix/build-icons-registry`): `npm run icons` reads
+   the current `export const … // was …` lines again and regenerates both
+   files byte-identically; it refuses an export line in any other shape.
 4. Left: Help and Settings phone passes (reading / settings pages).
 5. Older: COD-500 (desktop streak button), COD-481 heading-order half;
    Supabase project (COD-434) and sync encryption decision (COD-436).
