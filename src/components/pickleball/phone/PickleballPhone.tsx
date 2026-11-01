@@ -33,7 +33,10 @@ import type { SessionDraft } from '../sessionDraft'
  * neat for the mobile version". The shell frame is dropped for every phone
  * page in `App.tsx`'s `ViewFrame`.
  */
-export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPartners, recentVenues, allVenues }: {
+export function PickleballPhone({ day, f, set, onLog, sessions, recentPartners, allPartners, recentVenues, allVenues }: {
+  /** The view's `DayStrip` for the log's day — at PAGE level, never in a sheet,
+   *  so it can portal into the top bar. */
+  day: React.ReactNode
   f: SessionDraft
   set: (p: Partial<SessionDraft>) => void
   onLog: () => void
@@ -60,6 +63,7 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
       {/* The tab above already says Pickleball; the title is for screen
           readers, and the log is the first thing a thumb reaches. */}
       <h1 className="sr-only">Pickleball</h1>
+      {day}
 
       <QuickLog f={f} set={set} onLog={onLog} recentPartners={recentPartners} allPartners={allPartners} recentVenues={recentVenues} allVenues={allVenues} />
 
