@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { CalendarDot, CaretDown, Check, MapPin, Minus, Plus, SlidersHorizontal, Users } from '@/components/icons'
+import { Check, MapPin, Minus, Plus, SlidersHorizontal, Users } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Seg } from '../ui/seg'
 import { Cell, Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
-import { todayISO, addDays, prettyDay } from '../../lib/date'
+import { todayISO, addDays } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { SessionFields } from './SessionFields'
 import type { SessionDraft } from './sessionDraft'
@@ -23,7 +23,7 @@ const TIME_OPTIONS = [
 /**
  * THE PHONE'S LOG — one screen, nothing to scroll to log a session.
  *
- * OWNS: the phone layout of a new session — date and format, a scoreboard,
+ * OWNS: the phone layout of a new session — format, a scoreboard,
  * time and effort, a grouped list for who / where / more, and the sheet.
  * DOES NOT OWN: the draft, `log()`, or any field's meaning. The draft and the
  * save are the view's; every optional field is `SessionFields` in a `Sheet`,
@@ -45,13 +45,11 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
   allVenues: string[]
 }) {
   const [more, setMore] = useState(false)
-  const today = todayISO()
-  const yesterday = addDays(today, -1)
+  const yesterday = addDays(todayISO(), -1)
   const n = (v: string) => (v === '' ? 0 : Number(v))
   const won = n(f.gamesWon)
   const lost = n(f.gamesLost)
   const bump = (k: 'gamesWon' | 'gamesLost', d: number) => set({ [k]: String(Math.max(0, Math.min(30, n(f[k]) + d))) })
-  const dayLabel = f.date === today ? 'Today' : f.date === yesterday ? 'Yesterday' : prettyDay(f.date)
   const singles = f.format === 'singles'
   const who = singles ? f.opponent : f.partner
   // What the sheet holds that is filled in — so the row says it is not empty.
@@ -59,31 +57,14 @@ export function QuickLog({ f, set, onLog, recentPartners, allPartners, recentVen
 
   return (
     <section aria-label="Log a session" className="ios-form flex flex-col gap-3.5">
-      <div className="flex items-center gap-2">
-        {/* The date is a pill over a real date input — tapping it opens the
-            phone's own date wheel — and it says "Today", which is the answer
-            nine times in ten. */}
-        <label className="relative inline-flex h-[2.75rem] shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-ink-2 px-3 text-body font-medium text-fg-1">
-          <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-          {dayLabel}
-          <Icon as={CaretDown} size="sm" className="text-fg-2" />
-          <input
-            type="date"
-            value={f.date}
-            max={today}
-            onChange={(e) => e.target.value && set({ date: e.target.value })}
-            aria-label={`Date, ${dayLabel}`}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          />
-        </label>
-        <Seg
-          label="Format"
-          className="min-w-0 flex-1"
-          value={f.format}
-          onChange={(v) => v && set({ format: v })}
-          options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
-        />
-      </div>
+      {/* The day is the page's `DayStrip` (in the top bar), so the row that
+          held a date pill beside Format is Format alone — one day, one picker. */}
+      <Seg
+        label="Format"
+        value={f.format}
+        onChange={(v) => v && set({ format: v })}
+        options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]}
+      />
 
       {/* THE SCOREBOARD — the one number every session has, so the biggest
           thing on the screen. The side that is ahead takes its colour. */}

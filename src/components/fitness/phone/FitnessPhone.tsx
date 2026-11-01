@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { CalendarDot, CaretDown, Check, Clock, Gauge, SlidersHorizontal, Timer } from '@/components/icons'
+import { Check, Clock, Gauge, SlidersHorizontal, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { useConfirm } from '../../ConfirmDialog'
 import { notify } from '../../../lib/notify'
-import { addDays, dayDiff, prettyDay, todayISO } from '../../../lib/date'
+import { dayDiff, prettyDay, todayISO } from '../../../lib/date'
 import { weeklyActiveMinutes } from '../../../lib/fitness'
 import { cadence } from '../../../lib/fitnessReview'
 import { fullLabelOf, labelOf, MODE_COPY, modeSegments, type Mode } from '../../../domain/activities'
@@ -13,6 +13,7 @@ import type { DistanceUnit, Workout } from '../../../lib/types'
 import { Cell, Cells } from '../../ui/cells'
 import { Seg } from '../../ui/seg'
 import { Sheet } from '../../ui/sheet'
+import { DayStrip } from '../../ui/dayStrip'
 import { StatTiles } from '../../ui/statTiles'
 import { ActivityFieldsPhone } from './ActivityFieldsPhone'
 import { carryOverWorkout, glyphOf } from './phoneHelpers'
@@ -29,12 +30,18 @@ import { cat, onAccent } from '../../../lib/colors'
  * OWNS: the phone order and the edit sheet. DOES NOT OWN: the draft shape,
  * `workoutOf`, the store, or which fields an activity asks for.
  */
-export function FitnessPhone({ mode, onMode, sessions, unit }: {
+export function FitnessPhone({ mode, onMode, sessions, unit, day, onDay, mark }: {
   mode: Mode
   onMode: (m: Mode) => void
   /** This mode's sessions, newest first. */
   sessions: Workout[]
   unit: DistanceUnit
+  /** The day to log, held by the VIEW: this page remounts on a mode switch
+   *  (`key={mode}`), and the day you picked should survive that. */
+  day: string
+  onDay: (day: string) => void
+  /** The view's reading of a day for the `DayStrip` — the same on desktop. */
+  mark: (day: string) => React.ReactNode
 }) {
   const { data, addWorkout } = useJournal()
   const today = todayISO()
@@ -43,8 +50,6 @@ export function FitnessPhone({ mode, onMode, sessions, unit }: {
   const [editing, setEditing] = useState<Workout | null>(null)
   const [all, setAll] = useState(false)
   const patch = (p: Partial<ActivityDraft>) => setDraft((c) => ({ ...c, ...p }))
-  const yesterday = addDays(today, -1)
-  const dayLabel = draft.date === today ? 'Today' : draft.date === yesterday ? 'Yesterday' : prettyDay(draft.date)
 
   // The parent renders this page with `key={mode}`, so a mode switch REMOUNTS
   // it and the draft carries over from that mode's own last session — not the
@@ -52,7 +57,7 @@ export function FitnessPhone({ mode, onMode, sessions, unit }: {
   const switchMode = (next: Mode | null) => { if (next && next !== mode) onMode(next) }
   function log() {
     if (draftIsEmpty(draft)) { notify.info('Nothing to log yet', 'Add minutes or a distance first.'); return }
-    const w = workoutOf(draft, unit)
+    const w = workoutOf({ ...draft, date: day }, unit)
     addWorkout(w)
     setDraft(carryOverWorkout({ ...w, id: '' }, mode, unit))
   }
@@ -68,17 +73,13 @@ export function FitnessPhone({ mode, onMode, sessions, unit }: {
   return (
     <div className="flex flex-col gap-6 pb-4">
       <h1 className="sr-only">Fitness</h1>
+      {/* THE DAY TO LOG: the shared strip at PAGE level, so it portals into
+          the top bar — it replaced a date pill beside Mode (one day, one
+          picker). The day is the view's, so it outlives a mode switch. */}
+      <DayStrip value={day} onChange={onDay} today={today} label="Day to log" mark={mark} />
 
       <section aria-label={MODE_COPY[mode].formHeading} className="ios-form flex flex-col gap-3.5">
-        <div className="flex items-center gap-2">
-          <label className="relative inline-flex h-[2.75rem] shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-ink-2 px-3 text-body font-medium text-fg-1">
-            <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-            {dayLabel}
-            <Icon as={CaretDown} size="sm" className="text-fg-2" />
-            <input type="date" value={draft.date} max={today} onChange={(e) => e.target.value && patch({ date: e.target.value })} aria-label={`Date, ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-          </label>
-          <Seg label="Mode" className="min-w-0 flex-1" value={mode} onChange={switchMode} options={modeSegments()} />
-        </div>
+        <Seg label="Mode" value={mode} onChange={switchMode} options={modeSegments()} />
 
         <ActivityFieldsPhone part="main" mode={mode} draft={draft} onChange={patch} unit={unit} />
 

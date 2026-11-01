@@ -14,6 +14,7 @@ import { TodayDrill } from '../components/pickleball/TodayDrill'
 import { PB_PANELS, panelsFor } from '../components/pickleball/panels'
 import { useDevice } from '../components/shell/device'
 import { PickleballPhone } from '../components/pickleball/phone/PickleballPhone'
+import { DayStrip } from '../components/ui/dayStrip'
 import { useStickyState } from '../lib/useStickyState'
 import { notify } from '../lib/notify'
 
@@ -131,12 +132,31 @@ export function Pickleball() {
     // form: you could not hand-log "played for 40 minutes, didn't keep score".
     if (!f.gamesWon && !f.gamesLost && !f.durationMin) { notify.info('Nothing to log yet', 'A session needs a score or how long you played.'); return }
     addPickleball(sessionPatch(f) as Parameters<typeof addPickleball>[0])
-    setF(phone ? carryOver(sessionPatch(f) as Parameters<typeof carryOver>[0]) : blankOf())
+    /* The next draft stays on the day the strip shows: the strip is the
+       answer to "which day am I logging", and it jumping back to today after
+       a back-dated save would make the chip you just marked read as unchosen. */
+    setF({ ...(phone ? carryOver(sessionPatch(f) as Parameters<typeof carryOver>[0]) : blankOf()), date: f.date })
   }
   function repeatLast() {
     const last = sessions[0]
-    if (last) setF(carryOver(last))
+    if (last) setF({ ...carryOver(last), date: f.date })
   }
+
+  /* THE DAY TO LOG, one picker for both devices (owner, 2026-11-01: "show
+     the calendar on all possible pages"). It writes `f.date`, so the draft
+     and the strip cannot disagree. A phone portals it into the top bar
+     (`shell/barSlot.ts`); a desktop draws it at the top of the log. Each chip
+     says that day's games won–lost, or a tick for a session with no score. */
+  const day = (
+    <DayStrip value={f.date} onChange={(d) => set({ date: d })} today={today} label="Day to log"
+      mark={(d) => {
+        const on = sessions.filter((x) => x.date === d)
+        if (!on.length) return null
+        const w = on.reduce((n, x) => n + (x.gamesWon ?? 0), 0)
+        const l = on.reduce((n, x) => n + (x.gamesLost ?? 0), 0)
+        return w + l ? <>{w}–{l}<span className="sr-only"> games</span></> : <><span aria-hidden>✓</span><span className="sr-only">played</span></>
+      }} />
+  )
 
   const atAGlance = (
     /* ONE BLOCK, NOT THREE THINGS THAT HAPPEN TO BE ADJACENT.
@@ -254,6 +274,7 @@ export function Pickleball() {
   if (phone) {
     return (
       <PickleballPhone
+        day={day}
         f={f}
         set={set}
         onLog={log}
@@ -316,6 +337,7 @@ export function Pickleball() {
               in 0–21 with no common values, so chips would be a list of twenty-two
               and a Stepper would be eleven taps. A control is only an improvement
               if it is fewer actions than typing. */}
+          <div className="mb-3">{day}</div>
           <SessionFields
             f={f}
             set={set}
@@ -324,6 +346,7 @@ export function Pickleball() {
             recentVenues={recentVenues}
             allVenues={allVenues}
             yesterday={yesterday}
+            noDate
           />
           <Textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="How did it go?" rows={2} className="mt-3" />
           <Button variant="secondary" onClick={log} className="press-3d mt-3 w-full">Log session</Button>

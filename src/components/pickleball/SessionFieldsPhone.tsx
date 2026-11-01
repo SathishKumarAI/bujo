@@ -44,12 +44,14 @@ const ENERGY = [
  * added to a session must be added in BOTH renderings — the round-trip test
  * in `sessionDraft.test.ts` guards the draft, not the drawing.
  */
-export function SessionFieldsPhone({ f, set, allPartners, allVenues, sections }: {
+export function SessionFieldsPhone({ f, set, allPartners, allVenues, sections, noDate }: {
   f: SessionDraft
   set: (p: Partial<SessionDraft>) => void
   allPartners: string[]
   allVenues: string[]
   sections?: readonly SessionSection[]
+  /** As `SessionFields`: the page's `DayStrip` owns the day. */
+  noDate?: boolean
 }) {
   const has = (k: SessionSection) => !sections || sections.includes(k)
   const doubles = f.format === 'doubles'
@@ -62,10 +64,12 @@ export function SessionFieldsPhone({ f, set, allPartners, allVenues, sections }:
       {(has('when') || has('score') || has('session')) && (
         <Cells title="Session">
           {has('when') && (<>
-            <label className="cell">
-              <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Date</span>
-              <input type="date" value={f.date} max={todayISO()} onChange={(e) => e.target.value && set({ date: e.target.value })} className="cell-input" aria-label="Date" />
-            </label>
+            {!noDate && (
+              <label className="cell">
+                <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Date</span>
+                <input type="date" value={f.date} max={todayISO()} onChange={(e) => e.target.value && set({ date: e.target.value })} className="cell-input" aria-label="Date" />
+              </label>
+            )}
             <ControlCell label="Format">
               <Seg label="Format" value={f.format} onChange={(v) => v && set({ format: v })} options={[{ value: 'doubles', label: 'Doubles' }, { value: 'singles', label: 'Singles' }]} />
             </ControlCell>

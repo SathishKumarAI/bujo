@@ -21,6 +21,7 @@ import { FitnessReview } from '../components/fitness/Review'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
 import { FitnessPhone } from '../components/fitness/phone/FitnessPhone'
+import { DayStrip } from '../components/ui/dayStrip'
 
 /**
  * FITNESS · log a cardio session or a game, then read what they add up to.
@@ -108,7 +109,7 @@ export function Fitness() {
   function switchMode(next: Mode) {
     setLinkMode(null)
     setStickyMode(next)
-    setDraft(emptyDraft(next))
+    setDraft((cur) => ({ ...emptyDraft(next), date: cur.date }))
   }
 
   const sessions = sessionsInMode(data, mode).sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -208,12 +209,22 @@ export function Fitness() {
       return
     }
     addWorkout(workoutOf(draft, unit))
-    setDraft(emptyDraft(mode))
+    // Stays on the strip's day, so the chip just logged to stays chosen.
+    setDraft({ ...emptyDraft(mode), date: draft.date })
   }
 
   function repeatLast() {
     if (!last) return
-    setDraft({ ...draftOf(last, unit), date: today, rpe: '', notes: '' })
+    setDraft({ ...draftOf(last, unit), date: draft.date, rpe: '', notes: '' })
+  }
+
+  /* THE DAY TO LOG, one picker on both devices (owner, 2026-11-01: "show the
+     calendar on all possible pages"). Each chip says the minutes logged that
+     day in THIS mode — the sessions the page is about, not every activity. */
+  const markDay = (d: string) => {
+    const min = sessions.filter((s) => s.date === d).reduce((n, s) => n + (s.durationMin ?? 0), 0)
+    const n = sessions.filter((s) => s.date === d).length
+    return min ? <>{min}<span className="sr-only"> minutes</span></> : n ? <><span aria-hidden>✓</span><span className="sr-only">logged</span></> : null
   }
 
   const orient = (
@@ -263,7 +274,7 @@ export function Fitness() {
   /* A PHONE GETS ITS OWN PAGE (COD-459): the log first, the week as three
      numbers, recent sessions as rows — no charts. Every hook is above this
      line; the desktop return below is unchanged. */
-  if (phone) return <FitnessPhone key={mode} mode={mode} onMode={switchMode} sessions={sessions} unit={unit} />
+  if (phone) return <FitnessPhone key={mode} mode={mode} onMode={switchMode} sessions={sessions} unit={unit} day={draft.date} onDay={(d) => patch({ date: d })} mark={markDay} />
 
   return (
     <PageLayout
@@ -289,6 +300,7 @@ export function Fitness() {
           onSubmit={submit}
           unit={unit}
           submitLabel={mode === 'sport' ? 'Log game' : 'Log session'}
+          day={<DayStrip value={draft.date} onChange={(d) => patch({ date: d })} today={today} label="Day to log" mark={markDay} />}
           right={
             <span className="flex items-center gap-1.5">
               {last && (

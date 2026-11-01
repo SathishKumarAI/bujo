@@ -87,6 +87,7 @@ export function ActivityForm({
   submitLabel = 'Log session',
   heading,
   right,
+  day,
 }: {
   mode: Mode
   draft: ActivityDraft
@@ -106,6 +107,12 @@ export function ActivityForm({
   heading?: React.ReactNode
   /** e.g. a "Repeat last" affordance beside the heading. */
   right?: React.ReactNode
+  /**
+   * The page's `DayStrip`, drawn under the heading IN PLACE OF the Date field
+   * — one day, one picker. Fitness's log passes it; the history editor does
+   * not, so moving a logged session to another day stays possible there.
+   */
+  day?: React.ReactNode
 }) {
   const { activity } = draft
   const kinds = kindsFor(activity)
@@ -117,6 +124,7 @@ export function ActivityForm({
         </h2>
         {right}
       </div>
+      {day}
 
       <label className="block text-body text-fg-1">
         Activity
@@ -182,10 +190,10 @@ export function ActivityForm({
           (CLAUDE.md's clipped-control trap). Each field keeps `min-w-0` so the
           row shrinks rather than overflowing.
 
-          Date is always asked; duration and distance are per-activity, so the
-          row is never empty and Pickleball simply contributes fewer fields. */}
+          Date is asked unless the page's `DayStrip` (`day`) already did;
+          duration and distance are per-activity. */}
       <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
-        <label className="block min-w-0 text-body text-fg-1">
+        {!day && <label className="block min-w-0 text-body text-fg-1">
           Date
           {/* A date is a fixed-width value — `dd/mm/yyyy` plus the picker glyph
               and nothing else will ever be typed here. 11rem fits it with the
@@ -196,7 +204,7 @@ export function ActivityForm({
             onChange={(e) => onChange({ date: e.target.value })}
             className="mt-1 max-w-[11rem]"
           />
-        </label>
+        </label>}
 
         {asks(activity, 'durationMin') && (
           <NumField

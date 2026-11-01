@@ -24,6 +24,7 @@ import { cachedMusclesForName } from '../lib/wger'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
 import { GymPhone } from '../components/gym/phone/GymPhone'
+import { DayStrip } from '../components/ui/dayStrip'
 import { storedSets } from '../components/gym/phone/strengthHelpers'
 import { restFor } from '../lib/rest'
 import type { Split } from '../lib/types'
@@ -223,9 +224,22 @@ export function Gym() {
     })
     setSummary(sessionSummary(structured))
     setRows([newSetRow()])
-    setDate(todayISO())
+    // The day stays where the strip has it, so the chip just logged to stays
+    // chosen (it was reset to today when the picker was Today/Yesterday chips).
     if (pr) setPrParty(pr)
   }
+
+  /* THE DAY TO LOG, one picker on both devices (owner, 2026-11-01: "show the
+     calendar on all possible pages"): portalled into the top bar on a phone,
+     at the top of the logger on desktop. It writes `date`, which `finish()`
+     files the session under. Each chip says that day's strength sets. */
+  const day = (
+    <DayStrip value={date} onChange={setDate} today={todayISO()} label="Day to log"
+      mark={(d) => {
+        const n = data.workouts.filter((w) => w.split && w.date === d).reduce((s, w) => s + (w.setRows?.length ?? w.sets?.length ?? 0), 0)
+        return n ? <>{n}<span className="sr-only"> sets</span></> : null
+      }} />
+  )
 
   function saveAsRoutine() {
     const exercises = rows.map((r) => r.exercise.trim()).filter(Boolean)
@@ -283,8 +297,7 @@ export function Gym() {
           suggested={suggested}
           rows={rows}
           setRows={setRows}
-          date={date}
-          setDate={setDate}
+          day={day}
           onFinish={finish}
           unit={unit}
           recentExercises={recentExercises}
@@ -357,8 +370,7 @@ export function Gym() {
                 defaultBar={defaultBar}
                 warmStep={warmStep}
                 onFinish={finish}
-                date={date}
-                setDate={setDate}
+                day={day}
                 onRest={(exercise, seconds) => setRest({ exercise, seconds, key: Date.now() })}
               />
               {/* The page's one disclosure, at the bottom of the form. Naming a

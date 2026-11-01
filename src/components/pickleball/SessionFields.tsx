@@ -39,7 +39,7 @@ const numOrUndef = (v: string): number | undefined => (v.trim() === '' ? undefin
  * fourteen never rendered once the day had passed.
  */
 
-export function SessionFields({ f, set, recentPartners, allPartners, recentVenues, allVenues, yesterday, sections }: {
+export function SessionFields({ f, set, recentPartners, allPartners, recentVenues, allVenues, yesterday, sections, noDate }: {
   f: SessionDraft
   set: (p: Partial<SessionDraft>) => void
   /** The one chip: who you played with last. */
@@ -56,6 +56,13 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
    * form for a session.
    */
   sections?: readonly SessionSection[]
+  /**
+   * Leave the date out: the new-session log picks its day with the page's
+   * `DayStrip`, and one day gets one picker. The history editor omits this —
+   * moving a logged session to another day is an edit it must still offer
+   * (`docs/USER-CONTROL.md`).
+   */
+  noDate?: boolean
 }) {
   const has = (k: SessionSection) => !sections || sections.includes(k)
   /* A PHONE GETS ITS OWN DRAWING of the same fields (`SessionFieldsPhone`),
@@ -137,12 +144,12 @@ export function SessionFields({ f, set, recentPartners, allPartners, recentVenue
             )}
           </div>
   )
-  if (phoneDevice) return <SessionFieldsPhone f={f} set={set} allPartners={allPartners} allVenues={allVenues} sections={sections} />
+  if (phoneDevice) return <SessionFieldsPhone f={f} set={set} allPartners={allPartners} allVenues={allVenues} sections={sections} noDate={noDate} />
   return (
       <div className={phone ? 'flex flex-col gap-4' : 'flex flex-col gap-3'}>
         {has('when') && (<>
         <FieldGroup title="When" desktop="grid gap-3 sm:grid-cols-2">
-        <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
+        {!noDate && <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />}
 
         <ChipPick
           className={row}
