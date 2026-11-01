@@ -146,7 +146,7 @@ export function CompetitionPanel() {
                     <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
                       <CartesianGrid stroke={cat('surface0')} strokeDasharray="3 3" />
                       <XAxis dataKey="date" stroke={cat('overlay0')} fontSize={11} />
-                      <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} stroke={cat('overlay0')} fontSize={11} />
+                      <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} tickFormatter={(v: number) => String(+v.toFixed(2))} stroke={cat('overlay0')} fontSize={11} />
                       <Tooltip contentStyle={tip()} />
                       <Line type="monotone" dataKey="rating" stroke={cat('mauve')} dot={{ r: 2 }} strokeWidth={2} />
                     </LineChart>
@@ -160,7 +160,7 @@ export function CompetitionPanel() {
                     <span className="flex items-center gap-2">
                       <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
                       <Button variant="ghost" size="sm" onClick={() => editDupr(p)} aria-label={`Edit rating from ${p.date}`} className="text-fg-2 reveal">Edit</Button>
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
+                      <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({ title: 'Remove this rating?', description: `${p.rating} on ${prettyDay(p.date)} comes off the trend.`, confirmLabel: 'Remove it', destructive: true })) removeDupr(p.date) }} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
                     </span>
                   </li>
                 ))}
@@ -221,7 +221,7 @@ export function CompetitionPanel() {
                     {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
                     {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
                     <Button variant="ghost" size="sm" onClick={() => { setEv(draftOf(e)); setEditId(e.id); setEvOpen(true) }} aria-label={`Edit ${e.name}`} className="text-fg-2 reveal">Edit</Button>
-                    <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
+                    <Button variant="ghost" size="icon-sm" onClick={async () => { if (await confirm({ title: `Remove ${e.name}?`, description: 'The event and its record come off your history.', confirmLabel: 'Remove it', destructive: true })) removePickleEvent(e.id) }} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
                   </span>
                 </li>
               ))}
