@@ -31,9 +31,23 @@ const REGISTRY = join(root, 'src/components/icons.tsx')
 const DEFS = join(root, 'node_modules/@phosphor-icons/react/dist/defs')
 const OUT = join(root, 'src/components/icon-paths.ts')
 
-// Names come from the registry's own export list.
+// Names and their `// was …` notes come from the registry's own export lines,
+// in exactly the shape this script writes them (`exports` below). `[^\r\n]`
+// because a Windows checkout has CRLF endings and `.` would keep the `\r`.
 const registrySrc = readFileSync(REGISTRY, 'utf8')
-const names = [...registrySrc.matchAll(/^\s{2}([A-Z][A-Za-z0-9]*),/gm)].map((m) => m[1])
+const EXPORT_LINE =
+  /^export const ([A-Z][A-Za-z0-9]*) = \/\* @__PURE__ \*\/ glyph\(GLYPH_PATHS\.\1\)(?: \/\/ ([^\r\n]+))?\r?$/gm
+const entries = [...registrySrc.matchAll(EXPORT_LINE)]
+const names = entries.map((m) => m[1])
+// An export written in any other shape would be silently dropped on rewrite —
+// the way the old list-format regex dropped every `// was …` note. Refuse instead.
+const exportCount = (registrySrc.match(/^export const /gm) ?? []).length
+if (exportCount !== names.length) {
+  throw new Error(
+    `${exportCount - names.length} export line(s) in the registry are not in the generated shape ` +
+      '`export const Name = /* @__PURE__ */ glyph(GLYPH_PATHS.Name) // note`; fix them before re-running',
+  )
+}
 if (names.length === 0) throw new Error('no glyph names found in the registry')
 
 /**
@@ -95,9 +109,7 @@ writeFileSync(OUT, banner + JSON.stringify(out) + '\n', 'utf8')
 const kb = (readFileSync(OUT).length / 1024).toFixed(0)
 
 // The registry: one named export per glyph, built from the data above.
-const notes = new Map(
-  [...registrySrc.matchAll(/^\s{2}([A-Z][A-Za-z0-9]*),\s*\/\/ (.+)$/gm)].map((m) => [m[1], m[2]]),
-)
+const notes = new Map(entries.filter((m) => m[2]).map((m) => [m[1], m[2]]))
 const header = `import { GLYPH_PATHS, type GlyphPaths } from './icon-paths'
 
 /**
