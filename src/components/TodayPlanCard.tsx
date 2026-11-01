@@ -51,6 +51,13 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
   // says "your N-day streak" in a band at the top of Today, and two days is
   // not yet a streak worth interrupting someone over.
   const atRisk = atRiskHabits(data, day).filter((r) => r.streak >= 3)
+  // `trackers` redirects to Today, so navigating there only jumped to the top
+  // (COD-500). The habits are on THIS page: bring their card into view.
+  const toHabits = () => {
+    const card = document.querySelector('#today-habits > *')
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    else navigate('trackers')
+  }
   const tasksDue = data.entries.filter((e) => e.type === 'task' && e.status === 'open' && e.date && e.date <= day).length
   const workedOut = data.workouts.some((w) => w.date === day) || (data.pickleball ?? []).some((p) => p.date === day)
   const focusMin = (data.devSessions ?? []).filter((s) => s.date === day).reduce((a, s) => a + s.durationMin, 0)
@@ -115,7 +122,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
       right={phone ? undefined : <span className="text-label text-fg-2">week {weekScore}%</span>}
     >
       {!phone && atRisk.length > 0 && (
-        <button onClick={() => navigate('trackers')} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
+        <button onClick={toHabits} className="mb-3 flex w-full items-center gap-2 rounded-control border px-3 py-2 text-left text-body" style={{ borderColor: cat('peach') + '66', background: cat('peach') + '14', color: onRaised('peach') }}>
           <AppIcon as={Flame} size="sm" /> {atRisk.length === 1 ? `Your ${atRisk[0].streak}-day ${atRisk[0].habit.name} streak is at risk` : `${atRisk.length} streaks at risk`} · tap to keep them alive
         </button>
       )}
@@ -125,7 +132,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
           return (
             <button
               key={c.label}
-              onClick={() => navigate(c.to)}
+              onClick={() => (c.to === 'trackers' ? toHabits() : navigate(c.to))}
               /* The accent lives in the border, the fill and the icon; the TEXT is
                  fg-1 (fg-2 once done). Accent-on-its-own-wash measured 4.21:1 in
                  latte on a phone — the CLAUDE.md calibration trap, hidden on

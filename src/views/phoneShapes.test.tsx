@@ -379,4 +379,21 @@ describe("Today's plan on a phone", () => {
     wrap(<TodayPlanCard />)
     expect(screen.getByText('2 habits left')).toBeTruthy()
   })
+
+  // COD-500: the chip navigated to `trackers`, which redirects to Today, so
+  // the tap only jumped to the top. It must bring Today's Habits card in.
+  it('takes "habits left" to the Habits card on this page, not to a redirect', async () => {
+    desktop()
+    const h = (id: string) => ({ id, name: id, category: 'custom', color: 'mauve', startedOn: '2020-01-01' })
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...emptyJournal(), habits: [h('Read')] }))
+    const navigate = vi.fn()
+    render(<DeviceProvider><JournalProvider><NavProvider navigate={navigate}>
+      <TodayPlanCard /><div id="today-habits"><section aria-label="Habits" /></div>
+    </NavProvider></JournalProvider></DeviceProvider>)
+    const card = screen.getByRole('region', { name: 'Habits' })
+    card.scrollIntoView = vi.fn()
+    await userEvent.click(screen.getByRole('button', { name: /1 habit left/ }))
+    expect(card.scrollIntoView).toHaveBeenCalled()
+    expect(navigate).not.toHaveBeenCalled()
+  })
 })
