@@ -25,3 +25,16 @@ export function stepWeek(selected: string, dir: -1 | 1, min?: string, max?: stri
   if (min && dayDiff(min, d) < 0) d = min
   return d
 }
+
+/**
+ * THE TOP BAR'S FEW DAYS (`ui/dayStrip.tsx` in the phone header): `n` days with
+ * the selection in the middle, slid back inside [min, max] so the bar never
+ * spends a chip on a day that cannot be picked — today selected on a log
+ * shows the four days before it, not two dead tomorrows.
+ */
+export function windowDays(selected: string, n: number, min?: string, max?: string): string[] {
+  let start = addDays(selected, -Math.floor(n / 2))
+  if (max && dayDiff(addDays(start, n - 1), max) < 0) start = addDays(max, 1 - n)
+  if (min && dayDiff(min, start) < 0) start = min
+  return Array.from({ length: n }, (_, i) => addDays(start, i))
+}

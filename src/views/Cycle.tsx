@@ -574,7 +574,7 @@ export function Cycle() {
       mark={(d) => {
         const e = log.find((x) => x.date === d)
         if (e?.flags.includes('period')) return <span style={{ color: cat('red') }}>●<span className="sr-only"> period</span></span>
-        return e?.temp != null ? <>{e.temp}<span className="sr-only"> degrees</span></> : <span aria-hidden>·</span>
+        return e?.temp != null ? <>{e.temp}<span className="sr-only"> degrees</span></> : null
       }} />
   )
 

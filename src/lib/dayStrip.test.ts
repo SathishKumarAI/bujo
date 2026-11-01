@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stepWeek, stripDays } from './dayStrip'
+import { stepWeek, stripDays, windowDays } from './dayStrip'
 
 const T = '2026-10-30'
 
@@ -26,5 +26,19 @@ describe('stepWeek', () => {
     expect(stepWeek('2026-10-27', 1, undefined, T)).toBe(T)
     expect(stepWeek('2026-10-25', -1, '2026-10-21')).toBe('2026-10-21')
     expect(stepWeek('2026-10-25', -1)).toBe('2026-10-18')
+  })
+})
+
+describe('windowDays', () => {
+  it('centres the selection when there is room', () => {
+    expect(windowDays('2026-10-27', 5)).toEqual(['2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29'])
+  })
+
+  it('slides back from max so no chip is a day that cannot be picked', () => {
+    expect(windowDays(T, 5, undefined, T)).toEqual(['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', T])
+  })
+
+  it('slides forward from min', () => {
+    expect(windowDays('2026-10-21', 3, '2026-10-21', T)).toEqual(['2026-10-21', '2026-10-22', '2026-10-23'])
   })
 })

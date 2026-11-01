@@ -79,7 +79,7 @@ export function NutritionPhone({
 
       {/* THE DAY: the shared strip, each chip with that day's calories. */}
       <DayStrip value={date} onChange={(d) => { setDate(d); setOpen(null); setEditing(null) }} today={today} label="Day to log"
-        mark={(d) => { const c = metricOn(d)?.calories ?? 0; return c ? <>{c >= 1000 ? `${(c / 1000).toFixed(1)}k` : c}<span className="sr-only"> kcal</span></> : <span aria-hidden>·</span> }} />
+        mark={(d) => { const c = metricOn(d)?.calories ?? 0; return c ? <>{c >= 1000 ? `${(c / 1000).toFixed(1)}k` : c}<span className="sr-only"> kcal</span></> : null }} />
 
       {/* THE SCOREBOARD: the ceiling, big, then the three macros under it. */}
       <section aria-label={`${dayName} so far`} className="cells px-4 py-3">

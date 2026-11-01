@@ -1031,6 +1031,47 @@ button.cell:active {
   margin-bottom: -0.5rem;
 }
 
+/* THE FEW DAYS IN THE BAR ITSELF (COD-537, `BarDays` in `ui/dayStrip.tsx`):
+   the slot takes whatever the title leaves, and the title shrinks to its own
+   width only while the slot holds something. */
+.bar-days {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.bar-days:empty {
+  display: none;
+}
+
+.phone-bar:has(.bar-days:not(:empty)) .bar-title {
+  flex: 0 1 auto;
+}
+
+.bar-days-row {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* 44px tall, narrower than the bar's 44px floor: five 44px chips beside
+   "Cycle" overlapped each other and the + (a day chip is 2.5.8's 24px and
+   then some). The 2px inset keeps the chosen day's ring off the +. */
+.bar-days-row {
+  padding-inline: 2px;
+}
+
+.phone-bar .bar-days .day-chip {
+  min-width: 0;
+  min-height: 2.75rem;
+  gap: 1px;
+}
+
+.bar-dot {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background: currentColor;
+}
+
 /* A day outside the range (before a challenge starts, after today): drawn so
    the week keeps its shape, flat so it does not read as a control. The arrows
    at the end of the range go quiet the same way. */

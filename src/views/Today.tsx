@@ -104,7 +104,7 @@ function TodayFocused() {
           cursor every card on Today reads. */}
       {phone && (
         <DayStrip value={date} onChange={setDay} today={todayISO()} label="Day"
-          mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: data.settings.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> habits done</span></> : <span aria-hidden>·</span> }} />
+          mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: data.settings.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> habits done</span></> : null }} />
       )}
       <DayHeader date={date} />
 
