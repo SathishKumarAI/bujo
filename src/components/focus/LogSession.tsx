@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { SegmentScale } from '../fields/SegmentScale'
 import { Button } from '../ui/button'
-import { ChipPick, DayPick, Stepper } from '../ui/quickpick'
+import { ChipPick, Stepper } from '../ui/quickpick'
+import { DayStrip } from '../ui/dayStrip'
+import { focusMark } from '../../lib/focusDraft'
 import { durationOptions } from '../ui/quickpick.options'
-import { addDays, todayISO } from '../../lib/date'
+import { todayISO } from '../../lib/date'
 import type { DevSession } from '../../lib/types'
 import { notify } from '../../lib/notify'
 
@@ -38,15 +40,17 @@ export function LogSession({
   onLog,
   recentProjects = [],
   recentTags = [],
+  sessions = [],
 }: {
   onLog: (s: Omit<DevSession, 'id'>) => void
+  /** For the week strip's per-day minutes. */
+  sessions?: DevSession[]
   /** Sorted by minutes spent, so the first chip is usually the right one. */
   recentProjects?: string[]
   recentTags?: string[]
 }) {
   const [f, setF] = useState(blankOf)
   const set = (p: Partial<ReturnType<typeof blankOf>>) => setF((c) => ({ ...c, ...p }))
-  const yesterday = addDays(todayISO(), -1)
   const tagList = f.tags.split(',').map((t) => t.trim()).filter(Boolean)
 
   function log() {
@@ -90,7 +94,9 @@ export function LogSession({
 
             Both keep a text field beside them for something new. Notes stays
             typed because a note is never one of a handful. */}
-        <DayPick value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} yesterday={yesterday} />
+        {/* The shared week strip (phone: the top-bar days) instead of
+            Today/Yesterday chips: any day in two taps, each with its minutes. */}
+        <DayStrip value={f.date} onChange={(d) => set({ date: d })} today={todayISO()} label="Day to log" mark={(d) => focusMark(sessions, d)} />
 
         <ChipPick
           label="Minutes"

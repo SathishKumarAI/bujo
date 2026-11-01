@@ -306,6 +306,7 @@ export function Focus() {
               // "(no project)" is a bucket label, not a project.
               recentProjects={byProject.map((p) => p.project).filter((p) => p !== '(no project)')}
               recentTags={topTags(data, 8).map((t) => t.tag)}
+              sessions={sessions}
             />
           </Card>
         </>

@@ -200,7 +200,10 @@ describe('Focus · on a phone', () => {
     await user.click(minutes)
     await user.click(project)
     await user.click(tag)
-    await user.click(screen.getByRole('radio', { name: 'Yesterday' }))
+    // The day is the shared strip (in the top bar on a real phone): its
+    // second-to-last chip is yesterday on a trailing week ending today.
+    const days = within(screen.getByRole('radiogroup', { name: 'Day to log' })).getAllByRole('radio')
+    await user.click(days[days.length - 2])
     await user.click(screen.getByRole('button', { name: 'Log' }))
 
     const after = stored()
