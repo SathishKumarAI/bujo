@@ -1274,6 +1274,38 @@ button.cell:active {
   opacity: 0.45;
 }
 
+/* ── Pickleball competition (COD-553) ──────────────────────────────────────────
+   `pickleball/phone/CompetitionPhone.tsx`: the event form in the Competition
+   sheet. The dock is `.log-dock`'s idea at the SHEET's edge — sticky inside
+   the sheet's own scroll, so it pins while the form is on screen and leaves
+   with it when you scroll down to the history. */
+.comp-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.comp-dock > * {
+  pointer-events: auto;
+}
+
+/* A native select drawn as the row's value, right-aligned like `.cell-input`. */
+.cell-input.comp-select {
+  text-align-last: right;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Remove on a history row: a 44px target, quiet until pressed. */
+.comp-remove {
+  display: inline-grid;
+  min-width: 2.75rem;
+  place-items: center;
+  color: var(--color-fg-2);
+
 /* ── Focus (COD-554) ───────────────────────────────────────────────────────
    `focus/FocusPhone.tsx`. Project names are words of any length on a
    three-way bar: each segment takes an equal share and cuts its own name
