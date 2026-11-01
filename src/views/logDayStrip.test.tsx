@@ -1,13 +1,15 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { JournalProvider } from '../store'
 import { NavProvider } from '../components/shell/nav'
 import { DeviceProvider } from '../components/shell/device'
+import { ConfirmProvider } from '../components/ConfirmDialog'
 import { STORAGE_KEY } from '../lib/storage'
 import { addDays, todayISO } from '../lib/date'
 import { Pickleball } from './Pickleball'
+import { Fitness } from './Fitness'
 
 /**
  * THE LOG WRITES TO THE DAY THE STRIP SHOWS — on every session page, both
@@ -23,7 +25,7 @@ const media = (matches: (q: string) => boolean) => vi.stubGlobal('matchMedia', (
 const phone = () => media((q) => !q.includes('coarse'))
 const desktop = () => media(() => false)
 const wrap = (ui: ReactNode) =>
-  render(<DeviceProvider><JournalProvider><NavProvider navigate={() => {}}>{ui}</NavProvider></JournalProvider></DeviceProvider>)
+  render(<DeviceProvider><ConfirmProvider><JournalProvider><NavProvider navigate={() => {}}>{ui}</NavProvider></JournalProvider></ConfirmProvider></DeviceProvider>)
 const journal = () => JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
 const yesterday = () => addDays(todayISO(), -1)
 
@@ -66,5 +68,34 @@ describe('Pickleball logs on the strip’s day', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Log session' }))
     await waitFor(() => expect(journal().pickleball ?? []).toHaveLength(1))
     expect(journal().pickleball[0].date).toBe(yesterday())
+  })
+})
+
+describe('Fitness logs on the strip’s day', () => {
+  // The phone's activity row scrolls the chosen tile into view; jsdom has no
+  // `Element.scrollTo`.
+  beforeEach(() => { Element.prototype.scrollTo = () => {} })
+
+  it('phone: no date pill, and the workout lands on the picked day', async () => {
+    phone()
+    wrap(<Fitness />)
+    expect(screen.queryByLabelText(/^Date/)).toBeNull()
+    await pickYesterday()
+    await userEvent.click(screen.getByRole('button', { name: 'More minutes' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Log / }))
+    await waitFor(() => expect(journal().workouts ?? []).toHaveLength(1))
+    expect(journal().workouts[0].date).toBe(yesterday())
+  })
+
+  it('desktop: no Date field, and the workout lands on the picked day', async () => {
+    desktop()
+    wrap(<Fitness />)
+    await openAct(/Log a (session|game)/)
+    expect(screen.queryByLabelText('Date')).toBeNull()
+    await pickYesterday()
+    await userEvent.type(screen.getByLabelText(/Duration/), '30')
+    await userEvent.click(screen.getByRole('button', { name: /^Log (session|game)$/ }))
+    await waitFor(() => expect(journal().workouts ?? []).toHaveLength(1))
+    expect(journal().workouts[0].date).toBe(yesterday())
   })
 })
