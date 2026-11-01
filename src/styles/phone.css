@@ -1273,3 +1273,47 @@ button.cell:active {
 .urge-gave:disabled {
   opacity: 0.45;
 }
+
+/* ── Focus (COD-554) ───────────────────────────────────────────────────────
+   `focus/FocusPhone.tsx`. Project names are words of any length on a
+   three-way bar: each segment takes an equal share and cuts its own name
+   rather than pushing the bar past the screen (`1fr` is `minmax(auto, 1fr)`,
+   so the longest name would set every column). The full name is still the
+   button's text, so it is what is announced. */
+.focus-phone .seg {
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+.focus-phone .seg > button {
+  overflow: hidden;
+  padding-inline: 0.25rem;
+  text-overflow: ellipsis;
+}
+
+/* Focus is the one scale here where high is GOOD — the effort track runs
+   calm teal → red, which would paint deep flow as a warning. */
+.effort.effort-good::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--color-ink-3), var(--color-mauve));
+}
+
+.effort.effort-good::-moz-range-track {
+  background: linear-gradient(90deg, var(--color-ink-3), var(--color-mauve));
+}
+
+/* Start is tonal so Log stays the one filled button on the screen; the
+   brand wash/text pair is the app's one solved accent-on-wash. */
+.focus-phone .focus-start {
+  background: var(--color-brand-wash);
+  box-shadow: none;
+  color: var(--color-brand-text);
+}
+
+/* The day bar in the dock floats over the list like the dock's buttons, and
+   the dock stays ONE line: wrapped at 375px, its first line sat on the tags. */
+.focus-phone .log-dock {
+  flex-wrap: nowrap;
+}
+
+.focus-phone .log-dock > .seg {
+  box-shadow: 0 0 0 1px var(--color-line), var(--shadow-lift);
+}
