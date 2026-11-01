@@ -1,13 +1,15 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../store'
 import { ConfirmProvider } from '../components/ConfirmDialog'
 import { NavProvider } from '../components/shell/nav'
 import { CursorProvider } from '../components/shell/cursor'
+import { DeviceProvider } from '../components/shell/device'
 import { NoFap } from './NoFap'
 import { CARDS, GROUPS, GROUP_LABEL, DEFAULT_GROUP } from '../lib/recoveryCards'
 import { generateDemoData } from '../lib/demo'
+import { LONELY_KINDS } from '../lib/recoveryFeedback'
 import { TECHNIQUES } from '../components/recovery/TechniquesBlock'
 
 /**
@@ -304,5 +306,48 @@ describe('Recovery · the registry is the page', () => {
     expect(labels.some((l) => /held/.test(l))).toBe(true)
     expect(labels.some((l) => /gave in/.test(l))).toBe(true)
     expect(card.textContent).toMatch(/Both count/)
+  })
+})
+
+describe('Recovery on a phone · the Details sheet is one tap per answer', () => {
+  type Urge = { halt?: string[]; lonelyKind?: string }
+  const urges = () => (JSON.parse(localStorage.getItem('bujo:data')!) as { nofap: { urgeLog?: Urge[] } }).nofap.urgeLog ?? []
+
+  async function phoneDetails() {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    onTestFinished(() => { vi.unstubAllGlobals() })
+    localStorage.setItem('bujo:data', JSON.stringify(generateDemoData()))
+    render(
+      <DeviceProvider><NavProvider navigate={() => {}}><CursorProvider><ConfirmProvider><JournalProvider>
+        <NoFap />
+      </JournalProvider></ConfirmProvider></CursorProvider></NavProvider></DeviceProvider>,
+    )
+    await userEvent.click(await screen.findByRole('button', { name: /^Details/ }))
+    const sheet = screen.getByRole('dialog', { name: 'Details' })
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Lonely' }))
+    return sheet
+  }
+  const held = () => userEvent.click(screen.getAllByRole('button', { name: /: Held$/ })[0])
+
+  // The failure: the kind of lonely was a native select (open, scroll, pick).
+  // Asserted on the JOURNAL — a pill that lights and writes nothing must fail.
+  it('writes the kind of lonely picked with one tap into the urge it logs', async () => {
+    const sheet = await phoneDetails()
+    const kinds = within(sheet).getByRole('radiogroup', { name: 'What kind of lonely?' })
+    expect(within(sheet).queryByRole('combobox')).toBeNull()
+    // The demo seeds no lonely kinds, so this count can only move by the write.
+    const before = urges().filter((u) => u.lonelyKind === 'no-one-close').length
+    await userEvent.click(within(kinds).getByRole('radio', { name: 'Nobody I could call' }))
+    expect(within(kinds).getByRole('radio', { name: 'Nobody I could call' })).toHaveAttribute('aria-checked', 'true')
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Done' }))
+    await held()
+    await waitFor(() => expect(urges().filter((u) => u.lonelyKind === 'no-one-close').length).toBe(before + 1))
+    expect(urges().at(-1)?.halt).toEqual(['lonely'])
+  })
+
+  // The pill draws `short` and is named by `label`: a short that is not words
+  // of the label fails WCAG 2.5.3 (`label-content-name-mismatch`).
+  it('draws each kind of lonely as words its accessible name contains', () => {
+    for (const k of LONELY_KINDS) expect(` ${k.label.toLowerCase().replace(/[^a-z ]/g, '')} `).toContain(` ${k.short.toLowerCase()} `)
   })
 })
