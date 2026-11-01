@@ -2,6 +2,10 @@ import { useJournal } from '../../store'
 import { Card, StatTile } from '../ui'
 import { cat, onRaised } from '../../lib/colors'
 import { dataSummary } from '../../lib/csv'
+import { Database } from '@/components/icons'
+import { useDevice } from '../shell/device'
+import { Cell, Cells } from '../ui/cells'
+import { InfoCell } from '../ui/infoCell'
 
 /** localStorage's practical ceiling. The journal JSON is what counts against it. */
 const BUDGET_BYTES = 5 * 1024 * 1024
@@ -34,6 +38,26 @@ export function YourDataCard() {
   const sum = dataSummary(data)
   const pct = Math.min(100, Math.round((sum.bytes / BUDGET_BYTES) * 100))
   const warn = pct >= 80
+  const phone = useDevice() === 'mobile'
+
+  // Phone: the same numbers as value rows, iOS "About" style — no tiles and no
+  // bars (a phone draws no visualizations); the per-domain counts open a sheet.
+  if (phone) return (
+    <Cells title="Your data" aside="on this device">
+      <Cell title="Records" trail={sum.totalRecords} />
+      <Cell title="Active days" subtitle={sum.totalRecords > 0 ? `${sum.firstDay} to ${sum.lastDay}` : undefined} trail={sum.activeDays} />
+      {sum.totalRecords > 0 && <Cell title="Days with data" subtitle={`of ${sum.spanDays} in your span`} trail={`${sum.coveragePct}%`} />}
+      <Cell title="Photos" trail={sum.photos} />
+      <Cell title="Browser storage" subtitle={warn ? 'Getting full — export a backup now' : `${Math.round(sum.bytes / 1024)} KB of journal text`} trail={`${pct}% of ~5 MB`} />
+      {sum.counts.length > 0 && (
+        <InfoCell title="By domain" subtitle={`${sum.counts.length} ${sum.counts.length === 1 ? 'domain' : 'domains'}`} icon={Database} tone="teal">
+          <Cells>
+            {sum.counts.map((c) => <Cell key={c.label} title={c.label} trail={c.count} />)}
+          </Cells>
+        </InfoCell>
+      )}
+    </Cells>
+  )
 
   return (
     <Card band title="Your data" subtitle="Everything stored on this device" className="mb-5">

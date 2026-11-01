@@ -10,6 +10,9 @@ import { Switch } from '../ui/switch'
 import { pushCloud, pullCloud } from '../../lib/bujocloud'
 import { migrate } from '../../lib/storage'
 import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
+import { useDevice } from '../shell/device'
+import { Cell, Cells, FieldCell, ToggleCell } from '../ui/cells'
+import { InfoCell } from '../ui/infoCell'
 
 /**
  * One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync).
@@ -31,6 +34,7 @@ export function CloudSyncCard() {
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
+  const phone = useDevice() === 'mobile'
 
   async function push() {
     if (pass.length < 6) { setMsg('Use a passphrase of at least 6 characters.'); return }
@@ -112,6 +116,25 @@ export function CloudSyncCard() {
       await saveSyncPassphrase(pass); setAuto(true); push()
     } else { clearSyncPassphrase(); setAuto(false); setMsg('Auto-sync off.') }
   }
+
+  // Phone: iOS rows running the same handlers; the paragraph is points behind a row.
+  if (phone) return (
+    <Cells title="Encrypted sync" aside="no server can read it">
+      <FieldCell label="Passphrase" type="password" value={pass} onChange={setPass} placeholder="Sync passphrase" />
+      <Cell icon={Upload} tone="blue" title={busy === 'push' ? 'Pushing…' : 'Push to cloud'} chevron={false} onPress={busy ? undefined : push} />
+      <Cell icon={Download} tone="teal" title={busy === 'pull' ? 'Pulling…' : 'Pull from cloud'} subtitle="Replaces this device’s copy — asks first" chevron={false} onPress={busy ? undefined : pull} />
+      <ToggleCell title="Auto-sync on this device" subtitle="Pull on open · push on change" on={auto} onChange={toggleAuto} />
+      {auto && encrypted && <p className="cell text-label text-fg-1" role="note">Auto-sync keeps this passphrase readable in this browser — switch it off to sync by hand.</p>}
+      {msg && <p className="cell text-label text-fg-1" role="status">{msg}</p>}
+      <InfoCell title="How encrypted sync works" points={[
+        'Separate from your account',
+        'Encrypted in this browser before it is uploaded',
+        'The server only ever stores ciphertext',
+        'The same passphrase on another device gets your data back',
+        'A lost passphrase cannot be recovered',
+      ]} />
+    </Cells>
+  )
 
   return (
     <Card band title="Encrypted sync" subtitle="A second, separate copy that no server can read">

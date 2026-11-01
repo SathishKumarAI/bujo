@@ -1,20 +1,15 @@
 import { useRef, useState } from 'react'
-import { CheckCircle, Footprints, Heartbeat, Moon, Scales, ShieldCheck, Thermometer, Upload, Warning } from '@/components/icons'
+import { ShieldCheck, Upload, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useJournal } from '../../store'
 import { Card } from '../ui'
 import { Button } from '../ui/button'
 import { Switch } from '../ui/switch'
-import { useConfirm } from '../ConfirmDialog'
 import { Abbr } from '../Abbr'
-import { notify } from '../../lib/notify'
-import { todayISO } from '../../lib/date'
-import { exportJSON } from '../../lib/storage'
-import { stripSyncSecrets } from '../../lib/csv'
-import { describeSummary, readHealthExport, type HealthReadResult } from '../../lib/health/parse'
-import { plan, type ImportPlan } from '../../lib/ingest/plan'
-import { validateRecords } from '../../lib/ingest/validate'
-import { download } from './download'
+import { describeSummary } from '../../lib/health/parse'
+import { useDevice } from '../shell/device'
+import { READS } from './appleHealthReads'
+import { useHealthImport } from './useHealthImport'
+import { AppleHealthPhone } from './AppleHealthPhone'
 
 /**
  * IMPORTING FROM APPLE HEALTH · pick a file, see exactly what will change,
@@ -39,106 +34,15 @@ import { download } from './download'
  * about the file and misleading about the data.
  */
 
-/**
- * What the import can fill, named for the user rather than for HealthKit.
- *
- * `BBT` goes through `<Abbr>` rather than being explained here: the glossary
- * already carries the definition, the NHS source, and the sentence that matters
- * for this screen — a reading taken after you are up is not a basal
- * temperature. Writing a second copy of that is how two explanations drift.
- */
-const READS: { icon: typeof Thermometer; text: React.ReactNode; key: string }[] = [
-  { key: 'bbt', icon: Thermometer, text: <><Abbr term="BBT" /> → the chart on Cycle</> },
-  { key: 'steps', icon: Footprints, text: 'Steps and active energy' },
-  { key: 'sleep', icon: Moon, text: 'Hours asleep, on the day you woke up' },
-  { key: 'hr', icon: Heartbeat, text: 'Resting heart rate' },
-  { key: 'body', icon: Scales, text: 'Weight, body fat, lean mass, waist' },
-  { key: 'misc', icon: CheckCircle, text: 'Workouts, food, and period days' },
-]
-
-type Stage =
-  | { at: 'idle' }
-  | { at: 'reading'; pct: number | null; records: number }
-  | { at: 'ready'; read: HealthReadResult; plan: ImportPlan; takeTheirs: boolean; rejected: number }
-
 export function AppleHealthCard() {
-  const confirm = useConfirm()
-  const { data, replaceAll, undo } = useJournal()
+  const phone = useDevice() === 'mobile'
+  return phone ? <AppleHealthPhone /> : <AppleHealthDesktop />
+}
+
+function AppleHealthDesktop() {
+  const { stage, useBodyTemp, setUseBodyTemp, pick, takeTheirs, apply, cancel } = useHealthImport()
   const fileRef = useRef<HTMLInputElement>(null)
-  const [stage, setStage] = useState<Stage>({ at: 'idle' })
-  const [useBodyTemp, setUseBodyTemp] = useState(false)
   const [dragging, setDragging] = useState(false)
-
-  const s = data.settings
-
-  async function build(file: File, takeTheirs: boolean, bodyTemp: boolean) {
-    setStage({ at: 'reading', pct: null, records: 0 })
-    try {
-      const read = await readHealthExport(
-        file,
-        { useBodyTemperature: bodyTemp, cycleEnabled: s.cycleTrackerEnabled },
-        (p) => setStage({ at: 'reading', pct: p.total ? Math.min(99, Math.round((p.bytes / p.total) * 100)) : null, records: p.records }),
-      )
-      const { records, rejected } = validateRecords(read.records)
-      if (records.length === 0) {
-        notify.error(
-          'Nothing in that file could be imported',
-          read.summary.samples === 0
-            ? 'No health records were found in it — is it the right file?'
-            : `${read.summary.samples.toLocaleString()} records were read, but none of them map to anything this app tracks.`,
-        )
-        setStage({ at: 'idle' })
-        return
-      }
-      const p = await plan(records, data, {
-        source: 'apple-health',
-        takeTheirs,
-        weightUnit: s.weightUnit === 'lb' ? 'lb' : 'kg',
-        tempUnit: s.tempUnit === 'C' ? 'C' : 'F',
-      })
-      setStage({ at: 'ready', read, plan: p, takeTheirs, rejected: rejected.length })
-    } catch (e) {
-      // The reader's messages are written to be shown. A stack trace here would
-      // be the only feedback a user gets about a 400 MB file that took a minute.
-      notify.error('Could not read that export', e instanceof Error ? e.message : String(e))
-      setStage({ at: 'idle' })
-    }
-  }
-
-  /** Kept on the card so "take theirs" can re-plan without re-reading 800 MB. */
-  const lastFile = useRef<File | null>(null)
-
-  function pick(file: File | undefined) {
-    if (!file) return
-    lastFile.current = file
-    void build(file, false, useBodyTemp)
-  }
-
-  async function doExport() {
-    download(`cadence-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(data)))
-  }
-
-  async function apply() {
-    if (stage.at !== 'ready') return
-    const { counts } = stage.plan
-    const changing = counts.added + counts.updated
-    const ok = await confirm({
-      title: `Import ${changing.toLocaleString()} value${changing === 1 ? '' : 's'} from Apple Health?`,
-      description: counts.updated > 0
-        ? `${counts.updated.toLocaleString()} will replace something already in your journal. You can undo this, but a backup is the safer answer.`
-        : 'Nothing already in your journal will be replaced. You can undo this.',
-      confirmLabel: 'Import',
-      destructive: counts.updated > 0,
-      onBackup: doExport,
-    })
-    if (!ok) return
-    // One dispatch. `stamp: true` re-dates the journal so a fresh import beats a
-    // stale remote on the next sync, and `'set'` routes through `commit()`, so
-    // this is exactly ONE undo step no matter how many records it carried.
-    replaceAll(stage.plan.next, { stamp: true })
-    setStage({ at: 'idle' })
-    notify.undo(`Imported ${changing.toLocaleString()} value${changing === 1 ? '' : 's'} from Apple Health`, undo)
-  }
 
   return (
     <Card
@@ -276,7 +180,7 @@ export function AppleHealthCard() {
               <Button
                 variant="ghost"
                 className="mt-1.5"
-                onClick={() => { if (lastFile.current) void build(lastFile.current, true, useBodyTemp) }}
+                onClick={takeTheirs}
               >
                 Use Apple's values instead
               </Button>
@@ -305,7 +209,7 @@ export function AppleHealthCard() {
               Import {(stage.plan.counts.added + stage.plan.counts.updated).toLocaleString()}
               {stage.rejected > 0 && ` · skip ${stage.rejected.toLocaleString()}`}
             </Button>
-            <Button variant="secondary" onClick={() => setStage({ at: 'idle' })}>Cancel</Button>
+            <Button variant="secondary" onClick={cancel}>Cancel</Button>
           </div>
         </div>
       )}

@@ -5,6 +5,9 @@ import { Button } from '../ui/button'
 import { onRaised } from '../../lib/colors'
 import { DEFAULT_ENDPOINT, DEFAULT_MODEL, isLocalEndpoint, listModels } from '../../lib/voice/model'
 import { Row, Toggle } from './shared'
+import { MagnifyingGlass } from '@/components/icons'
+import { useDevice } from '../shell/device'
+import { Cell, Cells, FieldCell, ToggleCell } from '../ui/cells'
 
 /**
  * The local model the Talk panel can fall back to.
@@ -38,11 +41,42 @@ export function VoiceModelCard() {
   const [models, setModels] = useState<string[] | null>(null)
   const [checking, setChecking] = useState(false)
   const local = isLocalEndpoint(endpoint)
+  const phone = useDevice() === 'mobile'
 
   async function check() {
     setChecking(true)
     try { setModels(await listModels(endpoint)) } finally { setChecking(false) }
   }
+
+  const setVm = (patch: Partial<typeof vm>) => setSettings({ voiceModel: { ...vm, ...patch } })
+
+  // Phone: iOS rows over the same settings; the server and model rows exist only
+  // while the switch is on, exactly as the desktop card's fields do.
+  if (phone) return (
+    <Cells title="Local model" aside="this machine only">
+      <ToggleCell title="Use a model on this machine" subtitle="Only a fallback · you confirm before saving" on={vm.enabled === true} onChange={(v) => setVm({ enabled: v })} />
+      {vm.enabled && (
+        <>
+          <FieldCell label="Server" type="url" value={endpoint} onChange={(v) => setVm({ endpoint: v })} placeholder={DEFAULT_ENDPOINT} />
+          {!local && <p className="cell text-label text-fg-1" role="alert">Not this machine, so it will not be used — only localhost and 127.0.0.1</p>}
+          {models && models.length > 0 ? (
+            <label className="cell">
+              <span className="flex-1 text-body text-fg-1">Model</span>
+              <select className="cell-select" value={vm.model ?? DEFAULT_MODEL} onChange={(e) => setVm({ model: e.target.value })}>
+                {models.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </label>
+          ) : (
+            <FieldCell label="Model" value={vm.model ?? DEFAULT_MODEL} onChange={(v) => setVm({ model: v })} />
+          )}
+          <Cell icon={MagnifyingGlass} tone="blue" title={checking ? 'Looking…' : 'Find models'} chevron={false}
+            subtitle={models ? (models.length > 0 ? `${models.length} on this machine` : hostedBuild ? 'A hosted page cannot reach this machine' : 'Nothing answered — is Ollama running?') : 'Built against Ollama’s API'}
+            onPress={checking || !local ? undefined : check} />
+          {hostedBuild && <p className="cell text-label text-fg-2">Served over HTTPS, so it cannot reach a model here — use the desktop build or a self-hosted copy.</p>}
+        </>
+      )}
+    </Cells>
+  )
 
   return (
     <Card band title="Local model" subtitle="Understands the sentences the Talk panel's own rules miss">

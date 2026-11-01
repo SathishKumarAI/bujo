@@ -11,6 +11,8 @@ import { connect, disconnect, isConnected, listFiles, pullData, pushData, type D
 import { useConfirm } from './ConfirmDialog'
 import { notify } from '../lib/notify'
 import { Button } from './ui/button'
+import { useDevice } from './shell/device'
+import { Cell, Cells, FieldCell } from './ui/cells'
 
 /**
  * Optional Google Drive sync card. Requires a Google OAuth Client ID
@@ -24,6 +26,7 @@ export function DriveSync() {
   const [busy, setBusy] = useState('')
   const [files, setFiles] = useState<DriveFile[]>([])
   const [q, setQ] = useState('')
+  const phone = useDevice() === 'mobile'
 
   async function doConnect() {
     if (!clientId) return notify.error('Drive needs a client ID', 'Paste your Google OAuth Client ID above, then connect.')
@@ -86,6 +89,26 @@ export function DriveSync() {
       setBusy('')
     }
   }
+
+  // Phone: iOS rows, same handlers. A Drive file is a row that opens it.
+  if (phone) return (
+    <Cells title="Google Drive" aside="optional">
+      <FieldCell label="Client ID" value={clientId} onChange={(v) => setSettings({ googleClientId: v.trim() || undefined })} placeholder="….apps.googleusercontent.com" />
+      {!connected ? (
+        <Cell icon={Cloud} tone="blue" title={busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'} subtitle="Needs an OAuth Web client ID" chevron={false} onPress={doConnect} />
+      ) : (
+        <>
+          <Cell icon={CloudArrowUp} tone="blue" title={busy === 'push' ? 'Backing up…' : 'Back up to Drive'} subtitle={data.settings.lastDriveSync ? `Last Drive sync ${data.settings.lastDriveSync}` : undefined} chevron={false} onPress={backup} />
+          <Cell icon={CloudArrowDown} tone="teal" title={busy === 'pull' ? 'Restoring…' : 'Restore from Drive'} subtitle="Replaces this device’s copy — asks first" chevron={false} onPress={restore} />
+          <button type="button" className="cell cell-danger" onClick={() => { disconnect(); setConnected(false) }}>Disconnect</button>
+          <FieldCell label="Find a file" value={q} onChange={setQ} placeholder="images & docs" />
+          <Cell icon={MagnifyingGlass} tone="overlay1" title={busy === 'search' ? 'Searching…' : 'Search Drive'} chevron={false} onPress={search} />
+          {files.map((f) => <Cell key={f.id} href={f.webViewLink} title={f.name} />)}
+        </>
+      )}
+      {!connected && data.settings.lastDriveSync && <Cell title="Last Drive sync" trail={data.settings.lastDriveSync} />}
+    </Cells>
+  )
 
   return (
     <Card band
