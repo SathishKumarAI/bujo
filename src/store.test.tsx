@@ -209,3 +209,48 @@ describe('setCycle keeps data.cycle in date order', () => {
     expect(all).toEqual([...all].sort())
   })
 })
+
+/**
+ * COD-556: a competition event and a DUPR rating could be added and removed,
+ * never edited. Driven through the real store; the assertion is the stored
+ * array — one record, rewritten — because an "update" that appends a copy
+ * passes any test that only looks for the new value.
+ */
+describe('updatePickleEvent / updateDupr', () => {
+  function EditProbe() {
+    const { data, addPickleEvent, updatePickleEvent, logDupr, updateDupr } = useJournal()
+    const evs = data.pickleballEvents ?? []
+    return (
+      <div>
+        <button onClick={() => addPickleEvent({ date: '2026-06-01', name: 'Open', kind: 'tournament', format: 'pool-play', wins: 3, notes: 'kept' })}>add</button>
+        <button onClick={() => updatePickleEvent(evs[0].id, { date: '2026-06-02', name: 'Open', kind: 'league', format: 'pool-play', notes: 'kept' })}>edit</button>
+        <button onClick={() => { logDupr('2026-06-01', 3.5); logDupr('2026-06-05', 3.6) }}>rate</button>
+        <button onClick={() => updateDupr('2026-06-01', '2026-06-03', 3.55)}>move</button>
+        <output data-testid="evs">{JSON.stringify(evs)}</output>
+        <output data-testid="dupr">{JSON.stringify(data.settings.duprLog ?? [])}</output>
+      </div>
+    )
+  }
+
+  it('rewrites the one event in place, clearing a field the form cleared', async () => {
+    const user = userEvent.setup()
+    render(<JournalProvider><EditProbe /></JournalProvider>)
+    await user.click(screen.getByText('add'))
+    await user.click(screen.getByText('edit'))
+    const evs = JSON.parse(screen.getByTestId('evs').textContent!)
+    expect(evs).toHaveLength(1)
+    expect(evs[0]).toMatchObject({ date: '2026-06-02', kind: 'league', notes: 'kept' })
+    expect(evs[0].wins).toBeUndefined()
+  })
+
+  it('moves a rating to a new date without leaving the old one or touching the others', async () => {
+    const user = userEvent.setup()
+    render(<JournalProvider><EditProbe /></JournalProvider>)
+    await user.click(screen.getByText('rate'))
+    await user.click(screen.getByText('move'))
+    expect(JSON.parse(screen.getByTestId('dupr').textContent!)).toEqual([
+      { date: '2026-06-03', rating: 3.55 },
+      { date: '2026-06-05', rating: 3.6 },
+    ])
+  })
+})

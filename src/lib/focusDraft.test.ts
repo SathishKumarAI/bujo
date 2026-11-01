@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { draftFrom, lastSession, shortMin, toSession, withChoice } from './focusDraft'
+import { draftFrom, focusMark, lastSession, shortMin, toSession, withChoice } from './focusDraft'
 import type { DevSession } from './types'
 
 const s = (p: Partial<DevSession>): DevSession => ({ id: 'x', date: '2026-10-30', durationMin: 45, focus: 8, stress: 2, ...p })
@@ -31,5 +31,13 @@ describe('focusDraft', () => {
     const d = draftFrom(undefined, '2026-10-31')
     expect(toSession(d)).toBeNull()
     expect(toSession({ ...d, durationMin: 25, tags: ['go'], moreTags: 'Go, rust ,' })).toMatchObject({ durationMin: 25, tags: ['go', 'rust'], project: undefined })
+  })
+})
+
+describe('focusMark', () => {
+  it('sums a day across sessions and says nothing for an empty day', () => {
+    const s = [{ id: 'a', date: '2026-10-30', durationMin: 25 }, { id: 'b', date: '2026-10-30', durationMin: 35 }] as never
+    expect(focusMark(s, '2026-10-30')).toBe('1h')
+    expect(focusMark(s, '2026-10-29')).toBeNull()
   })
 })

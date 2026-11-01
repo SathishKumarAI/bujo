@@ -24,6 +24,7 @@ import { MACROS, inTargetStreak, nextStep, targetsOf, type Targets } from '../li
 import { togglePin, usualFoods } from '../lib/usualFoods'
 import { useStickyState } from '../lib/useStickyState'
 import { useDevice } from '../components/shell/device'
+import { DayStrip } from '../components/ui/dayStrip'
 
 /**
  * NUTRITION · promoted from an accordion on Fitness to a page of its own.
@@ -406,10 +407,11 @@ export function Nutrition() {
             <ActHide what="the log" onHide={logCol.close} />
           </div>
 
-          <label className="block text-body text-fg-1">
-            Date
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" />
-          </label>
+          {/* The shared week strip (the phone's top-bar days, drawn inline):
+              each day says its calories, so a missed day shows before you
+              pick it. Replaced a bare date input. */}
+          <DayStrip value={date} onChange={setDate} today={today} label="Day to log"
+            mark={(d) => { const c = data.metrics.find((x) => x.date === d)?.calories ?? 0; return c ? <>{c >= 1000 ? `${(c / 1000).toFixed(1)}k` : c}<span className="sr-only"> kcal</span></> : null }} />
 
           {/* A native <select> of forty options was the page's whole "add a
               food" flow: open, scroll, choose, then reach for a separate

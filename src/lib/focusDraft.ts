@@ -86,3 +86,10 @@ export function toSession(d: FocusDraft): Omit<DevSession, 'id'> | null {
     notes: d.notes.trim() || undefined,
   }
 }
+
+/** A day's focus minutes for the week strip (`ui/dayStrip.tsx`), or `null`
+ *  for a day with no session, so the strip draws no mark for it. */
+export function focusMark(sessions: readonly DevSession[], day: string): string | null {
+  const total = sessions.filter((s) => s.date === day).reduce((n, s) => n + (s.durationMin ?? 0), 0)
+  return total ? shortMin(total) : null
+}

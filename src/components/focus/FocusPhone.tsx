@@ -5,11 +5,12 @@ import { Seg } from '../ui/seg'
 import { Cells, FieldCell } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
 import { TimerPhone } from './TimerPhone'
-import { addDays, prettyDay, todayISO } from '../../lib/date'
+import { prettyDay, todayISO } from '../../lib/date'
+import { DayStrip } from '../ui/dayStrip'
 import { onRaised } from '../../lib/colors'
 import { formatMinutes } from '../../lib/focus'
 import {
-  MINUTE_CHOICES, draftFrom, lastSession, shortMin, toSession, toggle, withChoice, type FocusDraft,
+  MINUTE_CHOICES, draftFrom, focusMark, lastSession, shortMin, toSession, toggle, withChoice, type FocusDraft,
 } from '../../lib/focusDraft'
 import type { DevSession } from '../../lib/types'
 
@@ -37,7 +38,6 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
   review: ReactNode
 }) {
   const today = todayISO()
-  const yesterday = addDays(today, -1)
   const last = lastSession(sessions)
   const [f, setF] = useState<FocusDraft>(() => draftFrom(last, today))
   const set = (p: Partial<FocusDraft>) => setF((c) => ({ ...c, ...p }))
@@ -47,7 +47,7 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
   const minutes = withChoice([...MINUTE_CHOICES], f.durationMin, MINUTE_CHOICES.length)
   const projects = withChoice(recentProjects, f.project, 3)
   const tags = [...new Set([...recentTags.slice(0, 5), ...f.tags])]
-  const added = [f.interruptions !== undefined, f.notes.trim(), f.moreTags.trim(), f.date < yesterday].filter(Boolean).length
+  const added = [f.interruptions !== undefined, f.notes.trim(), f.moreTags.trim()].filter(Boolean).length
 
   function log() {
     const s = toSession(f)
@@ -61,6 +61,8 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
   return (
     <div className="focus-phone flex flex-col gap-3 pb-2">
       <h1 className="sr-only">Focus</h1>
+      {/* Portals into the top bar: the day this session is logged to. */}
+      <DayStrip value={f.date} onChange={(d) => set({ date: d })} today={today} label="Day to log" mark={(d) => focusMark(sessions, d)} />
       <TimerPhone />
 
       <section aria-label="Log a session" className="flex flex-col gap-1.5">
@@ -108,13 +110,9 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
       </section>
 
       <div className="log-dock">
-        {/* The day, at the dock's left — where every session page keeps it.
-            Always holds a value, so not `allowNone`; an earlier day is in the
-            sheet, and lights neither. */}
-        <Seg label="Day" className="mr-auto min-w-0" value={f.date === today || f.date === yesterday ? f.date : null}
-          onChange={(v) => v && set({ date: v })}
-          options={[{ value: today, label: 'Today' }, { value: yesterday, label: 'Yesterday' }]} />
-        <button type="button" className="round-btn" onClick={() => setMore(true)}
+        {/* The day lives in the top bar (the shared strip, rendered at the top
+            of this page), so the dock is the sheet's button and Log. */}
+        <button type="button" className="round-btn ml-auto" onClick={() => setMore(true)}
           aria-label={`Focus, stress, notes${added ? `, ${added} added` : ''}`}>
           <Icon as={SlidersHorizontal} size="md" />
         </button>
@@ -155,10 +153,6 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
             <FieldCell label="Minutes" type="number" inputMode="numeric" value={f.durationMin ? String(f.durationMin) : ''}
               onChange={(v) => set({ durationMin: v === '' ? undefined : Math.max(0, Number(v)) })} placeholder="Any length" />
             <FieldCell label="More tags" value={f.moreTags} onChange={(v) => set({ moreTags: v })} placeholder="go, rust" />
-            <label className="cell gap-3">
-              <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Earlier day</span>
-              <input type="date" value={f.date} max={today} onChange={(e) => e.target.value && set({ date: e.target.value })} className="cell-input" />
-            </label>
           </Cells>
           <Cells title="Notes">
             <div className="cell"><textarea value={f.notes} onChange={(e) => set({ notes: e.target.value })} placeholder="What did you work on?" rows={3} aria-label="Notes" className="cell-textarea" /></div>

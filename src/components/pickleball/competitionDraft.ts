@@ -4,7 +4,9 @@ import type { PickleballEvent, PickleballFormat } from '../../lib/types'
 /**
  * A league or tournament as a form holds it, and what saving one writes.
  *
- * OWNS: the blank draft, the draft → event conversion, and the prep checklist.
+ * OWNS: the blank draft, the draft ↔ event conversion (an edit loads `draftOf`
+ * and saves through the same `eventFrom` an add does), the same-day rating
+ * clash, and the prep checklist.
  * DOES NOT OWN: any drawing. Both the desktop `CompetitionPanel` and the phone
  * `phone/CompetitionPhone` read this, so an event field added here is added to
  * BOTH forms by hand — same rule as `sessionDraft.ts`.
@@ -27,6 +29,19 @@ export function eventFrom(ev: EventDraft): Omit<PickleballEvent, 'id'> {
     notes: ev.notes.trim() || undefined,
   }
 }
+
+/** An event back into the form, for editing. `notes` rides along although
+ *  neither form draws it, so an edit does not erase it. */
+export function draftOf(e: PickleballEvent): EventDraft {
+  const str = (n?: number) => (n == null ? '' : String(n))
+  return { date: e.date, name: e.name, kind: e.kind, format: e.format, division: e.division ?? '', wins: str(e.wins), losses: str(e.losses), placement: e.placement ?? '', partner: e.partner ?? '', notes: e.notes ?? '' }
+}
+
+/** DUPR is one rating per day, so saving on `date` replaces whatever it holds.
+ *  Returns that rating unless it is the one being edited (`from`) — the caller
+ *  asks before replacing it, instead of the store doing it silently. */
+export const ratingClash = (log: { date: string; rating: number }[] | undefined, date: string, from?: string | null) =>
+  (log ?? []).find((p) => p.date === date && p.date !== from)
 
 /** Tournament-day prep checklist, shown beside the countdown to an event. */
 export const PREP_CHECKLIST = [

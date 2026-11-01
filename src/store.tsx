@@ -169,6 +169,8 @@ interface Store {
   removeReadLink: (id: string) => void
   // pickleball leagues / tournaments
   addPickleEvent: (e: Omit<import('./lib/types').PickleballEvent, 'id'>) => void
+  /** Rewrite a whole event: every field comes from the form, so a cleared field is cleared. */
+  updatePickleEvent: (id: string, e: Omit<import('./lib/types').PickleballEvent, 'id'>) => void
   removePickleEvent: (id: string) => void
   // gratitude / memories
   setGratitude: (date: string, text: string) => void
@@ -247,6 +249,8 @@ interface Store {
   setSettings: (patch: Partial<Settings>) => void
   /** Append (or replace same-day) a dated DUPR rating in settings.duprLog. */
   logDupr: (date: string, rating: number) => void
+  /** Edit the rating logged on `from`: it moves to `date` (replacing whatever `date` held — ask first). */
+  updateDupr: (from: string, date: string, rating: number) => void
   removeDupr: (date: string) => void
   // bulk
   replaceAll: (data: JournalData, opts?: { stamp?: boolean }) => void
@@ -691,6 +695,9 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       addPickleEvent: (e) =>
         patch((d) => ({ ...d, pickleballEvents: [...(d.pickleballEvents ?? []), { id: uid('pke'), ...e }] })),
 
+      updatePickleEvent: (id, e) =>
+        patch((d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).map((x) => (x.id === id ? { id, ...e } : x)) })),
+
       removePickleEvent: (id) =>
         removeWithUndo('Event', (d) => ({ ...d, pickleballEvents: (d.pickleballEvents ?? []).filter((e) => e.id !== id) })),
 
@@ -1094,6 +1101,13 @@ export function JournalProvider({ children }: { children: ReactNode }) {
       logDupr: (date, rating) =>
         patch((d) => {
           const log = (d.settings.duprLog ?? []).filter((e) => e.date !== date)
+          const next = [...log, { date, rating }].sort((a, b) => (a.date < b.date ? -1 : 1))
+          return { ...d, settings: { ...d.settings, duprLog: next } }
+        }),
+
+      updateDupr: (from, date, rating) =>
+        patch((d) => {
+          const log = (d.settings.duprLog ?? []).filter((e) => e.date !== from && e.date !== date)
           const next = [...log, { date, rating }].sort((a, b) => (a.date < b.date ? -1 : 1))
           return { ...d, settings: { ...d.settings, duprLog: next } }
         }),

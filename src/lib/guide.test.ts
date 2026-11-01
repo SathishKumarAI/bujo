@@ -108,7 +108,7 @@ describe('tutorials', () => {
       expect(t.steps.length, t.id).toBeGreaterThanOrEqual(4)
       for (const s of t.steps) {
         if (s.to) expect(VIEW_CHROME[s.to], `${t.id} → ${s.to}`).toBeDefined()
-        expect(s.body.length, `${t.id} · ${s.title}`).toBeGreaterThan(40)
+        expect(s.body.join(' ').length, `${t.id} · ${s.title}`).toBeGreaterThan(40)
       }
     }
   })

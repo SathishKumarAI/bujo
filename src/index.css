@@ -18,6 +18,7 @@
 @import './styles/phone.css';
 @import './styles/touch-motion.css';
 @import './styles/phone-settings.css';
+@import './styles/phone-help.css';
 
 /*
   Catppuccin Mocha palette as Tailwind v4 theme tokens.
