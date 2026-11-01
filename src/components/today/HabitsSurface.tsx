@@ -236,6 +236,9 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
       ) : undefined) : undefined}
       zone2={slot === 'capture' ? (
 
+        // `contents`: an anchor for Today's "streak at risk" / "habits left"
+        // taps (COD-500) with no box of its own, so the layout is untouched.
+        <div id="today-habits" className="contents">
         <Card band
           title="Habits"
           subtitle="tap to mark the day"
@@ -316,6 +319,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
             </div>
           </DisclosureRow>
         </Card>
+        </div>
       
       ) : undefined}
       zone3={slot === 'review' ? (<>
