@@ -46,10 +46,10 @@ describe('every page is one tap from anywhere on a phone', () => {
 
   // Owner: "not able to navigate from today to other pages". Today's row is
   // its date, so it was the one bar with no door to the grid.
-  it('Today has a grid button too, and Nutrition is one tap from it', async () => {
+  it('Today opens the grid from its title like every page, and Nutrition is one tap from it', async () => {
     const nav = vi.fn()
     render(<JournalProvider><CursorProvider><PhoneTopBar view="today" gates={gates} onNavigate={nav} onQuickAdd={() => {}} /></CursorProvider></JournalProvider>)
-    await userEvent.click(screen.getByRole('button', { name: 'All pages' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Today.*all pages$/ }))
     await userEvent.click(within(screen.getByRole('navigation', { name: 'All pages' })).getByRole('button', { name: 'Nutrition' }))
     expect(nav).toHaveBeenCalledWith('nutrition')
   })

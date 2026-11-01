@@ -106,6 +106,12 @@ describe('PhoneTopBar date picker', () => {
     expect(screen.getByRole('heading', { name: 'Today' })).toBeTruthy()
   })
 
+  it('gives Today the same "Page ⌄" switcher as every other page, not a grid icon', () => {
+    at('today')
+    expect(screen.getByRole('button', { name: /^Today.*all pages$/ })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'All pages' })).toBeNull()
+  })
+
   it('keeps the month stepper on Monthly', () => {
     at('monthly')
     expect(screen.getByRole('button', { name: 'Previous' })).toBeTruthy()
