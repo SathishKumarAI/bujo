@@ -11,23 +11,10 @@ import { todayISO, prettyDay } from '../../lib/date'
 import { duprTrend, upcomingEvents } from '../../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../../lib/pickleballPlan'
 import type { PickleballFormat } from '../../lib/types'
+import { evtBlankOf, eventFrom, PREP_CHECKLIST } from './competitionDraft'
 import { notify } from '../../lib/notify'
-import { useDevice } from '../shell/device'
 
 const tip = rechartsTooltip
-
-const evtBlankOf = () => ({ date: todayISO(), name: '', kind: 'tournament' as 'league' | 'tournament', format: 'pool-play' as PickleballFormat, division: '', wins: '', losses: '', placement: '', partner: '', notes: '' })
-
-/** Tournament-day prep checklist, shown beside the countdown to an event. */
-const PREP_CHECKLIST = [
-  'Paddles (+ a backup) and fresh grip / overgrip tape',
-  'Court shoes, extra socks, athletic tape',
-  'Water + electrolytes; quick-energy snacks',
-  'Sun: hat, sunglasses, sunscreen - or layers for cold',
-  'Warm-up band, foam roller; ibuprofen / blister kit',
-  'Know your start time, division & format; arrive 45 min early',
-  'Mental routine: pre-point breath, one tactical intention',
-]
 
 /**
  * The `competition` panel - events, the DUPR trend, and league results.
@@ -41,12 +28,11 @@ export function CompetitionPanel() {
   const { data, addPickleEvent, removePickleEvent, logDupr, removeDupr } = useJournal()
   const today = todayISO()
   const [dupr, setDupr] = useState({ date: today, rating: '' })
-  /* A phone logs and a desktop reads (`panels.ts`, `phone`): on a phone both
-     forms start open and the DUPR trend chart is not drawn. */
-  const phone = useDevice() === 'mobile'
-  const [duprOpen, setDuprOpen] = useState(phone)
+  /* Desktop only: a phone draws `phone/CompetitionPhone` instead, so both
+     forms start shut behind the header's "+". */
+  const [duprOpen, setDuprOpen] = useState(false)
   const [duprCardOpen, setDuprCardOpen] = useState(true)
-  const [evOpen, setEvOpen] = useState(phone)
+  const [evOpen, setEvOpen] = useState(false)
   const [evCardOpen, setEvCardOpen] = useState(true)
   const [ev, setEv] = useState(evtBlankOf)
   const setE = (p: Partial<ReturnType<typeof evtBlankOf>>) => setEv((c) => ({ ...c, ...p }))
@@ -65,18 +51,7 @@ export function CompetitionPanel() {
   }
   function logEvent() {
     if (!ev.name.trim()) { notify.info('Name the event', 'A league or tournament needs a name to find it by.'); return }
-    addPickleEvent({
-      date: ev.date,
-      name: ev.name.trim(),
-      kind: ev.kind,
-      format: ev.format,
-      division: ev.division.trim() || undefined,
-      wins: ev.wins ? Number(ev.wins) : undefined,
-      losses: ev.losses ? Number(ev.losses) : undefined,
-      placement: ev.placement.trim() || undefined,
-      partner: ev.partner.trim() || undefined,
-      notes: ev.notes.trim() || undefined,
-    })
+    addPickleEvent(eventFrom(ev))
     setEv(evtBlankOf())
   }
 
@@ -148,7 +123,7 @@ export function CompetitionPanel() {
                 <StatTile compact label="Best" value={duprStats.best ?? '—'} color="green" icon={<Icon as={Trophy} size="sm" />} />
                 <StatTile compact label="Change" value={duprStats.change > 0 ? `+${duprStats.change}` : duprStats.change} />
               </div>
-              {!phone && duprStats.points.length >= 2 && (
+              {duprStats.points.length >= 2 && (
                 <div className="h-40" role="img" aria-label={`Line chart of DUPR rating over time, latest ${duprStats.latest}`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={duprStats.points.map((p) => ({ date: p.date.slice(5), rating: p.rating }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>

@@ -12,7 +12,7 @@ import { ACADEMY_DRILLS } from '../../../lib/pickleballAcademy'
 import { VideoLink } from '../../VideoLink'
 import { drillQuery } from '../../../lib/video'
 import type { PickleballSession } from '../../../lib/types'
-import { CompetitionPanel } from '../CompetitionPanel'
+import { CompetitionPhone } from './CompetitionPhone'
 import { QuickLog } from '../QuickLog'
 import { SessionSheet } from './SessionSheet'
 import type { SessionDraft } from '../sessionDraft'
@@ -109,7 +109,7 @@ export function PickleballPhone({ f, set, onLog, sessions, recentPartners, allPa
 
       {editing && <SessionSheet session={editing} onClose={() => setEditing(null)} partnerNames={allPartners} venueNames={allVenues} />}
       <Sheet open={comp} onOpenChange={setComp} title="Competition" description="Events and DUPR, apart from casual play">
-        <div className="flex flex-col gap-4"><CompetitionPanel /></div>
+        <CompetitionPhone allPartners={allPartners} />
       </Sheet>
     </div>
   )
