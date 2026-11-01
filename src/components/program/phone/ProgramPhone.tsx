@@ -180,41 +180,52 @@ export function ProgramPhone({ s, onCheck, rest }: {
                   >
                     {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{mine.length}</span>}
                   </button>
-                  <button type="button" className="min-w-0 flex-1 py-1.5 text-left" aria-expanded={open} onClick={() => setEditing(open ? null : e.name)}>
-                    <span className={`block truncate text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</span>
+                  {/* The name is the toggle, and its ::after stretches over
+                      the whole row (`.lift-toggle`) — so the form link can sit
+                      RIGHT AFTER the name, on the closed row, without nesting
+                      an anchor in a button. Owner ask (COD-541): "show the
+                      watch how button right after the workout name instead of
+                      me clicking on downside". */}
+                  <div className="relative min-w-0 flex-1 py-1.5">
+                    <span className="flex min-w-0 items-center gap-1">
+                      <button type="button" className={`lift-toggle min-w-0 truncate text-left text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`} aria-expanded={open} onClick={() => setEditing(open ? null : e.name)}>
+                        {e.name}
+                      </button>
+                      <VideoLink name={e.name} label="Watch" size="sm" className="lift-watch" />
+                    </span>
                     <span className="block text-label text-fg-2">
                       {mine.length} × {first?.reps || e.qty} · {first?.weight ? `${first.weight} ${unit}` : 'add weight'}
                       {prev && <span> · last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}
                     </span>
-                  </button>
-                  <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  </div>
+                  <Icon as={CaretDown} size="sm" className={`pointer-events-none shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </div>
                 {open && (
                   <div className="ios-form pb-1">
-                    {/* WEIGHT FOR EVERY SET, against last time: − / + move all
-                        the sets you have not done yet by one plate, and the
-                        suggestion is one tap when last time earned it. */}
-                    <div className="flex flex-col gap-2 px-3 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="flex-1 text-label text-fg-2">
-                          {prev
-                            ? <>Last time <b className="text-fg-1">{prev.weight > 0 ? `${prev.weight} ${unit} × ${prev.reps}` : `${prev.reps} reps`}</b></>
-                            : 'First time — pick a weight'}
-                        </span>
-                        <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
-                        <span className="min-w-[4.5rem] text-center text-heading font-bold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
-                        <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
-                      </div>
-                      {next != null && next !== cur && (
-                        <button type="button" className="suggest inline-flex items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
+                    {/* WEIGHT FOR EVERY SET, as ONE inset row: what last time
+                        was on the left, − value + on the right. − / + move all
+                        the sets you have not done yet by one plate. Before
+                        COD-541 this was three stacked lines — a wrapping
+                        sentence, a 17px bold value and a "Watch how" line of
+                        its own — read as "large kind of text". */}
+                    <div className="lift-weight">
+                      <span className="min-w-0 flex-1 truncate text-label text-fg-2">
+                        {prev
+                          ? <>Last <b className="font-semibold text-fg-1">{prev.weight > 0 ? `${prev.weight} ${unit} × ${prev.reps}` : `${prev.reps} reps`}</b></>
+                          : 'First time'}
+                      </span>
+                      <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
+                      <span className="min-w-[4.5rem] text-center text-body font-semibold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
+                      <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
+                    </div>
+                    {next != null && next !== cur && (
+                      <div className="px-3 pb-2">
+                        <button type="button" className="suggest inline-flex w-full items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
                           <Icon as={ArrowLineUp} size="sm" />
                           {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
                         </button>
-                      )}
-                      {/* Form demo, inside the open row only — the closed
-                          list stays one line per lift. A 44px target. */}
-                      <VideoLink name={e.name} label="Watch how" size="sm" className="min-h-11 self-start" />
-                    </div>
+                      </div>
+                    )}
                     <SetCards bare rows={mine} onChange={(r) => replaceLift(e.name, r)} unit={unit} data={data} onRest={tick} done={done} />
                   </div>
                 )}
@@ -243,7 +254,16 @@ export function ProgramPhone({ s, onCheck, rest }: {
             <Icon as={Check} size="md" />{ticked.length ? `Log workout · ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
           </button>
         </div>
-        {s.p.note && <p className="px-1 text-label text-fg-2">{s.p.note}</p>}
+        {/* The block's standing guidance, one row per point — it was a
+            two-line paragraph under the list. */}
+        {s.p.note && (
+          <section aria-label="Block notes" className="flex flex-col gap-1.5">
+            <h2 className="px-1 text-label font-semibold text-fg-2">Every week</h2>
+            <ul className="cells">
+              {s.p.note.map((n) => <li key={n} className="note-row">{n}</li>)}
+            </ul>
+          </section>
+        )}
       </section>
     </div>
   )

@@ -47,8 +47,10 @@ export interface Program {
    */
   home: 'pullups' | 'program'
   source: string
-  /** Short note shown under the title (cardio / cadence guidance). */
-  note?: string
+  /** The block's standing guidance (cardio, rest days, rest between sets) —
+   *  one point per line, in the order a week runs. A list, not a sentence:
+   *  the phone draws one row per point (CLAUDE.md "points, not paragraphs"). */
+  note?: string[]
   /**
    * This program prescribes rest by rep range — see `restSeconds`.
    *
@@ -107,7 +109,11 @@ export const HYPERTROPHY_PROGRAM: Program = {
   short: 'Hypertrophy',
   home: 'program',
   source: '3 phases × 4 weeks · 6 days/week · push/pull/legs',
-  note: 'Cardio: 20 min fast walk post-workout daily · Sun: rest / 1-hr walk / 10K steps. Rest: 12+ reps→30s · 8–10→120s · <8→180s.',
+  note: [
+    'Cardio: 20 min fast walk post-workout daily',
+    'Sun: rest / 1-hr walk / 10K steps',
+    'Rest: 12+ reps→30s · 8–10→120s · <8→180s',
+  ],
   // The rest sentence above, as something the app can act on. Both stay: the
   // note is the whole prescription in the author's words, `restRule` is the one
   // clause `restSeconds` implements.
