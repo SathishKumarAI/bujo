@@ -14,7 +14,7 @@ describe('DayStrip', () => {
     expect(within(screen.getByRole('radiogroup', { name: 'Day to log' })).getAllByRole('radio')).toHaveLength(7)
   })
 
-  it('moves into the bar slot, five days ending today, and still says each mark', () => {
+  it('moves into the bar slot, three days ending today, and still says each mark', () => {
     const slot = document.createElement('div')
     document.body.append(slot)
     act(() => setBarSlot(slot))
@@ -22,9 +22,9 @@ describe('DayStrip', () => {
     const group = within(slot).getByRole('radiogroup', { name: 'Day to log' })
     expect(container.querySelector('[role="radiogroup"]')).toBeNull()
     const days = within(group).getAllByRole('radio')
-    expect(days).toHaveLength(5)
-    expect(days[4].getAttribute('aria-checked')).toBe('true')
-    expect(days[4].textContent).toContain('2/3')
+    expect(days).toHaveLength(3)
+    expect(days[2].getAttribute('aria-checked')).toBe('true')
+    expect(days[2].textContent).toContain('2/3')
     slot.remove()
   })
 })
