@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CaretRight, type Icon as IconGlyph } from '@/components/icons'
+import { ArrowSquareOut, CaretRight, type Icon as IconGlyph } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { cat, onAccent } from '../../lib/colors'
 import { Switch } from './switch'
@@ -26,7 +26,7 @@ export function Cells({ title, aside, children }: { title?: string; aside?: Reac
   )
 }
 
-export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPress, chevron = true, label }: {
+export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPress, href, chevron = true, label }: {
   icon?: IconGlyph
   /** Palette name for the icon tile. */
   tone?: string
@@ -36,6 +36,8 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
   subtitle?: ReactNode
   trail?: ReactNode
   onPress?: () => void
+  /** An outside link (opens in a new tab): the row is the `<a>`, drawn with ↗. */
+  href?: string
   chevron?: boolean
   /**
    * Words said BEFORE the row's visible text ("Edit session"), never instead
@@ -62,8 +64,11 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
       </span>
       {trail && <span className="shrink-0 text-body text-fg-2">{trail}</span>}
       {onPress && chevron && <Icon as={CaretRight} size="sm" className="shrink-0 text-fg-2" />}
+      {href && <Icon as={ArrowSquareOut} size="sm" className="shrink-0 text-fg-2" />}
     </>
   )
+  // A row is navigation, not prose: no underline (the base `a` rule) — the ↗ says link.
+  if (href) return <a className="cell text-fg-1 no-underline" href={href} target="_blank" rel="noreferrer noopener">{body}</a>
   return onPress
     ? <button type="button" className="cell" onClick={onPress}>{body}</button>
     : <div className="cell">{body}</div>
@@ -79,7 +84,7 @@ export function FieldCell({ label, value, onChange, placeholder, type = 'text', 
   value: string
   onChange: (v: string) => void
   placeholder?: string
-  type?: 'text' | 'number'
+  type?: 'text' | 'number' | 'password' | 'url'
   inputMode?: 'text' | 'numeric' | 'decimal'
   suggestions?: string[]
   /** A `<datalist>` id: every value ever used, in the field's own dropdown. */

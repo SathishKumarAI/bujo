@@ -46,7 +46,10 @@ export function Sheet({ open, onOpenChange, title, description, children }: {
               competed with the sheet's own content for attention. */}
           <button type="button" onClick={() => onOpenChange(false)} className="sheet-done">Done</button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">{children}</div>
+        {/* Focusable, so a keyboard can scroll a sheet of rows with no
+            control in it (Settings' "By domain"): axe's
+            scrollable-region-focusable, measured serious at mocha and latte. */}
+        <div tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">{children}</div>
       </DialogContent>
     </Dialog>
   )
