@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { CaretLeft, CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
@@ -24,7 +24,7 @@ import { useBarSlot } from '../shell/barSlot'
  *
  * IN THE TOP BAR ITSELF (COD-537): when the phone bar is mounted the strip
  * portals into the gap beside the title (`shell/barSlot.ts`) as `BarDays` —
- * five days, three beside a long title, the chosen one centred. The separate
+ * three days (COD-557; first five), the chosen one centred. The separate
  * 71px row is gone. Owner idea, 2026-10-31: "show like 5 days instead of
  * entire week … 3 days is also okay".
  *
@@ -86,13 +86,15 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
   )
 }
 
-/** Chip width the bar needs per day; five fit beside a short title. */
-const CHIP = 38
+/** Days the bar shows. Owner, 2026-11-01: "show only 3 days in the top nav
+ *  bar" — five beside a short title read as crowded; three is the same on
+ *  every page and every width, and the chips get room to breathe. */
+const BAR_DAYS = 3
 
 /**
- * The strip as drawn in the phone bar: `n` two-line chips (weekday over date)
+ * The strip as drawn in the phone bar: three two-line chips (weekday over date)
  * and a dot under any day with a mark — the mark itself is still said, in
- * `sr-only`. No arrows: tapping an edge day moves the window two days, and
+ * `sr-only`. No arrows: tapping an edge day moves the window a day, and
  * tapping the chosen day opens the platform's date picker for any day.
  */
 function BarDays({ value, onChange, today, min, max, label, mark }: {
@@ -104,20 +106,12 @@ function BarDays({ value, onChange, today, min, max, label, mark }: {
   label: string
   mark: (day: string) => ReactNode
 }) {
-  const box = useRef<HTMLDivElement>(null)
   const picker = useRef<HTMLInputElement>(null)
-  const [n, setN] = useState(5)
-  useEffect(() => {
-    const el = box.current?.parentElement
-    if (!el || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => setN(el.clientWidth >= 5 * CHIP ? 5 : 3))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+  const n = BAR_DAYS
   const days = windowDays(value, n, min, max)
 
   return (
-    <div ref={box} role="radiogroup" aria-label={label} className="bar-days-row" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+    <div role="radiogroup" aria-label={label} className="bar-days-row" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
       {days.map((d) => {
         const dt = new Date(d + 'T00:00')
         const m = mark(d)
