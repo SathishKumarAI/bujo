@@ -256,16 +256,32 @@ export function ProgramPhone({ s, onCheck, rest }: {
         </div>
         {/* The block's standing guidance, one row per point — it was a
             two-line paragraph under the list. */}
-        {s.p.note && (
-          <section aria-label="Block notes" className="flex flex-col gap-1.5">
-            <h2 className="px-1 text-label font-semibold text-fg-2">Every week</h2>
-            <ul className="cells">
-              {s.p.note.map((n) => <li key={n} className="note-row">{n}</li>)}
-            </ul>
-          </section>
-        )}
+        {/* Folded to one row (COD-543): open, it added ~110px below the
+            lifts and took the page 1.13 -> 1.30 screens. A button with
+            aria-expanded, not <details>, so the a11y gate opens it. */}
+        {s.p.note && <WeekNotes notes={s.p.note} />}
       </section>
     </div>
   )
 }
 
+
+function WeekNotes({ notes }: { notes: string[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section aria-label="Block notes" className="cells">
+      <h2>
+        <button type="button" className="cell w-full gap-2 text-left" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <span className="min-w-0 flex-1 text-body text-fg-1">Every week</span>
+          <span className="text-label text-fg-2">{notes.length} notes</span>
+          <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </h2>
+      {open && (
+        <ul className="border-t border-line">
+          {notes.map((n) => <li key={n} className="note-row">{n}</li>)}
+        </ul>
+      )}
+    </section>
+  )
+}
