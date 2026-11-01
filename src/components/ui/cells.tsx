@@ -59,8 +59,10 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
         </span>
       ))}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-body font-medium text-fg-1">{title}</span>
-        {subtitle && <span className="block truncate text-label text-fg-2">{subtitle}</span>}
+        {/* Wraps, never truncates: a cut subtitle hid who you played and
+            where (Pickleball's Recent rows lost 97px of 327). COD-572. */}
+        <span className="block text-body font-medium text-fg-1 [overflow-wrap:anywhere]">{title}</span>
+        {subtitle && <span className="block text-label text-fg-2 [overflow-wrap:anywhere]">{subtitle}</span>}
       </span>
       {trail && <span className="shrink-0 text-body text-fg-2">{trail}</span>}
       {onPress && chevron && <Icon as={CaretRight} size="sm" className="shrink-0 text-fg-2" />}

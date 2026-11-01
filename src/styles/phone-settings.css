@@ -138,7 +138,9 @@
    splits across the columns. Only `.settings-cols` (desktop) opts in. */
 .settings-cols .settings-body {
   display: block;
-  columns: 2;
+  /* Up to two, each at least 22rem: at a 1024px laptop the panel holds one,
+     and two there cut "Continue with Google" short (COD-572). */
+  columns: 2 22rem;
   column-gap: 1.5rem;
 }
 

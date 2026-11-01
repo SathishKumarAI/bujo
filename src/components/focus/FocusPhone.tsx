@@ -87,7 +87,7 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
           {projects.length > 0 && (
             <div className="cell gap-3">
               <span className="w-16 shrink-0 text-body text-fg-1">Project</span>
-              <Seg label="Project" className="min-w-0 flex-1" value={f.project || null}
+              <Seg label="Project" className="seg-wrap min-w-0 flex-1" value={f.project || null}
                 onChange={(v) => v && set({ project: v })}
                 options={projects.map((p) => ({ value: p, label: p }))} />
             </div>
