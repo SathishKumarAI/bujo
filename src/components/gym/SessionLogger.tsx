@@ -12,8 +12,6 @@ import {
 import type { JournalData, Split } from '../../lib/types'
 import { newSetRow, type SetRow } from './setRow'
 import { restFor, restLabel, sessionMinutes } from '../../lib/rest'
-import { DayPick } from '../ui/quickpick'
-import { addDays, todayISO } from '../../lib/date'
 
 /**
  * Zone 2 · the act. One row per set: what, how heavy, how many, how hard.
@@ -112,7 +110,7 @@ const TOUCH = 'h-11 w-full @min-[30rem]/act:h-7'
 export function SessionLogger({
   data, split, setSplit, rows, setRows, setRow, addRow, onLoadRoutine,
   focusEx, setFocusEx, recentExercises, unit, defaultBar, warmStep, onFinish,
-  date, setDate, onRest,
+  day, onRest,
 }: {
   data: JournalData
   split: Split
@@ -129,9 +127,9 @@ export function SessionLogger({
   defaultBar: number
   warmStep: number
   onFinish: () => void
-  /** The day the session is filed under. Gym had no date control at all. */
-  date: string
-  setDate: (d: string) => void
+  /** The view's `DayStrip` — the day the session is filed under. Gym once had
+   *  no date control at all; then Today/Yesterday chips; now the shared strip. */
+  day: React.ReactNode
   /**
    * Start the rest for one set.
    *
@@ -161,7 +159,7 @@ export function SessionLogger({
           hardcode `todayISO()`, which made this the one workout form in the
           app where a back-dated session was impossible. */}
       <div className="mb-3">
-        <DayPick value={date} onChange={setDate} today={todayISO()} yesterday={addDays(todayISO(), -1)} />
+        {day}
       </div>
       {/* ONE LINE, MEASURED. Six chips with a glyph and `px-3` came to ~494px
           of controls in a **416px** act column, so the row wrapped to two —

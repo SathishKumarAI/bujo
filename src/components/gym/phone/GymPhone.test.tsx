@@ -14,7 +14,7 @@ const mount = (rows = [newSetRow()]) =>
     <JournalProvider>
       <GymPhone
         data={emptyJournal()} split="pull" setSplit={() => {}} suggested="pull"
-        rows={rows} setRows={() => {}} date="2026-10-29" setDate={() => {}} onFinish={vi.fn()}
+        rows={rows} setRows={() => {}} day={null} onFinish={vi.fn()}
         unit="lb" recentExercises={[]} onRest={() => {}} onLoadRoutine={() => {}}
         setsThisWeek={0} rest={null}
       />

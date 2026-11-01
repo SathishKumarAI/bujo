@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { ArrowsClockwise, Barbell, CalendarDot, CaretDown, Check, ClipboardText, Clock, Plus, Stack, Trophy } from '@/components/icons'
+import { ArrowsClockwise, Barbell, Check, ClipboardText, Clock, Plus, Stack, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { useConfirm } from '../../ConfirmDialog'
-import { addDays, dayDiff, prettyDay, todayISO } from '../../../lib/date'
+import { dayDiff, prettyDay, todayISO } from '../../../lib/date'
 import { SPLITS, splitMeta, PPL_PRESETS } from '../../../lib/fitness'
 import { cat, onAccent } from '../../../lib/colors'
 import type { JournalData, Split, Workout } from '../../../lib/types'
@@ -25,15 +25,15 @@ import { rowsOf, storedSets } from './strengthHelpers'
  * rest timer or the routines — all the view's, passed in, so the phone and the
  * desktop log a session through the same function.
  */
-export function GymPhone({ data, split, setSplit, suggested, rows, setRows, date, setDate, onFinish, unit, recentExercises, onRest, onLoadRoutine, setsThisWeek, lastSession, rest }: {
+export function GymPhone({ data, split, setSplit, suggested, rows, setRows, day, onFinish, unit, recentExercises, onRest, onLoadRoutine, setsThisWeek, lastSession, rest }: {
   data: JournalData
   split: Split
   setSplit: (s: Split) => void
   suggested: Split
   rows: SetRow[]
   setRows: (r: SetRow[]) => void
-  date: string
-  setDate: (d: string) => void
+  /** The view's `DayStrip`, drawn at PAGE level so it portals into the bar. */
+  day: React.ReactNode
   onFinish: () => void
   unit: string
   recentExercises: string[]
@@ -45,8 +45,6 @@ export function GymPhone({ data, split, setSplit, suggested, rows, setRows, date
   rest: React.ReactNode
 }) {
   const today = todayISO()
-  const yesterday = addDays(today, -1)
-  const dayLabel = date === today ? 'Today' : date === yesterday ? 'Yesterday' : prettyDay(date)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Workout | null>(null)
   const [done, setDone] = useState<Set<string>>(new Set())
@@ -79,16 +77,11 @@ export function GymPhone({ data, split, setSplit, suggested, rows, setRows, date
        sit permanently over the last card. */
     <div className={rest ? 'flex flex-col gap-6 pb-36' : 'flex flex-col gap-6 pb-4'}>
       <h1 className="sr-only">Strength</h1>
+      {/* The day to log: the shared strip, in the top bar — it replaced a
+          date pill that sat alone on a row of its own. */}
+      {day}
 
       <section aria-label="Today’s session" className="ios-form flex flex-col gap-3.5">
-        <div className="flex items-center justify-between gap-2">
-          <label className="relative inline-flex h-[2.75rem] shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-ink-2 px-3 text-body font-medium text-fg-1">
-            <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-            {dayLabel}
-            <Icon as={CaretDown} size="sm" className="text-fg-2" />
-            <input type="date" value={date} max={today} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Date, ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-          </label>
-        </div>
 
         {/* THE SPLIT, as tiles. The suggested one is pre-selected by the view
             (`nextSplit`), so most sessions start without touching this row. */}

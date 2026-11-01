@@ -10,6 +10,8 @@ import { STORAGE_KEY } from '../lib/storage'
 import { addDays, todayISO } from '../lib/date'
 import { Pickleball } from './Pickleball'
 import { Fitness } from './Fitness'
+import { Gym } from './Gym'
+import { setPendingSession } from '../lib/pendingSession'
 
 /**
  * THE LOG WRITES TO THE DAY THE STRIP SHOWS — on every session page, both
@@ -95,6 +97,37 @@ describe('Fitness logs on the strip’s day', () => {
     await pickYesterday()
     await userEvent.type(screen.getByLabelText(/Duration/), '30')
     await userEvent.click(screen.getByRole('button', { name: /^Log (session|game)$/ }))
+    await waitFor(() => expect(journal().workouts ?? []).toHaveLength(1))
+    expect(journal().workouts[0].date).toBe(yesterday())
+  })
+})
+
+describe('Strength logs on the strip’s day', () => {
+  // One exercise handed in, so the logger paints with a row to fill.
+  beforeEach(() => setPendingSession(['Deadlift']))
+
+  it('phone: no date pill, and the session lands on the picked day', async () => {
+    phone()
+    wrap(<Gym />)
+    expect(screen.queryByLabelText(/^Date/)).toBeNull()
+    await pickYesterday()
+    await userEvent.type(screen.getByLabelText(/Deadlift set 1 weight/), '100')
+    await userEvent.type(screen.getByLabelText('Deadlift set 1 reps'), '5')
+    await userEvent.click(screen.getByRole('button', { name: /Finish workout/ }))
+    await waitFor(() => expect(journal().workouts ?? []).toHaveLength(1))
+    expect(journal().workouts[0].date).toBe(yesterday())
+  })
+
+  it('desktop: no Today/Yesterday chips, and the session lands on the picked day', async () => {
+    desktop()
+    wrap(<Gym />)
+    await openAct(/Today’s session/)
+    expect(screen.queryByRole('button', { name: 'Yesterday' })).toBeNull()
+    expect(screen.queryByLabelText('Another date')).toBeNull()
+    await pickYesterday()
+    await userEvent.type(screen.getByLabelText('Weight'), '100')
+    await userEvent.type(screen.getByLabelText('Reps'), '5')
+    await userEvent.click(screen.getByRole('button', { name: 'Finish session' }))
     await waitFor(() => expect(journal().workouts ?? []).toHaveLength(1))
     expect(journal().workouts[0].date).toBe(yesterday())
   })
