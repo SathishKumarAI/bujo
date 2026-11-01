@@ -107,10 +107,11 @@ describe('?tab= addresses a section', () => {
 describe('Settings tabs on a phone', () => {
   // The failure: a fourth tab off the right edge of a scrolling strip whose
   // clip fell in the gap, so the row looked complete with three. On a phone
-  // the tabs are a two-column grid, and the long label is whole.
+  // the tabs are ONE segmented row (owner, 2026-11-01: "all in one line"),
+  // and the long label is still the tab's name.
   afterEach(() => vi.unstubAllGlobals())
 
-  it('lays the four tabs out as a grid with "Sync & privacy" in full', async () => {
+  it('lays the four tabs out in one segmented row with "Sync & privacy" as its name', async () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
     const { DeviceProvider } = await import('../components/shell/device')
     render(
@@ -118,7 +119,8 @@ describe('Settings tabs on a phone', () => {
         <Settings />
       </JournalProvider></ConfirmProvider></NavProvider></DeviceProvider>,
     )
-    expect(screen.getByRole('tablist').className).toContain('grid-cols-2')
-    expect(screen.getAllByRole('tab').map((t) => t.textContent?.trim())).toEqual(['Account', 'Appearance', 'Sync & privacy', 'Data'])
+    expect(screen.getByRole('tablist').classList.contains('seg')).toBe(true)
+    expect(screen.getAllByRole('tab').map((t) => t.textContent?.trim())).toEqual(['Account', 'Appearance', 'Sync', 'Data'])
+    expect(screen.getByRole('tab', { name: 'Sync & privacy' })).toBeTruthy()
   })
 })

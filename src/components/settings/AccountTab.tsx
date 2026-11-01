@@ -7,6 +7,7 @@ import { PhonePoints } from '../PhonePoints'
 import type { Gender } from '../../lib/types'
 import { useDevice } from '../shell/device'
 import { AboutYouCells, UnitsCells } from './AccountPhone'
+import { SyncAccountCells, YouCells } from '../account/AccountPhoneCells'
 
 /**
  * Who this journal belongs to — the verified account, the name on it, what it
@@ -67,15 +68,16 @@ export function AccountTab() {
     })
   }
 
-  // A phone draws the last two cards as iOS grouped rows (`AccountPhone.tsx`);
-  // the account and the name keep their cards — they hold forms, not settings.
+  // A phone draws the whole tab as iOS grouped rows: who you are first, then
+  // the account that syncs it (`account/AccountPhoneCells.tsx`, the same hooks
+  // as the desktop cards), then the settings (`AccountPhone.tsx`).
   if (phone) return (
-    <>
-      <AccountCard />
-      <LocalAccountCard />
+    <div className="flex flex-col gap-5">
+      <YouCells />
+      <SyncAccountCells />
       <AboutYouCells setGender={setGender} />
       <UnitsCells />
-    </>
+    </div>
   )
 
   return (

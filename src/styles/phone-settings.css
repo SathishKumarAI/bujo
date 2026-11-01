@@ -84,8 +84,24 @@
 }
 
 /* The four section tabs: 40px pills by default, a 44px floor here. */
-.settings-tabs [role='tab'] {
-  min-height: 2.75rem;
+/* The tab row is `.seg` (`phone.css`); Radix marks the open tab with
+   `data-state`, not `aria-checked`, so the thumb is restated for it. Label
+   size, so "Appearance" fits a quarter of 358px. */
+.seg.settings-tabs > button {
+  padding-inline: 0.25rem;
+  font-size: var(--text-label);
+}
+
+.seg.settings-tabs > button[data-state='active'] {
+  background: color-mix(in oklab, var(--color-ink-2), var(--color-fg-1) 16%);
+  color: var(--color-fg-1);
+  font-weight: 600;
+  box-shadow: var(--shadow-raise);
+}
+
+:root[data-theme='latte'] .seg.settings-tabs > button[data-state='active'],
+:root[data-theme='dawn'] .seg.settings-tabs > button[data-state='active'] {
+  background: var(--color-ink-1);
 }
 
 /* An action row: centred words in the brand colour, no chevron. */

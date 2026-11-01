@@ -1,11 +1,7 @@
 import { Card } from '../ui'
 import { Button } from '../ui/button'
-import { isConfigured, signInGoogle, signOut } from '../../lib/supabase'
-import { useAuthUser } from '../../lib/authUser'
-import { useAccountStatus } from '../../lib/accountStatus'
-import { identityOf, phaseCopy, SYNCED, WITHHELD, type AccountPhase } from '../../lib/account'
-import { notify } from '../../lib/notify'
-import { useState } from 'react'
+import { SYNCED, WITHHELD } from '../../lib/account'
+import { useAccountSession } from './useAccountSession'
 import { PhonePoints } from '../PhonePoints'
 
 /**
@@ -59,46 +55,8 @@ import { PhonePoints } from '../PhonePoints'
  * would be harder to doubt, not easier.
  */
 export function AccountCard() {
-  const [busy, setBusy] = useState(false)
-  const configured = isConfigured()
-  const { user, ready } = useAuthUser()
-  const status = useAccountStatus()
-  const who = identityOf(user)
-
+  const { configured, who, copy, busy, connect, disconnect } = useAccountSession()
   if (!configured) return null
-
-  // `status.phase` is the sync component's view of the world and this is the
-  // card's view of the *session*; they can disagree for a tick after a sign-in
-  // (the subscription fires in both, in whatever order React flushes them). The
-  // session wins, because it is the thing the user just did.
-  const phase: AccountPhase = !ready ? 'checking' : user ? (status.phase === 'signed-out' ? 'checking' : status.phase) : 'signed-out'
-  const copy = phaseCopy(phase, status.lastSyncedAt)
-
-  async function connect() {
-    setBusy(true)
-    try {
-      await signInGoogle()
-      // No success toast: this navigates away to Google. Anything optimistic
-      // here would be a claim made before the thing it claims has happened.
-    } catch (e) {
-      setBusy(false)
-      notify.error('Could not start sign-in', (e as Error).message)
-    }
-  }
-
-  async function disconnect() {
-    setBusy(true)
-    try {
-      await signOut()
-      // "Everywhere", because it now is: `signOut` revokes the refresh token
-      // globally, so the phone-shaped copy of this session dies with it. A
-      // toast that said only "Signed out" would under-report what just
-      // happened to the user's other devices.
-      notify.success('Signed out everywhere', 'Your journal is still on this device.')
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <Card

@@ -101,7 +101,8 @@ export function Settings() {
   // `flex-none` is load-bearing: TabsTrigger ships `flex-1`, which stretched
   // these pills to 209px each across the wide tier. They are labels, not a
   // segmented control — they should be as wide as their text.
-  const tabClass = 'flex-none gap-1.5 whitespace-nowrap rounded-card border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
+  // A phone's tabs are `.seg` segments: the segment rule draws them.
+  const tabClass = phone ? '' : 'flex-none gap-1.5 whitespace-nowrap rounded-card border border-transparent px-3.5 py-2 text-body text-fg-2 hover:text-fg-1 data-[state=active]:border-line data-[state=active]:bg-card data-[state=active]:text-fg-1 data-[state=active]:shadow-sm'
 
   return (
     // `gap-0` and no page header: the top bar already renders `Settings ·
@@ -124,25 +125,25 @@ export function Settings() {
             less than it holds (it showed everything) and `a11y` asks whether
             the tree is sound (it was). Overridden at the same specificity it
             is set at. */}
-        {/* ON A PHONE, A 2×2 GRID — not the scrolling strip. Measured at
-            390px: Sync ended at x370 and Data began at x376, so the strip's
-            clip fell in the gap and the row looked complete with three tabs;
-            the fourth was off the edge with nothing to say so (the
-            `.phone-strip` trap, in its own comment). Four tabs fit two-up
-            with their whole labels, "Sync & privacy" included. */}
-        <TabsList ref={listRef} className={`${phone ? 'settings-tabs grid grid-cols-2' : 'flex flex-wrap justify-start'} mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto`}>
+        {/* ON A PHONE, ONE SEGMENTED ROW — the app's own `.seg`, four equal
+            segments, no icons, "Sync" drawn short and "Sync & privacy" said
+            in full. Owner, 2026-11-01: the 2×2 grid (94px of two rows) should
+            be "all in one line". Not a scrolling strip either: that clipped
+            Data off the edge with nothing to say so (the `.phone-strip`
+            trap). */}
+        <TabsList ref={listRef} className={phone ? 'seg settings-tabs mb-4 w-full group-data-[orientation=horizontal]/tabs:h-auto' : 'flex flex-wrap justify-start mb-4 w-full gap-1.5 bg-transparent p-0 group-data-[orientation=horizontal]/tabs:h-auto'}>
           {/* "Account", not "Profile". There were two destinations answering
               "who is this journal for" — a whole `views/Account.tsx` holding
               the Google sign-in and a card titled "You", and this tab holding
               a card titled "Profile". One person, two nouns, two pages
               (COD-297). */}
-          <TabsTrigger value="account" className={tabClass}><Icon as={User} size="sm" /> Account</TabsTrigger>
-          <TabsTrigger value="feel" className={tabClass}><Icon as={Palette} size="sm" /> Appearance</TabsTrigger>
+          <TabsTrigger value="account" className={tabClass}>{!phone && <Icon as={User} size="sm" />} Account</TabsTrigger>
+          <TabsTrigger value="feel" className={tabClass}>{!phone && <Icon as={Palette} size="sm" />} Appearance</TabsTrigger>
           {/* "& privacy" is hidden below `sm`: with it, this row wrapped onto a
               third line at 390px, and those overflowing rows drew on top of
               the panel. It is a clarifier, not the name. */}
-          <TabsTrigger value="sync" className={tabClass}><Icon as={Cloud} size="sm" /> {phone ? 'Sync & privacy' : <>Sync<span className="hidden sm:inline">&nbsp;&amp; privacy</span></>}</TabsTrigger>
-          <TabsTrigger value="data" className={tabClass}><Icon as={Database} size="sm" /> Data</TabsTrigger>
+          <TabsTrigger value="sync" className={tabClass} aria-label={phone ? 'Sync & privacy' : undefined}>{phone ? 'Sync' : <><Icon as={Cloud} size="sm" /> Sync<span className="hidden sm:inline">&nbsp;&amp; privacy</span></>}</TabsTrigger>
+          <TabsTrigger value="data" className={tabClass}>{!phone && <Icon as={Database} size="sm" />} Data</TabsTrigger>
         </TabsList>
 
         {/* `key={tab}` remounts the wrapper on every switch, which replays the
