@@ -1024,9 +1024,14 @@ export function Cycle() {
             onPatch={(patch) => windowDay && setCycle(windowDay, patch)}
           />
 
-          <p className="mt-4 inline-flex items-start gap-1.5 rounded-card bg-red/10 p-2 text-label text-fg-2">
-            <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" /> {CYCLE_DISCLAIMER}
-          </p>
+          <section aria-labelledby="cycle-caveat" className="mt-4 rounded-card bg-red/10 p-3 text-label text-fg-2">
+            <h3 id="cycle-caveat" className="mb-1 flex items-center gap-1.5 font-medium text-fg-1">
+              <Icon as={ShieldWarning} size="sm" className="shrink-0 text-red" />Before you rely on this
+            </h3>
+            <ul className="list-disc space-y-0.5 pl-9">
+              {CYCLE_DISCLAIMER.map((p) => <li key={p}>{p}</li>)}
+            </ul>
+          </section>
         </>
       }
     />

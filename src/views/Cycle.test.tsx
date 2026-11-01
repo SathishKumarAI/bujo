@@ -216,7 +216,7 @@ describe('Cycle · the registry is the review zone', () => {
       await user.click(railRow(GROUP_LABEL[g]))
       // It sits outside the rail on purpose: a disclaimer behind a row you have
       // to select is one most readers never meet.
-      expect(screen.getByText(CYCLE_DISCLAIMER)).toBeInTheDocument()
+      for (const p of CYCLE_DISCLAIMER) expect(screen.getByText(p)).toBeInTheDocument()
     }
   })
 })

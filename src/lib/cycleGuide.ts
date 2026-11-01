@@ -243,5 +243,14 @@ export const TRACKING_TIPS = [
  */
 export const CYCLE_DISCLAIMER_VERSION = 1
 
-export const CYCLE_DISCLAIMER =
-  'Educational only — not medical advice, and temperature tracking is not contraception. Cycles vary; talk to a clinician about pain, heavy bleeding, or cycles consistently shorter than 21 or longer than 35 days.'
+/**
+ * The page's standing caveat, as points (owner, 2026-10-31: "make them into
+ * points"). Ordered by what costs most to miss: the two things this page is
+ * NOT, then when to see someone.
+ */
+export const CYCLE_DISCLAIMER: string[] = [
+  'Educational only — not medical advice',
+  'Temperature tracking is not contraception',
+  'See a clinician for pain or heavy bleeding',
+  'Also if cycles keep running under 21 or over 35 days',
+]
