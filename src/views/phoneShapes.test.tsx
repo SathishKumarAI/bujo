@@ -94,8 +94,15 @@ describe('Pull-ups log on a phone', () => {
     phone()
     wrap(<Pullups />)
     await userEvent.click(screen.getByRole('button', { name: /Log a free session/ }))
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Method' }), 'ladder')
+    // One tap, not a native picker; straight is the default, so a ladder in
+    // the journal can only come from the tap.
+    expect(screen.queryByRole('combobox', { name: 'Method' })).toBeNull()
+    await userEvent.click(screen.getByRole('radio', { name: 'Ladder' }))
     expect(screen.getByText(/1,2,…,top per round/)).toBeTruthy()
+    while (Number(document.querySelector('output[aria-label="Top set"]')!.textContent) < 3) {
+      await userEvent.click(screen.getByRole('button', { name: 'Top set, one more' }))
+    }
+    const top = Number(document.querySelector('output[aria-label="Top set"]')!.textContent)
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Rounds' }), '2')
     await userEvent.click(screen.getByRole('button', { name: /^Round 1, tap when done/ }))
     const log = screen.getByRole('button', { name: /^Log · \d+ reps$/ })
@@ -108,6 +115,23 @@ describe('Pull-ups log on a phone', () => {
     const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')
     expect(logged).toHaveLength(1)
     expect(repsOf(logged[0].sets)).toBe(perRound)
+    expect(perRound).toBe((top * (top + 1)) / 2)
+  })
+
+  // The failure: Effort and Duration as two bare segmented rows with no
+  // heading — a row of "Easy … Max" and one of "10m … 45m" that say nothing
+  // about what they are until you read them.
+  it('labels Effort and Duration in How it went', async () => {
+    phone()
+    wrap(<Pullups />)
+    await userEvent.click(screen.getByRole('button', { name: /Log a free session/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Effort, duration, notes/ }))
+    const sheet = screen.getByRole('dialog', { name: 'How it went' })
+    for (const name of ['Effort', 'Duration']) {
+      const group = screen.getByRole('radiogroup', { name })
+      expect(group.closest('.cell')?.textContent?.startsWith(name)).toBe(true)
+      expect(sheet.contains(group)).toBe(true)
+    }
   })
 })
 
