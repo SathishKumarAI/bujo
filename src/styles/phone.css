@@ -1012,11 +1012,23 @@ button.cell:active {
   top: var(--header-h, 3.5rem);
   z-index: 20;
   /* Up into the page's top padding, so at rest it touches the bar too. */
-  margin: -1rem -1rem 0;
+  /* 16px to the next card on EVERY strip page. Cycle, Today and Habits sat
+     flush against the rule (0px, reported "correct space management") and
+     Plan/Nutrition/Challenges got 24/16/16 from their parent's gap — so the
+     strip brings 1rem, minus whatever gap the parent already adds (below). */
+  margin: -1rem -1rem 1rem;
   padding: 0.375rem 1rem 0.5rem;
   border-bottom: 1px solid var(--color-line);
   background: color-mix(in oklab, var(--color-card) 82%, transparent);
   backdrop-filter: blur(16px);
+}
+
+.phone-frame .gap-4 > .day-strip {
+  margin-bottom: 0;
+}
+
+.phone-frame .gap-6 > .day-strip {
+  margin-bottom: -0.5rem;
 }
 
 /* A day outside the range (before a challenge starts, after today): drawn so
