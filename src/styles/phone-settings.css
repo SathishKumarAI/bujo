@@ -7,8 +7,9 @@
  * right, action and destructive rows; the desktop's two-column packing
  * (`.settings-cols`, `.settings-body`); a sheet as a centred desktop panel.
  * The rows themselves (`.cells`, `.cell`, `.seg`) are `phone.css`.
- * DOES NOT OWN: any page but Settings — `.sheet-up` is the one shared hook,
- * and sheets open on a desktop only from Settings.
+ * DOES NOT OWN: any page but Settings — `.sheet-up` is the one shared hook;
+ * at 1024px and up only Settings opens a sheet (every other caller is a
+ * phone drawing, and a phone is under 1024px by `useDevice`'s definition).
  *
  * Unlayered on purpose, like phone.css: it has to beat Tailwind's utilities on
  * the switch and the Cells heading.
@@ -153,7 +154,7 @@
 
 /* A sheet opened from Settings on a desktop: a centred panel, not a
    full-width slab along the bottom of a 1440px window. */
-@media (min-width: 48rem) {
+@media (min-width: 64rem) {
   .sheet-up {
     left: 50%;
     bottom: 1.5rem;
