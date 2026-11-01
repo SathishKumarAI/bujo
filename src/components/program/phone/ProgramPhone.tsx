@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { CalendarDot, ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
+import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { activityForSplit } from '../../../domain/activities'
 import { isNewPR, lastSetFor } from '../../../lib/fitness'
-import { addDays, prettyDay, todayISO } from '../../../lib/date'
+import { todayISO } from '../../../lib/date'
 import { notify } from '../../../lib/notify'
 import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
 import { VideoLink } from '../../VideoLink'
+import { DayStrip } from '../../ui/dayStrip'
 import { storedSets } from '../../gym/phone/strengthHelpers'
 import type { ProgramState } from '../useProgram'
 import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep } from './programLog'
@@ -44,7 +45,8 @@ export function ProgramPhone({ s, onCheck, rest }: {
   const [drafts, setDrafts] = useState<Record<string, { rows: SetRow[]; done: string[] }>>({})
   const [editing, setEditing] = useState<string | null>(null)
   // Which day the session is logged ON — today unless you are catching up a
-  // missed one. Before this Program could only ever log today.
+  // missed one. Picked in the shared `DayStrip`, which sits in the phone bar;
+  // it is not reset after a log, because the bar always shows the day.
   const [date, setDate] = useState(todayISO())
   const k = `${s.pid}:${s.week}:${s.cur.day}`
   const draft = drafts[k]
@@ -93,7 +95,6 @@ export function ProgramPhone({ s, onCheck, rest }: {
       .map((e, i) => ({ i, actual: actualOf(ticked.filter((r) => r.exercise === e.name), unit) }))
       .filter((x) => x.actual))
     setDrafts((d) => { const n = { ...d }; delete n[k]; return n })
-    setDate(todayISO())
     const next = s.days[at + 1]
     notify.success(
       pr ? `New PR · ${pr.exercise} ${pr.weight}${unit} × ${pr.reps}` : `${s.cur.focus} logged · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`,
@@ -105,11 +106,18 @@ export function ProgramPhone({ s, onCheck, rest }: {
 
   const logged = s.dayComplete(s.week, s.cur.day)
   const today = todayISO()
-  const dayLabel = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
+  /* What this program logged on a day: its sets. The program's own sessions
+     only (`notes` starts with its name, written by `log()` above), so a run on
+     the same day is not read as a lift. */
+  const setsOn = (d: string) => data.workouts.filter((w) => w.date === d && w.notes?.startsWith(s.p.name)).reduce((a, w) => a + w.sets.length, 0)
   const sameDay = (w: (typeof s.p.weeks)[number]) => w.days.find((d) => d.day === s.cur.day)?.day ?? w.days[0].day
   return (
     <div className="flex flex-col gap-3 pb-4">
       <h1 className="sr-only">Program</h1>
+      {/* THE DAY TO LOG — page level, so on a phone it portals into the top
+          bar. It replaced a date chip in the dock (COD-558). */}
+      <DayStrip value={date} onChange={setDate} today={today} label="Day to log"
+        mark={(d) => { const n = setsOn(d); return n ? <>{n}<span className="sr-only"> sets</span></> : null }} />
 
       {/* THE SELECTION BAR — week and day side by side in one 44px row.
           Native selects: on iOS they open the system wheel, the picker people
@@ -239,14 +247,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
             the buttons, rather than as a second fixed layer on top of them. */}
         <div className="log-dock">
           {rest && <div className="w-full">{rest}</div>}
-          {/* The space left of the buttons holds the one thing the page could
-              not do: log a session on a day other than today. */}
-          <label className="dock-chip mr-auto">
-            <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-            {dayLabel}
-            <input type="date" value={date} max={todayISO()} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Log on ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-          </label>
-          <button type="button" className="round-btn" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
+          <button type="button" className="round-btn ml-auto" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
             onClick={() => patch({ done: allTicked ? [] : rows.map((r) => r.id) })}>
             <Icon as={ListChecks} size="md" />
           </button>

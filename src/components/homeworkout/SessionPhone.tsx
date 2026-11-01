@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { CalendarDot, CaretDown, Check, SlidersHorizontal, Trash } from '@/components/icons'
+import { CaretDown, Check, SlidersHorizontal, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
 import { VideoLink } from '../VideoLink'
-import { addDays, prettyDay } from '../../lib/date'
 import { HOME_ROUTINES } from '../../lib/homeProgramming'
 import { exerciseById } from '../../lib/homeExercises'
 import type { SessionItem } from './SessionCard'
@@ -17,8 +16,8 @@ import { setsIn } from '../../lib/homeSets'
  * OWNS: the phone drawing of the session builder. A routine is one native
  * select, with how to run it under it; each exercise is one row with a
  * tap-per-set counter ("3×12" is three taps), opening in place to change the
- * reps, watch how, or drop it; a dock with the date, minutes and notes (a
- * sheet) and Log. Log writes the exercises you ticked, or the whole plan when
+ * reps, watch how, or drop it; a dock with minutes and notes (a sheet) and
+ * Log. The day is the page's `DayStrip`, in the top bar (COD-558). Log writes the exercises you ticked, or the whole plan when
  * you ticked none — the same rule Pull-ups' free session follows.
  * DOES NOT OWN: the session state or the write (`views/HomeWorkout.tsx`), which
  * the desktop's `SessionCard` draws from too.
@@ -26,14 +25,11 @@ import { setsIn } from '../../lib/homeSets'
  * Measured before: six typed "3×12" fields, date chips, minutes, notes and a
  * full-width Log slab — the session alone pushed the page to 2,271px.
  */
-export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, date, onDate, today, dur, onDur, notes, onNotes, onLog }: {
+export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur, notes, onNotes, onLog }: {
   items: SessionItem[]
   onReps: (id: string, reps: string) => void
   onDrop: (id: string) => void
   onLoadRoutine: (items: SessionItem[]) => void
-  date: string
-  onDate: (d: string) => void
-  today: string
   dur: string
   onDur: (v: string) => void
   notes: string
@@ -48,7 +44,6 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, date, onDat
   const loaded = HOME_ROUTINES.find((r) => r.id === routine)
   const ticked = items.filter((i) => (taps[i.id] ?? 0) > 0)
   const logging = ticked.length ? ticked : items
-  const dayLabel = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
 
   function load(id: string) {
     const r = HOME_ROUTINES.find((x) => x.id === id)
@@ -118,12 +113,7 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, date, onDat
 
       {items.length > 0 && (
         <div className="log-dock">
-          <label className="dock-chip mr-auto">
-            <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-            {dayLabel}
-            <input type="date" value={date} max={today} onChange={(e) => e.target.value && onDate(e.target.value)} aria-label={`Log on ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-          </label>
-          <button type="button" className="round-btn" onClick={() => setMore(true)} aria-label={`Minutes and notes${dur || notes.trim() ? ', added' : ''}`}>
+          <button type="button" className="round-btn ml-auto" onClick={() => setMore(true)} aria-label={`Minutes and notes${dur || notes.trim() ? ', added' : ''}`}>
             <Icon as={SlidersHorizontal} size="md" />
           </button>
           <button type="button" className="cta cta-compact" onClick={() => { onLog(logging); setTaps({}); setRoutine('') }}>

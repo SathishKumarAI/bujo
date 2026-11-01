@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { CalendarDot, CaretDown, Check, CheckCircle, ListChecks } from '@/components/icons'
+import { CaretDown, Check, CheckCircle, ListChecks } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
-import { addDays, prettyDay, todayISO } from '../../lib/date'
 import { notify } from '../../lib/notify'
 import { setLines } from '../../lib/pullups'
 
@@ -30,7 +29,10 @@ import { setLines } from '../../lib/pullups'
  * Owner ask, 2026-10-30: "the main focus should be on the Starting From Zero
  * pull-up program … that is the main program I need to save and do."
  */
-export function PullupProgramDay() {
+export function PullupProgramDay({ date }: {
+  /** The day the session is logged on — the page's `DayStrip` (COD-558). */
+  date: string
+}) {
   const s = useProgram('pullup-zero')
   const { addWorkout } = useJournal()
   const k = `${s.week}:${s.cur.day}`
@@ -38,7 +40,6 @@ export function PullupProgramDay() {
   const [taps, setTaps] = useState<Record<string, number[]>>({})
   const [notes, setNotes] = useState<Record<string, Record<number, string>>>({})
   const [open, setOpen] = useState<string | null>(null)
-  const [date, setDate] = useState(todayISO())
   const count = (i: number) => taps[k]?.[i] ?? 0
   const setsOf = (i: number) => Math.max(1, Number.parseInt(s.cur.exercises[i].sets, 10) || 1)
   const did = (i: number) => notes[k]?.[i] ?? s.actuals[s.key(i)] ?? ''
@@ -51,8 +52,6 @@ export function PullupProgramDay() {
   const tickAll = () => setTaps((t) => ({ ...t, [k]: s.cur.exercises.map((_, i) => (allDone ? 0 : setsOf(i))) }))
   const started = s.cur.exercises.map((_, i) => i).filter((i) => count(i) > 0 || did(i).trim())
   const logged = s.dayComplete(s.week, s.cur.day)
-  const today = todayISO()
-  const dayLabel = date === today ? 'Today' : date === addDays(today, -1) ? 'Yesterday' : prettyDay(date)
   const sameDay = (w: (typeof s.p.weeks)[number]) => w.days.find((d) => d.day === s.cur.day)?.day ?? w.days[0].day
 
   function log() {
@@ -66,7 +65,6 @@ export function PullupProgramDay() {
       addWorkout({ date, activity: 'pullups', sets: setLines([max]), notes: `${s.p.short} · week ${s.week}, day ${s.cur.day} · ${s.cur.focus}` })
     }
     setTaps((t) => { const n = { ...t }; delete n[k]; return n })
-    setDate(todayISO())
     const at = s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)
     const next = s.days[at + 1]
     notify.success(`Week ${s.week} · day ${s.cur.day} logged`, next ? `Next up: week ${next.week}, day ${next.day} · ${next.focus}` : 'That was the last day of the program.')
@@ -147,12 +145,7 @@ export function PullupProgramDay() {
       </div>
 
       <div className="log-dock">
-        <label className="dock-chip mr-auto">
-          <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-          {dayLabel}
-          <input type="date" value={date} max={today} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Log on ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-        </label>
-        <button type="button" className="round-btn" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
+        <button type="button" className="round-btn ml-auto" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
           <Icon as={ListChecks} size="md" />
         </button>
         <button type="button" className="cta cta-compact" onClick={log}>

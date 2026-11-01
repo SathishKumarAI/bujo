@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../store'
 import { Card, Input, Segmented, Textarea } from '../components/ui'
 import { Button } from '../components/ui/button'
-import { ChipPick, DayPick, Stepper, type ChipTone } from '../components/ui/quickpick'
+import { ChipPick, Stepper, type ChipTone } from '../components/ui/quickpick'
 import { ProgramTracker } from '../components/program'
 import { VideoLink } from '../components/VideoLink'
 import { useDevice } from '../components/shell/device'
@@ -13,6 +13,7 @@ import { PullupQuickLog } from '../components/pullups/QuickLog'
 import { PullupProgramDay } from '../components/pullups/ProgramDay'
 import { Cell, Cells } from '../components/ui/cells'
 import { Sheet } from '../components/ui/sheet'
+import { DayStrip } from '../components/ui/dayStrip'
 import { buyingGuideUrl } from '../lib/video'
 import {
   ActHide,
@@ -21,7 +22,7 @@ import {
   useActColumn,
 } from '../components/page'
 import { onRaised } from '../lib/colors'
-import { addDays, dayDiff, prettyDay, todayISO } from '../lib/date'
+import { dayDiff, prettyDay, todayISO } from '../lib/date'
 import type { Workout } from '../lib/types'
 import {
   pullupAbility, ladder, pyramid, repScheme, setLines, repsOf, bestSet,
@@ -144,6 +145,20 @@ export function Pullups() {
   const phone = useDevice() === 'mobile'
   const [free, setFree] = useState(false)
 
+  /* THE DAY TO LOG, one for the page (COD-558): the program day, the free
+     session and Repeat all write to it. On a phone the strip portals into the
+     top bar, so it sits at PAGE level — the free session's sheet logs onto
+     the bar's day rather than carrying a date chip of its own. On a desktop it
+     heads the act column. The mark is that day's reps. */
+  const [logDate, setLogDate] = useState(today)
+  const strip = (
+    <DayStrip value={logDate} onChange={setLogDate} today={today} label="Day to log"
+      mark={(d) => {
+        const n = sessions.filter((s) => s.date === d).reduce((a, s) => a + repsOf(s.sets), 0)
+        return n ? <>{n}<span className="sr-only"> reps</span></> : null
+      }} />
+  )
+
   /* ON A PHONE THE PROGRAM IS THE PAGE (owner, 2026-10-30): Starting From
      Zero's day first (`PullupProgramDay`), a free session one row away in a
      sheet, then the manual's rail without its own copy of the program. No
@@ -152,7 +167,8 @@ export function Pullups() {
     return (
       <div className="flex flex-col gap-6 pb-4">
         <h1 className="sr-only">Pull-ups</h1>
-        <PullupProgramDay />
+        {strip}
+        <PullupProgramDay date={logDate} />
         {/* A session outside the program — straight sets, a ladder, EMOM —
             is the second thing you log here, so it is one row away. */}
         <Cells title="Not on the program today?">
@@ -160,7 +176,7 @@ export function Pullups() {
         </Cells>
         <Sheet open={free} onOpenChange={setFree} title="Free session" description="Pull-ups outside the program">
           <LogSessionCard
-            defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setFree(false)}
+            date={logDate} defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={() => setFree(false)}
             guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
           />
         </Sheet>
@@ -193,7 +209,12 @@ export function Pullups() {
           onOpen={logCol.open}
         />
       ) : (
-        <LogSessionCard defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close} />
+        <>
+          {/* The act column stacks its cards flush; the strip is not a card,
+              so it gets 12px before the one below it. */}
+          <div className="pb-3">{strip}</div>
+          <LogSessionCard date={logDate} defaultTop={ability.trainingSet} onSave={addWorkout} last={last} onShut={logCol.close} />
+        </>
       )}
       zone3={
         <Review
@@ -372,7 +393,7 @@ const EFFORT: { value: number; label: string; name: string; hint: string; tone: 
  *
  * What changed, in order of how much time it saves:
  *
- * 1. **Repeat last** — one tap writes the previous session on today's date.
+ * 1. **Repeat last** — one tap writes the previous session on the day to log.
  *    The thing people do most often had no path at all.
  * 2. **The top set is a stepper**, pre-filled with the recommendation, so the
  *    default case is *zero* interactions rather than "type the number already
@@ -380,7 +401,8 @@ const EFFORT: { value: number; label: string; name: string; hint: string; tone: 
  * 3. **Effort is words.** "rpe" is jargon, and an unlabelled 1–10 box is a
  *    question most people skip — which is why it was almost always empty.
  * 4. **Rounds and duration are chips** with a typed escape hatch.
- * 5. **The date is Today / Yesterday**, picker behind them.
+ * 5. **The date is the page's `DayStrip`** (COD-558) — it was Today /
+ *    Yesterday chips with a picker behind them, a second calendar beside it.
  *
  * The rep-scheme readout was already here and was the quietest thing on the
  * card. It is the only element that tells you a ladder to 4 and a straight 4×4
@@ -405,8 +427,10 @@ function FormRule({ children }: { children: React.ReactNode }) {
 }
 
 function LogSessionCard({
-  defaultTop, onSave, last, onShut, guide,
+  date, defaultTop, onSave, last, onShut, guide,
 }: {
+  /** The day the session is logged on — the page's `DayStrip` picks it. */
+  date: string
   defaultTop: number
   /** Phone only: what the ability table says to do this day and week. */
   guide?: { group: string; daily: string; weekly: string; weekReps: number }
@@ -418,8 +442,6 @@ function LogSessionCard({
   /** The previous session, for Repeat last. Absent on a fresh journal. */
   last?: Workout
 }) {
-  const today = todayISO()
-  const [date, setDate] = useState(today)
   const [method, setMethod] = useState<PullupMethod>('straight')
   const [top, setTop] = useState<number | undefined>(undefined)
   const [rounds, setRounds] = useState<number | undefined>(3)
@@ -466,15 +488,14 @@ function LogSessionCard({
     setDuration(undefined)
     setRpe(undefined)
     setNotes('')
-    setDate(today)
     done(`${sets.reduce((a, n) => a + n, 0)} reps in ${sets.length} sets`)
   }
 
-  /** The previous session again, on today. The most common log, as one tap. */
+  /** The previous session again, on the day to log. The most common log, as one tap. */
   function repeatLast() {
     if (!last) return
     onSave({
-      date: today,
+      date,
       activity: 'pullups',
       durationMin: last.durationMin,
       rpe: last.rpe,
@@ -487,7 +508,7 @@ function LogSessionCard({
   if (phone && guide) {
     return (
       <PullupQuickLog
-        date={date} setDate={setDate} method={method} setMethod={setMethod}
+        method={method} setMethod={setMethod}
         top={topN} defaultTop={defaultTop} setTop={setTop} rounds={rounds} setRounds={setRounds}
         duration={duration} setDuration={setDuration} rpe={rpe} setRpe={setRpe}
         notes={notes} setNotes={setNotes} effort={EFFORT} guide={guide}
@@ -534,8 +555,6 @@ function LogSessionCard({
         )}
 
         <FormRule>What you did</FormRule>
-
-        <DayPick value={date} onChange={setDate} today={today} yesterday={addDays(today, -1)} />
 
         <div>
           <span className="mb-1.5 block text-body text-fg-1" id="pullup-method">Method</span>

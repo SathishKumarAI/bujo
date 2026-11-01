@@ -9,6 +9,7 @@ import { readyToProgress } from '../lib/homeProgress'
 import { notify } from '../lib/notify'
 import { useCappedList } from '../lib/useCappedList'
 import { useDevice } from '../components/shell/device'
+import { DayStrip } from '../components/ui/dayStrip'
 
 /**
  * HOME WORKOUT · an 83-movement training library, and the place a home session
@@ -114,8 +115,22 @@ export function HomeWorkout() {
       setRows: homeSetRows(sel),
       notes: notes.trim(),
     })
-    setItems([]); setDur(''); setNotes(''); setDate(today)
+    // The day stays picked: the strip always shows it, so a second session
+    // caught up for the same missed day does not silently jump to today.
+    setItems([]); setDur(''); setNotes('')
   }
+
+  /* THE DAY TO LOG (COD-558): the shared strip, bound to the date the log
+     writes. On a phone it portals into the top bar, so it is drawn even when
+     the act is shut; on a desktop it heads the open act column. The mark is
+     that day's exercise count. */
+  const strip = (
+    <DayStrip value={date} onChange={setDate} today={today} label="Day to log"
+      mark={(d) => {
+        const n = sessions.filter((s) => s.date === d).reduce((a, s) => a + s.sets.length, 0)
+        return n ? <>{n}<span className="sr-only"> exercises</span></> : null
+      }} />
+  )
 
   return (
     <PageLayout
@@ -136,13 +151,20 @@ export function HomeWorkout() {
       onSplitChange={logCol.onSplitChange}
       actShut={logCol.shut}
       zone2={logCol.shut ? (
+        <>
+        {phone && strip}
         <ActStrip
           label="Today’s session"
           summary={items.length ? `${items.length} exercise${items.length === 1 ? '' : 's'} ready to log` : 'Empty'}
           onOpen={logCol.open}
         />
+        </>
       ) : (
         <>
+        {/* On a desktop the column stacks its cards flush; the strip is not a
+            card, so it gets 12px before the one below it. On a phone it
+            portals into the bar, and a wrapper would be an empty box. */}
+        {phone ? strip : <div className="pb-3">{strip}</div>}
         {/* Above the builder: "what should I do today" is the question you
             arrive with, and this is the only thing on the page that answers it
             from your own history. The builder below is where you act on it, and
@@ -154,7 +176,6 @@ export function HomeWorkout() {
             onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
             onDrop={(id) => setItems((cur) => cur.filter((i) => i.id !== id))}
             onLoadRoutine={setItems}
-            date={date} onDate={setDate} today={today}
             dur={dur} onDur={setDur}
             notes={notes} onNotes={setNotes}
             onLog={logSession}
@@ -164,7 +185,6 @@ export function HomeWorkout() {
           onReps={(id, reps) => setItems((cur) => cur.map((i) => (i.id === id ? { ...i, reps } : i)))}
           onDrop={(id) => setItems((cur) => cur.filter((i) => i.id !== id))}
           onLoadRoutine={setItems}
-          date={date} onDate={setDate} today={today}
           dur={dur} onDur={setDur}
           notes={notes} onNotes={setNotes}
           onLog={() => logSession()}

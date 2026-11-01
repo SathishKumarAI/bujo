@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { ArrowCounterClockwise, CalendarDot, CaretDown, Check, Minus, Plus, SlidersHorizontal } from '@/components/icons'
+import { ArrowCounterClockwise, CaretDown, Check, Minus, Plus, SlidersHorizontal } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Seg } from '../ui/seg'
 import { Cells, ControlCell } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
-import { addDays, prettyDay, todayISO } from '../../lib/date'
+import { prettyDay } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { PULLUP_METHODS, repScheme, type PullupMethod } from '../../lib/pullups'
 
@@ -19,7 +19,8 @@ const ROUND_CHOICES = Array.from({ length: 12 }, (_, i) => i + 1)
  * OWNS: the phone layout — Method as a segmented row and Rounds as a native select, a
  * card saying what the method means and how much to do (training set, today's
  * and this week's target), one row per round with Program's tap counter, and
- * a dock with the date, the optional fields (a `Sheet`) and Log.
+ * a dock with the optional fields (a `Sheet`) and Log. The day is the
+ * page's `DayStrip` (COD-558).
  * DOES NOT OWN: the draft or the save. Both stay in `views/Pullups.tsx`
  * `LogSessionCard`, which renders this on a phone; Log hands back the reps to
  * store — the ticked rounds, or the whole plan when nothing is ticked.
@@ -29,11 +30,9 @@ const ROUND_CHOICES = Array.from({ length: 12 }, (_, i) => i + 1)
  * just like we did in program."
  */
 export function PullupQuickLog({
-  date, setDate, method, setMethod, top, defaultTop, setTop, rounds, setRounds, duration, setDuration,
+  method, setMethod, top, defaultTop, setTop, rounds, setRounds, duration, setDuration,
   rpe, setRpe, notes, setNotes, effort, guide, last, onRepeat, onLog, justLogged,
 }: {
-  date: string
-  setDate: (d: string) => void
   method: PullupMethod
   setMethod: (m: PullupMethod) => void
   /** The top set in use — the typed one or the training set. */
@@ -59,9 +58,6 @@ export function PullupQuickLog({
 }) {
   const [more, setMore] = useState(false)
   const [ticked, setTicked] = useState<number[]>([])
-  const today = todayISO()
-  const yesterday = addDays(today, -1)
-  const dayLabel = date === today ? 'Today' : date === yesterday ? 'Yesterday' : prettyDay(date)
   const emom = method === 'emom'
   const r = rounds ?? 0
   const one = repScheme(method, top, 1)
@@ -148,14 +144,10 @@ export function PullupQuickLog({
         })}
       </div>
 
-      {/* The dock: date, the optional fields, and Log. This log lives in a
-          sheet, so it pins to the sheet's bottom, not above the nav. */}
+      {/* The dock: the optional fields, and Log. This log lives in a
+          sheet, so it pins to the sheet's bottom, not above the nav. The day
+          is the page's `DayStrip`, in the top bar (COD-558). */}
       <div className="log-dock" style={{ bottom: 0 }}>
-        <label className="dock-chip mr-auto">
-          <Icon as={CalendarDot} size="sm" className="text-fg-2" />
-          {dayLabel}
-          <input type="date" value={date} max={today} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={`Log on ${dayLabel}`} className="absolute inset-0 cursor-pointer opacity-0" />
-        </label>
         <button type="button" className="round-btn" onClick={() => setMore(true)} aria-label={`Effort, duration, notes${added ? `, ${added} added` : ''}`}>
           <Icon as={SlidersHorizontal} size="md" />
         </button>
