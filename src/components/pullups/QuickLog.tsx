@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowCounterClockwise, CalendarDot, CaretDown, Check, Minus, Plus, SlidersHorizontal } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Seg } from '../ui/seg'
-import { Cells } from '../ui/cells'
+import { Cells, ControlCell } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
 import { addDays, prettyDay, todayISO } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
@@ -16,7 +16,7 @@ const ROUND_CHOICES = Array.from({ length: 12 }, (_, i) => i + 1)
  * (`PullupProgramDay` is the page's main log). Program's shape: choose at the top, read what to do,
  * tick it off, log from a dock.
  *
- * OWNS: the phone layout — Method and Rounds as one bar of native selects, a
+ * OWNS: the phone layout — Method as a segmented row and Rounds as a native select, a
  * card saying what the method means and how much to do (training set, today's
  * and this week's target), one row per round with Program's tap counter, and
  * a dock with the date, the optional fields (a `Sheet`) and Log.
@@ -77,14 +77,12 @@ export function PullupQuickLog({
 
   return (
     <section aria-label="Log a session" className="flex flex-col gap-3">
-      <div className="select-bar" role="group" aria-label="Choose the session">
-        <label className="select-pill">
-          <span className="sr-only">Method</span>
-          <select value={method} onChange={(e) => setMethod(e.target.value as PullupMethod)}>
-            {PULLUP_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-        </label>
+      {/* Method is four short words, so it is one tap: a segmented row, not a
+          native wheel. It always holds a method, so no `allowNone` — a tap on
+          the lit one confirms it. Rounds stays a select: twelve options. */}
+      <div className="flex flex-col gap-2" role="group" aria-label="Choose the session">
+        <Seg label="Method" value={method} onChange={(v) => v && setMethod(v)}
+          options={PULLUP_METHODS.map((m) => ({ value: m.value, label: m.label }))} />
         <label className="select-pill">
           <span className="sr-only">{emom ? 'Minutes' : 'Rounds'}</span>
           <select value={r} onChange={(e) => { setRounds(Number(e.target.value)); setTicked([]) }}>
@@ -99,7 +97,7 @@ export function PullupQuickLog({
       <div className="cells">
         <div className="flex items-start gap-3 px-4 py-3">
           <div className="min-w-0 flex-1">
-            {/* The select above already shows the name; said for a screen reader. */}
+            {/* The segmented row above already shows the name; said for a screen reader. */}
             <p className="sr-only">{PULLUP_METHODS.find((m) => m.value === method)?.label}</p>
             <p className="text-body text-fg-1">{PULLUP_METHODS.find((m) => m.value === method)?.hint}</p>
           </div>
@@ -173,10 +171,16 @@ export function PullupQuickLog({
         <div className="ios-form flex flex-col gap-4">
           {/* Starts empty — "no answer" and "Easy" are different facts — so a
               second tap clearing it is safe (`allowNone`). */}
-          <Seg label="Effort" allowNone value={rpe ?? null} onChange={(v) => setRpe(v ?? undefined)}
-            options={effort.map((e) => ({ value: e.value, label: e.label, name: e.name }))} />
-          <Seg label="Duration" allowNone value={DURATIONS.find((d) => d === duration) ?? null} onChange={(v) => setDuration(v ?? undefined)}
-            options={DURATIONS.map((d) => ({ value: d, label: `${d}m`, name: `${d} minutes` }))} />
+          <Cells>
+            <ControlCell label="Effort">
+              <Seg label="Effort" allowNone value={rpe ?? null} onChange={(v) => setRpe(v ?? undefined)}
+                options={effort.map((e) => ({ value: e.value, label: e.label, name: e.name }))} />
+            </ControlCell>
+            <ControlCell label="Duration">
+              <Seg label="Duration" allowNone value={DURATIONS.find((d) => d === duration) ?? null} onChange={(v) => setDuration(v ?? undefined)}
+                options={DURATIONS.map((d) => ({ value: d, label: `${d}m`, name: `${d} minutes` }))} />
+            </ControlCell>
+          </Cells>
           <Cells title="Other length">
             <label className="cell">
               <span className="flex-1 text-body text-fg-1">Minutes</span>
