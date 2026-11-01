@@ -96,3 +96,58 @@ describe('Settings on a phone · the Account tab as rows', () => {
     expect(settings().profile).toEqual({ name: 'Robin', emoji: '🦉' })
   })
 })
+
+describe('Settings on a phone · Sync and Data as rows', () => {
+  // The failure: a desktop card left on the phone. A `Card` draws its title in
+  // a <header>; a `Cells` group never does.
+  it.each(['sync', 'data'])('%s: no card is drawn, every group is rows', async (tab) => {
+    mount(tab)
+    // Open the one fold (Advanced sync), so whatever sits behind it counts too.
+    for (const b of screen.queryAllByRole('button', { expanded: false })) await userEvent.click(b)
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.querySelectorAll('section > header')).toHaveLength(0)
+    expect(panel.querySelectorAll('.cells').length).toBeGreaterThan(3)
+  })
+
+  // The failure: a phone field that lights up and saves nothing. The demo
+  // journal seeds none of these settings, so a seeded match cannot pass.
+  it('Sync: the rows write the journal — local model, self-host, gist token, Drive client', async () => {
+    const user = userEvent.setup()
+    mount('sync')
+    expect(settings().voiceModel).toBeUndefined()
+    await user.click(screen.getByRole('switch', { name: /Use a model on this machine/ }))
+    expect(settings().voiceModel?.enabled).toBe(true)
+    await user.click(screen.getByRole('button', { name: /Advanced sync/ }))
+    await user.type(screen.getByRole('textbox', { name: 'API URL' }), 'https://h:8443')
+    await user.type(screen.getByPlaceholderText('ghp_…'), 'ghp_x')
+    await user.type(screen.getByRole('textbox', { name: 'Client ID' }), 'abc.apps')
+    expect(settings().selfHostUrl).toBe('https://h:8443')
+    expect(settings().githubToken).toBe('ghp_x')
+    expect(settings().googleClientId).toBe('abc.apps')
+  })
+
+  // The failure: a tag row that opens an editor which renames nothing.
+  it('Data: a tag row renames the tag across every entry', async () => {
+    const user = userEvent.setup()
+    mount('data')
+    const texts = () => (JSON.parse(localStorage.getItem('bujo:data')!) as { entries: { text: string }[] }).entries.map((e) => e.text).join('\n')
+    expect(texts()).toContain('#travel')
+    expect(texts()).not.toContain('#voyage')
+    await user.click(screen.getByRole('button', { name: /^Rename\s*#travel/ }))
+    const field = screen.getByRole('textbox', { name: 'Rename tag travel' })
+    await user.clear(field)
+    await user.type(field, 'voyage')
+    await user.click(screen.getByRole('button', { name: 'Save tag' }))
+    expect(texts()).toContain('#voyage')
+    expect(texts()).not.toContain('#travel')
+  })
+
+  // The failure: a number on the phone that disagrees with the journal.
+  it('Data: Your data counts the journal’s own records', () => {
+    mount('data')
+    const rows = [...screen.getByRole('region', { name: 'Your data' }).querySelectorAll('.cell')]
+    const records = rows.find((r) => r.textContent?.startsWith('Records'))
+    expect(records?.textContent).toMatch(/^Records\d+$/)
+    expect(Number(records!.textContent!.replace('Records', ''))).toBeGreaterThan(100)
+  })
+})

@@ -1,5 +1,9 @@
 import { Card } from '../ui'
 import { isConfigured } from '../../lib/supabase'
+import { ShieldCheck, ShieldWarning } from '@/components/icons'
+import { useDevice } from '../shell/device'
+import { Cells } from '../ui/cells'
+import { InfoCell } from '../ui/infoCell'
 
 /**
  * What protects this journal, and where it does not — on screen, not only in
@@ -98,11 +102,28 @@ function Rows({ rows }: { rows: Row[] }) {
   )
 }
 
+/** The phone drawing of one half: a row whose sheet holds every claim and how. */
+function SecuritySheet({ title, subtitle, icon, rows }: { title: string; subtitle: string; icon: typeof ShieldCheck; rows: Row[] }) {
+  return (
+    <InfoCell title={title} subtitle={subtitle} icon={icon}>
+      <Rows rows={rows} />
+    </InfoCell>
+  )
+}
+
 export function SecurityCard() {
+  const phone = useDevice() === 'mobile'
   // Unconfigured builds have no account, so most of this would describe
   // something the reader cannot use. The local half is covered by the passcode
   // and sync cards already on this page.
   if (!isConfigured()) return null
+  // Phone: both halves stay on the page — as two rows, each opening its sheet.
+  if (phone) return (
+    <Cells title="Protection">
+      <SecuritySheet title="How your journal is protected" subtitle="Seven mechanisms, each one a thing the code does" icon={ShieldCheck} rows={PROTECTED} />
+      <SecuritySheet title="What this does not protect" subtitle="The half worth reading twice" icon={ShieldWarning} rows={LIMITS} />
+    </Cells>
+  )
   return (
     <>
       {/* ── Folded by default, which is a change and needs its reason ───────

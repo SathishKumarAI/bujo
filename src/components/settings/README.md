@@ -27,13 +27,16 @@ tab-shell rule below.
 | Passcode / encryption at rest | `PasscodeCard.tsx` |
 | PostgREST self-host fields | `SelfHostCard.tsx` |
 | The record counts, coverage, storage bar | `YourDataCard.tsx` |
-| Any export or import — JSON, Markdown, CSV, `.ics`, checksum | `BackupCard.tsx` |
-| Importing an Apple Health `export.zip` | `AppleHealthCard.tsx` |
+| Any export or import — JSON, Markdown, CSV, `.ics`, checksum (handlers and the export lists) | `useBackup.ts` |
+| How the backup card looks — desktop / phone | `BackupCard.tsx` / `BackupPhone.tsx` |
+| The Apple Health import (stages, confirm, apply) | `useHealthImport.ts` |
+| How the Apple Health card looks — desktop / phone; what it reads | `AppleHealthCard.tsx` / `AppleHealthPhone.tsx`; `appleHealthReads.tsx` |
 | Demo data, erase, back to start screen | `DemoResetCard.tsx` |
 | `Row`, `Toggle`, `Disclosure` | `shared.tsx` |
 | About you / Units on a PHONE (iOS rows) | `AccountPhone.tsx` |
 | Appearance on a PHONE | `AppearancePhone.tsx` |
-| Passcode, Weather & food, Demo & reset on a PHONE | the `if (phone)` branch in their own file |
+| Every other Sync / Data card on a PHONE — passcode, weather & food, local model, encrypted sync, self-host, cloud folder & gist, Drive, protection, your data, tags, demo & reset, help links | the `if (phone)` branch in their own file |
+| A row that opens a sheet of points | `../ui/infoCell.tsx` |
 | How the phone rows look (switch size, group titles, action rows) | `../../styles/phone-settings.css` |
 
 **A phone draws these fields a second time.** A setting added to a desktop

@@ -48,8 +48,8 @@
   translate: 1.3125rem 0;
 }
 
-/* A desktop `Toggle` row in a card Settings still draws as a card on a phone
-   (auto-sync, the local model): the row is the label, so make it 44px. */
+/* A desktop `Toggle` row, should one reach a phone tab: the row is the label,
+   so make it 44px. */
 .settings-phone label:has(> button[data-slot='switch']) {
   min-height: 2.75rem;
 }
@@ -117,8 +117,8 @@
   color: var(--color-red);
 }
 
-/* The cards Settings still draws as cards on a phone (sign-in, exports, tags)
-   get the same 44px floor as every other phone control. */
+/* Any `Button` left inside a phone Settings tab (none are drawn by the four
+   tabs since COD-567; a future card would be) gets the 44px phone floor. */
 .settings-phone [data-slot='button'] {
   min-height: 2.75rem;
 }

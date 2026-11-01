@@ -12,6 +12,8 @@ import { useConfirm } from './ConfirmDialog'
 import { notify } from '../lib/notify'
 import { Button } from './ui/button'
 import { forEgress, mergePulled, CYCLE_CLAUSE } from '../lib/cyclePrivacy'
+import { useDevice } from './shell/device'
+import { Cell, Cells, FieldCell } from './ui/cells'
 
 /** Own-cloud storage options: a synced folder + a private GitHub gist. */
 export function CloudStorage() {
@@ -19,6 +21,7 @@ export function CloudStorage() {
   const { data, setSettings, replaceAll } = useJournal()
   const s = data.settings
   const [busy, setBusy] = useState('')
+  const phone = useDevice() === 'mobile'
 
   // ── Folder (File System Access) ──
   async function chooseFolder() {
@@ -94,6 +97,31 @@ export function CloudStorage() {
       setBusy('')
     }
   }
+
+  // Phone: the folder and the gist as two groups of iOS rows, same handlers.
+  if (phone) return (
+    <>
+      <Cells title="Cloud-synced folder" aside="Drive · Dropbox · OneDrive">
+        {!isSupported() ? (
+          <p className="cell text-body text-fg-1">Needs Chrome / Edge</p>
+        ) : (
+          <>
+            <Cell icon={FolderOpen} tone="mauve" title={s.storageMode === 'folder' ? 'Change folder' : 'Connect folder'}
+              subtitle={s.storageMode === 'folder' ? `Saving to ${s.folderName ?? folderName() ?? 'your folder'}` : 'Pick one inside your sync folder'}
+              chevron={false} onPress={busy ? undefined : chooseFolder} />
+            {s.storageMode === 'folder' && <Cell icon={ArrowsClockwise} tone="teal" title="Save now" chevron={false} onPress={busy ? undefined : syncFolderNow} />}
+            {s.storageMode === 'folder' && <button type="button" className="cell cell-danger" onClick={() => setSettings({ storageMode: 'local', folderName: undefined })}>Switch to local</button>}
+          </>
+        )}
+      </Cells>
+      <Cells title="GitHub (private gist)" aside="token needs gist scope">
+        <FieldCell label="Token" type="password" value={s.githubToken ?? ''} onChange={(v) => setSettings({ githubToken: v.trim() || undefined })} placeholder="ghp_…" />
+        <Cell icon={Upload} tone="blue" title={busy === 'gh' ? 'Working…' : 'Back up to GitHub'} chevron={false} onPress={busy ? undefined : ghBackup} />
+        <Cell icon={Download} tone="teal" title="Restore from GitHub" subtitle="Replaces this device’s copy — asks first" chevron={false} onPress={busy ? undefined : ghRestore} />
+        {s.githubGistId && <Cell icon={GitBranch} tone="overlay1" title="Open gist" href={`https://gist.github.com/${s.githubGistId}`} />}
+      </Cells>
+    </>
+  )
 
   return (
     <Card band

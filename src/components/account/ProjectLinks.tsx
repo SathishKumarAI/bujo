@@ -1,4 +1,6 @@
 import { Card } from '../ui'
+import { useDevice } from '../shell/device'
+import { Cell, Cells } from '../ui/cells'
 
 /**
  * Where to go when the app does not do what you need.
@@ -33,6 +35,16 @@ const LINKS = [
 ]
 
 export function ProjectLinks() {
+  const phone = useDevice() === 'mobile'
+  // Phone: each link a row that opens it; the privacy note is the group footer.
+  if (phone) return (
+    <div className="flex flex-col gap-1.5">
+      <Cells title="Help build it">
+        {LINKS.map((l) => <Cell key={l.href} title={l.label} subtitle={l.detail} href={l.href} />)}
+      </Cells>
+      <p className="px-3 text-label text-fg-2">An issue shares only what you type into it</p>
+    </div>
+  )
   return (
     <Card band collapsible defaultCollapsed title="Help build it" subtitle="No support inbox — the issue tracker is the whole channel">
       <ul className="flex flex-col">
