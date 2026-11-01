@@ -485,6 +485,12 @@ describe('Cycle · the month calendar', () => {
   })
 
   it('names each day with what is on it, so the cell is not colour alone', async () => {
+    // Pinned late in a month: the seed puts the last period ~19 days back, so
+    // on a month's first days it falls in the PREVIOUS month and the visible
+    // calendar has none — red on 2026-11-01 with no change to the code.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-25T12:00:00'))
+    onTestFinished(() => { vi.useRealTimers() })
     const user = userEvent.setup()
     const { container } = mount()
     const card = await logCard(user, container)
