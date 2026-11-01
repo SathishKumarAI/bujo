@@ -11,6 +11,8 @@ import {
 import { completionsToICS, habitRemindersToICS, journalToICS, tasksToICS } from '../../lib/ics'
 import { inlineImages } from '../../lib/imageStore'
 import { download } from './download'
+import { useConfirm } from '../ConfirmDialog'
+import { dataSummary } from '../../lib/csv'
 
 /**
  * EVERYTHING THE BACKUP CARD DOES — exports, imports, the integrity check —
@@ -26,6 +28,7 @@ import { download } from './download'
  */
 export function useBackup() {
   const { data, setSettings, replaceAll, setMetric } = useJournal()
+  const confirm = useConfirm()
   const s = data.settings
   const fileRef = useRef<HTMLInputElement>(null)
   const csvRef = useRef<HTMLInputElement>(null)
@@ -84,17 +87,32 @@ export function useBackup() {
 
   const doMarkdown = () => download(`cadence-${todayISO()}.md`, exportMarkdown(data), 'text/markdown')
 
+  // Importing REPLACES the journal, so it asks first and names both sides
+  // (COD-569; USER-CONTROL.md: destructive asks and names what it removes).
+  // The file is parsed before asking, so a bad file never reaches the dialog.
   function onImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const input = e.target
+    const file = input.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
+      input.value = '' // the same file can be picked again after a Cancel
+      let next
       try {
-        replaceAll(importJSON(String(reader.result)), { stamp: true })
-        notify.success('Backup imported')
+        next = importJSON(String(reader.result))
       } catch {
         notify.error('Could not read that file', 'Is it a valid Cadence backup?')
+        return
       }
+      const now = dataSummary(data).totalRecords
+      const incoming = dataSummary(next).totalRecords
+      if (!await confirm({
+        title: `Replace ${now} records with the file’s ${incoming}?`,
+        description: `Everything in this journal is overwritten by ${file.name}. Export a backup first if you might want it back.`,
+        confirmLabel: 'Replace journal', destructive: true,
+      })) return
+      replaceAll(next, { stamp: true })
+      notify.success('Backup imported')
     }
     reader.readAsText(file)
   }
