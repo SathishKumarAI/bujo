@@ -71,3 +71,28 @@ function within(group: string, option: string) {
   const g = screen.getByRole('radiogroup', { name: group })
   return [...g.querySelectorAll('[role="radio"]')].find((b) => b.textContent === option) as HTMLElement
 }
+
+describe('Settings on a phone · the Account tab as rows', () => {
+  // The failure: the four tabs back on two lines, or the long name lost.
+  it('draws the four tabs as one segmented row, Sync said in full', () => {
+    mount('account')
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs.map((t) => t.textContent?.trim())).toEqual(['Account', 'Appearance', 'Sync', 'Data'])
+    expect(screen.getByRole('tab', { name: 'Sync & privacy' })).toBeTruthy()
+    expect(tabs[0].closest('[role="tablist"]')!.classList.contains('seg')).toBe(true)
+  })
+
+  // The failure: the phone's name rows drawing a form that saves nothing.
+  it('saves a name and a face from the You rows into the journal', async () => {
+    const user = userEvent.setup()
+    mount('account')
+    const edit = screen.queryByRole('button', { name: /^Edit your name/ })
+    if (edit) await user.click(edit)
+    const field = screen.getByRole('textbox', { name: 'Name' })
+    await user.clear(field)
+    await user.type(field, 'Robin')
+    await user.click(screen.getByRole('button', { name: 'Avatar 🦉' }))
+    await user.click(screen.getByRole('button', { name: /^(Save|Create local account)/ }))
+    expect(settings().profile).toEqual({ name: 'Robin', emoji: '🦉' })
+  })
+})

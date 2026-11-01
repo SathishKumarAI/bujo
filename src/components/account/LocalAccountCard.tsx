@@ -1,9 +1,7 @@
-import { useState } from 'react'
-import { useJournal } from '../../store'
 import { Card, Input } from '../ui'
 import { Button } from '../ui/button'
-import { notify } from '../../lib/notify'
 import { PhonePoints } from '../PhonePoints'
+import { EMOJI, useLocalProfile } from './useLocalProfile'
 
 /**
  * The local account: a name and an emoji, kept in this journal and nowhere else.
@@ -22,25 +20,9 @@ import { PhonePoints } from '../PhonePoints'
  */
 
 /** Kept short on purpose — a grid of 200 emoji is a decision, not a delight. */
-const EMOJI = ['🙂', '🦊', '🌱', '🪐', '🎧', '📓', '🏔️', '🐙', '☕', '🦉', '🍊', '⚡']
 
 export function LocalAccountCard() {
-  const { data, setSettings } = useJournal()
-  const profile = data.settings.profile
-  const [name, setName] = useState(profile?.name ?? '')
-  const [emoji, setEmoji] = useState(profile?.emoji ?? '🙂')
-  const [editing, setEditing] = useState(!profile)
-
-  function save() {
-    const trimmed = name.trim()
-    if (!trimmed) {
-      notify.error('Pick a name', 'Anything you like — it never leaves this device.')
-      return
-    }
-    setSettings({ profile: { name: trimmed, emoji } })
-    setEditing(false)
-    notify.success(profile ? 'Name updated' : `Welcome, ${trimmed}`, 'Stored on this device only.')
-  }
+  const { profile, name, setName, emoji, setEmoji, editing, setEditing, save } = useLocalProfile()
 
   if (profile && !editing) {
     return (
