@@ -37,6 +37,15 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   return <DeviceCtx.Provider value={device}>{children}</DeviceCtx.Provider>
 }
 
+/**
+ * Draws a subtree as if on a phone, whatever the screen. Settings uses it so
+ * every card inside picks its grouped-row drawing on a desktop too (owner,
+ * 2026-11-01: desktop should "follow the mobile version").
+ */
+export function AsPhone({ children }: { children: ReactNode }) {
+  return <DeviceCtx.Provider value="mobile">{children}</DeviceCtx.Provider>
+}
+
 // Hook co-located with its provider (same pattern as cursor/nav); fast-refresh
 // only affects dev HMR, not runtime.
 // eslint-disable-next-line react-refresh/only-export-components

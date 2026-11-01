@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Page } from '../components/shell/Page'
 import { readDeepLink } from '../lib/deepLink'
-import { useDevice } from '../components/shell/device'
+import { AsPhone, useDevice } from '../components/shell/device'
 import {
   AccountTab, AppearanceTab, DataTab, SyncTab,
 } from '../components/settings'
@@ -160,10 +160,14 @@ export function Settings() {
             fixed-height sideways-packing `SectionScreen` was for cards. */}
         <div key={tab} className={phone ? 'min-w-0 settings-phone' : 'min-w-0 flex-1 settings-phone settings-cols'}>
           {!phone && <h2 className="mb-5 text-title font-semibold text-fg-1">{LABEL[tab]}</h2>}
-          <TabsContent value="account"><section aria-label={LABEL.account}><AccountTab /></section></TabsContent>
-          <TabsContent value="feel"><section aria-label={LABEL.feel}><AppearanceTab /></section></TabsContent>
-          <TabsContent value="sync"><section aria-label={LABEL.sync}><SyncTab /></section></TabsContent>
-          <TabsContent value="data"><section aria-label={LABEL.data}><DataTab /></section></TabsContent>
+          {/* `AsPhone`: each card already has a grouped-row drawing for a
+              phone, and this makes every one of them choose it here. */}
+          <AsPhone>
+            <TabsContent value="account"><section aria-label={LABEL.account} className="settings-body"><AccountTab /></section></TabsContent>
+            <TabsContent value="feel"><section aria-label={LABEL.feel} className="settings-body"><AppearanceTab /></section></TabsContent>
+            <TabsContent value="sync"><section aria-label={LABEL.sync} className="settings-body"><SyncTab /></section></TabsContent>
+            <TabsContent value="data"><section aria-label={LABEL.data} className="settings-body"><DataTab /></section></TabsContent>
+          </AsPhone>
         </div>
       </Tabs>
     </Page>

@@ -24,7 +24,7 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
   const hidden = s.hideToday ?? []
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
       <Cells title="Theme">
         {THEMES.map((t) => {
           const active = (s.theme ?? 'mocha') === t.value
@@ -85,6 +85,6 @@ export function AppearancePhone({ onReset }: { onReset: () => void }) {
           <Icon as={ArrowsClockwise} size="sm" /> Reset appearance to defaults
         </button>
       </div>
-    </div>
+    </>
   )
 }

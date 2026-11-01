@@ -81,7 +81,7 @@ describe('the open section, drawn as rows on every device', () => {
     window.history.replaceState(null, '', '/?view=settings&tab=data')
     mount()
     const box = screen.getByRole('region', { name: 'Data' })
-    expect(within(box).getByText(/everything stored on this device/i)).toBeTruthy()
+    expect(within(box).getByText('Records')).toBeTruthy()
   })
 })
 

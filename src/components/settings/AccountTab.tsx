@@ -59,11 +59,11 @@ export function AccountTab() {
   // since the owner asked it to "follow the mobile version"): who you are
   // first, then the account that syncs it, then the settings.
   return (
-    <div className="flex flex-col gap-5">
+    <>
       <YouCells />
       <SyncAccountCells />
       <AboutYouCells setGender={setGender} />
       <UnitsCells />
-    </div>
+    </>
   )
 }
