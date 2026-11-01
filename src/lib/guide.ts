@@ -292,14 +292,14 @@ const NAV_LABEL: Partial<Record<ViewId, string>> = (() => {
 })()
 
 /**
- * Every navigable view, in nav order, with Home workout after its section's
- * tabs and Account/Settings last. Built once at module load — it is a pure
+ * Every navigable view, in nav order, with Account/Settings last. Home workout
+ * used to be appended here by hand; it is a Body tab now (COD-564), and the
+ * hand-added copy drew its card twice. Built once at module load — it is a pure
  * function of three constants and never changes at runtime.
  */
 export const GUIDE: GuideCard[] = (() => {
   const ordered: ViewId[] = [
     ...SECTIONS.flatMap((s) => s.tabs.map((t) => t.view)),
-    'homeworkout',
     ...SETUP,
   ]
   return ordered.flatMap((view) => {

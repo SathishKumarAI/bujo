@@ -69,8 +69,13 @@ describe('guide entries', () => {
     expect(groups.flatMap((g) => g.cards).length).toBe(GUIDE.length)
   })
 
-  it('puts Home workout under Body even though it is not a tab', () => {
+  it('puts Home workout under Body', () => {
     expect(GUIDE.find((c) => c.view === 'homeworkout')?.group).toBe('body')
+  })
+
+  it('draws each view once — a hand-appended view that later became a tab drew twice (COD-564)', () => {
+    const views = GUIDE.map((c) => c.view)
+    expect(views.filter((v, i) => views.indexOf(v) !== i)).toEqual([])
   })
 })
 
