@@ -3,9 +3,8 @@ import { Barbell } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Input, Textarea } from '../ui'
 import { Button } from '../ui/button'
-import { ChipPick, DayPick } from '../ui/quickpick'
+import { ChipPick } from '../ui/quickpick'
 import { ActHide, EmptyFrame } from '../page'
-import { addDays } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { HOME_ROUTINES } from '../../lib/homeProgramming'
 import { exerciseById, FAMILY_SHORT } from '../../lib/homeExercises'
@@ -31,16 +30,12 @@ export interface SessionItem { id: string; name: string; reps: string }
  */
 export function SessionCard({
   items, onReps, onDrop, onLoadRoutine,
-  date, onDate, today,
   dur, onDur, notes, onNotes, onLog, onShut,
 }: {
   items: SessionItem[]
   onReps: (id: string, reps: string) => void
   onDrop: (id: string) => void
   onLoadRoutine: (items: SessionItem[]) => void
-  date: string
-  onDate: (d: string) => void
-  today: string
   dur: string
   onDur: (v: string) => void
   notes: string
@@ -165,10 +160,8 @@ export function SessionCard({
               </div>
               )
             })}
-            {/* There was no date field at all — `logSession` hardcoded today,
-                so a session you did this morning and logged tonight was fine,
-                and one you forgot until tomorrow was unloggable. */}
-            <DayPick value={date} onChange={onDate} today={today} yesterday={addDays(today, -1)} />
+            {/* The day is the page's `DayStrip`, above this card (COD-558).
+                It was Today / Yesterday chips here — a second calendar. */}
             <Input type="number" value={dur} onChange={(e) => onDur(e.target.value)} placeholder="Minutes" aria-label="Duration in minutes" />
             <Textarea value={notes} onChange={(e) => onNotes(e.target.value)} placeholder="How did it go?" rows={2} />
             <Button onClick={onLog} className="press-3d w-full">Log workout</Button>

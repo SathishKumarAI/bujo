@@ -8,6 +8,8 @@ import { DeviceProvider } from '../components/shell/device'
 import { addDays, todayISO } from '../lib/date'
 import { Program } from './Program'
 import { Pullups } from './Pullups'
+import { HomeWorkout } from './HomeWorkout'
+import { HOME_ROUTINES } from '../lib/homeProgramming'
 
 /**
  * THE DAY STRIP ON THE TRAINING PAGES (COD-558): one picker per page, and the
@@ -80,6 +82,30 @@ describe('Pull-ups', () => {
     expect(screen.queryByLabelText('Another date')).toBeNull()
     const day = await pickTwoDaysAgo()
     await userEvent.click(screen.getByRole('button', { name: /^Log session/ }))
+    expect(journal().workouts.map((w) => w.date)).toEqual([day])
+  })
+})
+
+describe('Home workout', () => {
+  it('phone: the session logs on the picked day, with no date chip in its dock', async () => {
+    phone()
+    const { container } = wrap(<HomeWorkout />)
+    const day = await pickTwoDaysAgo()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Routine' }), HOME_ROUTINES[0].id)
+    expect(container.querySelector('input[type="date"]')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /^Log · \d+/ }))
+    expect(journal().workouts.map((w) => w.date)).toEqual([day])
+  })
+
+  it('desktop: the strip heads the act column and replaces Today / Yesterday', async () => {
+    desktop()
+    wrap(<HomeWorkout />)
+    await userEvent.click(screen.getAllByRole('button', { expanded: false }).find((b) => /session/i.test(b.textContent ?? ''))!)
+    const day = await pickTwoDaysAgo()
+    await userEvent.click(screen.getByRole('button', { name: HOME_ROUTINES[0].name }))
+    expect(screen.queryByRole('button', { name: 'Yesterday' })).toBeNull()
+    expect(screen.queryByLabelText('Another date')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Log workout' }))
     expect(journal().workouts.map((w) => w.date)).toEqual([day])
   })
 })
