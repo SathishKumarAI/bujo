@@ -1274,6 +1274,65 @@ button.cell:active {
   opacity: 0.45;
 }
 
+/* ── Recovery review (COD-552) ─────────────────────────────────────────────
+   `recovery/Review.tsx` phone branch: ONE select picks the panel (an optgroup
+   per group), replacing the group select + filter + heading + deck pager.
+   `recovery/UrgeHistoryCard.tsx` phone row: name and score left, day over
+   time right, × trailing — one line, where the desktop row wrapped × onto
+   a second. */
+.recovery-pick {
+  display: flex;
+  padding-bottom: 0.5rem;
+}
+
+.recovery-pick > .select-pill {
+  flex: 1;
+}
+
+.urge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The row IS the edit: tap it to open the trigger, day and intensity. */
+.urge-row-main {
+  display: flex;
+  min-width: 0;
+  min-height: 2.75rem;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.urge-row-when {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--color-fg-2);
+  font-size: var(--text-label);
+  line-height: 1.25;
+}
+
+.urge-row-del {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  margin-right: -0.5rem;
+  border-radius: 999px;
+  color: var(--color-fg-2);
+  font-size: 1.25rem;
+}
+
+.urge-row-del:active {
+  background: var(--color-ink-3);
+  color: var(--color-red);
+}
+
 /* ── Pickleball competition (COD-553) ──────────────────────────────────────────
    `pickleball/phone/CompetitionPhone.tsx`: the event form in the Competition
    sheet. The dock is `.log-dock`'s idea at the SHEET's edge — sticky inside

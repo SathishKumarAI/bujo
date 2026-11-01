@@ -351,3 +351,57 @@ describe('Recovery on a phone · the Details sheet is one tap per answer', () =>
     for (const k of LONELY_KINDS) expect(` ${k.label.toLowerCase().replace(/[^a-z ]/g, '')} `).toContain(` ${k.short.toLowerCase()} `)
   })
 })
+
+/**
+ * COD-552 · Recovery's review on a phone is ONE navigation, and an urge row
+ * keeps its edit and its asking delete.
+ *
+ * It was the group select, a filter box and a deck pager stacked for one
+ * panel. Anchored on roles and names, never on copy.
+ */
+describe('Recovery on a phone · one select picks the panel', () => {
+  function phone() {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: !q.includes('coarse'), media: q, addEventListener() {}, removeEventListener() {} }))
+    onTestFinished(() => { vi.unstubAllGlobals() })
+    localStorage.setItem('bujo:data', JSON.stringify(generateDemoData()))
+    return render(
+      <DeviceProvider><NavProvider navigate={() => {}}><CursorProvider><ConfirmProvider><JournalProvider>
+        <NoFap />
+      </JournalProvider></ConfirmProvider></CursorProvider></NavProvider></DeviceProvider>,
+    )
+  }
+
+  it('draws no filter box and no deck pager — the select is the only way across panels', () => {
+    phone()
+    expect(screen.getByRole('navigation', { name: 'Recovery panels' })).toBeInTheDocument()
+    expect(screen.queryByRole('searchbox')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Next card/ })).toBeNull()
+  })
+
+  it('reaches every registry group through the select, one optgroup each, in order', async () => {
+    const { container } = phone()
+    const sel = within(screen.getByRole('navigation', { name: 'Recovery panels' })).getByRole('combobox')
+    const groups = [...sel.querySelectorAll('optgroup')].map((g) => g.label)
+    expect(groups).toEqual(GROUPS.map((g) => GROUP_LABEL[g]).filter((l) => groups.includes(l)))
+    expect(groups.length).toBeGreaterThanOrEqual(4)
+    // Picking a panel in another group shows THAT panel, and only it.
+    const target = CARDS.find((c) => c.group !== DEFAULT_GROUP && sel.querySelector(`option[value="${c.id}"]`))!
+    await userEvent.selectOptions(sel, target.id)
+    expect([...container.querySelectorAll('[data-card]')].map((e) => e.getAttribute('data-card'))).toEqual([target.id])
+  })
+
+  it('opens an urge for editing by tapping its row, and asks before deleting it', async () => {
+    phone()
+    await userEvent.selectOptions(within(screen.getByRole('navigation', { name: 'Recovery panels' })).getByRole('combobox'), 'urgehistory')
+    const card = screen.getAllByRole('button', { name: /^Edit/ })[0].closest('ul')!
+    const row = within(card).getAllByRole('button', { name: /^Edit/ })[0]
+    await userEvent.click(row)
+    expect(row).toHaveAttribute('aria-expanded', 'true')
+    expect(within(card).getAllByRole('textbox').length).toBeGreaterThan(0)
+    const before = card.querySelectorAll('li').length
+    await userEvent.click(within(card).getAllByRole('button', { name: /^Delete the urge on / })[0])
+    // The dialog names what goes; the list is untouched until it is confirmed.
+    expect(screen.getByRole('alertdialog', { name: 'Delete this urge?' })).toBeInTheDocument()
+    expect(card.querySelectorAll('li').length).toBe(before)
+  })
+})
