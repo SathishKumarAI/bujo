@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowCounterClockwise, HandFist, Minus, Plus, SlidersHorizontal, CaretDown } from '@/components/icons'
+import { ArrowCounterClockwise, Check, HandFist, Minus, Plus, SlidersHorizontal } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { Cell, Cells } from '../ui/cells'
+import { Cell, Cells, ControlCell } from '../ui/cells'
 import { Seg } from '../ui/seg'
 import { Sheet } from '../ui/sheet'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
 import { todayISO } from '../../lib/date'
-import { cat, onRaised } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 import { HALT_STATES, type HaltState } from '../../lib/streak'
 import { LONELY_KINDS } from '../../lib/recoveryFeedback'
 import { formatAmount, unitOf } from '../../lib/addictionUnits'
@@ -142,40 +142,37 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
         </div>
       </Sheet>
 
+      {/* EVERY CHOICE HERE IS ONE TAP — Cycle's sheet (`DayMorePhone`). The
+          kind of lonely was a native select: open it, scroll, pick, three
+          actions for five answers, behind a placeholder option. Now pills
+          at their own width, like Fitness's activity type. All three start
+          empty, so a second tap clearing one is safe (the `Seg` trap). */}
       <Sheet open={more} onOpenChange={setMore} title="Details" description="Optional · added to the next urge you log">
-        <div className="flex flex-col gap-4">
-          <div>
-            <p className="mb-1 px-1 text-label text-fg-2">What helped</p>
-            {/* Starts empty, so a second tap clearing it is safe. */}
+        <Cells>
+          <ControlCell label="What helped">
             <Seg label="What helped" allowNone value={d.technique ?? null} onChange={(v) => d.setTechnique(v ?? undefined)}
               options={TECHNIQUES.map((t) => ({ value: t.id, label: t.label.replace(' 10 min', '').replace(' check', ''), name: t.label }))} />
-          </div>
-          <div>
-            <p className="mb-1 px-1 text-label text-fg-2">HALT · tap any that fit</p>
-            <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="HALT check">
-              {HALT_STATES.map((h) => {
-                const on = d.halt.includes(h.id)
-                return (
-                  <button key={h.id} type="button" aria-pressed={on} onClick={() => toggleHalt(h.id)}
-                    className="min-h-11 rounded-[0.75rem] text-label font-medium"
-                    style={on ? { background: `${cat('peach')}22`, boxShadow: `inset 0 0 0 1.5px ${cat('peach')}`, color: 'var(--color-fg-1)' } : { background: 'var(--color-ink-2)', color: 'var(--color-fg-2)' }}>
-                    {h.label}
-                  </button>
-                )
-              })}
+          </ControlCell>
+          <ControlCell label="HALT" hint={d.halt.length ? `${d.halt.length} picked` : 'tap any that fit'}>
+            <div role="group" aria-label="HALT check" className="flex flex-wrap gap-1.5" style={{ ['--tone' as string]: 'var(--color-peach)' }}>
+              {HALT_STATES.map((h) => (
+                <button key={h.id} type="button" className="chip-toggle" aria-pressed={d.halt.includes(h.id)} onClick={() => toggleHalt(h.id)}>
+                  <Icon as={Check} size="sm" />{h.label}
+                </button>
+              ))}
             </div>
-          </div>
+          </ControlCell>
           {d.halt.includes('lonely') && (
-            <label className="select-pill">
-              <span className="sr-only">What kind of lonely?</span>
-              <select value={d.lonelyKind} onChange={(e) => d.setLonelyKind(e.target.value)}>
-                <option value="">What kind of lonely?</option>
-                {LONELY_KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}
-              </select>
-              <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-            </label>
+            <ControlCell label="What kind of lonely?">
+              <div role="radiogroup" aria-label="What kind of lonely?" className="flex flex-wrap gap-1.5" style={{ ['--tone' as string]: 'var(--color-peach)' }}>
+                {LONELY_KINDS.map((k) => (
+                  <button key={k.id} type="button" role="radio" aria-checked={d.lonelyKind === k.id} aria-label={k.label} className="chip-toggle"
+                    onClick={() => d.setLonelyKind(d.lonelyKind === k.id ? '' : k.id)}>{k.short}</button>
+                ))}
+              </div>
+            </ControlCell>
           )}
-        </div>
+        </Cells>
       </Sheet>
 
       {/* TODAY'S COUNT, FIXABLE: the − / + the old Today list carried, in the

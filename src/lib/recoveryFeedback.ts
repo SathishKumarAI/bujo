@@ -220,35 +220,44 @@ function topOf(xs: string[]): string | null {
  * three views of one fact — and the step is the whole reason the field exists.
  * Every `step` here is different from every other; if two of them collapsed into
  * "reach out to someone", the split would not be earning its question.
+ *
+ * `short` is the phone's pill (`RecoveryPhone`), where five full labels took
+ * five lines and pushed the sheet past one screen. It must be WORDS of
+ * `label`, which stays the accessible name (WCAG 2.5.3 compares whole words).
  */
 export const LONELY_KINDS = [
   {
     id: 'alone' as const,
     label: 'Nobody around',
+    short: 'Nobody around',
     step: 'Arrange company before the hour it usually hits, not during it',
     why: 'This is the kind that company genuinely fixes — and the only one where it does. By the time the urge is there, arranging it is already too slow.',
   },
   {
     id: 'unseen' as const,
     label: 'People around, none who know me',
+    short: 'None who know me',
     step: 'One honest conversation with one person, rather than more company',
     why: 'You were not short of people. More of them does not touch this — depth with one does, and it is the harder thing to schedule.',
   },
   {
     id: 'no-one-close' as const,
     label: 'Nobody I could call',
+    short: 'Nobody I could call',
     step: 'Pick one person and build the tie over weeks',
     why: 'Nothing tonight fixes this, and pretending otherwise is why quick advice fails here. It is a months-long thing, and it is worth starting anyway.',
   },
   {
     id: 'disconnected' as const,
     label: 'Adrift from everything',
+    short: 'Adrift',
     step: 'Worth saying out loud to someone — a friend, or someone qualified',
     why: 'This one sits outside what a tracking page can help with. Logging it is useful; relying on the log to fix it is not.',
   },
   {
     id: 'bored' as const,
     label: 'Mostly just bored',
+    short: 'Just bored',
     step: 'Something absorbing, not company',
     why: 'Understimulation gets logged as loneliness constantly, and it needs the opposite response — company will not hold your attention, a hard task will.',
   },
