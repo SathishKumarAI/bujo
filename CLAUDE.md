@@ -151,6 +151,14 @@ shell's book frame and page-turn are dropped for EVERY phone page in
 cover's card colour, and an accent-on-wash pill can fall under 4.5 (Coaching's
 today-pill went to 4.39 in latte; fixed by moving its text to `fg-1`).
 
+Trap (COD-533): **a test that reads a controlled input's DOM value cannot see
+a write that never happened.** `user.selectOptions` sets the `<select>`'s value
+and React only puts it back on the next render — so with `onChange={() => {}}`
+the select still read `egg-white` and the test passed. Assert on the
+**journal** (`localStorage['bujo:data']`), and count a value the day does NOT
+already hold, or a seeded match passes for you (the demo day was already
+egg-white). Armed on that canary before trusting it.
+
 Trap: **tap-again-to-clear on a PRE-SELECTED control drops data.** Time arrives
 selected from last session, and people tap the highlighted option to confirm
 it — the e2e did exactly that and logged a session with no duration. `Seg`'s

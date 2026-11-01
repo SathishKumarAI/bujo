@@ -8,6 +8,7 @@ import { CommitField } from '../CommitField'
 import { useStickyState } from '../../lib/useStickyState'
 import type { CyclePoint } from '../../lib/types'
 import { CHIP_FIELDS, FIELD_SECTIONS, SCALE_FIELDS, TAG_FIELDS } from './dayFields'
+import { DayMorePhone } from './DayMorePhone'
 
 /**
  * MORE FOR TODAY · the optional half of a day's log.
@@ -98,9 +99,17 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
 
       </button>
 
-      {isOpen && (() => {
+      {/* A phone draws its own body: the desktop's chip groups, squeezed into
+          a sheet, measured 1,277px — two sheets of scrolling (`DayMorePhone`). */}
+      {phone && (
+        <Sheet open={sheet} onOpenChange={setSheet} title="Mood, mucus, LH & more" description="All optional — saved as you tap">
+          <DayMorePhone entry={entry} onPatch={onPatch} sections={sections} />
+        </Sheet>
+      )}
+
+      {isOpen && !phone && (() => {
         const body = (
-        <div className={phone ? 'space-y-5' : 'collapse-in mt-3 space-y-5'}>
+        <div className="collapse-in mt-3 space-y-5">
           {/* THREE QUESTIONS, NOT NINE FIELDS.
               Nine chip groups at one weight with nothing between them is
               ~900px of flat stack in a 424px column — a list you scan rather
@@ -222,9 +231,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
           </label>
         </div>
         )
-        return phone
-          ? <Sheet open={sheet} onOpenChange={setSheet} title="Mood, mucus, LH & more" description="All optional — saved as you tap">{body}</Sheet>
-          : body
+        return body
       })()}
     </div>
   )

@@ -257,6 +257,13 @@
   background: var(--color-ink-1);
 }
 
+/* A track on a card that is already `ink-2` (Cycle's log card): the fill
+   vanishes into it, so the track is an outline instead. */
+.seg.seg-on-card {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+
 .seg > button:focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 1px;
