@@ -11,8 +11,9 @@ import { todayISO, prettyDay } from '../../lib/date'
 import { duprTrend, upcomingEvents } from '../../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../../lib/pickleballPlan'
 import type { PickleballFormat } from '../../lib/types'
-import { evtBlankOf, eventFrom, PREP_CHECKLIST } from './competitionDraft'
+import { evtBlankOf, eventFrom, draftOf, ratingClash, PREP_CHECKLIST } from './competitionDraft'
 import { notify } from '../../lib/notify'
+import { useConfirm } from '../ConfirmDialog'
 
 const tip = rechartsTooltip
 
@@ -25,9 +26,13 @@ const tip = rechartsTooltip
  * reason to exist is reading what they produced.
  */
 export function CompetitionPanel() {
-  const { data, addPickleEvent, removePickleEvent, logDupr, removeDupr } = useJournal()
+  const { data, addPickleEvent, updatePickleEvent, removePickleEvent, updateDupr, removeDupr } = useJournal()
+  const confirm = useConfirm()
   const today = todayISO()
   const [dupr, setDupr] = useState({ date: today, rating: '' })
+  /* What an Edit loaded: the event id / the rating's original date. Null = adding. */
+  const [duprFrom, setDuprFrom] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
   /* Desktop only: a phone draws `phone/CompetitionPhone` instead, so both
      forms start shut behind the header's "+". */
   const [duprOpen, setDuprOpen] = useState(false)
@@ -43,17 +48,28 @@ export function CompetitionPanel() {
   const evLosses = events.reduce((s, e) => s + (e.losses ?? 0), 0)
   const medals = events.filter((e) => /gold|silver|bronze|1st|2nd|3rd/i.test(e.placement ?? '')).length
 
-  function saveDupr() {
+  async function saveDupr() {
     const r = Number(dupr.rating)
     if (!dupr.rating || Number.isNaN(r) || r <= 0) return
-    logDupr(dupr.date, r)
+    const clash = ratingClash(data.settings.duprLog, dupr.date, duprFrom)
+    if (clash && !(await confirm({ title: `Replace ${clash.rating}?`, description: `${prettyDay(dupr.date)} already has a rating of ${clash.rating}. ${r} takes its place.`, confirmLabel: 'Replace it' }))) return
+    updateDupr(duprFrom ?? dupr.date, dupr.date, r)
     setDupr({ date: todayISO(), rating: '' })
+    setDuprFrom(null)
+  }
+  function editDupr(p: { date: string; rating: number }) {
+    setDupr({ date: p.date, rating: String(p.rating) })
+    setDuprFrom(p.date)
+    setDuprOpen(true)
   }
   function logEvent() {
     if (!ev.name.trim()) { notify.info('Name the event', 'A league or tournament needs a name to find it by.'); return }
-    addPickleEvent(eventFrom(ev))
+    if (editId) updatePickleEvent(editId, eventFrom(ev))
+    else addPickleEvent(eventFrom(ev))
     setEv(evtBlankOf())
+    setEditId(null)
   }
+  function cancelEdit() { setEv(evtBlankOf()); setEditId(null) }
 
   return (
     <>
@@ -111,7 +127,8 @@ export function CompetitionPanel() {
             <div className="mb-3 flex flex-wrap items-end gap-2 bg-ink-2 p-3">
               <label className="block text-label text-fg-1">Date<Input type="date" value={dupr.date} onChange={(e) => setDupr((c) => ({ ...c, date: e.target.value }))} className="mt-1" /></label>
               <label className="block text-label text-fg-1">Rating<Input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="e.g. 3.75" aria-label="DUPR rating" className="mt-1 w-28" /></label>
-              <Button variant="ghost" size="sm" onClick={saveDupr}>Save rating</Button>
+              <Button variant="ghost" size="sm" onClick={saveDupr}>{duprFrom ? 'Save changes' : 'Save rating'}</Button>
+              {duprFrom && <Button variant="ghost" size="sm" onClick={() => { setDuprFrom(null); setDupr({ date: todayISO(), rating: '' }) }}>Cancel</Button>}
             </div>
           )}
           {duprStats.points.length === 0 ? (
@@ -142,6 +159,7 @@ export function CompetitionPanel() {
                     <span className="text-fg-1">{prettyDay(p.date)}</span>
                     <span className="flex items-center gap-2">
                       <span className="font-medium tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
+                      <Button variant="ghost" size="sm" onClick={() => editDupr(p)} aria-label={`Edit rating from ${p.date}`} className="text-fg-2 reveal">Edit</Button>
                       <Button variant="ghost" size="icon-sm" onClick={() => removeDupr(p.date)} aria-label={`Remove rating from ${p.date}`} className="text-fg-2 reveal hover:text-red">×</Button>
                     </span>
                   </li>
@@ -184,7 +202,10 @@ export function CompetitionPanel() {
             <Input type="number" value={ev.wins} onChange={(e) => setE({ wins: e.target.value })} placeholder="Wins" aria-label="Wins" />
             <Input type="number" value={ev.losses} onChange={(e) => setE({ losses: e.target.value })} placeholder="Losses" aria-label="Losses" />
             <Input value={ev.partner} onChange={(e) => setE({ partner: e.target.value })} placeholder="Partner (optional)" aria-label="Partner" className="sm:col-span-2" />
-            <div className="flex justify-end sm:col-span-2"><Button variant="ghost" size="sm" onClick={logEvent}>Save event</Button></div>
+            <div className="flex justify-end gap-2 sm:col-span-2">
+              {editId && <Button variant="ghost" size="sm" onClick={cancelEdit}>Cancel</Button>}
+              <Button variant="ghost" size="sm" onClick={logEvent}>{editId ? 'Save changes' : 'Save event'}</Button>
+            </div>
           </div>
           )}
           {/* event list */}
@@ -199,6 +220,7 @@ export function CompetitionPanel() {
                   <span className="flex shrink-0 items-center gap-2">
                     {e.placement && <Pill color="yellow" size="micro" className="px-2">{e.placement}</Pill>}
                     {(e.wins != null || e.losses != null) && <span className="text-fg-2">{e.wins ?? 0}–{e.losses ?? 0}</span>}
+                    <Button variant="ghost" size="sm" onClick={() => { setEv(draftOf(e)); setEditId(e.id); setEvOpen(true) }} aria-label={`Edit ${e.name}`} className="text-fg-2 reveal">Edit</Button>
                     <Button variant="ghost" size="icon-sm" onClick={() => removePickleEvent(e.id)} aria-label="Remove event" className="text-fg-2 reveal hover:text-red">×</Button>
                   </span>
                 </li>

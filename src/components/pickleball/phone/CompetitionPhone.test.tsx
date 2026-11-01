@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JournalProvider } from '../../../store'
 import { ConfirmProvider } from '../../ConfirmDialog'
@@ -9,6 +9,7 @@ import { DeviceProvider } from '../../shell/device'
 import { Pickleball } from '../../../views/Pickleball'
 import { generateDemoData } from '../../../lib/demo'
 import type { PickleballEvent } from '../../../lib/types'
+import { prettyDay } from '../../../lib/date'
 
 /**
  * The Competition sheet on a phone (COD-553), asserted on the JOURNAL: a
@@ -55,5 +56,47 @@ describe('Pickleball Competition sheet on a phone', () => {
     expect(e).toBeTruthy()
     expect(e.wins).toBeUndefined()
     expect(e.losses).toBeUndefined()
+  })
+
+  /* COD-556. Asserted on the journal and on the COUNT: an edit that appends a
+     copy shows the new name too, so "still one record with this id" is the
+     half that catches it. The new name is one the demo does not hold. */
+  it('a tapped event row loads the form and saving rewrites that record', async () => {
+    const sheet = await openSheet()
+    const before = events()
+    const target = [...before].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+    await userEvent.click(within(sheet).getByRole('button', { name: new RegExp(String.raw`^Edit\s*${target.name}`) }))
+    const name = within(sheet).getByRole('textbox', { name: 'Event' })
+    expect(name).toHaveProperty('value', target.name)
+    await userEvent.clear(name)
+    await userEvent.type(name, 'COD-556 Renamed')
+    await userEvent.click(within(sheet).getByRole('button', { name: /Save changes/ }))
+    const after = events()
+    expect(after).toHaveLength(before.length)
+    expect(after.filter((e) => e.id === target.id)).toEqual([{ ...target, name: 'COD-556 Renamed' }])
+  })
+
+  it('a tapped rating row edits that rating, and saving onto another day asks first', async () => {
+    const sheet = await openSheet()
+    const log = () => (JSON.parse(localStorage.getItem('bujo:data')!) as { settings: { duprLog?: { date: string; rating: number }[] } }).settings.duprLog ?? []
+    const before = log()
+    const [older, newest] = before.slice(-2)
+    await userEvent.click(within(sheet).getByRole('button', { name: new RegExp(String.raw`^Edit rating,\s*${prettyDay(newest.date)}`) }))
+    const rating = within(sheet).getByRole('spinbutton', { name: 'Rating' })
+    expect(rating).toHaveProperty('value', String(newest.rating))
+    await userEvent.clear(rating)
+    await userEvent.type(rating, '4.99')
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
+    expect(log()).toHaveLength(before.length)
+    expect(log().find((p) => p.date === newest.date)?.rating).toBe(4.99)
+
+    // Moving it onto a day that already holds a rating is a replace: it asks.
+    await userEvent.click(within(sheet).getByRole('button', { name: new RegExp(String.raw`^Edit rating,\s*${prettyDay(newest.date)}`) }))
+    fireEvent.change(within(sheet).getByLabelText('Rating date'), { target: { value: older.date } })
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Replace it' }))
+    expect(log()).toHaveLength(before.length - 1)
+    expect(log().find((p) => p.date === older.date)?.rating).toBe(4.99)
+    expect(log().some((p) => p.date === newest.date)).toBe(false)
   })
 })
