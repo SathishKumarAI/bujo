@@ -1,55 +1,50 @@
 # STATUS
 
-**Stopped:** 2026-10-31, on `main` after #491. Every page you LOG on has its
-phone pass in the Program / Pickleball shape; desktop unchanged on each
-(DOM element count + `#main` text diffed against main's build per PR).
+**Stopped:** 2026-11-01, on `main` after #505. Every logging page has its
+phone pass; this stretch made the phone feel like an app (taps answer, the
+day lives in the top bar) and found a type bug that shrank titles everywhere.
 
 ## Where it stands
 
-| # | page | phone shape |
-|---|---|---|
-| #476 | Pull-ups | Starting From Zero day first; free session in a sheet |
-| #477, #478 | Nutrition | day strip · scoreboard · Your usual (pins, usage, Indian staples) · Add-food sheet |
-| #479, #480, #481 | Challenges, shared `DayStrip` | strip with week arrows (one 56px row) |
-| #482–#484 | Recovery | one-line streak · frequent urges (Held / Gave in) · today's count on the rows |
-| #485 | Today | trimmed check-in, fasting, no duplicate status strip; plan card's habits-left count fixed |
-| #486, #489 | Cycle | one-line orientation · flags in one row · extras in a sheet |
-| #487 | Goals | your goals first as rows with − / + |
-| #488 | Home workout | routine select · tap-per-set rows · log dock |
-| #489 | all strip pages | `DayStrip` pinned under the top bar; Today's bar drops its date stepper |
-| #490 | Coaching | week select · drill rows · dock (done → next) |
-| #491 | Collections | add forms in sheets; deletes ask first |
-
-Monthly reviewed and left (the calendar is the page).
+| # | what |
+|---|---|
+| #476–#491 | phone pass on every logging page (Program/Pickleball shape) |
+| #493 | Insights: one key chart per domain back on the phone |
+| #494, #495 | Cycle: one-tap Day sheet, temperature row, caveat as points; Today's title switcher |
+| #496 | COD-518: a tracked addiction's slip can be removed |
+| #497 | Recovery's URL is `?view=recovery` (`?view=nofap` still lands) |
+| #498 | COD-537: the day strip lives IN the top bar — 5 days, 3 beside a long title; tap the chosen day for any date |
+| #499 | COD-511: `npm run icons` reads the current registry again |
+| #500, #502 | Program: "Watch" beside every lift (phone + desktop), compact rows, Every week notes folded |
+| #501, #503, #505 | one-tap sheets: Recovery details, Nutrition source, Pull-ups method |
+| #504 | COD-547: touch press/reveal motion (`styles/touch-motion.css`), phone headings 20/700; **`cn()` was dropping size tokens** (desktop titles 15→17px, chips 15→13px) |
 
 ## The next action
 
-1. **Insights on a phone (COD-531, done):** the one key chart per domain is
-   back (`phone: true` in `lib/insightsFilter.ts`): mood calendar, sleep debt,
-   workout minutes, task trend. Every logging page stays chart-free.
-2. **COD-518** (backlog): a tracked addiction's lapse day cannot be removed
-   (only the main streak's can); needs `removeAddictionRelapse` + restartFrom.
-3. **COD-511** (in review, `fix/build-icons-registry`): `npm run icons` reads
-   the current `export const … // was …` lines again and regenerates both
-   files byte-identically; it refuses an export line in any other shape.
-4. Left: Help and Settings phone passes (reading / settings pages).
-5. Older: COD-500 (desktop streak button), COD-481 heading-order half;
-   Supabase project (COD-434) and sync encryption decision (COD-436).
+1. **Focus** has no phone drawing at all (3.5 screens, desktop form on a
+   phone): a full phone-page pass — log first, Date/Minutes as `Seg`, Tags as
+   `.chip-toggle`.
+2. **Pickleball Competition sheet** is the desktop form (1702px) — needs
+   `Cells` rows (Format stays a select, 8 options).
+3. Recovery review zone on a phone: "Win or loss" select + filter + pager +
+   heading are three navigations for one panel; history rows wrap their `×`.
+4. Older: Help and Settings phone passes, COD-500, COD-481 heading-order
+   half; Supabase project (COD-434), sync encryption (COD-436).
 
 ## Live traps
 
-- **Chrome DevTools MCP needs Chrome on 9333** after a reboot — see memory
-  `chrome-devtools-mcp-port`. Re-emulate the phone after any reconnect (the
-  emulation is per-connection; a fresh one reads 767px wide).
-- **Compare bundles before a desktop diff**: the app reloads once after a new
-  build (`controllerchange`), so read after two reloads and check the served
-  `index-*.js` against `dist/index.html` — one "identical" diff this session
-  was two reads of the same old bundle.
+- **A new `--text-*` token goes into `lib/cn.ts`** too, or tailwind-merge
+  reads it as a colour and drops it (CLAUDE.md, COD-547).
+- **Probe screenshots: absolute paths.** A relative `screenshot({path})` run
+  from the repo root landed `prog-fold.png` in a commit (#502, removed in #504).
+- **Compare bundles before a desktop diff** — read after two reloads and check
+  the served `index-*.js` against `dist/index.html`; Playwright probes use
+  `serviceWorkers: 'block'`.
 - **`.cell` is unlayered**: `flex-col` utilities lose to its
   `align-items: center` — use `cell cell-stack`.
-- **A `Sheet` is `.ios-form`**: single-choice chip rows become segmented,
-  multi-choice wrap four to a line (long labels now take their width).
-- **Sticky works against the parent**: the day strip must sit at page level.
+- **A `Sheet` is `.ios-form`**: single-choice chip rows become segmented.
+- **The day strip portals into the bar** (`shell/barSlot.ts`); without the
+  bar (component tests) it draws the old inline week.
 
 ## Environment
 
@@ -57,4 +52,5 @@ Preview: `npx vite preview --port 4180 --strictPort` (this session's).
 Dev: `127.0.0.1:5199`. Gates before every push: `npm run verify`,
 `npm run design`, `npm run contrast`; a11y with
 `BUJO_URL=http://localhost:4180 BUJO_THEMES=mocha BUJO_PHONE_THEMES=mocha,latte node scripts/a11y-axe.mjs`
-(backgrounded; never build while it runs).
+(backgrounded; never build while it runs). Agents ran in `.claude/worktrees/`
+on previews 4190–4192, each stopped by its own PID.
