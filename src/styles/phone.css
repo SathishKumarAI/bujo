@@ -240,6 +240,16 @@
   transition: background-color 180ms, color 180ms, box-shadow 180ms;
 }
 
+/* A segment whose labels are the person's own words (Focus's projects):
+   they wrap inside the segment instead of being cut ("pickleball-vision"
+   showed 80px of 124). COD-572. */
+.seg.seg-wrap > button {
+  padding-block: 0.25rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
 /* The thumb must sit LIGHTER than its track in every theme, or it reads as
    pressed in. Measured against --color-ink-2: the card colour is lighter in
    the light themes (latte 1.11, dawn 1.18) and DARKER in the three dark ones
