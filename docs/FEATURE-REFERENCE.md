@@ -206,7 +206,7 @@
 
 ### Recovery
 
-`?view=nofap`
+`?view=recovery` (`?view=nofap` still lands there)
 
 **What it is.** An opt-in abstinence streak: current streak, personal best, milestones, an urge-surfing counter, and a judgement-free relapse log. Stays entirely on your device.
 

@@ -55,12 +55,12 @@ describe('guide entries', () => {
   })
 
   it('titles and nav labels come from the app, not from this file', () => {
-    // `nofap` is the case that catches a hand-typed label: its page title is
-    // "Recovery" in the chrome and its tab label is "Recovery" in the nav,
-    // while the view id says otherwise.
-    const recovery = GUIDE.find((c) => c.view === 'nofap')
-    expect(recovery?.navLabel).toBe('Recovery')
-    expect(recovery?.title).toBe(VIEW_CHROME.nofap.title)
+    // `gym` is the case that catches a hand-typed label: its tab label is
+    // "Strength" in the nav while the view id says otherwise. (It was `nofap`
+    // until that id became `recovery` and stopped disagreeing.)
+    const strength = GUIDE.find((c) => c.view === 'gym')
+    expect(strength?.navLabel).toBe('Strength')
+    expect(strength?.title).toBe(VIEW_CHROME.gym.title)
   })
 
   it('groups every card under a real nav section, in nav order', () => {

@@ -19,7 +19,7 @@ describe('the five sections', () => {
     // Recovery is not first, but the principle has to hold for whichever tab
     // is: a landing view that the settings have hidden is a dead rail row.
     const off = { cycle: false, nofap: false }
-    expect(tabsOf('body', off).map((t) => t.view)).not.toContain('nofap')
+    expect(tabsOf('body', off).map((t) => t.view)).not.toContain('recovery')
     expect(tabsOf('body', off).map((t) => t.view)).not.toContain('cycle')
   })
 

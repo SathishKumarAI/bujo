@@ -53,7 +53,7 @@ const UPDATE = process.argv.includes('--update')
 // "a page that is never visited cannot fail" trap one level up.
 const VIEWS = [
   'today', 'plan', 'fitness', 'gym', 'mindset', 'insights',
-  'nutrition', 'nofap', 'cycle', 'coaching', 'pickleball', 'collections', 'help',
+  'nutrition', 'recovery', 'cycle', 'coaching', 'pickleball', 'collections', 'help',
 ]
 
 /** Runs in the page. Returns the counts for one view. */

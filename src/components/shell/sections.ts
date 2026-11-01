@@ -190,7 +190,7 @@ export const SECTIONS: Section[] = [
       // fact about their output, not about what the page is for. Insights keeps
       // the three surfaces that only ever look backwards.
       { view: 'challenges', label: 'Challenges' },
-      { view: 'nofap', label: 'Recovery', gate: 'nofap' },
+      { view: 'recovery', label: 'Recovery', gate: 'nofap' },
       { view: 'cycle', label: 'Cycle', gate: 'cycle' },
     ],
   },

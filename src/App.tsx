@@ -58,7 +58,7 @@ const Settings = lazy(() => import('./views/Settings').then((m) => ({ default: m
 const VIEWS: Record<ViewId, React.ComponentType> = {
   today: Today, monthly: Monthly, trackers: Trackers,
   fitness: Fitness, nutrition: Nutrition, gym: Gym, program: Program, pullups: Pullups, pickleball: Pickleball, homeworkout: HomeWorkout, challenges: Challenges, focus: Focus, plan: Plan, collections: Collections, reading: Reading, goals: Goals,
-  insights: Insights, cycle: Cycle, nofap: NoFap, coaching: Coaching, mindset: Mindset, help: Help,
+  insights: Insights, cycle: Cycle, recovery: NoFap, coaching: Coaching, mindset: Mindset, help: Help,
   'kitchen-sink': KitchenSink,
   settings: Settings,
 }

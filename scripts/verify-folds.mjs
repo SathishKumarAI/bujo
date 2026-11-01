@@ -5,7 +5,7 @@
  * months: a gate that cannot see a region cannot vouch for it.
  *
  *   node scripts/verify-folds.mjs coaching
- *   BUJO_URL=http://localhost:5199 node scripts/verify-folds.mjs nofap
+ *   BUJO_URL=http://localhost:5199 node scripts/verify-folds.mjs recovery
  *
  * Run it on any page whose folds a change closed. It opens in three passes,
  * because opening an outer fold mounts inner ones that were not in the DOM

@@ -176,7 +176,7 @@ export function Goals() {
       target: best,
       color: 'peach',
       icon: Flame,
-      to: 'nofap',
+      to: 'recovery',
     })
   }
 

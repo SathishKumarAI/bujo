@@ -63,7 +63,7 @@ const PAGES = [
    * Its `patterns` row also carries sub-section chips now; those are inside
    * the row, so opening the row reaches them, and the chips default to All.
    */
-  { view: 'nofap', label: 'recovery', rows: ['Win or loss', 'Progress', 'Patterns', 'Plan', 'Reference'] },
+  { view: 'recovery', label: 'recovery', rows: ['Win or loss', 'Progress', 'Patterns', 'Plan', 'Reference'] },
   /**
    * CYCLE, the last of the six pages COD-237 named and the one with the most
    * to hide: six rail rows, of which `npm run a11y` has only ever scanned
