@@ -353,11 +353,35 @@ export function searchGuide(query: string): GuideCard[] {
   })
 }
 
+/**
+ * A paragraph as its sentences, for a phone that reads points (CLAUDE.md
+ * "Points, not paragraphs"). For copy this module does not own — `what` is
+ * `VIEW_CHROME.help`, a glossary entry is `glossary.json` — so the desktop keeps
+ * the paragraph and the phone draws the same words one sentence per line.
+ * Splits only where a sentence ends and a capital starts the next, so "e.g. a"
+ * and "0.3–0.5" stay whole. `helpPoints.test.ts` holds every split to a floor.
+ */
+export function asPoints(text: string): string[] {
+  const out: string[] = []
+  for (const s of text.trim().split(/(?<=[.!?])\s+(?=[A-Z“"(])/)) {
+    // A three-word sentence ("A Body tab.") is not a point on its own; it
+    // rides with the line before it rather than drawing as a stub.
+    if (out.length && (s.length < 16 || out[out.length - 1].length < 16)) out[out.length - 1] += ` ${s}`
+    else out.push(s)
+  }
+  return out
+}
+
 // ── Tutorials ───────────────────────────────────────────────────────────────
 
 export interface TutorialStep {
   title: string
-  body: string
+  /**
+   * One idea per line — a phone reads them as points (CLAUDE.md "Points, not
+   * paragraphs"). The desktop joins them back into the paragraph it always
+   * drew, so the lines are whole sentences, never fragments.
+   */
+  body: string[]
   /** Where to go to do it. Omitted when the step is a decision, not a screen. */
   to?: ViewId
 }
@@ -389,27 +413,45 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         title: 'Load the demo and look around',
-        body: 'Settings → Demo & reset → Load demo data fills about thirty days, so every chart has something in it. Do this before you write anything of your own: it replaces the journal.',
+        body: [
+          'Settings → Demo & reset → Load demo data fills about thirty days, so every chart has something in it.',
+          'Do this before you write anything of your own: it replaces the journal.',
+        ],
         to: 'settings',
       },
       {
         title: 'Write three lines in Today',
-        body: 'One task, one event, one note. Type "t buy milk", then "e dentist 3pm", then "n slept badly". Enter after each.',
+        body: [
+          'One task, one event, one note.',
+          'Type "t buy milk", then "e dentist 3pm", then "n slept badly".',
+          'Enter after each.',
+        ],
         to: 'today',
       },
       {
         title: 'Close a task',
-        body: 'Click the · glyph beside a task and it becomes ✕. Click again to cycle through migrated and dropped. The status is the glyph — there is no separate checkbox anywhere in this app.',
+        body: [
+          'Click the · glyph beside a task and it becomes ✕.',
+          'Click again to cycle through migrated and dropped.',
+          'The status is the glyph — there is no separate checkbox anywhere in this app.',
+        ],
         to: 'today',
       },
       {
         title: 'Rate the day',
-        body: 'Set mood, stress and sleep on the 0–10 scales. Three taps. These are what every correlation and chart is built from, so a day without them is a blank in Stats.',
+        body: [
+          'Set mood, stress and sleep on the 0–10 scales. Three taps.',
+          'These are what every correlation and chart is built from, so a day without them is a blank in Stats.',
+        ],
         to: 'today',
       },
       {
         title: 'Export a backup',
-        body: 'Settings → Data → Export JSON. Your journal exists only in this browser. Do it now, while it costs nothing, so the habit is in place before the journal is worth losing.',
+        body: [
+          'Settings → Data → Export JSON.',
+          'Your journal exists only in this browser.',
+          'Do it now, while it costs nothing, so the habit is in place before the journal is worth losing.',
+        ],
         to: 'settings',
       },
     ],
@@ -422,26 +464,41 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         title: 'Pick two habits. Two.',
-        body: 'Trackers → add habit. Two is not a soft start, it is the right number — a grid with eleven rows is a grid you stop filling in on day four.',
+        body: [
+          'Trackers → add habit.',
+          'Two is not a soft start, it is the right number — a grid with eleven rows is a grid you stop filling in on day four.',
+        ],
         to: 'trackers', // redirects to Today → Habits
       },
       {
         title: 'Anchor the log to something you already do',
-        body: 'Decide when you write: with coffee, or before bed. A journal with no fixed time is one you do at 1am once a week and then stop.',
+        body: [
+          'Decide when you write: with coffee, or before bed.',
+          'A journal with no fixed time is one you do at 1am once a week and then stop.',
+        ],
       },
       {
         title: 'Tick the grid and rate the day, every day',
-        body: 'Tap the habit cells, set mood/stress/sleep. Under a minute. Skipping the written entries is fine; skipping the three numbers is what leaves holes in every chart later.',
+        body: [
+          'Tap the habit cells, set mood/stress/sleep. Under a minute.',
+          'Skipping the written entries is fine; skipping the three numbers is what leaves holes in every chart later.',
+        ],
         to: 'trackers', // redirects to Today → Habits
       },
       {
         title: 'Log one session of whatever you train',
-        body: 'Fitness for anything timed, Strength for sets and reps. One session is enough to make the week view mean something.',
+        body: [
+          'Fitness for anything timed, Strength for sets and reps.',
+          'One session is enough to make the week view mean something.',
+        ],
         to: 'fitness',
       },
       {
         title: 'On day seven, run the Weekly Review',
-        body: 'Insights → Weekly Review walks you through migrate → review → reflect. This is the step that turns a pile of entries into something you have actually read.',
+        body: [
+          'Insights → Weekly Review walks you through migrate → review → reflect.',
+          'This is the step that turns a pile of entries into something you have actually read.',
+        ],
         to: 'insights',
       },
     ],
@@ -454,27 +511,45 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       {
         title: 'Migrate, and drop things on purpose',
-        body: 'Plan → work the overdue list. Move each task to today or tomorrow, or drop it. Dropping is not failure: a task carried for five weeks was never going to happen, and was costing you attention every time you read past it.',
+        body: [
+          'Plan → work the overdue list.',
+          'Move each task to today or tomorrow, or drop it.',
+          'Dropping is not failure: a task carried for five weeks was never going to happen, and was costing you attention every time you read past it.',
+        ],
         to: 'plan',
       },
       {
         title: 'Read the heatmap before anything else',
-        body: 'Insights → filter to Habits → activity heatmap. The empty weeks are the finding. Everything else on that page is detail about the weeks that were not empty.',
+        body: [
+          'Insights → filter to Habits → activity heatmap.',
+          'The empty weeks are the finding.',
+          'Everything else on that page is detail about the weeks that were not empty.',
+        ],
         to: 'insights',
       },
       {
         title: 'Check the sleep↔mood scatter',
-        body: 'Insights → filter to Mood & sleep. Thirty days is roughly where this becomes readable. Most people are confidently wrong about their own answer, which is the reason to look rather than guess.',
+        body: [
+          'Insights → filter to Mood & sleep.',
+          'Thirty days is roughly where this becomes readable.',
+          'Most people are confidently wrong about their own answer, which is the reason to look rather than guess.',
+        ],
         to: 'insights',
       },
       {
         title: 'Set the new month up',
-        body: 'Monthly → record where you are, what you want from the month, and the photo. Two minutes, and it is what makes the month findable a year from now.',
+        body: [
+          'Monthly → record where you are, what you want from the month, and the photo.',
+          'Two minutes, and it is what makes the month findable a year from now.',
+        ],
         to: 'monthly',
       },
       {
         title: 'Export again, and keep the file',
-        body: 'Settings → Export JSON, and Export Markdown if you want it readable in Obsidian or Logseq. A monthly export is the entire backup strategy, and it is yours to run — no server is holding a copy.',
+        body: [
+          'Settings → Export JSON, and Export Markdown if you want it readable in Obsidian or Logseq.',
+          'A monthly export is the entire backup strategy, and it is yours to run — no server is holding a copy.',
+        ],
         to: 'settings',
       },
     ],
