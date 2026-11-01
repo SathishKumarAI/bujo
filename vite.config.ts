@@ -93,6 +93,8 @@ export default defineConfig({
     // checked out is worse than no count — it was quoted in commit messages
     // before anyone noticed. eslint already ignores this path for the same
     // reason (see eslint.config.js).
-    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
+    // `.vercel/**`: the deploy bundle (`scripts/ship.sh`) holds copies of
+    // tests too — 2406 read as 2425 after a deploy.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**', '.vercel/**'],
   },
 })

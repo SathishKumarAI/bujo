@@ -17,7 +17,9 @@ export default defineConfig([
   // repo. They contain a full second copy of the app, so linting them doubles
   // every finding — and because each carries its own tsconfig, typescript-eslint
   // cannot decide which root it is looking at and errors on every file.
-  globalIgnores(['dist', '@', '.claude/worktrees']),
+  // `.vercel/output` is the bundle `scripts/ship.sh` leaves behind — a
+  // second copy of the app whose test file failed lint after every deploy.
+  globalIgnores(['dist', '@', '.claude/worktrees', '.vercel']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
