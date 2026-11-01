@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { CalendarDot, CaretDown, Check, Minus, Plus, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
@@ -11,7 +11,7 @@ import { duprTrend, upcomingEvents } from '../../../lib/pickleball'
 import { PICKLE_FORMATS, FORMAT_LABEL } from '../../../lib/pickleballPlan'
 import type { PickleballFormat } from '../../../lib/types'
 import { notify } from '../../../lib/notify'
-import { evtBlankOf, eventFrom, PREP_CHECKLIST, type EventDraft } from '../competitionDraft'
+import { evtBlankOf, eventFrom, draftOf, ratingClash, PREP_CHECKLIST, type EventDraft } from '../competitionDraft'
 
 const KINDS = [{ value: 'tournament', label: 'Tournament' }, { value: 'league', label: 'League' }] as const
 /** One tap for the answers `medals` counts; anything else ("2nd of 8") is typed. */
@@ -24,6 +24,8 @@ const MEDALS = ['Gold', 'Silver', 'Bronze']
  * OWNS: the phone drawing — the event form as inset rows with its Save pinned
  * to the sheet's bottom edge, the DUPR rating as two rows, then the read-back
  * (events, ratings, what is coming up and its checklist), no chart.
+ * A tap on an event or rating row loads it into the same form (COD-556);
+ * saving then rewrites that record instead of adding a second one.
  * DOES NOT OWN: the draft or what saving writes (`competitionDraft.ts`, shared
  * with the desktop panel), or the sheet itself (`PickleballPhone`).
  *
@@ -33,12 +35,18 @@ const MEDALS = ['Gold', 'Silver', 'Bronze']
  * `Seg` trap: a confirming tap would clear it).
  */
 export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
-  const { data, addPickleEvent, removePickleEvent, logDupr, removeDupr } = useJournal()
+  const { data, addPickleEvent, updatePickleEvent, removePickleEvent, updateDupr, removeDupr } = useJournal()
   const confirm = useConfirm()
   const today = todayISO()
   const [ev, setEv] = useState(evtBlankOf)
   const set = (p: Partial<EventDraft>) => setEv((c) => ({ ...c, ...p }))
   const [dupr, setDupr] = useState({ date: today, rating: '' })
+  /* What a tapped row loaded into the form: the event id / the rating's
+     original date. Null = adding. The form scrolls into view on a tap. */
+  const [editId, setEditId] = useState<string | null>(null)
+  const [duprFrom, setDuprFrom] = useState<string | null>(null)
+  const evForm = useRef<HTMLElement>(null)
+  const duprForm = useRef<HTMLDivElement>(null)
   const stats = duprTrend(data.settings)
   const upcoming = upcomingEvents(data, today)
   const events = [...(data.pickleballEvents ?? [])].sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -51,20 +59,25 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
 
   function save() {
     if (!ev.name.trim()) { notify.info('Name the event', 'A league or tournament needs a name to find it by.'); return }
-    addPickleEvent(eventFrom(ev))
-    notify.success('Event logged', ev.name.trim())
+    if (editId) updatePickleEvent(editId, eventFrom(ev))
+    else addPickleEvent(eventFrom(ev))
+    notify.success(editId ? 'Event updated' : 'Event logged', ev.name.trim())
     setEv(evtBlankOf())
+    setEditId(null)
   }
-  function saveDupr() {
+  async function saveDupr() {
     const r = Number(dupr.rating)
     if (!dupr.rating || Number.isNaN(r) || r <= 0) return
-    logDupr(dupr.date, r)
+    const clash = ratingClash(data.settings.duprLog, dupr.date, duprFrom)
+    if (clash && !(await confirm({ title: `Replace ${clash.rating}?`, description: `${prettyDay(dupr.date)} already has a rating of ${clash.rating}. ${r} takes its place.`, confirmLabel: 'Replace it' }))) return
+    updateDupr(duprFrom ?? dupr.date, dupr.date, r)
     setDupr({ date: todayISO(), rating: '' })
+    setDuprFrom(null)
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <section aria-label="Log an event" className="flex flex-col gap-3">
+      <section ref={evForm} aria-label={editId ? 'Edit event' : 'Log an event'} className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           {/* A pill over a real date input — the phone's own date wheel. No
               `max`: an event you have entered but not yet played is logged too. */}
@@ -122,8 +135,9 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
           <FieldCell label="Partner" value={ev.partner} onChange={(v) => set({ partner: v })} placeholder="Optional" list="pb-comp-partners" />
         </div>
         {/* Pinned to the sheet's bottom edge while the form is on screen. */}
-        <div className="comp-dock">
-          <button type="button" className="cta cta-compact" onClick={save}><Icon as={Check} size="md" />Save event</button>
+        <div className="comp-dock gap-2">
+          {editId && <button type="button" className="suggest" onClick={() => { setEv(evtBlankOf()); setEditId(null) }}>Cancel edit</button>}
+          <button type="button" className="cta cta-compact" onClick={save}><Icon as={Check} size="md" />{editId ? 'Save changes' : 'Save event'}</button>
         </div>
       </section>
 
@@ -132,12 +146,13 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
           <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Date</span>
           <input type="date" value={dupr.date} onChange={(e) => e.target.value && setDupr((c) => ({ ...c, date: e.target.value }))} className="cell-input" aria-label="Rating date" />
         </label>
-        <div className="cell gap-2">
+        <div ref={duprForm} className="cell gap-2">
           <label className="flex min-w-0 flex-1 items-center gap-3">
             <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Rating</span>
             <input type="number" step="0.01" inputMode="decimal" value={dupr.rating} onChange={(e) => setDupr((c) => ({ ...c, rating: e.target.value }))} placeholder="3.75" className="cell-input" />
           </label>
-          <button type="button" className="urge-held" onClick={saveDupr} disabled={!dupr.rating}>Save rating</button>
+          {duprFrom && <button type="button" className="suggest" onClick={() => { setDuprFrom(null); setDupr({ date: todayISO(), rating: '' }) }}>Cancel</button>}
+          <button type="button" className="urge-held" onClick={saveDupr} disabled={!dupr.rating}>{duprFrom ? 'Save' : 'Save rating'}</button>
         </div>
       </Cells>
 
@@ -159,9 +174,10 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
       {events.length > 0 && (
         <Cells title="Events" aside={`${events.length} logged`}>
           {events.map((e) => (
-            <Cell key={e.id} title={e.name}
+            <EditRow key={e.id} label="Edit" title={e.name}
               subtitle={[prettyDay(e.date), FORMAT_LABEL[e.format], e.placement, (e.wins != null || e.losses != null) ? `${e.wins ?? 0}–${e.losses ?? 0}` : ''].filter(Boolean).join(' · ')}
-              trail={(
+              onPress={() => { setEv(draftOf(e)); setEditId(e.id); evForm.current?.scrollIntoView?.({ block: 'start' }) }}
+              remove={(
                 <button type="button" className="comp-remove" aria-label={`Remove ${e.name}`} onClick={async () => {
                   if (await confirm({ title: `Remove ${e.name}?`, description: 'The event and its record come off your history.', confirmLabel: 'Remove it', destructive: true })) removePickleEvent(e.id)
                 }}><Icon as={X} size="sm" /></button>
@@ -173,18 +189,39 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
       {stats.points.length > 0 && (
         <Cells title="Ratings">
           {[...stats.points].reverse().slice(0, 8).map((p) => (
-            <Cell key={p.date} title={prettyDay(p.date)}
-              trail={(
-                <span className="flex items-center gap-1">
-                  <span className="font-semibold tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>
+            <EditRow key={p.date} label="Edit rating," title={prettyDay(p.date)}
+              value={<span className="font-semibold tabular-nums" style={{ color: onRaised('mauve') }}>{p.rating}</span>}
+              onPress={() => { setDupr({ date: p.date, rating: String(p.rating) }); setDuprFrom(p.date); duprForm.current?.scrollIntoView?.({ block: 'center' }) }}
+              remove={(
                   <button type="button" className="comp-remove" aria-label={`Remove rating from ${prettyDay(p.date)}`} onClick={async () => {
                     if (await confirm({ title: 'Remove this rating?', description: `${p.rating} on ${prettyDay(p.date)} comes off the trend.`, confirmLabel: 'Remove it', destructive: true })) removeDupr(p.date)
                   }}><Icon as={X} size="sm" /></button>
-                </span>
               )} />
           ))}
         </Cells>
       )}
+    </div>
+  )
+}
+
+/**
+ * A history row that edits on a tap and keeps its remove beside it. Not
+ * `Cell onPress`: that row IS a button, and a remove inside it would nest one
+ * button in another. `label` is said BEFORE the visible text, never instead
+ * (the `label-content-name-mismatch` trap).
+ */
+function EditRow({ label, title, subtitle, value, onPress, remove }: { label: string; title: string; subtitle?: string; value?: ReactNode; onPress: () => void; remove: ReactNode }) {
+  return (
+    <div className="cell pr-1">
+      <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={onPress}>
+        <span className="min-w-0 flex-1">
+          <span className="sr-only">{label} </span>
+          <span className="block truncate text-body font-medium text-fg-1">{title}</span>
+          {subtitle && <span className="block truncate text-label text-fg-2">{subtitle}</span>}
+        </span>
+        {value}
+      </button>
+      {remove}
     </div>
   )
 }
