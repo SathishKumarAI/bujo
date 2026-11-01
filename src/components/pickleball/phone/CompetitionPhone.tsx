@@ -103,7 +103,21 @@ export function CompetitionPhone({ allPartners }: { allPartners: string[] }) {
               </div>
             )
           })}
-          <FieldCell label="Placement" value={ev.placement} onChange={(v) => set({ placement: v })} placeholder="2nd of 8" suggestions={MEDALS} />
+          {/* Not `FieldCell`'s suggestions: its strip is indented 7.25rem and
+              does not wrap, which put Bronze 5px past the cell's content box
+              at 390px (363 vs 358). Here the medals sit under the field,
+              right-aligned, and may wrap. */}
+          <div className="cell cell-stack gap-1.5">
+            <label className="flex min-h-[2.25rem] items-center gap-3">
+              <span className="w-[6.5rem] shrink-0 text-body text-fg-1">Placement</span>
+              <input value={ev.placement} onChange={(e) => set({ placement: e.target.value })} placeholder="2nd of 8" className="cell-input" />
+            </label>
+            <div className="flex flex-wrap justify-end gap-1.5" role="group" aria-label="Medal">
+              {MEDALS.filter((m) => m !== ev.placement).map((m) => (
+                <button key={m} type="button" className="suggest" onClick={() => set({ placement: m })}>{m}</button>
+              ))}
+            </div>
+          </div>
           <FieldCell label="Division" value={ev.division} onChange={(v) => set({ division: v })} placeholder="3.5 Mixed" />
           <FieldCell label="Partner" value={ev.partner} onChange={(v) => set({ partner: v })} placeholder="Optional" list="pb-comp-partners" />
         </div>
