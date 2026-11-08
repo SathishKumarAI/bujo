@@ -1,5 +1,3 @@
-import { Card } from '../ui'
-import { useDevice } from '../shell/device'
 import { Cell, Cells } from '../ui/cells'
 
 /**
@@ -35,44 +33,13 @@ const LINKS = [
 ]
 
 export function ProjectLinks() {
-  const phone = useDevice() === 'mobile'
-  // Phone: each link a row that opens it; the privacy note is the group footer.
-  if (phone) return (
+  // Each link a row that opens it; the privacy note is the group footer.
+  return (
     <div className="flex flex-col gap-1.5">
       <Cells title="Help build it">
         {LINKS.map((l) => <Cell key={l.href} title={l.label} subtitle={l.detail} href={l.href} />)}
       </Cells>
       <p className="px-3 text-label text-fg-2">An issue shares only what you type into it</p>
     </div>
-  )
-  return (
-    <Card band collapsible defaultCollapsed title="Help build it" subtitle="No support inbox — the issue tracker is the whole channel">
-      <ul className="flex flex-col">
-        {LINKS.map((l) => (
-          <li key={l.href} className="border-t border-line first:border-t-0">
-            <a
-              href={l.href}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="group/link flex items-baseline justify-between gap-4 py-2.5 hover:bg-ink-2/50"
-            >
-              <span className="min-w-0">
-                <span className="block text-body text-fg-1 group-hover/link:text-brand-text">{l.label}</span>
-                <span className="block text-label text-fg-2">{l.detail}</span>
-              </span>
-              {/* Not an aria-label: the link text already names the destination,
-                  and "opens in a new tab" belongs to every one of these. */}
-              <span aria-hidden className="shrink-0 text-label text-fg-3">
-                ↗
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-label text-fg-2">
-        Opening an issue shares only what you type into it. Your journal never leaves this device
-        unless you turn on sync yourself.
-      </p>
-    </Card>
   )
 }

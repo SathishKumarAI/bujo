@@ -1,9 +1,6 @@
 import { useJournal } from '../../store'
-import { Card, StatTile } from '../ui'
-import { cat, onRaised } from '../../lib/colors'
 import { dataSummary } from '../../lib/csv'
 import { Database } from '@/components/icons'
-import { useDevice } from '../shell/device'
 import { Cell, Cells } from '../ui/cells'
 import { InfoCell } from '../ui/infoCell'
 
@@ -28,21 +25,20 @@ const BUDGET_BYTES = 5 * 1024 * 1024
  * owns every number here — counts, photos and bytes included — so a second
  * definition has nowhere to live.
  *
- * Two progress bars became two, deliberately: **storage used** answers "will
- * this stop working" and **coverage** answers "how complete is my record".
- * They are different questions and both belong, but they sit in one card now
- * rather than bracketing a 3,000px tab.
+ * Two rows answer two different questions: **browser storage** says "will
+ * this stop working" and **days with data** says "how complete is my record".
+ * Storage measures the journal JSON only — photos live in IndexedDB
+ * (`imageStore.ts`), off this budget.
  */
 export function YourDataCard() {
   const { data } = useJournal()
   const sum = dataSummary(data)
   const pct = Math.min(100, Math.round((sum.bytes / BUDGET_BYTES) * 100))
   const warn = pct >= 80
-  const phone = useDevice() === 'mobile'
-
-  // Phone: the same numbers as value rows, iOS "About" style — no tiles and no
-  // bars (a phone draws no visualizations); the per-domain counts open a sheet.
-  if (phone) return (
+  // Value rows, iOS "About" style — no tiles and no bars (Settings draws as a
+  // phone everywhere, and a phone draws no visualizations); the per-domain
+  // counts open a sheet.
+  return (
     <Cells title="Your data" aside="on this device">
       <Cell title="Records" trail={sum.totalRecords} />
       <Cell title="Active days" subtitle={sum.totalRecords > 0 ? `${sum.firstDay} to ${sum.lastDay}` : undefined} trail={sum.activeDays} />
@@ -59,63 +55,4 @@ export function YourDataCard() {
     </Cells>
   )
 
-  return (
-    <Card band title="Your data" subtitle="Everything stored on this device" className="mb-5">
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <StatTile compact label="Records" value={sum.totalRecords} />
-        <StatTile compact label="Active days" value={sum.activeDays} />
-        <StatTile compact label="Days span" value={sum.spanDays} />
-        <StatTile compact label="Photos" value={sum.photos} />
-        <StatTile compact label="KB stored" value={Math.round(sum.bytes / 1024)} />
-        <StatTile compact label="Domains" value={sum.counts.length} />
-      </div>
-
-      {/* Storage used · the budget question. Measures the JSON blob only, which
-          is the right number for THAT budget — photos moved to IndexedDB
-          (`imageStore.ts`) and are neither in this count nor on this quota. */}
-      <div className="mt-3">
-        <div className="mb-1 flex justify-between text-label">
-          <span className="text-fg-2">Browser storage used</span>
-          <span style={{ color: warn ? cat('peach') : cat('subtext1') }}>{pct}% of ~5 MB</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-          <div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat(warn ? 'peach' : 'green') }} />
-        </div>
-        {warn && (
-          <p className="mt-1.5 text-label text-peach">
-            Getting full. Export a backup now. Photos are NOT counted here — they live in
-            IndexedDB, off this budget — so this is journal text: trim old collections or entries.
-          </p>
-        )}
-      </div>
-
-      {/* Coverage · the completeness question. Hidden on an empty journal
-          rather than drawn as a 0% bar over a null date range: the whole card
-          above already says the true thing, and a zeroed bar reads as a total
-          failure that never happened (the `count ? x : 0` trap). */}
-      {sum.totalRecords > 0 && (
-        <div className="mt-4 border-t border-line pt-3">
-          <div className="mb-1 flex justify-between text-label">
-            <span className="text-fg-2">
-              Days with data · {sum.firstDay} to {sum.lastDay}
-            </span>
-            <span style={{ color: onRaised('subtext1') }}>{sum.coveragePct}%</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-pill bg-ink-2">
-            <div className="h-full rounded-pill" style={{ width: `${sum.coveragePct}%`, background: cat('teal') }} />
-          </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {sum.counts.map((c) => (
-              <span key={c.label} className="inline-flex items-center gap-1 rounded-pill bg-ink-2 px-2 py-0.5 text-label text-fg-1">
-                {c.label} <span className="font-medium text-fg-1">{c.count}</span>
-              </span>
-            ))}
-          </div>
-          <p className="mt-2 text-label text-fg-2">
-            {sum.totalRecords} records across {sum.counts.length} {sum.counts.length === 1 ? 'domain' : 'domains'} · coverage is how many days in your tracked span have at least one record.
-          </p>
-        </div>
-      )}
-    </Card>
-  )
 }

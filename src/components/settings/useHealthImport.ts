@@ -14,14 +14,16 @@ export type Stage =
   | { at: 'ready'; read: HealthReadResult; plan: ImportPlan; takeTheirs: boolean; rejected: number }
 
 /**
- * THE APPLE HEALTH IMPORT, for both drawings — read a file, plan the merge,
- * apply it as one undoable step.
+ * THE APPLE HEALTH IMPORT — read a file, plan the merge, apply it as one
+ * undoable step.
  *
- * OWNS: the stage machine and every handler, moved out of `AppleHealthCard.tsx`
- * unchanged so the phone rows (`AppleHealthPhone.tsx`) run the same import.
+ * OWNS: the stage machine and every handler; `AppleHealthCard.tsx` draws it.
+ * **Nothing is written until `apply`**: `plan()` returns a whole candidate
+ * journal and touches no store, and the apply is one `replaceAll` — one
+ * `localStorage` write, one undo step, whether 3 records or 11,000.
  * DOES NOT OWN: parsing (`lib/health`) or merge rules (`lib/ingest`), and no
- * markup. **Nothing is written until `apply`**, which confirms first and names
- * how many values change and how many replace something already there.
+ * markup. `apply` confirms first and names how many values change and how
+ * many replace something already there.
  */
 export function useHealthImport() {
   const confirm = useConfirm()

@@ -1,218 +1,96 @@
-import { useRef, useState } from 'react'
-import { ShieldCheck, Upload, Warning } from '@/components/icons'
+import { Check, Info, Upload, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { Card } from '../ui'
-import { Button } from '../ui/button'
-import { Switch } from '../ui/switch'
-import { Abbr } from '../Abbr'
 import { describeSummary } from '../../lib/health/parse'
-import { useDevice } from '../shell/device'
+import { cat, onAccent } from '../../lib/colors'
+import { Cell, Cells, ToggleCell } from '../ui/cells'
+import { InfoCell } from '../ui/infoCell'
 import { READS } from './appleHealthReads'
 import { useHealthImport } from './useHealthImport'
-import { AppleHealthPhone } from './AppleHealthPhone'
 
 /**
- * IMPORTING FROM APPLE HEALTH · pick a file, see exactly what will change,
- * then apply it as one undoable step.
+ * SETTINGS › DATA › APPLE HEALTH — pick a file, see exactly what will change,
+ * then apply it as one undoable step. iOS rows, one stage at a time (Settings
+ * draws as a phone on every device, `AsPhone`).
  *
- * The reader is `lib/health` and the merge is `lib/ingest`; this file is the
- * screen and nothing else. It holds no parsing and no merge rules, which is
- * deliberate — every claim it makes about the user's data is a string built by
- * `describeSummary()` or a count computed by `plan()`, both of which are unit
- * tested. A number assembled in JSX is a number nothing asserts.
+ * OWNS: the drawing of the three stages — pick a file, reading, the preview
+ * with Import and Cancel.
+ * DOES NOT OWN: the import — `useHealthImport.ts`, which confirms before
+ * anything is written, naming how many values change and how many replace
+ * yours. Parsing is `lib/health`, merge rules `lib/ingest`: every claim drawn
+ * here is a string from `describeSummary()` or a count from `plan()`, both
+ * unit tested.
  *
- * **Nothing is written until "Apply".** `plan()` returns a whole candidate
- * journal and touches no store, so a user who reads the preview and closes the
- * card has changed nothing at all, and a tab killed mid-parse leaves the journal
- * exactly as it was. The apply itself is one `replaceAll` — one `localStorage`
- * write, one undo step, whether it carries 3 records or 11,000.
- *
- * The consent copy is above the file picker rather than in a fold, and it says
- * both halves of the truth: the *file* never leaves the device, and an imported
- * value is a journal field like any other and will travel on whatever sync the
- * user has already switched on. Saying only the first would be technically true
- * about the file and misleading about the data.
+ * The file row is a `<label>` wrapping the real file input: the row is the
+ * control, so it is named and reachable.
  */
-
 export function AppleHealthCard() {
-  const phone = useDevice() === 'mobile'
-  return phone ? <AppleHealthPhone /> : <AppleHealthDesktop />
-}
-
-function AppleHealthDesktop() {
   const { stage, useBodyTemp, setUseBodyTemp, pick, takeTheirs, apply, cancel } = useHealthImport()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
+
+  if (stage.at === 'reading') return (
+    <Cells title="Apple Health">
+      <div className="cell cell-stack gap-2" aria-live="polite">
+        <span className="text-body text-fg-1">Reading… {stage.records.toLocaleString()} records{stage.pct != null ? ` · ${stage.pct}%` : ''}</span>
+        <progress className="h-2 w-full" value={stage.pct ?? undefined} max={100} aria-label="Reading the Health export" />
+        <span className="text-label text-fg-2">Nothing is written yet — all on this device</span>
+      </div>
+    </Cells>
+  )
+
+  if (stage.at === 'ready') {
+    const { counts, dateRange, conflicts } = stage.plan
+    return (
+      <Cells title="Apple Health" aside={dateRange ? `${dateRange.from} → ${dateRange.to}` : undefined}>
+        <Cell title="New values" trail={counts.added.toLocaleString()} />
+        <Cell title="Already in your journal" trail={counts.unchanged.toLocaleString()} />
+        {counts.updated > 0 && <Cell title="Replaced" trail={counts.updated.toLocaleString()} />}
+        {stage.rejected > 0 && <Cell title="Skipped" trail={stage.rejected.toLocaleString()} />}
+        {counts.conflicts > 0 && (
+          <InfoCell title={`${counts.conflicts.toLocaleString()} kept yours`} subtitle="They disagree with something you typed">
+            <Cells>
+              {conflicts.slice(0, 20).map((c, i) => (
+                <Cell key={`${c.date}-${c.field}-${i}`} title={`${c.date} ${c.field}`} subtitle={`yours ${String(c.mine)} · Apple ${String(c.theirs)}`} />
+              ))}
+            </Cells>
+            {conflicts.length > 20 && <p className="text-label text-fg-2">…and {(conflicts.length - 20).toLocaleString()} more</p>}
+            <Cells>
+              <button type="button" className="cell cell-action" onClick={takeTheirs}>Use Apple’s values instead</button>
+            </Cells>
+          </InfoCell>
+        )}
+        <InfoCell title="What was found" points={[
+          ...Object.entries(stage.read.summary.byField).sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f} · ${n.toLocaleString()} days`),
+          ...describeSummary(stage.read.summary, stage.read.info),
+        ]} />
+        <Cell icon={Check} tone="green" chevron={false} onPress={apply}
+          title={`Import ${(counts.added + counts.updated).toLocaleString()}${stage.rejected > 0 ? ` · skip ${stage.rejected.toLocaleString()}` : ''}`}
+          subtitle="Asks first · one undo step" />
+        <Cell icon={X} tone="overlay1" title="Cancel" chevron={false} onPress={cancel} />
+      </Cells>
+    )
+  }
 
   return (
-    <Card
-      band
-      // Folded by default: an import you run once, not something you came to
-      // Settings to read. It was part of what pushed the Data section past one
-      // screen while every other section fit. `Card collapsible` renders a
-      // real `aria-expanded`, so the a11y gate's `openFolds()` still scans
-      // inside it — folding content is how the Gym pass once hid a 1.41:1
-      // contrast bug from that gate, and the gate was armed against exactly
-      // this afterwards.
-      collapsible
-      defaultCollapsed
-      title="Apple Health"
-      subtitle="Drop your export in — temperature, steps, sleep and weight"
-      help="Read entirely on this device. Basal body temperature fills the chart on Cycle, so you stop typing it in every morning."
-    >
-      {stage.at === 'idle' && (
-        <div className="space-y-4">
-          <p className="flex items-start gap-1.5 rounded-card border border-green/30 bg-ink-0 p-2 text-label text-fg-1">
-            <span className="text-green"><Icon as={ShieldCheck} size="sm" /></span>
-            <span>
-              <strong>This file is read on your device. It is never uploaded.</strong>{' '}
-              Imported values become part of your journal, so if you have turned on any
-              sync they will travel with the rest of it, like anything you type.
-            </span>
-          </p>
-
-          <div>
-            <p className="mb-1.5 text-label text-fg-2">What gets read:</p>
-            <ul className="space-y-1">
-              {READS.map((r) => (
-                <li key={r.key} className="flex items-center gap-1.5 text-label text-fg-1">
-                  <span className="text-fg-2"><Icon as={r.icon} size="sm" /></span> {r.text}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-1.5 text-label text-fg-2">
-              Ignored: GPS routes, clinical records, heart-rate samples, sleep stages, and
-              everything not listed above.
-            </p>
-          </div>
-
-          {/* A real label wrapping a real file input: the drop target is the
-              same control as the button, so it is keyboard-reachable and named
-              without a role="button" div pretending to be one. */}
-          <label
-            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => { e.preventDefault(); setDragging(false); pick(e.dataTransfer.files?.[0]) }}
-            className={`flex cursor-pointer flex-col items-center gap-2 rounded-card border border-dashed p-4 text-center transition-colors ${dragging ? 'border-mauve bg-ink-2' : 'border-line bg-ink-0'}`}
-          >
-            <span className="text-fg-2"><Icon as={Upload} size="md" /></span>
-            <span className="text-body text-fg-1">Drop <code>export.zip</code> here, or choose it</span>
-            <span className="text-label text-fg-2">
-              On your iPhone: Health → your picture (top right) → Export All Health Data.
-              A large export works better on a computer than on a phone.
-            </span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".zip,.xml,application/zip,text/xml"
-              onChange={(e) => { pick(e.target.files?.[0]); if (fileRef.current) fileRef.current.value = '' }}
-              className="sr-only"
-            />
-            <span className="text-label text-mauve underline">Choose a file</span>
-          </label>
-
-          <label className="flex items-center justify-between gap-3 text-label text-fg-1">
-            <span>
-              Also use general body temperature
-              <span className="block text-fg-2">
-                Only on days with no <Abbr term="BBT" /> reading. It is a different
-                measurement, so it is off by default.
-              </span>
-            </span>
-            <Switch checked={useBodyTemp} onCheckedChange={setUseBodyTemp} />
-          </label>
-        </div>
-      )}
-
-      {stage.at === 'reading' && (
-        <div className="space-y-2" aria-live="polite">
-          <p className="text-body text-fg-1">
-            Reading… {stage.records.toLocaleString()} records
-            {stage.pct != null ? ` · ${stage.pct}%` : ''}
-          </p>
-          {/* A real progress element, so the figure is in the accessibility tree
-              rather than only in a coloured bar. */}
-          <progress
-            className="h-2 w-full"
-            value={stage.pct ?? undefined}
-            max={100}
-            aria-label="Reading the Health export"
-          />
-          <p className="text-label text-fg-2">
-            Nothing has been written yet. This is all happening on your device.
-          </p>
-        </div>
-      )}
-
-      {stage.at === 'ready' && (
-        <div className="space-y-4">
-          <div className="space-y-1">
-            {stage.plan.dateRange && (
-              <p className="text-body text-fg-1">
-                {stage.plan.dateRange.from} → {stage.plan.dateRange.to}
-              </p>
-            )}
-            <p className="text-body text-fg-1">
-              <strong>{stage.plan.counts.added.toLocaleString()} new</strong>
-              {' · '}{stage.plan.counts.unchanged.toLocaleString()} already in your journal
-              {stage.plan.counts.updated > 0 && <> · <span className="text-peach">{stage.plan.counts.updated.toLocaleString()} replaced</span></>}
-              {stage.plan.counts.conflicts > 0 && <> · <span className="text-yellow">{stage.plan.counts.conflicts.toLocaleString()} kept yours</span></>}
-              {stage.rejected > 0 && <> · {stage.rejected.toLocaleString()} skipped</>}
-            </p>
-          </div>
-
-          {stage.plan.counts.conflicts > 0 && (
-            <div className="rounded-card border border-yellow/30 bg-ink-0 p-2">
-              <p className="flex items-center gap-1.5 text-label text-yellow">
-                <Icon as={Warning} size="sm" />
-                {stage.plan.counts.conflicts.toLocaleString()} value{stage.plan.counts.conflicts === 1 ? '' : 's'} disagree with something you typed. Yours are being kept.
-              </p>
-              <ul className="mt-1.5 space-y-0.5">
-                {stage.plan.conflicts.slice(0, 6).map((c, i) => (
-                  <li key={`${c.date}-${c.field}-${i}`} className="text-label text-fg-2">
-                    {c.date} {c.field} · yours {String(c.mine)} · Apple {String(c.theirs)}
-                  </li>
-                ))}
-              </ul>
-              {stage.plan.conflicts.length > 6 && (
-                <p className="mt-1 text-label text-fg-2">…and {(stage.plan.conflicts.length - 6).toLocaleString()} more.</p>
-              )}
-              <Button
-                variant="ghost"
-                className="mt-1.5"
-                onClick={takeTheirs}
-              >
-                Use Apple's values instead
-              </Button>
-            </div>
-          )}
-
-          {Object.keys(stage.read.summary.byField).length > 0 && (
-            <div>
-              <p className="mb-1 text-label text-fg-2">Days of data found, by measurement:</p>
-              <ul className="space-y-0.5">
-                {Object.entries(stage.read.summary.byField).sort((a, b) => b[1] - a[1]).map(([field, n]) => (
-                  <li key={field} className="text-label text-fg-1">{field} · {n.toLocaleString()}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <ul className="space-y-0.5">
-            {describeSummary(stage.read.summary, stage.read.info).map((line) => (
-              <li key={line} className="text-label text-fg-2">{line}</li>
-            ))}
-          </ul>
-
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={apply}>
-              Import {(stage.plan.counts.added + stage.plan.counts.updated).toLocaleString()}
-              {stage.rejected > 0 && ` · skip ${stage.rejected.toLocaleString()}`}
-            </Button>
-            <Button variant="secondary" onClick={cancel}>Cancel</Button>
-          </div>
-        </div>
-      )}
-    </Card>
+    <Cells title="Apple Health" aside="read on this device">
+      <label className="cell cursor-pointer">
+        <span className="cell-tile" style={{ background: cat('green'), color: onAccent(cat('green')) }}><Icon as={Upload} size="sm" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-body font-medium text-fg-1">Choose export.zip</span>
+          <span className="block text-label text-fg-2">Health → your picture → Export All Health Data</span>
+        </span>
+        <input type="file" accept=".zip,.xml,application/zip,text/xml" className="sr-only"
+          onChange={(e) => { pick(e.target.files?.[0]); e.target.value = '' }} />
+      </label>
+      <ToggleCell title="Also use general body temperature" subtitle="Only on days with no BBT reading" on={useBodyTemp} onChange={setUseBodyTemp} />
+      <InfoCell title="What gets read" icon={Info} points={[
+        'The file is never uploaded — it is read on this device',
+        'Imported values join your journal, and travel on any sync you turned on',
+        'Ignored: GPS routes, clinical records, heart-rate samples, sleep stages',
+        'A large export works better on a computer than on a phone',
+      ]}>
+        <Cells>
+          {READS.map((r) => <Cell key={r.key} icon={r.icon} tone="teal" title={r.text} />)}
+        </Cells>
+      </InfoCell>
+    </Cells>
   )
 }
