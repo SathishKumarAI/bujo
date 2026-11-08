@@ -125,17 +125,48 @@ The full page-by-page record: `docs/sessions/2026-10-29-phone-pages.md`. The
 prompt for the next phone page: `docs/MOBILE-BRIEF.md`. The procedure, as a
 skill: `.claude/skills/phone-page/SKILL.md`.
 
-## Next up — queued by the owner
+## Settings is one drawing (2026-11-01…07, #524–#536)
 
-**COD-479 · "watch how" on YouTube, on every named thing, phone AND desktop**
-— workouts first, then drills, movements, principles, recipes. Asked
-2026-10-29: *"I want to see YouTube videos … search in YouTube as well? For
-both mobile as well as the desktop versions, not only workouts."* Build ONE
-`VideoLink` on top of `lib/video.ts` (search links built from a name, never
-pinned ids), adopt it per page, and test each CALL SITE. **Links only, no
-embedded player**: an iframe reports every view to Google and needs CSP
-`frame-src`, against the "no user data collected" goal (COD-436). Plan and
-page list: `docs/NEXT-SESSION.md` §1.
+`views/Settings.tsx` wraps its tabs in `AsPhone` (`shell/device.tsx`), so
+every card inside draws its rows on a desktop too; the desktop cards were
+deleted (COD-571). COD-479 (watch-how links) is done on every page in its
+table (#536). Traps from getting there:
+
+Trap: **`AsPhone` turns every `if (phone)` branch beneath it into dead
+code, and nothing fails.** An unreachable desktop branch typechecks, lints
+and keeps its tests green. Delete it in the same change, or a later author
+edits the drawing nobody sees.
+
+Trap: **a deleted drawing can carry the only copy of a promise.** Before
+deleting `AccountCard`, its test pointed at the live rows failed **4 of 9**:
+"private to your account, not secret from the server" lived only inside a
+sheet on the rows. Point the old drawing's tests at the new one FIRST; what
+fails is what the new drawing forgot.
+
+Trap: **a rule scoped to `.phone-frame` misses the desktop and every sheet.**
+Settings' small group titles keyed on `#main .phone-frame`; the desktop has
+no `.phone-frame` and a `Sheet` portals to `<body>`, so both drew 17px
+(phone 13px). Scope Settings rules to `.settings-phone` and `.sheet-up`.
+
+Trap: **two columns that fit 1440 cut text at 1024.** Plain `columns: 2`
+cut "Continue with Google" short on a 1024px laptop; `columns: 2 22rem`
+(each column at least 22rem) drops to one there. Run `clipped-text` at 1440, **1024** and
+390.
+
+Trap: **a sheet is invisible to `openFolds()`.** Rows that open a sheet have
+no `aria-expanded`; from #524 to #535 no Settings sheet was scanned. A new
+sheet-opening row needs `Cell opensSheet` (`aria-haspopup="dialog"`), which
+`scanSheets()` finds. Phone pages outside Settings: COD-575.
+
+Trap: **a hand-written copy of an export drifts.** Three copies of the backup
+file existed; Apple Health's skipped `inlineImages`, so the backup offered
+before a destructive import restored photos as dangling ids (COD-570). There
+is one now: `settings/download.ts` `downloadBackup`.
+
+Trap: **a deploy breaks local `verify`.** `vercel build` leaves
+`.vercel/output` (eslint scanned its bundle, vitest counted +19 tests — both
+now ignore it) and reinstalls `node_modules`, wiping the `--no-save`
+playwright/axe packages. Reinstall after `scripts/ship.sh`.
 
 Trap (fixed, COD-467): `useActColumn` shut the act column whenever the page
 STACKED, which on a phone hid the form behind a strip — the measured "before"

@@ -26,6 +26,88 @@ Rules the three share:
 
 ---
 
+## 2026-11-01…07 — Settings becomes one drawing, every backup carries its photos (COD-560…575, 479, 481 · PRs #520–#537)
+
+Owner direction: the desktop Settings "follows the mobile version", in two
+columns "to stay on page"; then "complete all the tasks". Picked up after
+#519 (every logging page has its phone pass; Help and Settings phone-first).
+
+**Shipped (all merged, squash):**
+
+| PR | Ticket | What |
+|---|---|---|
+| #520 | COD-564 | Help drew Home workout twice (a hand-appended id in `GUIDE`) |
+| #521 | COD-560/561 | desktop Competition × asks first; DUPR Y ticks rounded |
+| #523 | COD-567 | Sync & Data tabs as phone rows (agent) — new `useBackup`, `useHealthImport`, `InfoCell` |
+| #524 | COD-568 | desktop Settings = the phone rows: `AsPhone`, vertical tab list, `columns: 2 22rem` — **the last build deployed** |
+| #525 | COD-572 | `Cell` and Focus project segments wrap instead of cutting text; `.vercel` ignored by eslint/vitest |
+| #526 | COD-569 | Import JSON asks "Replace N records with the file's M?" |
+| #527 | COD-570 | one `downloadBackup`: Apple Health's backup had no photos; Import offers "Export a backup first" |
+| #529–#531, #533 | COD-571 | the desktop Settings cards deleted (~1,600 lines); docs follow |
+| #532 | COD-481 | Coaching chapter heading h3 → h2 |
+| #534 | COD-574 | drop an Apple Health export onto its row (agent) |
+| #535 | COD-573 | `npm run a11y` opens and scans every Settings sheet, fails on zero (agent) |
+| #536 | COD-479 | watch-how links on Strength, Fitness, Nutrition, Focus — every page in the table now (agent) |
+| #522, #528, #537 | — | STATUS |
+
+**Measured:**
+
+- Desktop Settings at 1440, `?demo=1`, in screens: account 1.05, appearance
+  1.05, sync 1.05, data 1.35, with 0 cards (was a grid of cards). Phone:
+  account 1.93, appearance 2.36, sync 2.14, data 3.18.
+- `clipped-text` 9 → 0 at 1440, 1024 and 390, over 23 pages. It had been red
+  in CI all day, across every phone pass.
+- Group titles on desktop and in sheets 17px → 13px, the same as the phone.
+- Coaching `heading-order` on `#main`: 1 node → none.
+- Settings sheets scanned by axe: 0 → 7 per walk in CI. That rises to 10 with
+  Supabase configured, because the SecurityCard pair and "What is uploaded"
+  only render then. 0 serious.
+- Tests: 2406 → 2419. Every new test was armed on a canary.
+
+**Got wrong, and what replaced it:**
+
+- Two columns at 1024px cut off "Continue with Google". `columns: 2` became
+  `columns: 2 22rem`, so a laptop gets one column.
+- My first desktop sheet breakpoint (48rem) would also have caught touch
+  tablets, so it is 64rem.
+- The `TabsList` `line` variant blanked the active tab's background.
+- I put `AsPhone` between an `eslint-disable` comment and the hook the comment
+  was for.
+
+**Found on the way:**
+
+- **A deleted drawing can carry the only copy of a promise.** Pointed at the
+  live rows, `AccountCard`'s test failed 4 of 9. "Private to your account, not
+  secret from the server" existed only inside a sheet. It is now the row's
+  subtitle, and a test fails if it leaves the row.
+- **Three hand-written copies of the backup file existed, and one had
+  drifted.** The Apple Health "back up first" skipped `inlineImages`. Its
+  backup, the one offered as the safe answer to a destructive import, would
+  have restored every photo as a dangling `img:` id.
+- **`AsPhone` made the gate blinder.** The desktop folds had been scanned;
+  the sheets that replaced them had not, from #524 until #535. Phone-page
+  sheets elsewhere are still unscanned (COD-575).
+- **A deploy breaks local verify.** `vercel build` leaves `.vercel/output`,
+  which eslint scanned and vitest counted (+19 tests). It also reinstalls
+  `node_modules`, which wipes the `--no-save` playwright/axe packages.
+- Desktop Strength's rest button painted "90s" and was named "Start the rest
+  after …": a `label-content-name-mismatch` at every theme. Fixed in #536.
+- Dropped deliberately: Backup's "print / save as PDF". From Settings it
+  prints Settings.
+
+**Not done:**
+
+- **Deploy #525–#537.** The permission check blocked
+  `scripts/ship.sh --deploy-only` twice, so the owner runs it.
+- COD-434 (Supabase NXDOMAIN) and COD-436 (encrypt or drop sync) need the
+  owner.
+- COD-575 is next.
+- A leftover worktree folder, `agent-a2055eaee3f51a294`, is held by its own
+  `vite preview --port 4340` (PID 52420). The permission check would not let
+  this session stop it.
+
+---
+
 ## 2026-10-28/29 — Every page on a phone, the shell, and a production audit (COD-434…468, 479 · PRs #438–#457)
 
 Owner direction: a phone logs, a desktop reads — no charts on a phone, the
