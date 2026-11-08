@@ -1,10 +1,12 @@
 import { CaretDown, CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Switch } from '../ui/switch'
 
 /**
- * The three things every Settings card needs and none of them owns.
+ * The one Settings primitive the tabs share: `Disclosure` (SyncTab's
+ * advanced fold). `Row` and `Toggle` drew the desktop cards' label/control
+ * pairs and went with them (COD-571); a setting is a `Cell` row now
+ * (`../ui/cells.tsx`).
  *
  * `views/Settings.tsx` was 969 lines holding five tab panels, nine cards and
  * these primitives, so changing a label meant opening the file that also holds
@@ -13,63 +15,6 @@ import { Switch } from '../ui/switch'
  * verbatim, with the rendered text of all five tabs captured before and diffed
  * after, because markup that looks identical often is not.
  */
-
-/**
- * A labeled settings row: label on the left, control on the right.
- *
- * **The cap is the whole point.** `justify-between` across an uncapped parent
- * strands the control at the far edge of whatever width it is given, and on the
- * wide tier that is a long way: measured on Settings at 1440, the Gender row was
- * **546px wide with a 344px gap** between the word "Gender" and the select it
- * names, and the wellbeing toggles put their switches ~700px from their labels.
- * Reported as "it's overflowing to the sides".
- *
- * A pair that far apart is two separate things to the eye — you read the label,
- * travel, and have to re-check which control you landed on. The page contract
- * caps an individual control at ~380px for the same reason; this caps the
- * *pairing*, which is the half that was actually broken here.
- *
- * Capped here rather than at the call sites because there are a dozen of them
- * across five cards, and a rule each author has to remember is a rule that gets
- * forgotten — the same argument as `.prose-doc a` and `CYCLE_CLAUSE`.
- */
-const PAIR = 'max-w-[26rem]'
-
-/**
- * A label and its control, on one line until there is not room for one line.
- *
- * `flex-wrap` and `min-w-0` are both load-bearing and were both added from a
- * measurement. Settings is four columns of ~328px now, and a `Row` holding the
- * "Weight kg/lb" pair overflowed its column by **19px** — a `w-fit`
- * ToggleGroup cannot shrink, so the row simply got wider than its parent and
- * the controls left the pane by the right edge.
- *
- * That is the exact failure `scripts/clipped-text.mjs` was extended to catch:
- * nothing is clipped, every element shows all of what it holds, the
- * accessibility tree is sound, and a control is off the viewport anyway. And
- * it is the trap CLAUDE.md records from the other end — `Card` can cap its
- * `right` slot at `max-w-full` but cannot wrap a cluster whose markup it does
- * not own. This is that cluster's own markup, so the fix belongs here rather
- * than in a rule scoped to the pane: every narrow container gets it, not just
- * this one.
- */
-export function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className={`flex ${PAIR} flex-wrap items-center justify-between gap-x-3 gap-y-1.5`}>
-      <span className="min-w-0 text-body text-fg-1">{label}</span>
-      {children}
-    </div>
-  )
-}
-
-export function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label className={`flex w-full ${PAIR} cursor-pointer items-center justify-between text-body text-fg-1`}>
-      <span>{label}</span>
-      <Switch checked={on} onCheckedChange={onChange} />
-    </label>
-  )
-}
 
 /** Self-managed collapsible settings section (SET-5) — one disclosure primitive
  *  instead of the three ad-hoc toggle buttons this page used to repeat. */

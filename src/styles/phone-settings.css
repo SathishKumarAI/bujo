@@ -55,12 +55,6 @@
   translate: 1.3125rem 0;
 }
 
-/* A desktop `Toggle` row, should one reach a phone tab: the row is the label,
-   so make it 44px. */
-.settings-phone label:has(> button[data-slot='switch']) {
-  min-height: 2.75rem;
-}
-
 /* A value at the row's right edge (Gender, reminder time): no box, the row is
    the box — the iOS "detail" value. */
 .cell-select {

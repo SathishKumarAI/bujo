@@ -1,10 +1,10 @@
 # STATUS
 
-**Stopped:** 2026-11-07, on `main` after #527. Settings draws its phone rows
-on every device (desktop: vertical tabs, two columns); clipped-text is 0;
-every backup carries its photos. **Production is still at #524** — the
-redeploy of #525–#527 was blocked by the permission check; run
-`bash scripts/ship.sh --deploy-only` with the owner's go.
+**Stopped:** 2026-11-07, on `main` after #533. Settings is one drawing on
+every device (the desktop cards are deleted, COD-571); every backup carries
+its photos; Coaching's heading order is clean. **Production is still at
+#524** — the permission check blocks this session from deploying; the owner
+runs `bash scripts/ship.sh --deploy-only`.
 
 ## Where it stands
 
@@ -25,16 +25,19 @@ redeploy of #525–#527 was blocked by the permission check; run
 | #525 | COD-572: `Cell` text and Focus project segments wrap; clipped-text 9 → 0; `.vercel` ignored by eslint/vitest |
 | #526 | COD-569: Import JSON asks "Replace N records with the file's M?" |
 | #527 | COD-570: one `downloadBackup` — Apple Health's backup now has photos; Import offers "Export a backup first" |
+| #529–#531 | COD-571: desktop Settings cards deleted (−1,478 lines); "not secret from the server" back on the account row; group titles 13px on desktop and in sheets |
+| #532 | COD-481: Coaching chapter heading h3 → h2 |
+| #533 | Settings README/docstrings follow the one drawing; `Row`/`Toggle` and dead barrel exports gone |
 
 ## The next action
 
-1. **Deploy** #525–#527 (above).
-2. COD-571: the desktop card drawings in Settings are dead since #524
-   (`AccountCard`, `LocalAccountCard` used only by tests) — deleting needs the
-   owner's yes. Sheet group titles render at 20px.
-3. COD-481 heading-order half; Supabase project (COD-434), sync encryption
-   (COD-436); COD-479 YouTube links.
-4. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
+1. **Deploy** #525–#533 (owner — see above).
+2. COD-573: `npm run a11y` cannot see Settings sheet contents (rows open
+   sheets, no `aria-expanded`) — blind since #524.
+3. COD-574 (owner's call): Backup print-to-PDF and Apple Health drag-and-drop
+   went with the desktop cards.
+4. Supabase project (COD-434), sync encryption (COD-436), COD-479 YouTube links.
+5. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
    Cycle, Plan (own calendars), Challenges desktop, Goals, Recovery, Program
    desktop, edit forms. Do not "complete" them.
 
