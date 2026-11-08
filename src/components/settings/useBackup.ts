@@ -15,16 +15,12 @@ import { useConfirm } from '../ConfirmDialog'
 import { dataSummary } from '../../lib/csv'
 
 /**
- * EVERYTHING THE BACKUP CARD DOES — exports, imports, the integrity check —
- * for both of its drawings.
+ * EVERYTHING THE BACKUP CARD DOES — exports, imports, the integrity check.
  *
  * OWNS: the handlers, the three hidden file inputs' refs, and the two export
- * LISTS (CSV per section, `.ics` per feed), so the desktop buttons and the
- * phone rows cannot disagree about which exports exist.
- * DOES NOT OWN: markup. Desktop is `BackupCard.tsx`, phone `BackupPhone.tsx`.
- *
- * An export added here appears in both drawings; one added in either file's
- * JSX appears in only that one.
+ * LISTS (CSV per section, `.ics` per feed). An export added to a list appears
+ * as a row with no markup change.
+ * DOES NOT OWN: markup — `BackupCard.tsx`.
  */
 export function useBackup() {
   const { data, setSettings, replaceAll, setMetric } = useJournal()
@@ -142,7 +138,7 @@ export function useBackup() {
   ]
 
   return {
-    data, s, fileRef, csvRef, verifyRef,
+    s, fileRef, csvRef, verifyRef,
     onVerifyBackup, onMetricsCsv, onImport, doExport, doRedactedExport, doChecksummed, doMarkdown,
     csvExports, collectionExports, icsExports,
   }

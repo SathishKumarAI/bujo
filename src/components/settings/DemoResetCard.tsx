@@ -1,9 +1,4 @@
-import { Sparkle, Trash } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
-import { Card } from '../ui'
-import { Button } from '../ui/button'
-import { Switch } from '../ui/switch'
 import { useConfirm } from '../ConfirmDialog'
 import { notify } from '../../lib/notify'
 import { todayISO } from '../../lib/date'
@@ -12,7 +7,6 @@ import { generateDemoData } from '../../lib/demo'
 import { downloadBackup } from './download'
 import { eraseDevice, wipeableKeys, wipeSummary } from '../../lib/wipe'
 import { signOut } from '../../lib/supabase'
-import { useDevice } from '../shell/device'
 import { Cells, ToggleCell } from '../ui/cells'
 
 /**
@@ -25,7 +19,6 @@ import { Cells, ToggleCell } from '../ui/cells'
 export function DemoResetCard() {
   const confirm = useConfirm()
   const { data, setSettings, replaceAll } = useJournal()
-  const phone = useDevice() === 'mobile'
 
   async function doExport() {
     await downloadBackup(data)
@@ -121,10 +114,11 @@ export function DemoResetCard() {
     }
   }
 
-  // Phone: one row per action, iOS style, the destructive one last and red.
-  // Every row runs the SAME handler as its desktop button above, so each one
-  // still asks first and names what it removes.
-  if (phone) return (
+  // One row per action, iOS style, the destructive one last and red. Every
+  // handler above asks first and names what it removes. "Load demo data" is
+  // hidden, not disabled, when demo is switched off — the toggle answers why;
+  // "Remove demo data" exists only while the journal IS the samples.
+  return (
     <Cells title="Demo & reset">
       <ToggleCell title="Allow demo data" subtitle="Off: ?demo=1 links are ignored" on={!data.settings.demoDisabled} onChange={setAllowed} />
       {!data.settings.demoDisabled && <button type="button" className="cell cell-action" onClick={loadDemo}>Load demo data</button>}
@@ -134,66 +128,4 @@ export function DemoResetCard() {
     </Cells>
   )
 
-  return (
-      <Card band title="Demo & reset" subtitle="Sample data, or start fresh">
-        <div className="flex flex-wrap gap-2">
-          {/* Hidden, not disabled, when demo data is switched off: a greyed
-              button invites a click and then explains why it will not work.
-              The switch below is the place that answers "why is this gone". */}
-          {!data.settings.demoDisabled && (
-          <Button
-            variant="secondary"
-            onClick={loadDemo}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Icon as={Sparkle} size="sm" /> Load demo data
-          </Button>
-          )}
-          {/* Only offered when the journal actually IS the samples. Without the
-              marker this button could not exist: nothing distinguishes a demo
-              entry from a real one, so "remove the demo" on a journal that has
-              since been written in would have meant erasing the real work too.
-              That is why the confirm still names the counts — anything typed
-              since the seed goes with it. */}
-          {data.settings.demoSeeded && (
-          <Button
-            variant="secondary"
-            onClick={removeDemo}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Icon as={Trash} size="sm" /> Remove demo data
-          </Button>
-          )}
-          <Button
-            variant="danger"
-            onClick={eraseAll}
-            className="inline-flex items-center gap-1.5"
-          >
-            <Icon as={Trash} size="sm" /> Clear all data
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={toStart}
-            className="inline-flex items-center gap-1.5"
-          >
-            Back to start screen
-          </Button>
-        </div>
-        <label className="mt-4 flex cursor-pointer items-center justify-between gap-4 border-t border-line pt-3 text-body text-fg-1">
-          <span>
-            Allow demo data
-            <span className="block text-label text-fg-2">
-              Off: <code>?demo=1</code> links are ignored and the sample journal cannot be loaded. If this journal is samples, you are asked whether to clear them too.
-            </span>
-          </span>
-          <Switch
-            checked={!data.settings.demoDisabled}
-            onCheckedChange={setAllowed}
-          />
-        </label>
-        <p className="mt-2 text-label text-fg-2">
-          Demo data fills ~30 days of correlated entries so charts have something to show. <strong>Back to start screen</strong> keeps your data and lets you re-pick how it's stored; <strong>Clear all data</strong> wipes everything.
-        </p>
-      </Card>
-  )
 }
