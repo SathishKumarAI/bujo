@@ -783,10 +783,10 @@ function Manual({ chapter }: { chapter: string }) {
               kept because it is an ORDER: the colour is the level, and five
               rungs with no ramp lose information rather than noise.
             */}
-            <h3 className="flex items-center gap-2 text-heading font-medium text-fg-1">
+            <h2 className="flex items-center gap-2 text-heading font-medium text-fg-1">
               <Icon as={current.icon} size="md" className="text-fg-2" />
               {'title' in current ? current.title : current.label}
-            </h3>
+            </h2>
             <p className="text-label text-fg-2">{current.blurb}</p>
           </div>
           {chapter === 'shots' && (<>
