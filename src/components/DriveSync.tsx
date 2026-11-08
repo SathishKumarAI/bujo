@@ -1,17 +1,12 @@
-import { ArrowSquareOut, Cloud, CloudArrowDown, CloudArrowUp, MagnifyingGlass } from '@/components/icons'
-import { Icon } from '@/components/Icon'
+import { Cloud, CloudArrowDown, CloudArrowUp, MagnifyingGlass } from '@/components/icons'
 import { useState } from 'react'
 import { useJournal } from '../store'
-import { Card, Empty, Input } from './ui'
-import { onRaised } from '../lib/colors'
 import { migrate } from '../lib/storage'
 import { forEgress, mergePulled, CYCLE_CLAUSE } from '../lib/cyclePrivacy'
 import { todayISO } from '../lib/date'
 import { connect, disconnect, isConnected, listFiles, pullData, pushData, type DriveFile } from '../lib/gdrive'
 import { useConfirm } from './ConfirmDialog'
 import { notify } from '../lib/notify'
-import { Button } from './ui/button'
-import { useDevice } from './shell/device'
 import { Cell, Cells, FieldCell } from './ui/cells'
 
 /**
@@ -26,7 +21,6 @@ export function DriveSync() {
   const [busy, setBusy] = useState('')
   const [files, setFiles] = useState<DriveFile[]>([])
   const [q, setQ] = useState('')
-  const phone = useDevice() === 'mobile'
 
   async function doConnect() {
     if (!clientId) return notify.error('Drive needs a client ID', 'Paste your Google OAuth Client ID above, then connect.')
@@ -90,8 +84,8 @@ export function DriveSync() {
     }
   }
 
-  // Phone: iOS rows, same handlers. A Drive file is a row that opens it.
-  if (phone) return (
+  // Grouped rows. A Drive file is a row that opens it.
+  return (
     <Cells title="Google Drive" aside="optional">
       <FieldCell label="Client ID" value={clientId} onChange={(v) => setSettings({ googleClientId: v.trim() || undefined })} placeholder="….apps.googleusercontent.com" />
       {!connected ? (
@@ -108,72 +102,5 @@ export function DriveSync() {
       )}
       {!connected && data.settings.lastDriveSync && <Cell title="Last Drive sync" trail={data.settings.lastDriveSync} />}
     </Cells>
-  )
-
-  return (
-    <Card band
-      title={<span className="inline-flex items-center gap-2"><Icon as={Cloud} size="md" /> Cloud sync · Google Drive</span>}
-      subtitle="Optional. Store your journal in Drive and reference images/docs from it."
-      className="lg:col-span-2"
-    >
-      <label className="block text-body text-fg-1">
-        Google OAuth Client ID
-        <Input
-          value={clientId}
-          onChange={(e) => setSettings({ googleClientId: e.target.value.trim() || undefined })}
-          placeholder="xxxxxxxx.apps.googleusercontent.com"
-          className="mt-1 font-mono"
-        />
-      </label>
-      <p className="mt-1 text-label text-fg-2">
-        Create one in Google Cloud Console (OAuth 2.0, Web). Steps in
-        <code className="mx-1">docs/GOOGLE_DRIVE.md</code>.
-      </p>
-
-      <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
-        {!connected ? (
-          <Button variant="secondary" onClick={doConnect} className="press-3d inline-flex items-center gap-1.5">
-            <Icon as={Cloud} size="sm" /> {busy === 'connect' ? 'Connecting…' : 'Connect Google Drive'}
-          </Button>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={backup} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowUp} size="sm" /> {busy === 'push' ? 'Backing up…' : 'Back up to Drive'}</Button>
-            <Button variant="secondary" onClick={restore} className="press-3d inline-flex items-center gap-1.5"><Icon as={CloudArrowDown} size="sm" /> {busy === 'pull' ? 'Restoring…' : 'Restore from Drive'}</Button>
-            <Button variant="ghost" onClick={() => { disconnect(); setConnected(false) }} className="press-3d text-red hover:text-red">Disconnect</Button>
-          </>
-        )}
-      </div>
-      {data.settings.lastDriveSync && <p className="mt-2 text-label text-fg-2">Last Drive sync: {data.settings.lastDriveSync}</p>}
-
-      {connected && (
-        <div className="mt-4 border-t border-line pt-3">
-          <p className="mb-2 text-body text-fg-1">Reference a file from Drive</p>
-          <div className="flex gap-2">
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Drive images & docs…" onKeyDown={(e) => e.key === 'Enter' && search()} />
-            <Button variant="secondary" onClick={search} className="press-3d inline-flex items-center gap-1.5"><Icon as={MagnifyingGlass} size="sm" /> Search</Button>
-          </div>
-          {files.length === 0 ? (
-            <Empty>Search your Drive to list images and documents.</Empty>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {files.map((f) => (
-                <a key={f.id} href={f.webViewLink} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-card bg-ink-2 transition-colors hover:border-mauve" title={f.name}>
-                  <div className="grid h-24 place-items-center overflow-hidden bg-ink-1">
-                    {f.thumbnailLink ? (
-                      <img src={f.thumbnailLink} alt={f.name} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-                    ) : (
-                      <img src={f.iconLink} alt="" className="h-8 w-8" style={{ filter: 'invert(0.8)' }} />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-1.5 text-label text-fg-1">
-                    <Icon as={ArrowSquareOut} size="sm" style={{ color: onRaised('overlay1') }} /> <span className="truncate">{f.name}</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
   )
 }

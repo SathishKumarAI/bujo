@@ -1,10 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { Card, Input } from '../ui'
-import { Button } from '../ui/button'
 import { cachedFoodCount, clearFoodCache } from '../../lib/food/lookup'
-import { Row, Toggle } from './shared'
-import { useDevice } from '../shell/device'
 import { Cells, FieldCell, ToggleCell } from '../ui/cells'
 
 /**
@@ -27,10 +23,9 @@ export function ConnectionsCard() {
   const { data, setSettings } = useJournal()
   const s = data.settings
   const [foodCache, setFoodCache] = useState(() => cachedFoodCount())
-  const phone = useDevice() === 'mobile'
 
-  // Phone: the same two switches as iOS rows, the paragraphs cut to one line each.
-  if (phone) return (
+  // The two switches as grouped rows, each explanation cut to one line.
+  return (
     <Cells title="Weather & food lookup" aside="off by default">
       <ToggleCell title="Auto-log weather & location" subtitle="open-meteo · your browser location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
       <ToggleCell title="Look food up online" subtitle="Only the words you type are sent" on={s.foodLookup === true} onChange={(v) => setSettings({ foodLookup: v })} />
@@ -44,50 +39,5 @@ export function ConnectionsCard() {
         </>
       )}
     </Cells>
-  )
-
-  return (
-    <Card band title="Weather & food lookup" subtitle="Both off until you turn them on">
-      <div className="space-y-3">
-        <div>
-          <Toggle label="Auto-log weather & location" on={s.weatherEnabled} onChange={(v) => setSettings({ weatherEnabled: v })} />
-          <p className="mt-1 text-label text-fg-2">Uses open-meteo and your browser location. When off, the app makes no network calls.</p>
-        </div>
-        {/* The second and last thing in the app that may touch the network for
-            a lookup. Grouped with weather on purpose: "may this app talk to
-            something outside itself" is one decision, and it should be
-            answerable in one place rather than hunted for per feature. */}
-        <div className="border-t border-line pt-3">
-          <Toggle label="Look food up online" on={s.foodLookup === true} onChange={(v) => setSettings({ foodLookup: v })} />
-          <p className="mt-1 text-label text-fg-2">
-            Searches <strong className="font-medium text-fg-1">Open Food Facts</strong> (open data, no account) and falls
-            back to <strong className="font-medium text-fg-1">USDA FoodData Central</strong> for whole foods. Only the words you
-            type are sent — never your journal. Results are cached on this device, so a food you have looked up once works offline.
-          </p>
-          {s.foodLookup && (
-            <div className="mt-2">
-              <Row label="USDA key">
-                <Input
-                  value={s.usdaKey ?? ''}
-                  onChange={(e) => setSettings({ usdaKey: e.target.value })}
-                  placeholder="optional"
-                  aria-label="USDA FoodData Central API key"
-                  className="control-max"
-                />
-              </Row>
-              <p className="mt-1 text-label text-fg-2">
-                Optional. Blank uses a shared demo key that is rate-limited hard — a free one from
-                <code className="mx-1">fdc.nal.usda.gov/api-key-signup</code> makes whole-food search reliable.
-                Open Food Facts needs no key at all.
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Button variant="secondary" onClick={() => { clearFoodCache(); setFoodCache(0) }}>Clear food cache</Button>
-                <span className="text-label text-fg-2">{foodCache} food{foodCache === 1 ? '' : 's'} cached on this device</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
   )
 }

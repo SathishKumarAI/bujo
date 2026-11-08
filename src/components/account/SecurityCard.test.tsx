@@ -6,20 +6,13 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react'
  * post-mortem quotes back. These tests pin the half that is not reassuring,
  * because that is the half a cheerful copy edit removes.
  *
- * ── Both cards are folded by default now, and these tests open them ───────
+ * ── Both halves live behind a row, and these tests open them ──────────────
  *
  * They are eleven rows of reference prose that answer "how is this protected"
- * once, and on the one-screen Sync section they were the single biggest thing
- * on the page — folding them is what took that section from 2.37 screens of
- * sideways scroll to one.
- *
- * Folding content is also how the Gym contract pass once hid a 1.41:1 contrast
- * bug from `npm run a11y` (COD-93), so it is worth being explicit about what
- * protects this: `Card collapsible` renders a real `aria-expanded` toggle, and
- * `openFolds()` in the gate clicks every one inside `#main` before scanning.
- * These tests do the same thing for the same reason — the content is still
- * there, and a test that stopped finding it because of a fold would be
- * measuring the fold rather than the copy.
+ * once, so each half is a row whose bottom sheet holds every claim. The copy
+ * is only in the DOM once a sheet is open, so these tests open both — a test
+ * that stopped finding it because of the sheet would be measuring the sheet
+ * rather than the copy.
  */
 const mockState = { configured: false }
 vi.mock('../../lib/supabase', () => ({ isConfigured: () => mockState.configured }))
@@ -27,11 +20,12 @@ vi.mock('../../lib/supabase', () => ({ isConfigured: () => mockState.configured 
 const { SecurityCard } = await import('./SecurityCard')
 afterEach(() => { cleanup(); mockState.configured = false })
 
-/** Render with both reference folds open, which is what the gate also does. */
+/** Render with both halves' sheets open. */
 function renderOpen() {
   mockState.configured = true
   const r = render(<SecurityCard />)
-  for (const t of screen.getAllByRole('button', { expanded: false })) fireEvent.click(t)
+  fireEvent.click(screen.getByRole('button', { name: /How your journal is protected/ }))
+  fireEvent.click(screen.getByRole('button', { name: /What this does not protect/, hidden: true }))
   return r
 }
 
