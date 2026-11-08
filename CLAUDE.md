@@ -1155,6 +1155,16 @@ five desktop and two phone themes — 28 scans, 0 serious or critical — so arm
 there is free; that is not known for the other five. A rail is still the right
 instrument; what is not allowed is letting the fold count read as coverage.
 
+Trap (fixed, COD-573): **a bottom `Sheet` is portalled outside `#main`, so
+neither `openFolds` nor the page scan ever saw one.** Settings' long content
+(security claims, setup steps, backup exports) lives in sheets since #524. A
+row that opens one now passes `Cell`'s `opensSheet` (`aria-haspopup="dialog"`;
+`InfoCell` does it for you), and `scanSheets` in `a11y-axe.mjs` opens each on
+the Settings tabs, scans the dialog alone, and **fails if a shard opened zero**.
+Measured: 7 sheets per Settings walk unconfigured, 10 with Supabase configured
+(SecurityCard's two and "What is uploaded" render only then, so CI scans 7). A
+new sheet-opening row without `opensSheet` is unscanned again.
+
 Trap (COD-329): **a sticky toggle hides half a page from a gate exactly the way
 a tab shell does.** Fitness's Cardio/Sport switch is `useStickyState`, not a URL
 parameter, so a probe that clears `bujo.ui.*` and scans seven themes scans the

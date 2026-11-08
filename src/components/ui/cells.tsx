@@ -26,7 +26,7 @@ export function Cells({ title, aside, children }: { title?: string; aside?: Reac
   )
 }
 
-export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPress, href, chevron = true, label }: {
+export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPress, href, chevron = true, label, opensSheet }: {
   icon?: IconGlyph
   /** Palette name for the icon tile. */
   tone?: string
@@ -46,6 +46,12 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
    * first draft of the Recent rows, at all five themes.
    */
   label?: string
+  /**
+   * The row opens a `Sheet`: announced as `aria-haspopup="dialog"`, and the
+   * hook `scripts/a11y-axe.mjs` clicks to scan the sheet (COD-573) — sheets
+   * are portalled outside `#main`, so no fold pass ever reached them.
+   */
+  opensSheet?: boolean
 }) {
   const body = (
     <>
@@ -72,7 +78,7 @@ export function Cell({ icon, tone = 'mauve', lead, title, subtitle, trail, onPre
   // A row is navigation, not prose: no underline (the base `a` rule) — the ↗ says link.
   if (href) return <a className="cell text-fg-1 no-underline" href={href} target="_blank" rel="noreferrer noopener">{body}</a>
   return onPress
-    ? <button type="button" className="cell" onClick={onPress}>{body}</button>
+    ? <button type="button" className="cell" aria-haspopup={opensSheet ? 'dialog' : undefined} onClick={onPress}>{body}</button>
     : <div className="cell">{body}</div>
 }
 

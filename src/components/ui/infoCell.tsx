@@ -23,7 +23,7 @@ export function InfoCell({ title, subtitle, icon = Info, tone = 'overlay1', poin
   const [open, setOpen] = useState(false)
   return (
     <>
-      <Cell icon={icon} tone={tone} title={title} subtitle={subtitle} onPress={() => setOpen(true)} />
+      <Cell icon={icon} tone={tone} title={title} subtitle={subtitle} opensSheet onPress={() => setOpen(true)} />
       <Sheet open={open} onOpenChange={setOpen} title={title} description={subtitle}>
         <div className="flex flex-col gap-4">
           {points && (

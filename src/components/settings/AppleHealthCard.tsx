@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Check, Info, Upload, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { describeSummary } from '../../lib/health/parse'
@@ -21,10 +22,14 @@ import { useHealthImport } from './useHealthImport'
  * unit tested.
  *
  * The file row is a `<label>` wrapping the real file input: the row is the
- * control, so it is named and reachable.
+ * control, so it is named and reachable. The whole idle group is also a drop
+ * target for the same `pick()` (lost with the desktop card in #531, COD-574):
+ * outlined in brand while a file is held over it. Touch fires no drag events,
+ * so on a phone it is inert and the row is the only way in.
  */
 export function AppleHealthCard() {
   const { stage, useBodyTemp, setUseBodyTemp, pick, takeTheirs, apply, cancel } = useHealthImport()
+  const [dragging, setDragging] = useState(false)
 
   if (stage.at === 'reading') return (
     <Cells title="Apple Health">
@@ -70,6 +75,13 @@ export function AppleHealthCard() {
   }
 
   return (
+    <div
+      className={`rounded-card outline-offset-4 ${dragging ? 'outline-2 outline-dashed outline-brand' : ''}`}
+      onDragOver={(e) => { if (!e.dataTransfer.types.includes('Files')) return; e.preventDefault(); setDragging(true) }}
+      // Leaving for a child row is not leaving the group.
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false) }}
+      onDrop={(e) => { e.preventDefault(); setDragging(false); pick(e.dataTransfer.files?.[0]) }}
+    >
     <Cells title="Apple Health" aside="read on this device">
       <label className="cell cursor-pointer">
         <span className="cell-tile" style={{ background: cat('green'), color: onAccent(cat('green')) }}><Icon as={Upload} size="sm" /></span>
@@ -92,5 +104,6 @@ export function AppleHealthCard() {
         </Cells>
       </InfoCell>
     </Cells>
+    </div>
   )
 }

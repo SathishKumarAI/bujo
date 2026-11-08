@@ -951,6 +951,63 @@ async function scan(w, label) {
 }
 
 /**
+ * Settings' bottom sheets · portalled to <body>, so `scan` never saw one.
+ *
+ * Since Settings drew rows on every device (#524), most of its long content —
+ * the security claims, "How to set it up", "What is uploaded", the backup
+ * exports — lives in a `Sheet` opened by a row. Radix portals the sheet outside
+ * `#main`, and the row carries no `aria-expanded`, so `openFolds` cannot open
+ * it and the page scan cannot reach it: the COD-232 tab-shell hole one more
+ * mechanism over (COD-573). A sheet-opening row says `aria-haspopup="dialog"`
+ * (`Cell`'s `opensSheet`), and that is the hook: open each, scan the dialog
+ * alone, close it, assert it is gone. Returns how many were scanned, so the
+ * caller can fail on a zero — a hook that stopped matching would otherwise
+ * print a reassuring nothing.
+ */
+async function scanSheets(w, label) {
+  const rows = w.page.locator('#main [aria-haspopup="dialog"]')
+  const dialog = w.page.locator('[role="dialog"]')
+  const n = await rows.count()
+  let scanned = 0
+  for (let i = 0; i < n; i++) {
+    const row = rows.nth(i)
+    if (!(await row.isVisible())) continue
+    w.at = `${label} · sheet ${i + 1} of ${n}`
+    await row.scrollIntoViewIfNeeded()
+    await row.click()
+    await dialog.first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+    if (!(await dialog.first().isVisible())) {
+      fail(`\n[${w.viewport} · ${w.theme} · ${label}] row ${i + 1} says aria-haspopup="dialog" and no dialog opened.`,
+        `  row text: "${(await row.innerText()).replace(/\s+/g, ' ').slice(0, 80)}"`)
+    }
+    // The sheet slides up (`.sheet-up`): measure it settled, not mid-slide —
+    // the mid-fade blend trap in CLAUDE.md is exactly this.
+    await settle(w)
+    const name = (await dialog.first().locator('h2').first().innerText().catch(() => '?')).trim()
+    const results = await new AxeBuilder({ page: w.page })
+      .include('[role="dialog"]')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+    const bad = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')
+    const meh = results.violations.filter((v) => v.impact === 'moderate' || v.impact === 'minor')
+    const where = `${w.viewport} · ${w.theme} · ${label} ▸ ${name}`
+    w.rows.push({ view: where, serious: bad.length, other: meh.length, folds: 0, sheet: true })
+    for (const v of bad) {
+      w.err(`\n[${where}] ${v.impact}: ${v.id} — ${v.help}`)
+      w.err(`  ${v.helpUrl}`)
+      for (const node of v.nodes.slice(0, 3)) w.err(`  ${node.html.slice(0, 120)}
+    DATA ${JSON.stringify(node.any?.[0]?.data)}`)
+    }
+    await w.page.keyboard.press('Escape')
+    await dialog.first().waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+    if (await dialog.count()) fail(`\n[${where}] the sheet did not close on Escape — the next row would be clicked under it.`)
+    await settle(w)
+    scanned++
+  }
+  return scanned
+}
+
+/**
  * The capture receipt · the one surface `VIEWS` structurally cannot reach.
  *
  * It does not exist until something is captured, so walking pages scans the
@@ -1193,6 +1250,7 @@ async function runUnit(w, unit) {
   // Companion views, reached by URL because they have no tab to click.
   // `setTheme` persists to the journal in localStorage, which survives the
   // navigation, so these are scanned under the theme of the current pass.
+  let settingsSheets = 0
   for (const [label, view, query] of COMPANIONS) {
     w.at = label
     const url = `${BASE}?view=${view}${query ? `&${query}` : ''}`
@@ -1217,6 +1275,12 @@ async function runUnit(w, unit) {
         '  Something is redirecting it — see VIEW_ALIASES in lib/deepLink.ts.')
     }
     await scan(w, label)
+    if (view === 'settings') settingsSheets += await scanSheets(w, label)
+  }
+  // Armed against a hook that silently matches nothing (COD-573).
+  if (settingsSheets === 0) {
+    fail(`\n[${unit.label}] Settings opened 0 sheets across its four tabs.`,
+      '  Either no row carries aria-haspopup="dialog" any more (Cell `opensSheet`), or the sheets moved — the pass is scanning nothing.')
   }
 }
 
@@ -1320,6 +1384,7 @@ for (const s of rows) console.log(`  ${s.view.padEnd(30)} ${String(s.serious).pa
    "173 of 166", arithmetic nobody reads as success. The planned figure is still
    the denominator when a shard dies (the partial-summary path needs it); it
    just cannot be smaller than what actually ran. */
+console.log(`\n${rows.filter((r) => r.sheet).length} Settings sheet(s) scanned (COD-573).`)
 console.log(`\n${rows.length} of ${Math.max(TOTAL_SCANS, rows.length)} scan(s) completed across ${UNITS.filter((u) => u.done).length} of ${UNITS.length} shard(s).`)
 
 if (aborted) {
