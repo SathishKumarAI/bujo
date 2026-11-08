@@ -1,6 +1,6 @@
 # STATUS
 
-**Stopped:** 2026-11-07, on `main` after #533. Settings is one drawing on
+**Stopped:** 2026-11-07, on `main` after #536. Settings is one drawing on
 every device (the desktop cards are deleted, COD-571); every backup carries
 its photos; Coaching's heading order is clean. **Production is still at
 #524** — the permission check blocks this session from deploying; the owner
@@ -28,16 +28,19 @@ runs `bash scripts/ship.sh --deploy-only`.
 | #529–#531 | COD-571: desktop Settings cards deleted (−1,478 lines); "not secret from the server" back on the account row; group titles 13px on desktop and in sheets |
 | #532 | COD-481: Coaching chapter heading h3 → h2 |
 | #533 | Settings README/docstrings follow the one drawing; `Row`/`Toggle` and dead barrel exports gone |
+| #534 | COD-574: drop an Apple Health export onto its row (print link deliberately not restored) |
+| #535 | COD-573: `npm run a11y` opens and scans every Settings sheet (`Cell opensSheet` → `aria-haspopup`), fails on zero |
+| #536 | COD-479: watch-how links on Strength, Fitness, Nutrition, Focus — every page in the table now; desktop Strength rest-button name fixed |
 
 ## The next action
 
-1. **Deploy** #525–#533 (owner — see above).
-2. COD-573: `npm run a11y` cannot see Settings sheet contents (rows open
-   sheets, no `aria-expanded`) — blind since #524.
-3. COD-574 (owner's call): Backup print-to-PDF and Apple Health drag-and-drop
-   went with the desktop cards.
-4. Supabase project (COD-434), sync encryption (COD-436), COD-479 YouTube links.
-5. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
+1. **Deploy** #525–#536 (owner: `bash scripts/ship.sh --deploy-only`; this
+   session's permission check blocks it).
+2. COD-575: phone-page sheets (Pickleball, Gym, Nutrition…) still unscanned
+   by axe — add `aria-haspopup="dialog"` there and run `scanSheets`.
+3. Owner decisions: Supabase project (COD-434, NXDOMAIN), sync encryption
+   (COD-436).
+4. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
    Cycle, Plan (own calendars), Challenges desktop, Goals, Recovery, Program
    desktop, edit forms. Do not "complete" them.
 
@@ -65,5 +68,6 @@ user's own is 4180). Dev: `127.0.0.1:5199`. Gates before every push:
 `npm run verify`, `npm run design`, `npm run contrast`; a11y with
 `BUJO_URL=… BUJO_THEMES=mocha BUJO_PHONE_THEMES=mocha,latte node scripts/a11y-axe.mjs`.
 Old agent worktrees remain in `.claude/worktrees/` (recovery-review-phone,
-recovery-one-tap held by previews on 4191/4195; agent-a6eef2012354e2d3b holds
-the merged `feat/settings-phone-rows-rest`).
+recovery-one-tap held by previews on 4191/4195). `agent-a2055eaee3f51a294`
+is a leftover folder held by a `vite preview --port 4340` (PID 52420) that
+this session was not permitted to stop.
