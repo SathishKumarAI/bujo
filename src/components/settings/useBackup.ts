@@ -10,7 +10,7 @@ import {
 } from '../../lib/csv'
 import { completionsToICS, habitRemindersToICS, journalToICS, tasksToICS } from '../../lib/ics'
 import { inlineImages } from '../../lib/imageStore'
-import { download } from './download'
+import { download, downloadBackup } from './download'
 import { useConfirm } from '../ConfirmDialog'
 import { dataSummary } from '../../lib/csv'
 
@@ -66,10 +66,7 @@ export function useBackup() {
   }
 
   async function doExport() {
-    // Inline IndexedDB-stored photos so the backup is self-contained, then strip
-    // device-/account-specific sync secrets so the file is safe to share/move.
-    const full = await inlineImages(data)
-    download(`cadence-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
+    await downloadBackup(data)
     setSettings({ lastBackup: todayISO() })
   }
 
@@ -109,7 +106,7 @@ export function useBackup() {
       if (!await confirm({
         title: `Replace ${now} records with the file’s ${incoming}?`,
         description: `Everything in this journal is overwritten by ${file.name}. Export a backup first if you might want it back.`,
-        confirmLabel: 'Replace journal', destructive: true,
+        confirmLabel: 'Replace journal', destructive: true, onBackup: doExport,
       })) return
       replaceAll(next, { stamp: true })
       notify.success('Backup imported')
