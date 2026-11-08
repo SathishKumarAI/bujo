@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useJournal } from '../../store'
 import { notify } from '../../lib/notify'
 
-/** The faces a local account can pick (`LocalAccountCard`, `AccountPhoneCells`). */
+/** The faces a local account can pick (`AccountPhoneCells`). */
 export const EMOJI = ['🙂', '🦊', '🌱', '🪐', '🎧', '📓', '🏔️', '🐙', '☕', '🦉', '🍊', '⚡']
 
 /** The name form's state and its save — shared by this card and the phone's

@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { useJournal } from '../../store'
-import { Card, Input } from '../ui'
-import { Button } from '../ui/button'
 import { useConfirm } from '../ConfirmDialog'
 import { migrate } from '../../lib/storage'
 import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
 import { pullJournalFromServer, pushJournalToServer, serverConfigured } from '../../lib/serverSync'
 import { Download, Upload } from '@/components/icons'
-import { useDevice } from '../shell/device'
 import { Cell, Cells, FieldCell } from '../ui/cells'
 import { InfoCell } from '../ui/infoCell'
 
@@ -22,7 +19,6 @@ export function SelfHostCard() {
   const s = data.settings
   const [msg, setMsg] = useState('')
   const configured = serverConfigured(s.selfHostUrl, s.selfHostToken)
-  const phone = useDevice() === 'mobile'
 
   async function test() {
     if (!configured) { setMsg('Enter both an HTTPS URL and a Bearer token first.'); return }
@@ -40,8 +36,8 @@ export function SelfHostCard() {
     else setMsg(r ? 'Cancelled.' : 'Nothing on the server yet (or auth failed).')
   }
 
-  // Phone: iOS rows running the same handlers; the setup notes are points behind a row.
-  if (phone) return (
+  // Grouped rows; the setup notes are points behind a row.
+  return (
     <Cells title="Self-host sync" aside="your own server">
       <FieldCell label="API URL" type="url" value={s.selfHostUrl ?? ''} onChange={(v) => setSettings({ selfHostUrl: v || undefined })} placeholder="https://localhost:8443" />
       <FieldCell label="Token" type="password" value={s.selfHostToken ?? ''} onChange={(v) => setSettings({ selfHostToken: v || undefined })} placeholder="HS256 JWT" />
@@ -56,24 +52,5 @@ export function SelfHostCard() {
         'Once set it syncs on change, on tab close, and pulls on load',
       ]} />
     </Cells>
-  )
-
-  return (
-    <Card band title="Self-host sync" subtitle="Sync your journal with your own secured PostgREST API (the Docker stack)">
-      <div className="space-y-2">
-        <label className="block text-body text-fg-1">API URL
-          <Input value={s.selfHostUrl ?? ''} onChange={(e) => setSettings({ selfHostUrl: e.target.value || undefined })} placeholder="https://localhost:8443" className="mt-1" />
-        </label>
-        <label className="block text-body text-fg-1">Bearer token <span className="text-fg-2">(HS256 JWT · required)</span>
-          <Input value={s.selfHostToken ?? ''} onChange={(e) => setSettings({ selfHostToken: e.target.value || undefined })} placeholder="paste your minted JWT (role=bujo_user, sub=device id)" className="mt-1" />
-        </label>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={test}>Test / Push now</Button>
-          <Button variant="secondary" onClick={pull}>Pull from server</Button>
-        </div>
-        {msg && <p className="text-label text-fg-2">{msg}</p>}
-        <p className="text-label text-fg-2">The API is secured: use the <code>https://…:8443</code> origin and paste a minted JWT (see docs/security/postgrest-hardening.md). Once set, the journal auto-syncs on change, on tab close, and pulls on load. Run the stack with <code>docker compose up -d</code>.</p>
-      </div>
-    </Card>
   )
 }

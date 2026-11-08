@@ -1,9 +1,12 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import { render, screen, cleanup, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 /**
- * The property that makes this feature safe to merge before a Supabase project
- * exists: with no `VITE_SUPABASE_URL` the card is **absent**, not broken.
+ * The Account tab's sign-in rows (`SyncAccountCells`), which took over these
+ * promises from the deleted desktop `AccountCard` (COD-571). The property that
+ * makes the feature safe before a Supabase project exists: with no
+ * `VITE_SUPABASE_URL` the rows are **absent**, not broken.
  *
  * Worth a test rather than a glance because the failure is asymmetric. If
  * `isConfigured()` ever returns true by accident — an empty-string env var read
@@ -24,7 +27,10 @@ vi.mock('../../lib/supabase', () => ({
   signOut: async () => {},
 }))
 
-const { AccountCard } = await import('./AccountCard')
+const { SyncAccountCells: AccountCard } = await import('./AccountPhoneCells')
+
+/** The lists live in a sheet behind the "What is uploaded" row. */
+const openUploaded = async () => userEvent.click(await screen.findByRole('button', { name: /what is uploaded/i }))
 const { __resetAuthUser } = await import('../../lib/authUser')
 const { __resetAccountStatus, setAccountStatus } = await import('../../lib/accountStatus')
 
@@ -71,7 +77,7 @@ describe('the account card is absent until a project is configured', () => {
     mockState.user = { email: 'someone@example.com' }
     render(<AccountCard />)
     await waitFor(() => expect(screen.getByText(/someone@example\.com/)).toBeTruthy())
-    expect(screen.getByText(/leaves this journal on this device/i)).toBeTruthy()
+    expect(screen.getByText(/this device keeps its journal/i)).toBeTruthy()
   })
 
   it('prefers the Google display name over the email for the identity line', async () => {
@@ -106,11 +112,13 @@ describe('the account card is absent until a project is configured', () => {
     mockState.configured = true
     mockState.user = { email: 'sam@example.com' }
     render(<AccountCard />)
+    await screen.findByText('sam@example.com') // signed in, so the row is the signed-in one
+    await openUploaded()
     await waitFor(() => expect(screen.getByText('Uploaded to your account')).toBeTruthy())
     expect(screen.getByText('Never uploaded')).toBeTruthy()
     // The absolute promise. If this list stops naming the cycle log, the page
     // is making a weaker claim than `lib/cyclePrivacy.ts` enforces.
-    expect(screen.getByText(/cycle log/i)).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Never uploaded' }).textContent).toMatch(/cycle log/i)
   })
 
   it('reports an unreadable row, and says nothing was overwritten', async () => {
@@ -135,5 +143,12 @@ describe('the account card is absent until a project is configured', () => {
     expect(page).not.toMatch(/the journal is not|cannot be read|encrypted on this device/i)
     // And says the true thing in its place, where a skimmer will meet it.
     expect(page).toMatch(/private to your account, not secret from the server/i)
+  })
+
+  it('keeps the honest half on the row itself, not only inside the sheet', async () => {
+    mockState.configured = true
+    render(<AccountCard />)
+    const row = await screen.findByRole('button', { name: /what is uploaded/i })
+    expect(row.textContent).toMatch(/not secret from the server/i)
   })
 })

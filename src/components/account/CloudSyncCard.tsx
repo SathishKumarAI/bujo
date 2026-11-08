@@ -1,32 +1,21 @@
 import { autoSyncEnabled, clearSyncPassphrase } from '../../lib/syncSecret'
 import { Download, Upload } from '@/components/icons'
-import { Icon } from '@/components/Icon'
 import { useState } from 'react'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
-import { Card, Input } from '../ui'
-import { Button } from '../ui/button'
-import { Switch } from '../ui/switch'
 import { pushCloud, pullCloud } from '../../lib/bujocloud'
 import { migrate } from '../../lib/storage'
 import { mergePulled, CYCLE_CLAUSE } from '../../lib/cyclePrivacy'
-import { useDevice } from '../shell/device'
 import { Cell, Cells, FieldCell, ToggleCell } from '../ui/cells'
 import { InfoCell } from '../ui/infoCell'
 
 /**
  * One-passphrase, end-to-end-encrypted cloud sync (Vercel Blob via /api/sync).
  *
- * Lives here rather than inside `views/Settings.tsx` because Account needs the
- * same card: the local account has no email and no provider, so *this* is what
- * "sync your journal" means in this app, and burying it two tabs into Settings
- * made it look like an advanced option rather than the only one.
- *
- * The markup was moved verbatim, not re-typed. The rendered card was captured
- * from the running app before the move and diffed after — 4,637 characters,
- * byte-identical. That is the drill this repo's CLAUDE.md asks for before
- * extracting shared markup, and it exists because an "identical" banner
- * extraction once silently replaced an office phone number with 911.
+ * Rendered only by Settings → Sync (`settings/SyncTab.tsx`), which sits inside
+ * `AsPhone`, so it draws as grouped rows on every device. The desktop card it
+ * used to carry beside them was unreachable after #524 and was removed
+ * (COD-571).
  */
 export function CloudSyncCard() {
   const confirm = useConfirm()
@@ -34,7 +23,6 @@ export function CloudSyncCard() {
   const [pass, setPass] = useState('')
   const [busy, setBusy] = useState('')
   const [msg, setMsg] = useState('')
-  const phone = useDevice() === 'mobile'
 
   async function push() {
     if (pass.length < 6) { setMsg('Use a passphrase of at least 6 characters.'); return }
@@ -117,8 +105,8 @@ export function CloudSyncCard() {
     } else { clearSyncPassphrase(); setAuto(false); setMsg('Auto-sync off.') }
   }
 
-  // Phone: iOS rows running the same handlers; the paragraph is points behind a row.
-  if (phone) return (
+  // Grouped rows; the explanation is points behind a row.
+  return (
     <Cells title="Encrypted sync" aside="no server can read it">
       <FieldCell label="Passphrase" type="password" value={pass} onChange={setPass} placeholder="Sync passphrase" />
       <Cell icon={Upload} tone="blue" title={busy === 'push' ? 'Pushing…' : 'Push to cloud'} chevron={false} onPress={busy ? undefined : push} />
@@ -134,33 +122,5 @@ export function CloudSyncCard() {
         'A lost passphrase cannot be recovered',
       ]} />
     </Cells>
-  )
-
-  return (
-    <Card band title="Encrypted sync" subtitle="A second, separate copy that no server can read">
-      <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Sync passphrase" autoComplete="off" />
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={push} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Upload} size="sm" /> {busy === 'push' ? 'Pushing…' : 'Push to cloud'}</Button>
-        <Button variant="secondary" onClick={pull} disabled={!!busy} className="inline-flex items-center gap-1.5"><Icon as={Download} size="sm" /> {busy === 'pull' ? 'Pulling…' : 'Pull from cloud'}</Button>
-      </div>
-      <label className="mt-3 flex cursor-pointer items-center justify-between text-body text-fg-1">
-        <span>Auto-sync on this device <span className="text-label text-fg-2">(pull on open · push on change)</span></span>
-        <Switch checked={auto} onCheckedChange={toggleAuto} />
-      </label>
-      {auto && encrypted && (
-        <p className="mt-2 rounded-card border border-yellow/30 bg-ink-0 p-2 text-label text-yellow">
-          Auto-sync keeps this passphrase in readable browser storage, so it can fetch the cloud copy
-          of this journal without the passcode. Switch it off to sync by hand instead.
-        </p>
-      )}
-      {msg && <p className="mt-2 text-label text-fg-1">{msg}</p>}
-      {/* "There are no accounts" was true when this was the only sync target.
-          It is now one column from the Account pane, where there plainly is
-          one — a contradiction that was survivable while a tab shell showed
-          these two a click apart, and is not now they share a screen. The
-          rename is the same point: both cards said "sync", so the honest
-          difference between them had to be read rather than seen. */}
-      <p className="mt-2 text-label text-fg-2">Separate from your account, and the encrypted option. Your journal is encrypted in this browser before it is uploaded, so this server only ever stores ciphertext — nobody holding it can read your journal, which is the trade your account does not make. Enter the same passphrase on another device to get your data back. A lost passphrase cannot be recovered.</p>
-    </Card>
   )
 }
