@@ -40,7 +40,7 @@ import { SyncAccountCells, YouCells } from '../account/AccountPhoneCells'
  *
  * The desktop cards (`AccountCard`, `LocalAccountCard`) drew the same hooks
  * in three columns of prose until the owner asked the desktop to follow the
- * phone (2026-11-01).
+ * phone (2026-11-01); they were deleted in COD-571.
  */
 export function AccountTab() {
   const { data, setSettings } = useJournal()

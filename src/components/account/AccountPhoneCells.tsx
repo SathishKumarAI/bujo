@@ -7,19 +7,30 @@ import { useAccountSession } from './useAccountSession'
 import { EMOJI, useLocalProfile } from './useLocalProfile'
 
 /**
- * THE ACCOUNT TAB ON A PHONE — iOS Settings rows instead of two cards.
+ * THE ACCOUNT TAB — iOS Settings rows, on every device since #524.
  *
- * OWNS: the phone drawing of "You" (the local name and face) and of the
- * Google account (sign in, who, status, sign out), and the sheet holding what
- * is and is not uploaded.
- * DOES NOT OWN: any account logic — `useAccountSession` (AccountCard.tsx) and
- * `useLocalProfile` (LocalAccountCard.tsx) are the same hooks the desktop
- * cards draw from, so a change to sign-in reaches both.
+ * OWNS: "You" (the local name and face) and the Google account (sign in, who,
+ * status, sign out), and the sheet holding what is and is not uploaded.
+ * DOES NOT OWN: any account logic — `useAccountSession` and `useLocalProfile`.
  *
- * Owner, 2026-11-01: "make this page into a more mobile version". Measured
- * before: the tab opened on an "Account" card repeating the tab's own name,
- * seven bullet points, then a second card with a form — the first setting
- * row sat below the first screen.
+ * **The only sign-in surface.** `lib/auth.contract.test.ts` counts the callers
+ * of `signInGoogle`; render `SyncAccountCells` rather than a second button.
+ * **Absent, not broken:** with no Supabase project configured it returns null —
+ * most clones of this public repo never set one, and a sign-in that throws on
+ * click is a worse first run than none.
+ *
+ * **The honest half stays on screen.** "Private to your account, not secret
+ * from the server" is the row's subtitle, not only the sheet's: the journal is
+ * stored in a form the server can read (COD-309), and a reader who skims has to
+ * still meet that sentence. **Signed in is not synced**: the status row reads
+ * the phase `AccountSync` publishes, so it can only say what is happening.
+ *
+ * **"You" is identity, not authentication.** Nothing is verified and anyone
+ * holding the device can change it. No password field and no "secure" /
+ * "log in" copy near it — the passcode lock is what protects the journal.
+ *
+ * The desktop cards (`AccountCard`, `LocalAccountCard`) drew these same hooks
+ * and were deleted once Settings drew rows everywhere (COD-571).
  */
 export function YouCells() {
   const { profile, name, setName, emoji, setEmoji, editing, setEditing, save } = useLocalProfile()
@@ -66,13 +77,13 @@ export function SyncAccountCells() {
                 : undefined}
               title={who.name} subtitle={who.email ?? `Signed in with ${who.provider}`} chevron={false} />
             <Cell icon={CloudCheck} tone="teal" title={copy.short} subtitle={copy.detail} chevron={false} />
-            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" onPress={() => setInfo(true)} />
+            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" onPress={() => setInfo(true)} />
             <Cell icon={SignOut} tone="red" title={busy ? 'Signing out…' : 'Sign out'} subtitle="Everywhere — this device keeps its journal" chevron={false} onPress={busy ? undefined : disconnect} />
           </>
         ) : (
           <>
             <Cell icon={SignIn} tone="blue" title={busy ? 'Opening Google…' : 'Continue with Google'} subtitle="Your journal on every device" chevron={false} onPress={busy ? undefined : connect} />
-            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" onPress={() => setInfo(true)} />
+            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" onPress={() => setInfo(true)} />
           </>
         )}
       </Cells>
