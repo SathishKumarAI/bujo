@@ -77,13 +77,13 @@ export function SyncAccountCells() {
                 : undefined}
               title={who.name} subtitle={who.email ?? `Signed in with ${who.provider}`} chevron={false} />
             <Cell icon={CloudCheck} tone="teal" title={copy.short} subtitle={copy.detail} chevron={false} />
-            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" onPress={() => setInfo(true)} />
+            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" opensSheet onPress={() => setInfo(true)} />
             <Cell icon={SignOut} tone="red" title={busy ? 'Signing out…' : 'Sign out'} subtitle="Everywhere — this device keeps its journal" chevron={false} onPress={busy ? undefined : disconnect} />
           </>
         ) : (
           <>
             <Cell icon={SignIn} tone="blue" title={busy ? 'Opening Google…' : 'Continue with Google'} subtitle="Your journal on every device" chevron={false} onPress={busy ? undefined : connect} />
-            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" onPress={() => setInfo(true)} />
+            <Cell icon={ShieldCheck} tone="overlay1" title="What is uploaded" subtitle="Private to your account, not secret from the server" opensSheet onPress={() => setInfo(true)} />
           </>
         )}
       </Cells>
