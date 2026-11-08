@@ -19,8 +19,12 @@
    iOS Settings draws them. Weighted to out-rank touch-motion.css's
    `#main .phone-frame h2:is(.text-heading…):not(.sr-only)` (1,3,1), which
    promotes every phone h2 to a 20px section title — right for a page section,
-   wrong for a group of five switches (measured: "THEME" drew at 20/700). */
-#main .phone-frame .settings-phone h2.cells-title:not(.sr-only) {
+   wrong for a group of five switches (measured: "THEME" drew at 20/700).
+   The two shorter selectors are the desktop (no `.phone-frame` there) and a
+   sheet, which portals to <body> outside both (COD-571: both drew 20px). */
+#main .phone-frame .settings-phone h2.cells-title:not(.sr-only),
+.settings-phone h2.cells-title:not(.sr-only),
+.sheet-up h2.cells-title:not(.sr-only) {
   padding-inline: 0.75rem;
   font-size: var(--text-label);
   font-weight: 600;
