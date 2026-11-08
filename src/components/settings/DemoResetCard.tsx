@@ -7,11 +7,9 @@ import { Switch } from '../ui/switch'
 import { useConfirm } from '../ConfirmDialog'
 import { notify } from '../../lib/notify'
 import { todayISO } from '../../lib/date'
-import { emptyJournal, exportJSON } from '../../lib/storage'
-import { stripSyncSecrets } from '../../lib/csv'
+import { emptyJournal } from '../../lib/storage'
 import { generateDemoData } from '../../lib/demo'
-import { inlineImages } from '../../lib/imageStore'
-import { download } from './download'
+import { downloadBackup } from './download'
 import { eraseDevice, wipeableKeys, wipeSummary } from '../../lib/wipe'
 import { signOut } from '../../lib/supabase'
 import { useDevice } from '../shell/device'
@@ -30,8 +28,7 @@ export function DemoResetCard() {
   const phone = useDevice() === 'mobile'
 
   async function doExport() {
-    const full = await inlineImages(data)
-    download(`cadence-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(full)))
+    await downloadBackup(data)
     setSettings({ lastBackup: todayISO() })
   }
 

@@ -3,12 +3,10 @@ import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
 import { notify } from '../../lib/notify'
 import { todayISO } from '../../lib/date'
-import { exportJSON } from '../../lib/storage'
-import { stripSyncSecrets } from '../../lib/csv'
 import { readHealthExport, type HealthReadResult } from '../../lib/health/parse'
 import { plan, type ImportPlan } from '../../lib/ingest/plan'
 import { validateRecords } from '../../lib/ingest/validate'
-import { download } from './download'
+import { downloadBackup } from './download'
 
 export type Stage =
   | { at: 'idle' }
@@ -27,7 +25,7 @@ export type Stage =
  */
 export function useHealthImport() {
   const confirm = useConfirm()
-  const { data, replaceAll, undo } = useJournal()
+  const { data, replaceAll, undo, setSettings } = useJournal()
   const [stage, setStage] = useState<Stage>({ at: 'idle' })
   const [useBodyTemp, setUseBodyTemp] = useState(false)
   const s = data.settings
@@ -80,7 +78,8 @@ export function useHealthImport() {
   }
 
   async function doExport() {
-    download(`cadence-backup-${todayISO()}.json`, exportJSON(stripSyncSecrets(data)))
+    await downloadBackup(data)
+    setSettings({ lastBackup: todayISO() })
   }
 
   async function apply() {
