@@ -6,6 +6,8 @@ import { Button } from '../ui/button'
 import { useConfirm } from '../ConfirmDialog'
 import { prettyDay } from '../../lib/date'
 import type { LoggedFood } from '../../lib/types'
+import { VideoLink } from '../VideoLink'
+import { recipeQuery } from '../../lib/video'
 
 /**
  * WHAT YOU LOGGED TODAY, AND EVERY WAY BACK OUT OF IT.
@@ -101,6 +103,8 @@ export function DayLog({ date, today, foods, onEdit, onRemove, onServings }: {
                     onClick={() => onServings(f, (f.servings ?? 1) + 1)}
                   >+</Button>
                   <span className="num text-label text-fg-2">{f.kcal} kcal</span>
+                  {/* COD-479: quiet, one icon among the row's controls. */}
+                  <VideoLink name={f.name} query={recipeQuery(f.name)} label="" quiet className="min-h-7 min-w-7 justify-center" />
                   {/* Edit before delete, and both named: "Remove" alone would
                       give a screen reader eleven identical controls. */}
                   <Button

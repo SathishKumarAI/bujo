@@ -46,6 +46,20 @@ The work:
    name in the query (the `InfoTip onMore` trap in `CLAUDE.md`: a helper
    with no caller is a feature nobody can reach).
 
+**Status, 2026-11-07: every row of the table above is adopted.** Program,
+Pickleball, Coaching, Home Workout, Pull-ups and Mindset landed first; the
+last four in `feat/video-links-rest`:
+
+| page | where | query |
+|---|---|---|
+| Strength | desktop: each set row (`SessionLogger`, already there); phone: each set card header (`gym/phone/SetCards.tsx`, `.lift-watch` — 44px without growing the header) | `videoUrl` (pinned clip, else proper form) |
+| Fitness | desktop: under the activity select (`page/ActivityForm.tsx`); phone: the "Type, calories, notes" sheet, NOT the one-screen log | `activityQuery` — "Run · Intervals technique for beginners"; `watchNameOf` names Sport/Other by their kind and draws nothing without one |
+| Nutrition | desktop: each logged food (`DayLog`); phone: each `FoodRow` (Your usual + Add food), icon-only 44px | `recipeQuery` — "how to cook …" |
+| Focus | typing practice card, both drawings (`focus/TypingBand.tsx`) | `TYPING_QUERY` |
+
+Call-site tests: `components/watchHow.test.tsx`, one per drawing. Not done:
+the phone's opened logged-food row (six 44px controls already fill it).
+
 **Privacy — links only, no embedded player.** An iframe sends every view to
 Google and needs `frame-src` in the CSP; that contradicts the "no data from
 users is collected" goal (COD-436). A link leaves only when the user taps it,

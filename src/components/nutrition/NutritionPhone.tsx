@@ -13,6 +13,8 @@ import { MACROS, type Targets } from '../../lib/nutritionReview'
 import { FOODS, foodMatches, type Food } from '../../lib/foods'
 import type { DailyMetric, LoggedFood } from '../../lib/types'
 import { FoodEditor } from './DayLog'
+import { VideoLink } from '../VideoLink'
+import { recipeQuery } from '../../lib/video'
 
 type Patch = Pick<LoggedFood, 'name' | 'kcal' | 'protein' | 'carbs' | 'fat'>
 
@@ -227,6 +229,8 @@ function FoodRow({ food: f, n, to, onAdd, pinned, onPin }: {
         <span className="block truncate text-body font-medium text-fg-1">{f.name}{n > 0 && <span className="font-normal text-fg-2"> · ×{n}</span>}</span>
         <span className="block truncate text-label text-fg-2">{f.kcal} kcal · {f.protein} g protein · {f.serving}</span>
       </span>
+      {/* Icon-only at 44px: the row's own text already names the food (COD-479). */}
+      <VideoLink name={f.name} query={recipeQuery(f.name)} label="" size="md" quiet className="min-h-11 min-w-11 justify-center" />
       {/* Pinned foods stay at the top of Your usual whatever the fortnight says. */}
       <button type="button" className="pin-btn" aria-pressed={pinned} aria-label={`Pin ${f.name} to Your usual`} onClick={() => onPin(f.name)}>
         <Icon as={PushPin} size="sm" active={pinned} />

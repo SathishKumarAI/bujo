@@ -293,7 +293,8 @@ export function SessionLogger({
                       type="button"
                       onClick={() => onRest(row.exercise.trim(), restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))}
                       title={`Rest ${restLabel(restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))} after this set`}
-                      aria-label={`Start the rest after ${row.exercise.trim()}`}
+                      // Names the painted "90s" too: axe 2.5.3 wants the visible words inside the name.
+                      aria-label={`Rest ${restLabel(restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))} after ${row.exercise.trim()}`}
                       className="inline-flex items-center gap-1 hover:text-fg-1"
                     >
                       <AppIcon as={Timer} size="sm" /> {restLabel(restFor({ exercise: row.exercise, reps: row.reps, kind: row.kind }, data.settings))}

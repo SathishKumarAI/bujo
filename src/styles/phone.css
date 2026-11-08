@@ -960,7 +960,8 @@ button.cell:active {
   content: '';
 }
 
-.lift-row .lift-watch {
+/* Also the Strength set card header (`gym/phone/SetCards.tsx`). */
+.lift-watch {
   position: relative;
   z-index: 1;
   flex: none;
