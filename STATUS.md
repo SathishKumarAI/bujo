@@ -1,8 +1,10 @@
 # STATUS
 
-**Stopped:** 2026-11-01, on `main` after #521. Every logging page has its
-phone pass and the day strip; Help and Settings are phone pages now; the
-agents' backlog finds (COD-560/561/564) are fixed.
+**Stopped:** 2026-11-07, on `main` after #527. Settings draws its phone rows
+on every device (desktop: vertical tabs, two columns); clipped-text is 0;
+every backup carries its photos. **Production is still at #524** — the
+redeploy of #525–#527 was blocked by the permission check; run
+`bash scripts/ship.sh --deploy-only` with the owner's go.
 
 ## Where it stands
 
@@ -18,16 +20,21 @@ agents' backlog finds (COD-560/561/564) are fixed.
 | #516, #519 | Settings on a phone: iOS rows; tabs one segmented row; Account tab as rows (desktop byte-identical) |
 | #520 | COD-564: Help drew Home workout twice |
 | #521 | COD-560/561: desktop competition × confirms; DUPR ticks rounded |
+| #523 | COD-567: Sync & Data tabs as phone rows (agent) |
+| #524 | COD-568: desktop Settings = the phone rows (`AsPhone`), vertical tabs, `columns: 2 22rem` — deployed |
+| #525 | COD-572: `Cell` text and Focus project segments wrap; clipped-text 9 → 0; `.vercel` ignored by eslint/vitest |
+| #526 | COD-569: Import JSON asks "Replace N records with the file's M?" |
+| #527 | COD-570: one `downloadBackup` — Apple Health's backup now has photos; Import offers "Export a backup first" |
 
 ## The next action
 
-1. **Settings Sync & Data tabs on a phone**: the cards left there (sign-in,
-   local account, encrypted sync, local model, exports/backup, Apple Health,
-   tags, project links) become rows — an agent branch
-   `feat/settings-phone-rows-rest` was in flight; check `gh pr list`.
-2. COD-481 heading-order half; Supabase project (COD-434), sync encryption
+1. **Deploy** #525–#527 (above).
+2. COD-571: the desktop card drawings in Settings are dead since #524
+   (`AccountCard`, `LocalAccountCard` used only by tests) — deleting needs the
+   owner's yes. Sheet group titles render at 20px.
+3. COD-481 heading-order half; Supabase project (COD-434), sync encryption
    (COD-436); COD-479 YouTube links.
-3. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
+4. Pages that deliberately have NO day strip: Today, Monthly, Trackers,
    Cycle, Plan (own calendars), Challenges desktop, Goals, Recovery, Program
    desktop, edit forms. Do not "complete" them.
 
@@ -42,6 +49,8 @@ agents' backlog finds (COD-560/561/564) are fixed.
 - **Probe screenshots: absolute paths**, in the scratchpad.
 - **Desktop-unchanged proof on tabs**: strip generated ids (radix
   `aria-controls`, `id`) before hashing `#main`, or every run differs.
+- **`vercel build` reinstalls node_modules** and wipes the `--no-save`
+  playwright/axe — reinstall after a deploy.
 - **`.cell` is unlayered**: use `cell cell-stack` for a column.
 - **Date-dependent tests**: pin the clock (`vi.setSystemTime`) — Cycle's went
   red on the 1st of a month.
@@ -52,5 +61,6 @@ Preview: `npx vite preview --port 43xx --strictPort` (pick a free one; the
 user's own is 4180). Dev: `127.0.0.1:5199`. Gates before every push:
 `npm run verify`, `npm run design`, `npm run contrast`; a11y with
 `BUJO_URL=… BUJO_THEMES=mocha BUJO_PHONE_THEMES=mocha,latte node scripts/a11y-axe.mjs`.
-Two old agent worktrees (recovery-review-phone, recovery-one-tap) remain in
-`.claude/worktrees/`, held by previews on 4191/4195 this session could not stop.
+Old agent worktrees remain in `.claude/worktrees/` (recovery-review-phone,
+recovery-one-tap held by previews on 4191/4195; agent-a6eef2012354e2d3b holds
+the merged `feat/settings-phone-rows-rest`).
