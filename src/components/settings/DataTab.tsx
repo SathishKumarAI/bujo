@@ -8,14 +8,11 @@ import { ProjectLinks } from '../account/ProjectLinks'
 /**
  * What is here, how to get it out, and how to destroy it — in that order.
  *
- * Three cards, down from four. "Your data at a glance" and "Journal summary"
- * counted the same journal at opposite ends of a 3,000px tab and disagreed
- * about what "Habits" meant; `YourDataCard` is the merge, and `dataSummary()`
- * is the only thing that computes any of it now.
- *
- * `MasonryGrid`, not `CardGrid`: Backup is ~1,300px and Tags is ~90px, so a
- * row sized to its tallest cell stretched Tags to match and left ~1,200px of
- * empty column under it and again beside Demo & reset.
+ * Groups of rows, one under another on a phone and packed into two columns
+ * on a desktop by `.settings-cols` (`styles/phone-settings.css`). "Your data
+ * at a glance" and "Journal summary" once counted the same journal twice and
+ * disagreed about "Habits"; `YourDataCard` is the merge, and `dataSummary()`
+ * is the only thing that computes any of it.
  */
 export function DataTab() {
   return (

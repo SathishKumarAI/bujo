@@ -26,25 +26,24 @@ tab-shell rule below.
 | Cloud sync, the protection cards, advanced/self-host fold | `SyncTab.tsx` |
 | Passcode / encryption at rest | `PasscodeCard.tsx` |
 | PostgREST self-host fields | `SelfHostCard.tsx` |
-| The record counts, coverage, storage bar | `YourDataCard.tsx` |
+| The record counts and coverage rows | `YourDataCard.tsx` |
 | Any export or import — JSON, Markdown, CSV, `.ics`, checksum (handlers and the export lists) | `useBackup.ts` |
-| How the backup card looks — desktop / phone | `BackupCard.tsx` / `BackupPhone.tsx` |
+| How the backup rows look | `BackupCard.tsx` |
 | The Apple Health import (stages, confirm, apply) | `useHealthImport.ts` |
-| How the Apple Health card looks — desktop / phone; what it reads | `AppleHealthCard.tsx` / `AppleHealthPhone.tsx`; `appleHealthReads.tsx` |
+| How the Apple Health rows look; what it reads | `AppleHealthCard.tsx`; `appleHealthReads.tsx` |
 | Demo data, erase, back to start screen | `DemoResetCard.tsx` |
-| `Row`, `Toggle`, `Disclosure` | `shared.tsx` |
-| About you / Units on a PHONE (iOS rows) | `AccountPhone.tsx` |
-| Appearance on a PHONE | `AppearancePhone.tsx` |
-| Every other Sync / Data card on a PHONE — passcode, weather & food, local model, encrypted sync, self-host, cloud folder & gist, Drive, protection, your data, tags, demo & reset, help links | the `if (phone)` branch in their own file |
+| `Disclosure` (the advanced fold) | `shared.tsx` |
+| Handing the browser a file; THE backup file (`downloadBackup`) | `download.ts` |
+| About you / Units rows | `AccountPhone.tsx` |
+| Appearance rows | `AppearancePhone.tsx` |
+| Every other Sync / Data card — passcode, weather & food, local model, encrypted sync, self-host, cloud folder & gist, Drive, protection, your data, tags, demo & reset, help links | its own file (rows only) |
 | A row that opens a sheet of points | `../ui/infoCell.tsx` |
-| How the phone rows look (switch size, group titles, action rows) | `../../styles/phone-settings.css` |
+| How the rows look (switch size, group titles, action rows, desktop two columns) | `../../styles/phone-settings.css` |
 
-**A phone draws these fields a second time.** A setting added to a desktop
-card goes in its phone drawing too (`AccountPhone`, `AppearancePhone`, or the
-`if (phone)` branch); `SettingsPhone.test.tsx` asserts the writes land in the
-journal. Destructive rows call the desktop's own handler, so they still ask
-first (COD-562).
-| Handing the browser a file | `download.ts` |
+**One drawing, every device.** `views/Settings.tsx` wraps the tabs in
+`AsPhone`, so the rows are what a desktop sees too (#524); the desktop cards
+were deleted in COD-571. `SettingsPhone.test.tsx` asserts the writes land in
+the journal, and every destructive row asks first (COD-562).
 
 ## Rules this layout is holding up
 
@@ -56,7 +55,7 @@ counted ten from `dataSummary`. Four repeated verbatim, and the fifth —
 not. Adding a count to this card means adding it to `dataSummary`, not to the
 JSX.
 
-**Every calendar export lives in `BackupCard`'s one `.ics` fold.** The
+**Every calendar export lives in `BackupCard`'s one `.ics` sheet.** The
 events-and-birthdays file used to be a hero button while its three siblings
 were folded below it, so "does this export to my calendar" had two answers.
 

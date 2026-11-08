@@ -21,8 +21,8 @@ import { SyncStatusBar } from './SyncStatusBar'
  * viewport**: two half-empty screens and two answers to one question. One tab
  * now, ~650px, and no tab in Settings is under half a screen except Profile.
  *
- * `CloudSyncCard` is the same component the Account page renders, not a copy of
- * it — see `views/Account.tsx` for why it lives in both places.
+ * `CloudSyncCard` lives in `components/account/` for history: the Account page
+ * it was shared with is retired (`?view=account` redirects here, COD-297).
  */
 export function SyncTab() {
   return (
