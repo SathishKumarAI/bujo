@@ -1,4 +1,6 @@
-import { asks, kindsFor, labelOf, MODE_COPY, optionsFor, type ActivityKey, type Mode } from '../../domain/activities'
+import { asks, kindsFor, labelOf, MODE_COPY, optionsFor, watchNameOf, type ActivityKey, type Mode } from '../../domain/activities'
+import { VideoLink } from '../VideoLink'
+import { activityQuery } from '../../lib/video'
 import { Input, Textarea } from '../ui'
 import { NumField } from './NumField'
 import { Button } from '../ui/button'
@@ -116,6 +118,7 @@ export function ActivityForm({
 }) {
   const { activity } = draft
   const kinds = kindsFor(activity)
+  const watch = watchNameOf(activity, draft.subActivity)
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-2">
@@ -176,6 +179,10 @@ export function ActivityForm({
           hint="Optional. Tap again to clear."
         />
       )}
+
+      {/* COD-479: follows the activity AND its kind — "Run · Intervals" is a
+          different video from "Run". */}
+      {watch && <VideoLink name={watch} query={activityQuery(watch)} label="Watch how" className="self-start" />}
 
       {/* ── The three short facts, on one line ───────────────────────────
           "October 15th, 45 minutes, 5 miles" is a single statement about the

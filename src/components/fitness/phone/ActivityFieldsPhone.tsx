@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Icon } from '@/components/Icon'
-import { asks, kindsFor, labelOf, optionsFor, type Mode } from '../../../domain/activities'
+import { asks, kindsFor, labelOf, optionsFor, watchNameOf, type Mode } from '../../../domain/activities'
+import { VideoLink } from '../../VideoLink'
+import { activityQuery } from '../../../lib/video'
 import { glyphOf } from './phoneHelpers'
 import type { ActivityDraft } from '../../page/draft'
 import type { DistanceUnit } from '../../../lib/types'
@@ -80,6 +82,7 @@ export function ActivityFieldsPhone({ part, mode, draft, onChange, unit }: {
   }
 
   const kinds = kindsFor(a)
+  const watch = watchNameOf(a, draft.subActivity)
   return (
     <div className="flex flex-col gap-5">
       <Cells title="Details">
@@ -96,6 +99,8 @@ export function ActivityFieldsPhone({ part, mode, draft, onChange, unit }: {
             </div>
           </ControlCell>
         )}
+        {/* In the sheet, not the main screen — the log stays one screen (COD-479). */}
+        {watch && <div className="cell"><VideoLink name={watch} query={activityQuery(watch)} label="Watch how" className="min-h-11" /></div>}
         <FieldCell label="Calories" type="number" inputMode="numeric" value={draft.calories} onChange={(calories) => onChange({ calories })} placeholder="Optional" />
       </Cells>
       <Cells title="Notes">

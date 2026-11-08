@@ -9,6 +9,8 @@ import {
   avgWpm, bestWpm, DEFAULT_TYPING_GOAL_MIN, isWeekday, typingGoalProgress, typingStreak, typingWeekMinutes, wpmTrend,
 } from '../../lib/typing'
 import { notify } from '../../lib/notify'
+import { VideoLink } from '../VideoLink'
+import { TYPING_QUERY } from '../../lib/video'
 
 const SOURCES = ['Monkeytype', 'keybr', 'TypingClub', '10FastFingers', 'TypeRacer', 'Other'] as const
 const SITES = [
@@ -99,6 +101,8 @@ export function TypingDrill() {
             ))}
           </select>
         </label>
+        {/* COD-479. 44px tall for a phone; the card sits in the review, below the log. */}
+        <VideoLink name="Touch typing" query={TYPING_QUERY} label="Watch how" className="min-h-11 justify-self-start" />
         {/* `secondary`, not `primary`. The page is allowed one accent-filled
             action and it belongs to "Log session" in zone 2; a second one here
             would mean neither reads as the thing to do. */}

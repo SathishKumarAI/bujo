@@ -27,6 +27,12 @@ export function youtubeSearchUrl(q: string): string {
 export const drillQuery = (name: string) => `pickleball ${name} drill`
 /** A mindset principle — a talk about the idea, not a how-to. */
 export const principleQuery = (title: string) => `${title} explained`
+/** A cardio session or a sport, by what `watchNameOf` names it ("Run · Intervals", "Tennis"). */
+export const activityQuery = (name: string) => `${name} technique for beginners`
+/** A food — how to make it, not its calories. */
+export const recipeQuery = (name: string) => `how to cook ${name}`
+/** Typing practice: the skill the drills train, not a site's tutorial. */
+export const TYPING_QUERY = 'touch typing technique for beginners'
 
 /** Always-available "find more" search link. */
 export function videoSearchUrl(name: string): string {

@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon'
 import type { JournalData } from '../../../lib/types'
 import { lastSetFor } from '../../../lib/fitness'
 import { newSetRow, type SetRow } from '../setRow'
+import { VideoLink } from '../../VideoLink'
 
 /**
  * THE PHONE'S SET LOGGER — one card per exercise, its sets as rows (COD-460).
@@ -58,6 +59,8 @@ export function SetCards({ rows, onChange, unit, data, onRest, done, bare }: {
           <section key={g.rows[0].id} aria-label={g.exercise} className={bare ? undefined : 'cells'}>
             <div className={bare ? 'sr-only' : 'flex items-baseline justify-between gap-2 px-4 pt-3 pb-1'}>
               <h3 className="min-w-0 truncate text-heading font-semibold text-fg-1">{g.exercise}</h3>
+              {/* Bare = Program's lift row, which draws its own Watch link. */}
+              {!bare && <VideoLink name={g.exercise} label="Watch" className="lift-watch mr-auto" />}
               <span className="shrink-0 text-label text-fg-2">{prev ? `Last ${prev.weight > 0 ? `${prev.weight}${unit}` : 'bodyweight'} × ${prev.reps}` : 'First time'}</span>
             </div>
             <div className="set-head" aria-hidden>

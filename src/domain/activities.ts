@@ -335,6 +335,14 @@ export const fullLabelOf = (activityKey: string, kind?: string): string =>
   kind ? `${labelOf(activityKey)} · ${kind}` : labelOf(activityKey)
 
 /**
+ * What a "watch how" search names (COD-479). The catch-alls are named by their
+ * kind alone — "Sport · Tennis" searches for Tennis — and have no search
+ * without one, because "Other technique" finds nothing worth watching.
+ */
+export const watchNameOf = (activityKey: string, kind?: string): string | null =>
+  activityKey === 'other' || activityKey === 'sport' ? kind || null : fullLabelOf(activityKey, kind)
+
+/**
  * Legacy free-form `activity` strings → registry keys.
  *
  * Two generations wrote these: the retired Fitness `<select>` ('Run', 'Home',
