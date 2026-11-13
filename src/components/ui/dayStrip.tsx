@@ -1,9 +1,9 @@
-import { useRef, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { CaretLeft, CaretRight } from '@/components/icons'
+import { CaretDown, CaretLeft, CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { dayDiff, WEEKDAYS } from '../../lib/date'
-import { stepWeek, stripDays, windowDays } from '../../lib/dayStrip'
+import { dayDiff, prettyDay, WEEKDAYS } from '../../lib/date'
+import { stepWeek, stripDays } from '../../lib/dayStrip'
 import { useBarSlot } from '../shell/barSlot'
 
 /**
@@ -55,7 +55,7 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
   const canBack = !min || dayDiff(min, days[0]) > 0
   const canOn = !hi || dayDiff(days[6], hi) > 0
 
-  if (slot) return createPortal(<BarDays value={value} onChange={onChange} today={today} min={min} max={hi} label={label} mark={mark} />, slot)
+  if (slot) return createPortal(<BarDay value={value} onChange={onChange} today={today} min={min} max={hi} label={label} />, slot)
 
   return (
     /* ONE ROW: the arrows are the strip's two ends, not a header above it.
@@ -86,53 +86,30 @@ export function DayStrip({ value, onChange, today, mode = 'trailing', weekStart 
   )
 }
 
-/** Days the bar shows. Owner, 2026-11-01: "show only 3 days in the top nav
- *  bar" — five beside a short title read as crowded; three is the same on
- *  every page and every width, and the chips get room to breathe. */
-const BAR_DAYS = 3
-
 /**
- * The strip as drawn in the phone bar: three two-line chips (weekday over date)
- * and a dot under any day with a mark — the mark itself is still said, in
- * `sr-only`. No arrows: tapping an edge day moves the window a day, and
- * tapping the chosen day opens the platform's date picker for any day.
+ * The day in the phone bar: ONE pill, "Today", "Yesterday" or "Wed, Nov 11",
+ * that opens the phone's own date wheel (owner, 2026-11-13: the three day
+ * chips "look like a calendar on the top" — no week on a phone). It used to
+ * be three weekday chips (COD-537). Backfilling a missed day stays one tap:
+ * the native `<input type="date">` covers the pill, so iOS opens its wheel
+ * without `showPicker`, which older Safari lacks. COD-600.
  */
-function BarDays({ value, onChange, today, min, max, label, mark }: {
+function BarDay({ value, onChange, today, min, max, label }: {
   value: string
   onChange: (day: string) => void
   today: string
   min?: string
   max?: string
   label: string
-  mark: (day: string) => ReactNode
 }) {
-  const picker = useRef<HTMLInputElement>(null)
-  const n = BAR_DAYS
-  const days = windowDays(value, n, min, max)
-
+  const ago = dayDiff(value, today)
+  const text = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : prettyDay(value)
   return (
-    <div role="radiogroup" aria-label={label} className="bar-days-row" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-      {days.map((d) => {
-        const dt = new Date(d + 'T00:00')
-        const m = mark(d)
-        const on = d === value
-        return (
-          <button key={d} type="button" role="radio" aria-checked={on} className="day-chip" data-today={d === today || undefined}
-            onClick={() => {
-              if (!on) return onChange(d)
-              const p = picker.current
-              try { p?.showPicker() } catch { p?.focus() }
-            }}>
-            <span className="text-micro leading-none text-fg-2">{WEEKDAYS[dt.getDay()]}</span>{' '}
-            <span className="text-body font-bold leading-tight">{dt.getDate()}</span>
-            <span aria-hidden className={`bar-dot${m == null ? ' invisible' : ''}`} />
-            {m != null && <span className="sr-only">, {m}</span>}
-            {on && <span className="sr-only">, tap again for any date</span>}
-          </button>
-        )
-      })}
-      <input ref={picker} type="date" value={value} min={min} max={max} tabIndex={-1} aria-hidden className="sr-only"
+    <label className="bar-day" data-today={ago === 0 || undefined}>
+      <span aria-hidden>{text}</span>
+      <Icon as={CaretDown} size="sm" className="text-fg-2" />
+      <input type="date" value={value} min={min} max={max} aria-label={`${label}: ${text}`}
         onChange={(e) => { if (e.target.value) onChange(e.target.value) }} />
-    </div>
+    </label>
   )
 }
