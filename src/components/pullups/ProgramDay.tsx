@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { CaretDown, Check, CheckCircle, ListChecks } from '@/components/icons'
+import { CaretDown, Check, CheckCircle, ListChecks, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
+import { HoldTimer } from '../HoldTimer'
+import { secondsIn } from '../../lib/holdTime'
 import { notify } from '../../lib/notify'
 import { setLines } from '../../lib/pullups'
 
@@ -38,6 +40,7 @@ export function PullupProgramDay({ date }: {
   const k = `${s.week}:${s.cur.day}`
   // Taps per exercise, per day, for the visit — peeking at tomorrow keeps today.
   const [taps, setTaps] = useState<Record<string, number[]>>({})
+  const [timing, setTiming] = useState<number | null>(null)
   const [notes, setNotes] = useState<Record<string, Record<number, string>>>({})
   const count = (i: number) => taps[k]?.[i] ?? 0
   const setsOf = (i: number) => Math.max(1, Number.parseInt(s.cur.exercises[i].sets, 10) || 1)
@@ -123,6 +126,11 @@ export function PullupProgramDay({ date }: {
                 </div>
                 <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
               </div>
+              {secondsIn(e.qty) != null && (
+                <button type="button" className="timer-btn mt-2" aria-haspopup="dialog" onClick={() => setTiming(i)}>
+                  <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {e.name}</span>
+                </button>
+              )}
               <label className="ios-form mt-2 flex items-center gap-2">
                 <span className="flex-1 text-label text-fg-2">{assess ? 'Your max, strict reps' : 'What you did'}</span>
                 <input
@@ -139,6 +147,15 @@ export function PullupProgramDay({ date }: {
         })}
       </ol>
 
+      {timing != null && s.cur.exercises[timing] && (
+        <HoldTimer name={s.cur.exercises[timing].name} target={secondsIn(s.cur.exercises[timing].qty)} onClose={() => setTiming(null)}
+          onSave={(secs) => {
+            // The hold goes into "what you did" and ticks one set.
+            const i = timing
+            setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: did(i).trim() ? `${did(i).trim()}, ${secs} s` : `${secs} s` } }))
+            if (count(i) < setsOf(i)) bump(i)
+          }} />
+      )}
       <div className="log-dock">
         <button type="button" className="round-btn ml-auto" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
           <Icon as={ListChecks} size="md" />

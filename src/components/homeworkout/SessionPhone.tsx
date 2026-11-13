@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, SlidersHorizontal, Trash } from '@/components/icons'
+import { Check, SlidersHorizontal, Timer, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
@@ -9,6 +9,8 @@ import { exerciseById } from '../../lib/homeExercises'
 import type { SessionItem } from './SessionCard'
 import { setsIn } from '../../lib/homeSets'
 import { plain } from '../../lib/plain'
+import { HoldTimer } from '../HoldTimer'
+import { secondsIn } from '../../lib/holdTime'
 
 
 /**
@@ -43,6 +45,8 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
   const [more, setMore] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const edited = items.find((i) => i.id === editing)
+  const [timing, setTiming] = useState<string | null>(null)
+  const timed = items.find((i) => i.id === timing)
   const loaded = HOME_ROUTINES.find((r) => r.id === routine)
   const ticked = items.filter((i) => (taps[i.id] ?? 0) > 0)
   const logging = ticked.length ? ticked : items
@@ -123,7 +127,14 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
                       <Icon as={Trash} size="sm" />
                     </button>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={`${i.name} sets`}>{pills(i)}</div>
+                  <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={`${i.name} sets`}>
+                    {pills(i)}
+                    {secondsIn(i.reps) != null && (
+                      <button type="button" className="timer-btn ml-auto" aria-haspopup="dialog" onClick={() => setTiming(i.id)}>
+                        <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {i.name}</span>
+                      </button>
+                    )}
+                  </div>
                 </li>
               )
             })}
@@ -142,6 +153,11 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
         </div>
       )}
 
+      {timed && (
+        /* A saved hold ticks the next set; the session line keeps its plan. */
+        <HoldTimer name={timed.name} target={secondsIn(timed.reps)} onClose={() => setTiming(null)}
+          onSave={() => setTaps((t) => ({ ...t, [timed.id]: Math.min(setsIn(timed.reps), (t[timed.id] ?? 0) + 1) }))} />
+      )}
       {edited && (
         <Sheet open onOpenChange={(o) => { if (!o) setEditing(null) }} title={edited.name} description="Sets and reps, for example 3x12">
           <Cells>
