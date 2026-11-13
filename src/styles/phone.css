@@ -1468,6 +1468,27 @@ button.cell:active {
   color: var(--color-ink-0);
 }
 
+/* Interval timer: WORK or REST in a word you read from the floor, and a
+   ring that is green while you work and plain while you rest. Colour is
+   in the ring (a graphic, 3:1), never the text. */
+.interval-word {
+  color: var(--color-fg-1);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.interval .hold-clock {
+  padding: 1rem 1.5rem;
+  border-radius: 1.5rem;
+  box-shadow: inset 0 0 0 6px var(--color-line-strong);
+}
+
+.interval[data-phase='work'] .hold-clock {
+  box-shadow: inset 0 0 0 6px var(--color-green);
+}
+
 /* The button on a timed exercise card that opens it. */
 .timer-btn {
   display: inline-flex;

@@ -16,3 +16,49 @@ export function secondsIn(plan: string): number | null {
 
 /** 0:20, 1:05, 10:00 — minutes and two-digit seconds. */
 export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+
+/** One stretch of an interval timer: on the bar or floor, or resting. */
+export type Step = { kind: 'work' | 'rest'; secs: number; label: string }
+/** `manual`: the clock stops after each step and you start the next one. */
+export type Intervals = { steps: Step[]; manual: boolean }
+
+/**
+ * The run of steps a card's plan asks for, or null for a single hold.
+ * - Tabata ("Planks (Tabata 20s/10s)", 8 sets): 20 s work, 10 s rest, eight
+ *   rounds, no rest after the last. The clock runs through all of it.
+ * - A list of holds ("15,30,15 s"): each hold in turn; the clock stops
+ *   between them, because the program gives no rest time and you take
+ *   what you need.
+ */
+export function intervalsIn(name: string, plan: string, sets: number): Intervals | null {
+  const tab = /tabata\D*(\d+)\s*s?\s*\/\s*(\d+)\s*s?/i.exec(`${name} ${plan}`)
+  if (tab) {
+    const on = Number(tab[1]), off = Number(tab[2]), n = Math.max(1, sets)
+    return {
+      manual: false,
+      steps: Array.from({ length: n }, (_, i): Step[] => [
+        { kind: 'work', secs: on, label: `Round ${i + 1} of ${n}` },
+        ...(i < n - 1 ? [{ kind: 'rest' as const, secs: off, label: `Round ${i + 2} of ${n} next` }] : []),
+      ]).flat(),
+    }
+  }
+  const list = /(\d+(?:\s*,\s*\d+)+)\s*s\b/i.exec(plan)
+  if (list) {
+    const xs = list[1].split(',').map(Number)
+    return { manual: true, steps: xs.map((secs, i) => ({ kind: 'work', secs, label: `Hold ${i + 1} of ${xs.length}` })) }
+  }
+  return null
+}
+
+/** Which step the clock is in after `ms`, and whole seconds left in it. `i === steps.length` once it is over. */
+export function stepAt(steps: Step[], ms: number): { i: number; left: number } {
+  let t = ms / 1000
+  for (let i = 0; i < steps.length; i++) {
+    if (t < steps[i].secs) return { i, left: Math.ceil(steps[i].secs - t) }
+    t -= steps[i].secs
+  }
+  return { i: steps.length, left: 0 }
+}
+
+/** Seconds from the start to the beginning of step `i`. */
+export const startOf = (steps: Step[], i: number) => steps.slice(0, i).reduce((s, x) => s + x.secs, 0)
