@@ -226,12 +226,30 @@ export const PULLUP_EQUIPMENT: EquipmentItem[] = [
 
 export type PullupMethod = 'straight' | 'ladder' | 'pyramid' | 'emom'
 
-export const PULLUP_METHODS: { value: PullupMethod; label: string; hint: string }[] = [
-  { value: 'straight', label: 'Straight', hint: 'Rounds × the same set. Rest as needed.' },
-  { value: 'ladder', label: 'Ladder', hint: '1,2,…,top per round. 10–20s inside a ladder, 3+ min between.' },
-  { value: 'pyramid', label: 'Pyramid', hint: '1,…,top,…,1 per round. 10–20s inside, 3+ min between.' },
-  { value: 'emom', label: 'EMOM', hint: 'The set every minute on the minute; rounds = minutes.' },
+export const PULLUP_METHODS: { value: PullupMethod; label: string }[] = [
+  { value: 'straight', label: 'Straight' },
+  { value: 'ladder', label: 'Ladder' },
+  { value: 'pyramid', label: 'Pyramid' },
+  { value: 'emom', label: 'EMOM' },
 ]
+
+/**
+ * A method as steps for the page, in plain words, built from YOUR training
+ * set (owner, 2026-11-13: "if you go with this method you need to do like
+ * this", no symbols). Same facts as the guide's Formats (they replaced a terse `hint`
+ * full of arrows and ellipses) —
+ * nothing here that the guide does not say. `pullups.test.ts` asserts no
+ * arrows, ellipses, times signs or dashes reach the page.
+ */
+export function methodSteps(method: PullupMethod, set: number): string[] {
+  const reps = `${set} ${set === 1 ? 'rep' : 'reps'}`
+  switch (method) {
+    case 'straight': return [`Do ${reps}`, 'Rest as long as you need', 'Repeat for the rounds you planned']
+    case 'ladder': return [`Climb one rep at a time, 1 then 2, up to ${set}`, 'Rest 10 to 20 seconds between steps', 'Rest at least 3 minutes before the next ladder']
+    case 'pyramid': return [`Climb from 1 up to ${set}, then back down to 1`, 'Rest 10 to 20 seconds between steps', 'Rest at least 3 minutes before the next pyramid']
+    case 'emom': return [`At the start of every minute, do ${reps}`, 'Rest for what is left of that minute', 'One minute is one round, for the minutes you planned']
+  }
+}
 
 /**
  * The reps actually performed, set by set — the thing that gets stored.

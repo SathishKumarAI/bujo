@@ -128,3 +128,19 @@ describe('the manual is the library, not a copy of it', () => {
     expect(new Set(PULLUP_METHODS.map((m) => m.value)).size).toBe(PULLUP_METHODS.length)
   })
 })
+
+describe('methodSteps, the plan page in plain words', () => {
+  const SYMBOLS = /[→←×…–—·]/
+  it('says every method in steps with no symbols, using your training set', async () => {
+    const { methodSteps, PULLUP_METHODS } = await import('./pullups')
+    for (const m of PULLUP_METHODS) {
+      const steps = methodSteps(m.value, 4)
+      expect(steps.length, m.value).toBeGreaterThanOrEqual(2)
+      for (const s of steps) expect(s, m.value).not.toMatch(SYMBOLS)
+      expect(steps.join(' '), m.value).toMatch(/4/)
+    }
+  })
+  it('the symbol check would catch the old hint', () => {
+    expect('1,2,…,top per round. 10–20s inside').toMatch(SYMBOLS)
+  })
+})

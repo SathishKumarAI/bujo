@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { JournalProvider } from '../store'
@@ -93,15 +93,17 @@ describe('Pull-ups log on a phone', () => {
   // The failures: the method left unexplained above the form (owner: "how
   // will I know what is straight and ladder"), and Log writing the plan when
   // only some rounds were ticked.
-  it('says what the method means, and logs only the rounds you ticked', async () => {
+  it('says what each method means on the plan, and logs only the rounds you ticked', async () => {
     phone()
     wrap(<Pullups />)
+    // The plan explains the methods, open on the page; the log only records.
+    const how = screen.getByRole('region', { name: 'How to do each method' })
+    expect(within(how).getByText('Rest at least 3 minutes before the next ladder')).toBeTruthy()
     await userEvent.click(screen.getByRole('button', { name: /Log a free session/ }))
     // One tap, not a native picker; straight is the default, so a ladder in
     // the journal can only come from the tap.
     expect(screen.queryByRole('combobox', { name: 'Method' })).toBeNull()
     await userEvent.click(screen.getByRole('radio', { name: 'Ladder' }))
-    expect(screen.getByText(/1,2,…,top per round/)).toBeTruthy()
     while (Number(document.querySelector('output[aria-label="Top set"]')!.textContent) < 3) {
       await userEvent.click(screen.getByRole('button', { name: 'Top set, one more' }))
     }
