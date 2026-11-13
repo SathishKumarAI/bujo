@@ -83,6 +83,19 @@ describe('Pull-ups log on a phone', () => {
     expect(logged.map((w: { sets: string[] }) => repsOf(w.sets))).toEqual([3])
   })
 
+  it('puts a logged day in History with what you did, even with no pull-up max', async () => {
+    // Owner, 2026-11-13: timer results "saving them into the history".
+    phone()
+    wrap(<Pullups />)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Planks (Tabata 20s/10s), what you did' }), '8 rounds of 20 s')
+    await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
+    const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
+    const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')
+    expect(logged).toHaveLength(1)
+    expect(logged[0].sets).toEqual([])
+    expect(logged[0].notes.split('\n')).toEqual(['Pull-ups, day 1 of 30, Strength', 'Planks (Tabata 20s/10s): 8 rounds of 20 s'])
+  })
+
   it('puts effort, duration and notes behind one dock button in the free session', async () => {
     phone()
     wrap(<Pullups />)

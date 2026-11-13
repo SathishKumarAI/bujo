@@ -67,16 +67,20 @@ export function PullupProgramDay({ date }: {
 
   function log() {
     if (started.length === 0) { notify.info('Nothing ticked yet', 'Tick what you did, then log.'); return }
-    s.logDay(started.map((i) => ({ i, actual: did(i).trim() || `${Math.min(count(i), setsOf(i))}/${setsOf(i)} sets` })))
-    // The assessment's number is a pull-up set: store it, so the rest of the
-    // page (History, this week, your training set) counts the day.
+    const results = started.map((i) => ({ i, actual: did(i).trim() || `${Math.min(count(i), setsOf(i))}/${setsOf(i)} sets` }))
+    s.logDay(results)
+    const at = s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)
+    // EVERY logged day is a session in History, with what you did line by
+    // line — the timer's "8 rounds of 20 s" included (owner, 2026-11-13:
+    // "saving them into the history"). Only the assessment's number is a
+    // pull-up set; the rest are notes, so the rep totals stay pull-ups.
     const assess = s.cur.exercises.findIndex((e) => /assessment/i.test(e.name))
     const max = assess >= 0 ? Number.parseInt(did(assess), 10) : NaN
-    if (max > 0) {
-      addWorkout({ date, activity: 'pullups', sets: setLines([max]), notes: `${s.p.short} · week ${s.week}, day ${s.cur.day} · ${s.cur.focus}` })
-    }
+    addWorkout({
+      date, activity: 'pullups', sets: max > 0 ? setLines([max]) : [],
+      notes: [`${s.p.short}, day ${at + 1} of ${s.days.length}, ${s.cur.focus}`, ...results.map((r) => `${s.cur.exercises[r.i].name}: ${r.actual}`)].join('\n'),
+    })
     setTaps((t) => { const n = { ...t }; delete n[k]; return n })
-    const at = s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)
     const next = s.days[at + 1]
     notify.success(`Day ${at + 1} logged`, next ? `Next up: day ${at + 2} of ${s.days.length}, ${next.focus}` : 'That was the last day of the program.')
     if (next) s.goTo(next.week, next.day)

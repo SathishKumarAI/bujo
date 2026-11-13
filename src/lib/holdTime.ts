@@ -19,8 +19,26 @@ export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s 
 
 /** One stretch of an interval timer: on the bar or floor, or resting. */
 export type Step = { kind: 'work' | 'rest'; secs: number; label: string }
-/** `manual`: the clock stops after each step and you start the next one. */
-export type Intervals = { steps: Step[]; manual: boolean }
+/** The numbers you can change before you start: seconds on and off, rounds; `reps` marks EMOM. */
+export type Tune = { on: number; off: number; rounds: number; reps?: number }
+/** `manual`: the clock stops after each step and you start the next one. `tune`: it can be retuned. */
+export type Intervals = { steps: Step[]; manual: boolean; tune?: Tune }
+
+/** Rounds of `on` seconds with `off` between (none after the last, none at all when 0). */
+export function tabata(on: number, off: number, rounds: number): Intervals {
+  const n = Math.max(1, rounds)
+  return {
+    manual: false,
+    tune: { on, off, rounds: n },
+    steps: Array.from({ length: n }, (_, i): Step[] => [
+      { kind: 'work', secs: on, label: `Round ${i + 1} of ${n}` },
+      ...(i < n - 1 && off > 0 ? [{ kind: 'rest' as const, secs: off, label: `Round ${i + 2} of ${n} next` }] : []),
+    ]).flat(),
+  }
+}
+
+/** The clock again, from changed numbers. */
+export const retune = (t: Tune): Intervals => (t.reps != null ? emomSteps(t.rounds, t.reps) : tabata(t.on, t.off, t.rounds))
 
 /**
  * The run of steps a card's plan asks for, or null for a single hold.
@@ -32,16 +50,7 @@ export type Intervals = { steps: Step[]; manual: boolean }
  */
 export function intervalsIn(name: string, plan: string, sets: number): Intervals | null {
   const tab = /tabata\D*(\d+)\s*s?\s*\/\s*(\d+)\s*s?/i.exec(`${name} ${plan}`)
-  if (tab) {
-    const on = Number(tab[1]), off = Number(tab[2]), n = Math.max(1, sets)
-    return {
-      manual: false,
-      steps: Array.from({ length: n }, (_, i): Step[] => [
-        { kind: 'work', secs: on, label: `Round ${i + 1} of ${n}` },
-        ...(i < n - 1 ? [{ kind: 'rest' as const, secs: off, label: `Round ${i + 2} of ${n} next` }] : []),
-      ]).flat(),
-    }
-  }
+  if (tab) return tabata(Number(tab[1]), Number(tab[2]), sets)
   const list = /(\d+(?:\s*,\s*\d+)+)\s*s\b/i.exec(plan)
   if (list) {
     const xs = list[1].split(',').map(Number)
@@ -71,6 +80,7 @@ export function emomSteps(minutes: number, reps: number): Intervals {
   const n = Math.max(1, minutes)
   return {
     manual: false,
+    tune: { on: 60, off: 0, rounds: n, reps },
     steps: Array.from({ length: n }, (_, i) => ({ kind: 'work' as const, secs: 60, label: `Minute ${i + 1} of ${n}: ${reps} ${reps === 1 ? 'rep' : 'reps'}, then rest` })),
   }
 }

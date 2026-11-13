@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Sheet } from './ui/sheet'
-import { describeIntervals, mmss, startOf, stepAt, type Intervals } from '../lib/holdTime'
+import { Minus, Plus } from '@/components/icons'
+import { Icon } from '@/components/Icon'
+import { describeIntervals, mmss, retune, startOf, stepAt, type Intervals, type Tune } from '../lib/holdTime'
 
 /**
  * THE INTERVAL TIMER — Tabata (20 s work, 10 s rest, eight rounds) and a run
@@ -24,7 +26,11 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
   onSave: (worked: number[]) => void
   onClose: () => void
 }) {
-  const { steps, manual } = plan
+  // Your numbers, before Start (owner, 2026-11-13: "they can change based
+  // upon their needs"): work, rest and rounds, from the plan's.
+  const [tune, setTune] = useState<Tune | undefined>(plan.tune)
+  const cur = tune ? retune(tune) : plan
+  const { steps, manual } = cur
   const [banked, setBanked] = useState(0)
   const [since, setSince] = useState<number | null>(null)
   const [now, setNow] = useState(() => Date.now())
@@ -76,10 +82,17 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
     } else { setBanked(ms); setSince(null) }
   }
   function reset() { setBanked(0); setSince(null); beeped.current = '' }
+  /** Move the clock to the start of step `to`; a hold list waits there. */
+  function jump(to: number) {
+    setBanked(startOf(steps, Math.max(0, Math.min(steps.length, to))) * 1000)
+    if (running && !manual) { const t = Date.now(); setSince(t); setNow(t) } else setSince(null)
+  }
+  // Back: to the start of this step, or the one before if it only just began.
+  function back() { jump(ms / 1000 - startOf(steps, i) > 2 || i === 0 ? i : i - 1) }
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onClose() }} title={name}
-      description={describeIntervals(plan)}>
+      description={describeIntervals(cur)}>
       <div className="interval flex flex-col items-center gap-4 py-4" data-phase={phase}>
         <p className="interval-word" aria-live="assertive">{phase === 'done' ? 'Done' : phase === 'work' ? 'Work' : 'Rest'}</p>
         <output className="hold-clock" aria-live="off" aria-label={`${left} seconds left`}>{mmss(over ? 0 : left)}</output>
@@ -88,6 +101,25 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
           <button type="button" className="hold-go" aria-pressed={running} onClick={toggle}>
             {running ? 'Pause' : ms > 0 ? (manual && left === step.secs ? `Start hold ${worked.length + 1}` : 'Resume') : 'Start'}
           </button>
+        )}
+        {/* YOUR NUMBERS, only before you start: a run is never retimed
+            under you. */}
+        {tune && since == null && ms === 0 && (
+          <div className="cells w-full" role="group" aria-label="Your timer">
+            {tune.reps == null && <TuneRow label="Work" unit="s" value={tune.on} min={5} max={300} step={5} onChange={(on) => setTune({ ...tune, on })} />}
+            {tune.reps == null && <TuneRow label="Rest" unit="s" value={tune.off} min={0} max={180} step={5} onChange={(off) => setTune({ ...tune, off })} />}
+            <TuneRow label={tune.reps == null ? 'Rounds' : 'Minutes'} unit="" value={tune.rounds} min={1} max={30} step={1} onChange={(rounds) => setTune({ ...tune, rounds })} />
+          </div>
+        )}
+        {ms > 0 && (
+          <div className="flex w-full gap-3">
+            <button type="button" className="hold-sub" onClick={back}>Back</button>
+            {!over && (
+              <button type="button" className="hold-sub" onClick={() => jump(i + 1)}>
+                {phase === 'rest' && !manual ? 'Skip rest' : manual ? 'Hold done' : 'Round done'}
+              </button>
+            )}
+          </div>
         )}
         <div className="flex w-full gap-3">
           <button type="button" className="hold-sub" onClick={reset} disabled={ms === 0}>Reset</button>
@@ -98,6 +130,21 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
         </div>
       </div>
     </Sheet>
+  )
+}
+
+/** One number to change: label, − value +. */
+function TuneRow({ label, unit, value, min, max, step, onChange }: {
+  label: string; unit: string; value: number; min: number; max: number; step: number; onChange: (n: number) => void
+}) {
+  const said = `${value}${unit ? ` ${unit}` : ''}`
+  return (
+    <div className="cell">
+      <span className="flex-1 text-body text-fg-1">{label}</span>
+      <button type="button" className="round-btn" aria-label={`${label}, less`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - step))}><Icon as={Minus} size="sm" /></button>
+      <output aria-live="polite" aria-label={`${label} ${said}`} className="min-w-[3.5rem] text-center text-body font-semibold tabular-nums text-fg-1">{said}</output>
+      <button type="button" className="round-btn" aria-label={`${label}, more`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + step))}><Icon as={Plus} size="sm" /></button>
+    </div>
   )
 }
 
