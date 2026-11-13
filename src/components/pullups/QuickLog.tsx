@@ -93,9 +93,9 @@ export function PullupQuickLog({
       <div className="cells">
         <div className="flex items-start gap-3 px-4 py-3">
           <div className="min-w-0 flex-1">
-            {/* The segmented row above already shows the name; said for a screen reader. */}
-            <p className="sr-only">{PULLUP_METHODS.find((m) => m.value === method)?.label}</p>
-            <p className="text-body text-fg-1">{PULLUP_METHODS.find((m) => m.value === method)?.hint}</p>
+            {/* How to run the method is on the page's plan, not here (owner,
+                2026-11-13): the log records, the plan explains. */}
+            <p className="text-body text-fg-1">{PULLUP_METHODS.find((m) => m.value === method)?.label}</p>
           </div>
           {last && (
             <button type="button" onClick={onRepeat} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill bg-ink-2 px-3 text-label font-semibold text-fg-1">
@@ -121,7 +121,7 @@ export function PullupQuickLog({
       {/* ONE ROW PER ROUND, ticked after you do it — Program's counter. */}
       <div className="flex items-center gap-3 px-1">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label={`${unit}s ticked`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={r ? Math.round((done.length / r) * 100) : 0}>
-          <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${r ? (done.length / r) * 100 : 0}%` }} />
+          <div className="h-full rounded-pill bg-green" style={{ width: `${r ? (done.length / r) * 100 : 0}%` }} />
         </div>
         <span className="shrink-0 text-label text-fg-2">{done.length}/{r} {unit.toLowerCase()}s</span>
       </div>

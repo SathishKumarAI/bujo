@@ -11,6 +11,7 @@ import { VideoLink } from '../components/VideoLink'
 import { useDevice } from '../components/shell/device'
 import { PullupQuickLog } from '../components/pullups/QuickLog'
 import { PullupProgramDay } from '../components/pullups/ProgramDay'
+import { PullupTodayGuide } from '../components/pullups/TodayGuide'
 import { Cell, Cells } from '../components/ui/cells'
 import { Sheet } from '../components/ui/sheet'
 import { DayStrip } from '../components/ui/dayStrip'
@@ -27,7 +28,7 @@ import type { Workout } from '../lib/types'
 import {
   pullupAbility, ladder, pyramid, repScheme, setLines, repsOf, bestSet,
   PULLUP_ABILITY, PULLUP_WORKOUTS, PULLUP_PROGRESSIONS, PULLUP_FORM,
-  PULLUP_PRINCIPLES, PULLUP_EQUIPMENT, PULLUP_METHODS, type PullupMethod,
+  PULLUP_PRINCIPLES, PULLUP_EQUIPMENT, PULLUP_METHODS, methodSteps, type PullupMethod,
 } from '../lib/pullups'
 import { ShowMore } from '../components/ShowMore'
 import { useCappedList, type CappedList } from '../lib/useCappedList'
@@ -182,12 +183,16 @@ export function Pullups() {
             guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
           />
         </Sheet>
+        {/* THE PLAN for today, open on the page: numbers, the four methods
+            in plain steps, the form cues (owner, 2026-11-13). */}
+        <PullupTodayGuide ability={ability} weekReps={weekReps} />
         {/* No chip rail on a phone (owner, 2026-11-13: "no more subparts"):
             the program is the page, and each part of the manual is one row
             that opens whole in a sheet. COD-585. */}
-        <Cells title="History & guide">
-          {PU_PANELS.filter((c) => c.id !== 'program').map((c) => (
-            <Cell key={c.id} title={c.label} subtitle={c.id === 'history' ? `${sessions.length} sessions · ${totalReps} reps` : c.blurb} opensSheet onPress={() => setSheet(c.id)} />
+        <Cells title="History & reference">
+          {/* Training set and Form are open above, so not rows here too. */}
+          {PU_PANELS.filter((c) => !['program', 'ability', 'form'].includes(c.id)).map((c) => (
+            <Cell key={c.id} title={c.label} subtitle={c.id === 'history' ? `${sessions.length} sessions, ${totalReps} reps` : c.blurb} opensSheet onPress={() => setSheet(c.id)} />
           ))}
         </Cells>
         {open && (
@@ -464,7 +469,6 @@ function LogSessionCard({
   useEffect(() => () => clearTimeout(flash.current), [])
   const reps = repScheme(method, topN, rounds ?? 0)
   const total = reps.reduce((a, r) => a + r, 0)
-  const hint = PULLUP_METHODS.find((m) => m.value === method)?.hint ?? ''
 
   function done(msg: string) {
     setJustLogged(msg)
@@ -539,7 +543,7 @@ function LogSessionCard({
          four names for. */
       right={<ActHide what="the log" onHide={onShut} />}
       title="Log a pull-up session"
-      subtitle={hint}
+      subtitle="Steps for each method are under Training set"
     >
       <div className="space-y-4">
         {/* The previous session, as a card rather than a button with a grey
@@ -555,7 +559,7 @@ function LogSessionCard({
               <span className="block text-label text-fg-2">{prettyDay(last.date)} · your last session</span>
             </span>
             <Button variant="secondary" onClick={repeatLast} className="group/rep inline-flex shrink-0 items-center gap-1.5">
-              <Icon as={ArrowCounterClockwise} size="sm" className="transition-transform duration-300 group-hover/rep:-rotate-180" />
+              <Icon as={ArrowCounterClockwise} size="sm" />
               Repeat
             </Button>
           </div>
@@ -631,7 +635,7 @@ function LogSessionCard({
             <span className="text-body text-fg-2">Pick a top set and rounds to see the scheme.</span>
           ) : (
             <>
-              <span className="num block text-heading font-medium text-fg-1">{reps.join(' · ')}</span>
+              <span className="num block text-heading font-medium text-fg-1">{reps.join(', ')}</span>
               {/* The method, named on the thing it produced. A ladder to 4 and
                   a straight 4×4 are different sessions that both read as "4"
                   in the form, and the scheme alone does not say which rule
@@ -809,7 +813,7 @@ const PU_PANELS = [
   // The row names the row; the card names which programme it is showing.
   { id: 'program', label: 'Today', blurb: 'The day you are on, ticked off' },
   { id: 'formats', label: 'Formats', blurb: `${PULLUP_WORKOUTS.length} session structures, solo first` },
-  { id: 'ability', label: 'Training set', blurb: 'Your max → set, schemes, volume' },
+  { id: 'ability', label: 'Training set', blurb: 'Your set, the methods and your volume' },
   { id: 'form', label: 'Form', blurb: 'Set-up & execution' },
   { id: 'history', label: 'History', blurb: 'Sessions, volume and the calendar' },
   { id: 'progressions', label: 'Progressions', blurb: 'Building toward a first strict rep' },
@@ -963,6 +967,17 @@ function Chapter({
       ))}
     </tbody>
         </table>
+        {/* The same four methods the phone's plan spells out, with your set. */}
+        <h3 className="mt-4 mb-2 text-label font-semibold text-fg-1">How to do each method</h3>
+        <PanelGrid>
+          {PULLUP_METHODS.map((m) => (
+            <PanelCard key={m.value} title={m.label}>
+              <ol className="list-decimal space-y-1 pl-5 text-label text-fg-2">
+                {methodSteps(m.value, pullupAbility(max).trainingSet).map((t) => <li key={t}>{t}</li>)}
+              </ol>
+            </PanelCard>
+          ))}
+        </PanelGrid>
     </>)}
     {chapter === 'formats' && <Formats />}
     {chapter === 'progressions' && (

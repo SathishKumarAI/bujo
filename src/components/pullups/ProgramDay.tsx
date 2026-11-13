@@ -72,19 +72,19 @@ export function PullupProgramDay({ date }: {
 
   return (
     <section aria-label={s.p.name} className="flex flex-col gap-3">
-      <h2 className="sr-only">{s.p.name}</h2>
+      <h2 className="sr-only">{s.p.name.replace(' — ', ': ')}</h2>
       <div className="select-bar" role="group" aria-label="Choose the day">
         <label className="select-pill">
           <span className="sr-only">Week</span>
           <select value={s.week} onChange={(e) => { const w = s.p.weeks.find((x) => x.week === Number(e.target.value)); if (w) s.goTo(w.week, sameDay(w)) }}>
-            {s.p.weeks.map((w) => <option key={w.week} value={w.week}>Week {w.week}{s.weekComplete(w.week) ? ' ✓' : ''}</option>)}
+            {s.p.weeks.map((w) => <option key={w.week} value={w.week}>Week {w.week}{s.weekComplete(w.week) ? ', done' : ''}</option>)}
           </select>
           <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
         </label>
         <label className="select-pill">
           <span className="sr-only">Day</span>
           <select value={s.cur.day} onChange={(e) => s.goTo(s.week, Number(e.target.value))}>
-            {s.curWeek.days.map((d) => <option key={d.day} value={d.day}>Day {d.day} · {d.focus}{s.dayComplete(s.week, d.day) ? ' ✓' : ''}</option>)}
+            {s.curWeek.days.map((d) => <option key={d.day} value={d.day}>Day {d.day}: {d.focus}{s.dayComplete(s.week, d.day) ? ', done' : ''}</option>)}
           </select>
           <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
         </label>
@@ -92,7 +92,7 @@ export function PullupProgramDay({ date }: {
 
       <div className="flex items-center gap-3 px-1">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Program days done" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((s.doneCount / s.totalDays) * 100)}>
-          <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${(s.doneCount / s.totalDays) * 100}%` }} />
+          <div className="h-full rounded-pill bg-green" style={{ width: `${(s.doneCount / s.totalDays) * 100}%` }} />
         </div>
         <span className="shrink-0 text-label text-fg-2">
           {logged ? <span className="inline-flex items-center gap-1 font-semibold text-fg-1"><Icon as={CheckCircle} size="sm" />Logged</span> : `${s.doneCount}/${s.totalDays} days`}
@@ -119,12 +119,12 @@ export function PullupProgramDay({ date }: {
                 </button>
                 <div className="min-w-0 flex-1">
                   <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
-                  <p className="text-label text-fg-2">{e.qty} × {total} {total === 1 ? 'set' : 'sets'}</p>
+                  <p className="text-label text-fg-2">{e.qty}, {total} {total === 1 ? 'set' : 'sets'}</p>
                 </div>
                 <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
               </div>
               <label className="ios-form mt-2 flex items-center gap-2">
-                <span className="flex-1 text-label text-fg-2">{assess ? 'Your max — strict reps' : 'What you did'}</span>
+                <span className="flex-1 text-label text-fg-2">{assess ? 'Your max, strict reps' : 'What you did'}</span>
                 <input
                   value={did(i)}
                   inputMode={assess ? 'numeric' : 'text'}
