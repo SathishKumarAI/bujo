@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Sheet } from './ui/sheet'
-import { mmss, startOf, stepAt, type Intervals } from '../lib/holdTime'
+import { describeIntervals, mmss, startOf, stepAt, type Intervals } from '../lib/holdTime'
 
 /**
  * THE INTERVAL TIMER — Tabata (20 s work, 10 s rest, eight rounds) and a run
@@ -79,7 +79,7 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onClose() }} title={name}
-      description={manual ? `${works} holds, start each one when you are ready` : `${works} rounds, ${steps[0].secs} s work and ${steps[1]?.secs ?? 0} s rest`}>
+      description={describeIntervals(plan)}>
       <div className="interval flex flex-col items-center gap-4 py-4" data-phase={phase}>
         <p className="interval-word" aria-live="assertive">{phase === 'done' ? 'Done' : phase === 'work' ? 'Work' : 'Rest'}</p>
         <output className="hold-clock" aria-live="off" aria-label={`${left} seconds left`}>{mmss(over ? 0 : left)}</output>

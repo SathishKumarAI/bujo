@@ -1419,6 +1419,23 @@ button.cell:active {
   box-shadow: 0 0 0 1px var(--color-line), var(--shadow-lift);
 }
 
+/* The rest clock in a log dock (`components/RestClock.tsx`): a full-width
+   bar above Log; its border goes green when a set rest is over. */
+.rest-clock {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 1rem;
+  border-radius: 999px;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 2px var(--color-line-strong), var(--shadow-lift);
+}
+
+.rest-clock[data-over] {
+  box-shadow: 0 0 0 2px var(--color-green), var(--shadow-lift);
+}
+
 /* THE BIG TIMER (`components/HoldTimer.tsx`): digits you can read from the
    floor in a plank, one giant start button, nothing that moves. */
 .hold-clock {
