@@ -84,7 +84,7 @@ export function SegmentScale({
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span id={scaleId} className="text-body text-fg-1">
           {label}
-          {phone && anchors && <span className="ml-2 text-label text-fg-2">{anchors[0]} → {anchors[1]}</span>}
+          {phone && anchors && <span className="ml-2 text-label text-fg-2">{anchors[0]} to {anchors[1]}</span>}
         </span>
         {/* The value is the thing you are setting, so it is the biggest thing
             in the row rather than a footnote beside the label. Unset stays a
@@ -94,7 +94,7 @@ export function SegmentScale({
           className="num text-heading leading-none tabular-nums transition-colors"
           style={{ color: unset ? cat('overlay0') : accent }}
         >
-          {value ?? '—'}
+          {value ?? <span className="font-sans text-label text-fg-2">not set</span>}
         </span>
       </div>
       <div

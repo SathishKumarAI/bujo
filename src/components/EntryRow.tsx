@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
 import { glyphFor } from '../lib/bullets'
 import { cat, onRaised } from '../lib/colors'
 import { useJournal } from '../store'
@@ -128,7 +130,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
           aria-label="Delete entry"
           className="reveal text-fg-2 hover:text-red"
         >
-          ×
+          <Icon as={Trash} size="sm" />
         </button>
       </span>
     </li>
