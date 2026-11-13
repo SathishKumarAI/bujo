@@ -136,12 +136,9 @@ export function HomeWorkout() {
     <PageLayout
       tier={1180}
       zone1={phone ? (
-        /* One line on a phone: the week against the guideline and the last
-           session. "In this session" is the session itself, right below. */
-        <p className="px-1 text-label text-fg-2">
-          <b className="text-fg-1">{weekDays} day{weekDays === 1 ? '' : 's'}</b> this week, {weekDays >= 2 ? 'guideline met' : `${2 - weekDays} more for the guideline`}
-          {last && <>, last {prettyDay(last.date)}</>}
-        </p>
+        /* One line on a phone: the last session. No week (owner,
+           2026-11-13: "I don't want to see week"); the desktop keeps it. */
+        last ? <p className="px-1 text-label text-fg-2">Last workout {prettyDay(last.date)}</p> : undefined
       ) : <StatBar facts={[
         { label: 'Trained this week', value: `${weekDays} day${weekDays === 1 ? '' : 's'}` },
         { label: 'Guideline', value: weekDays >= 2 ? 'Met — 2+ days' : `${2 - weekDays} more to reach 2`, prose: true },

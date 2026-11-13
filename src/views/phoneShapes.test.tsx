@@ -72,6 +72,9 @@ describe('Pull-ups log on a phone', () => {
     const day = screen.getByRole('region', { name: /Starting From Zero/ })
     expect(day.querySelectorAll('[aria-expanded]')).toHaveLength(0)
     expect(screen.queryByRole('navigation', { name: 'Pull-up sections' })).toBeNull()
+    // No week on a phone (owner, 2026-11-13): one day-of-the-program picker.
+    expect(screen.queryByRole('combobox', { name: 'Week' })).toBeNull()
+    expect(screen.getByRole('combobox', { name: 'Day of the program' })).toBeTruthy()
     await userEvent.type(screen.getByRole('textbox', { name: 'Pull-up assessment, what you did' }), '3')
     await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
     const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)

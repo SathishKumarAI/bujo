@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CaretDown, Check, CheckCircle, ListChecks, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { plain } from '../../lib/plain'
 import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
@@ -54,7 +55,6 @@ export function PullupProgramDay({ date }: {
   const tickAll = () => setTaps((t) => ({ ...t, [k]: s.cur.exercises.map((_, i) => (allDone ? 0 : setsOf(i))) }))
   const started = s.cur.exercises.map((_, i) => i).filter((i) => count(i) > 0 || did(i).trim())
   const logged = s.dayComplete(s.week, s.cur.day)
-  const sameDay = (w: (typeof s.p.weeks)[number]) => w.days.find((d) => d.day === s.cur.day)?.day ?? w.days[0].day
 
   function log() {
     if (started.length === 0) { notify.info('Nothing ticked yet', 'Tick what you did, then log.'); return }
@@ -69,29 +69,25 @@ export function PullupProgramDay({ date }: {
     setTaps((t) => { const n = { ...t }; delete n[k]; return n })
     const at = s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)
     const next = s.days[at + 1]
-    notify.success(`Week ${s.week} · day ${s.cur.day} logged`, next ? `Next up: week ${next.week}, day ${next.day} · ${next.focus}` : 'That was the last day of the program.')
+    notify.success(`Day ${at + 1} logged`, next ? `Next up: day ${at + 2} of ${s.days.length}, ${next.focus}` : 'That was the last day of the program.')
     if (next) s.goTo(next.week, next.day)
   }
 
   return (
     <section aria-label={s.p.name} className="flex flex-col gap-3">
       <h2 className="sr-only">{s.p.name.replace(' — ', ': ')}</h2>
-      <div className="select-bar" role="group" aria-label="Choose the day">
-        <label className="select-pill">
-          <span className="sr-only">Week</span>
-          <select value={s.week} onChange={(e) => { const w = s.p.weeks.find((x) => x.week === Number(e.target.value)); if (w) s.goTo(w.week, sameDay(w)) }}>
-            {s.p.weeks.map((w) => <option key={w.week} value={w.week}>Week {w.week}{s.weekComplete(w.week) ? ', done' : ''}</option>)}
-          </select>
-          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-        </label>
-        <label className="select-pill">
-          <span className="sr-only">Day</span>
-          <select value={s.cur.day} onChange={(e) => s.goTo(s.week, Number(e.target.value))}>
-            {s.curWeek.days.map((d) => <option key={d.day} value={d.day}>Day {d.day}: {d.focus}{s.dayComplete(s.week, d.day) ? ', done' : ''}</option>)}
-          </select>
-          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-        </label>
-      </div>
+      {/* ONE PICKER, the day of the program — no week or block on a phone
+          (owner, 2026-11-13: "I don't want to see week"). COD-596. */}
+      <label className="select-pill">
+        <span className="sr-only">Day of the program</span>
+        <select value={s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)}
+          onChange={(e) => { const d = s.days[Number(e.target.value)]; if (d) s.goTo(d.week, d.day) }}>
+          {s.days.map((d, n) => (
+            <option key={`${d.week}:${d.day}`} value={n}>Day {n + 1} of {s.days.length}: {plain(d.focus)}{s.dayComplete(d.week, d.day) ? ', done' : ''}</option>
+          ))}
+        </select>
+        <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
+      </label>
 
       <div className="flex items-center gap-3 px-1">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Program days done" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((s.doneCount / s.totalDays) * 100)}>
@@ -106,7 +102,7 @@ export function PullupProgramDay({ date }: {
       {/* ONE CARD PER EXERCISE, everything on it (owner, 2026-11-13: "only
           cards with all the exercises planned … no subparts"): the plan, the
           set counter, what you did and the how-to — nothing opens. */}
-      <ol className="flex flex-col gap-3" aria-label={`Week ${s.week}, day ${s.cur.day} · ${s.cur.focus}`}>
+      <ol className="flex flex-col gap-3" aria-label={`Today's exercises, ${s.cur.focus}`}>
         {s.cur.exercises.map((e, i) => {
           const n = count(i)
           const total = setsOf(i)
