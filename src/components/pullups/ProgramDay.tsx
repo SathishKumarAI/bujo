@@ -109,35 +109,36 @@ export function PullupProgramDay({ date }: {
           const all = n >= total
           const assess = /assessment/i.test(e.name)
           return (
-            <li key={`${k}:${i}`} className="ex-card" data-done={all || undefined}>
-              <div className="flex items-center gap-3">
-                <button type="button" className="set-count" aria-pressed={all}
-                  aria-label={all ? `${e.name}: all ${total} sets done, tap to clear` : `${e.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
-                  onClick={() => bump(i)}>
-                  {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
-                </button>
-                <div className="min-w-0 flex-1">
-                  <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
-                  <p className="text-label text-fg-2">{e.qty}, {total} {total === 1 ? 'set' : 'sets'}</p>
-                </div>
-                <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
+            <li key={`${k}:${i}`} className="ex-card flex items-center gap-2" data-done={all || undefined}>
+              {/* ONE ROW (owner, 2026-11-13: "all the cards … in one page"):
+                  counter, name and plan with Watch under it, the timer when
+                  the plan is timed, and what you did. Five cards were 1.5
+                  screens as three rows each. */}
+              <button type="button" className="set-count" aria-pressed={all}
+                aria-label={all ? `${e.name}: all ${total} sets done, tap to clear` : `${e.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
+                onClick={() => bump(i)}>
+                {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
+              </button>
+              <div className="min-w-0 flex-1">
+                <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
+                <p className="text-label text-fg-2">
+                  {e.qty}, {total} {total === 1 ? 'set' : 'sets'}{' '}
+                  <VideoLink name={e.name} label="Watch" size="sm" className="-my-3 py-3" />
+                </p>
               </div>
               {secondsIn(e.qty) != null && (
-                <button type="button" className="timer-btn mt-2" aria-haspopup="dialog" onClick={() => setTiming(i)}>
-                  <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {e.name}</span>
+                <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${e.name}`} onClick={() => setTiming(i)}>
+                  <Icon as={Timer} size="md" />
                 </button>
               )}
-              <label className="ios-form mt-2 flex items-center gap-2">
-                <span className="flex-1 text-label text-fg-2">{assess ? 'Your max, strict reps' : 'What you did'}</span>
-                <input
-                  value={did(i)}
-                  inputMode={assess ? 'numeric' : 'text'}
-                  placeholder={assess ? 'reps' : e.qty}
-                  onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
-                  aria-label={`${e.name}, what you did`}
-                  className="w-32 rounded-[0.625rem] bg-ink-2 px-3 py-2 text-right text-body text-fg-1"
-                />
-              </label>
+              <span className="ios-form shrink-0"><input
+                value={did(i)}
+                inputMode={assess ? 'numeric' : 'text'}
+                placeholder={secondsIn(e.qty) != null ? 'secs' : 'reps'}
+                onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
+                aria-label={`${e.name}, what you did`}
+                className="w-20 rounded-[0.625rem] bg-ink-2 px-2 py-2 text-right text-body text-fg-1"
+              /></span>
             </li>
           )
         })}

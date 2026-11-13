@@ -18,8 +18,8 @@ import { secondsIn } from '../../lib/holdTime'
  *
  * OWNS: the phone drawing of the session builder. Nothing loaded: every
  * routine as a card listing its exercises, with Start. Loaded: the routine's
- * how-to, then one card per exercise — a pill per set ("3×12" is three),
- * the plan to change, Watch and remove, nothing folded (COD-593); a dock with minutes and notes (a sheet) and
+ * how-to, then one card per exercise — a set counter ("3×12" is three sets),
+ * the plan to change, Watch and remove, in one row (COD-593); a dock with minutes and notes (a sheet) and
  * Log. The day is the page's `DayStrip`, in the top bar (COD-558). Log writes the exercises you ticked, or the whole plan when
  * you ticked none — the same rule Pull-ups' free session follows.
  * DOES NOT OWN: the session state or the write (`views/HomeWorkout.tsx`), which
@@ -61,15 +61,6 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
     }))
   }
 
-  const pills = (i: SessionItem) => {
-    const n = taps[i.id] ?? 0
-    return Array.from({ length: setsIn(i.reps) }, (_, j) => (
-      <button key={j} type="button" className="set-pill" aria-pressed={j < n}
-        onClick={() => setTaps((t) => ({ ...t, [i.id]: j < n ? j : j + 1 }))}>
-        {j < n && <Icon as={Check} size="sm" />}Set {j + 1}
-      </button>
-    ))
-  }
 
   return (
     <section aria-label="Today’s session" className="flex flex-col gap-3">
@@ -105,36 +96,40 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
             <button type="button" className="mt-1 min-h-11 text-label font-semibold text-brand-text"
               onClick={() => { onLoadRoutine([]); setRoutine(''); setTaps({}) }}>Change routine</button>
           </div>
-          {/* ONE CARD PER EXERCISE, nothing folded: the plan, a pill per set,
+          {/* ONE CARD PER EXERCISE, nothing folded: the plan, a set counter,
               the reps to change, how to do it, and remove. */}
           <ol className="flex flex-col gap-3">
             {items.map((i) => {
-              const all = (taps[i.id] ?? 0) >= setsIn(i.reps)
+              const n = taps[i.id] ?? 0
+              const total = setsIn(i.reps)
+              const all = n >= total
               return (
-                <li key={i.id} className="ex-card" data-done={all || undefined}>
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{i.name}</h3>
-                      <p className="text-label text-fg-2">
-                        {plain(i.reps)}{' '}
-                        <button type="button" className="min-h-11 px-1 font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(i.id)}>
-                          Change<span className="sr-only"> {i.name}</span>
-                        </button>
-                      </p>
-                    </div>
-                    <VideoLink name={i.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
-                    <button type="button" className="round-btn shrink-0" aria-label={`Remove ${i.name} from the session`} onClick={() => onDrop(i.id)}>
-                      <Icon as={Trash} size="sm" />
+                <li key={i.id} className="ex-card flex items-center gap-2" data-done={all || undefined}>
+                  {/* One row, Pull-ups' shape: a set counter, the plan with
+                      Change and Watch, the timer when timed, remove. */}
+                  <button type="button" className="set-count" aria-pressed={all}
+                    aria-label={all ? `${i.name}: all ${total} sets done, tap to clear` : `${i.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
+                    onClick={() => setTaps((t) => ({ ...t, [i.id]: all ? 0 : n + 1 }))}>
+                    {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{i.name}</h3>
+                    <p className="text-label text-fg-2">
+                      {plain(i.reps)}{' '}
+                      <button type="button" className="-my-3 px-1 py-3 font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(i.id)}>
+                        Change<span className="sr-only"> {i.name}</span>
+                      </button>{' '}
+                      <VideoLink name={i.name} label="Watch" size="sm" className="-my-3 py-3" />
+                    </p>
+                  </div>
+                  {secondsIn(i.reps) != null && (
+                    <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${i.name}`} onClick={() => setTiming(i.id)}>
+                      <Icon as={Timer} size="md" />
                     </button>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={`${i.name} sets`}>
-                    {pills(i)}
-                    {secondsIn(i.reps) != null && (
-                      <button type="button" className="timer-btn ml-auto" aria-haspopup="dialog" onClick={() => setTiming(i.id)}>
-                        <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {i.name}</span>
-                      </button>
-                    )}
-                  </div>
+                  )}
+                  <button type="button" className="round-btn shrink-0" aria-label={`Remove ${i.name} from the session`} onClick={() => onDrop(i.id)}>
+                    <Icon as={Trash} size="sm" />
+                  </button>
                 </li>
               )
             })}
