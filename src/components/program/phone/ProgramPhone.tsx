@@ -1,3 +1,4 @@
+import { Seg } from '../../ui/seg'
 import { useState } from 'react'
 import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
@@ -122,6 +123,9 @@ export function ProgramPhone({ s, onCheck, rest }: {
       {/* THE SELECTION BAR — week and day side by side in one 44px row.
           Native selects: on iOS they open the system wheel, the picker people
           already know, and they cost no sheet of our own. */}
+      {s.programs.length > 1 && (
+        <Seg label="Program" value={s.pid} onChange={(v) => { if (v) s.pickProgram(v) }} options={s.programs.map((x) => ({ value: x.id, label: x.short, name: x.name }))} />
+      )}
       <div className="select-bar" role="group" aria-label="Choose the day">
         <label className="select-pill">
           <span className="sr-only">{s.unit}</span>
@@ -196,13 +200,13 @@ export function ProgramPhone({ s, onCheck, rest }: {
                       me clicking on downside". */}
                   <div className="relative min-w-0 flex-1 py-1.5">
                     <span className="flex min-w-0 items-center gap-1">
-                      <button type="button" className={`lift-toggle min-w-0 truncate text-left text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`} aria-expanded={open} onClick={() => setEditing(open ? null : e.name)}>
+                      <button type="button" className={`lift-toggle min-w-0 text-left text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`} aria-expanded={open} onClick={() => setEditing(open ? null : e.name)}>
                         {e.name}
                       </button>
                       <VideoLink name={e.name} label="Watch" size="sm" className="lift-watch" />
                     </span>
                     <span className="block text-label text-fg-2">
-                      {mine.length} × {first?.reps || e.qty} · {first?.weight ? `${first.weight} ${unit}` : 'add weight'}
+                      {mine.length} × {first?.reps || e.qty}{/rep/i.test(e.qty) && <> · {first?.weight ? `${first.weight} ${unit}` : 'add weight'}</>}
                       {prev && <span> · last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}
                     </span>
                   </div>

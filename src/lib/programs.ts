@@ -8,6 +8,8 @@
 // pin itself to one; each has a `home` view that owns it. Progress lives in
 // `settings.programDone` / `programActuals`, keyed `<id>-w<week>d<day>-e<i>`.
 //
+// - "Gym Trainer Plan" — 25 sessions from the owner's trainer (`lib/trainerPlan.ts`).
+//
 // The pull-up *reference* material — workout formats, progressions, the ability
 // table — is not a program and lives in `lib/pullups.ts`.
 
@@ -65,6 +67,8 @@ export interface Program {
   restRule?: 'rep-range'
   weeks: ProgramWeek[]
 }
+
+import { TRAINER_PROGRAM } from './trainerPlan'
 
 const ex = (name: string, qty: string, sets: string): ProgramExercise => ({ name, qty, sets })
 
@@ -155,7 +159,7 @@ export const HYPERTROPHY_PROGRAM: Program = {
   ],
 }
 
-export const PROGRAMS: Program[] = [PULLUP_PROGRAM, HYPERTROPHY_PROGRAM]
+export const PROGRAMS: Program[] = [PULLUP_PROGRAM, HYPERTROPHY_PROGRAM, TRAINER_PROGRAM]
 
 // ── Where you are in a program ───────────────────────────────────────────────
 //
