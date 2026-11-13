@@ -301,7 +301,7 @@ describe('Home workout on a phone', () => {
     expect(screen.queryByRole('combobox', { name: 'Routine' })).toBeNull()
     expect(container.querySelectorAll('#main [aria-expanded], [aria-expanded]').length).toBe(0)
     await userEvent.click(screen.getByRole('button', { name: /^Start this routine: Full body, no kit/ }))
-    await userEvent.click(within(screen.getByRole('group', { name: 'Push-ups sets' })).getByRole('button', { name: 'Set 1' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Push-ups: 0\/3 sets done/ }))
     await userEvent.click(screen.getByRole('button', { name: /^Log 1 exercise/ }))
     const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
     const logged = j.workouts.filter((w: { activity: string }) => w.activity === 'homeWorkout')

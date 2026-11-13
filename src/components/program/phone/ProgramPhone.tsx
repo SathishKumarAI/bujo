@@ -22,10 +22,9 @@ import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep 
 /**
  * PROGRAM ON A PHONE — pick the day, log it, here (COD-461, COD-464).
  *
- * OWNS: the phone page: Week and Day as one selection bar (two native
- * selects side by side), the day as ONE CARD PER LIFT — weight − / +, one
- * pill per set you tap after it, Strength's set cards in a sheet for a
- * single set (COD-588) — and "Log workout", which saves a real Strength session
+ * OWNS: the phone page: the program and one Day select (COD-596), the day
+ * as ONE ROW-CARD PER LIFT — a set counter you tap after each set, weight
+ * − / +, Strength's set cards in a sheet behind the weight (COD-588) — and "Log workout", which saves a real Strength session
  * AND ticks the program day. Owner ask: the selection on one bar, the whole
  * day in one screen.
  * DOES NOT OWN: the program state (`useProgram`), the rest timer (the view's),
@@ -167,11 +166,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
           </span>
         </div>
 
-        {/* ONE CARD PER LIFT, nothing folded (owner, 2026-11-13: "only
-            cards … no subparts"). Each card: name + Watch, what last time
-            was, the weight for every set (− / +), and one pill per set — tap
-            it after the set. Changing a single set's numbers is the sheet
-            behind "Edit sets"; the card itself never opens. COD-588. */}
+        {/* ONE CARD PER LIFT, nothing folded, one row each (COD-588). */}
         <ol className="flex flex-col gap-3">
           {s.cur.exercises.map((e) => {
             const mine = rows.filter((r) => r.exercise === e.name)
@@ -185,48 +180,49 @@ export function ProgramPhone({ s, onCheck, rest }: {
             const next = suggestWeight(prev, target, unit)
             const cur = Number(first?.weight) || 0
             return (
-              <li key={e.name} className="ex-card" data-done={all || undefined}>
-                <div className="flex items-start gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
-                    <p className="text-label text-fg-2">
-                      {mine.length} × {first?.reps || e.qty}
-                      {prev && <span> · last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}
-                    </p>
-                  </div>
-                  <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
-                </div>
-                {reps && (
-                  <div className="ex-weight">
-                    <span className="min-w-0 flex-1 text-label text-fg-2">Weight, every set</span>
-                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
-                    <span className="min-w-[4.5rem] text-center text-body font-semibold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
-                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
-                  </div>
-                )}
-                {next != null && next !== cur && (
-                  <button type="button" className="suggest mt-2 inline-flex w-full items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
-                    <Icon as={ArrowLineUp} size="sm" />
-                    {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
-                  </button>
-                )}
-                <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label={`${e.name} sets`}>
-                  {mine.map((r, j) => {
-                    const on = done.has(r.id)
-                    const what = r.weight ? `${r.weight}×${r.reps || '?'}` : (r.reps || e.qty)
-                    return (
-                      <button key={r.id} type="button" className="set-pill" aria-pressed={on} onClick={() => tick(r)}>
-                        {on && <Icon as={Check} size="sm" />}<span className="sr-only">Set {j + 1} </span>{what}
-                      </button>
-                    )
-                  })}
-                  {reps && <button type="button" className="ml-auto min-h-11 text-label font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(e.name)}>Edit sets</button>}
-                  {secondsIn(e.qty) != null && (
-                    <button type="button" className="timer-btn ml-auto" aria-haspopup="dialog" onClick={() => setTiming(e.name)}>
-                      <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {e.name}</span>
+              <li key={e.name} className="ex-card flex items-center gap-2" data-done={all || undefined}>
+                {/* ONE ROW, Pull-ups' shape (owner, 2026-11-13: "fit all in
+                    the one card"): a set counter — tap after each set, tap a
+                    full one to clear —, the name with plan, last time and
+                    Watch, then the weight. Tapping the weight opens the sheet
+                    for set-by-set numbers. Was a pill per set on a second row. */}
+                <button type="button" className="set-count" aria-pressed={all}
+                  aria-label={all ? `${e.name}: all ${mine.length} sets done, tap to clear` : `${e.name}: ${n}/${mine.length} sets done, tap after set ${n + 1}`}
+                  onClick={() => {
+                    if (all) { patch({ done: [...done].filter((id) => !mine.some((r) => r.id === id)) }); return }
+                    const nextSet = mine.find((r) => !done.has(r.id))
+                    if (nextSet) tick(nextSet)
+                  }}>
+                  {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{mine.length}</span>}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
+                  <p className="text-label text-fg-2">
+                    {mine.length} × {first?.reps || e.qty}
+                    {prev && <span>, last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}{' '}
+                    <VideoLink name={e.name} label="Watch" size="sm" className="-my-3 py-3" />
+                  </p>
+                  {next != null && next !== cur && (
+                    <button type="button" className="suggest mt-1 inline-flex items-center gap-1" onClick={() => setLiftWeight(e.name, next)}>
+                      <Icon as={ArrowLineUp} size="sm" />Try {next} {unit}
                     </button>
                   )}
                 </div>
+                {reps && (
+                  <div className="ex-weight" role="group" aria-label={`${e.name}, weight for every set`}>
+                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
+                    <button type="button" className="min-h-11 min-w-[3.25rem] text-center text-label font-semibold tabular-nums text-fg-1" aria-haspopup="dialog"
+                      aria-label={`${cur ? `${cur} ${unit}` : `No weight`}: edit ${e.name} sets`} onClick={() => setEditing(e.name)}>
+                      {cur ? `${cur} ${unit}` : `– ${unit}`}
+                    </button>
+                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
+                  </div>
+                )}
+                {secondsIn(e.qty) != null && (
+                  <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${e.name}`} onClick={() => setTiming(e.name)}>
+                    <Icon as={Timer} size="md" />
+                  </button>
+                )}
               </li>
             )
           })}
