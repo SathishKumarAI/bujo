@@ -61,14 +61,15 @@ function DeskDay() {
 }
 
 describe('Program shows "Watch" beside every lift without opening it', () => {
-  it('phone: every closed lift row carries its own Watch link', () => {
-    render(<NavProvider navigate={() => {}}><JournalProvider><PhoneDay /></JournalProvider></NavProvider>)
-    const toggles = screen.getAllByRole('button', { expanded: false }).filter((b) => b.closest('.lift-row'))
-    expect(toggles.length).toBeGreaterThan(0)
-    for (const t of toggles) {
-      const name = t.textContent!.trim()
-      // In the same row, not somewhere else on the page.
-      within(t.closest('.lift-row') as HTMLElement).getByRole('link', { name: `Watch: ${name}` })
+  it('phone: every lift card carries its own Watch link, with nothing to open', () => {
+    const { container } = render(<NavProvider navigate={() => {}}><JournalProvider><PhoneDay /></JournalProvider></NavProvider>)
+    const cards = [...container.querySelectorAll<HTMLElement>('.ex-card')]
+    expect(cards.length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('[aria-expanded]')).toHaveLength(0)
+    for (const c of cards) {
+      const name = within(c).getByRole('heading').textContent!.trim()
+      // In the same card, not somewhere else on the page.
+      within(c).getByRole('link', { name: `Watch: ${name}` })
     }
   })
 

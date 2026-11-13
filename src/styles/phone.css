@@ -938,6 +938,40 @@ button.cell:active {
   background: color-mix(in oklab, var(--color-green) 8%, var(--color-ink-1));
 }
 
+/* Program's lift card: the weight for every set, one line under the name. */
+.ex-weight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* One pill per set: tap after the set, a filled check once done. */
+.set-pill {
+  display: inline-flex;
+  min-width: 3.5rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--color-line-strong);
+  color: var(--color-fg-1);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.set-pill:active {
+  transform: scale(0.94);
+}
+
+.set-pill[aria-pressed='true'] {
+  background: var(--color-green);
+  box-shadow: none;
+  color: var(--color-ink-0);
+}
+
 /* The set counter: "2/3" in a ring, a filled check when the lift is done. */
 .set-count {
   display: grid;

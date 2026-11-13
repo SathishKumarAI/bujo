@@ -143,7 +143,9 @@ export function Program() {
           )}
 
           {s.p.note && (
-            <p className="mt-3 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">{s.p.note.join(' · ')}</p>
+            <ul className="mt-3 space-y-1 rounded-card bg-ink-2 px-3 py-2 text-label text-fg-2">
+              {s.p.note.map((n) => <li key={n} className="pl-3 -indent-3">· {n}</li>)}
+            </ul>
           )}
 
           {/* The map is in the ACT column because choosing the day *is* the act

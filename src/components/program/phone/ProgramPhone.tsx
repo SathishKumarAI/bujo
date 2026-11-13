@@ -11,6 +11,7 @@ import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
 import { VideoLink } from '../../VideoLink'
 import { DayStrip } from '../../ui/dayStrip'
+import { Sheet } from '../../ui/sheet'
 import { storedSets } from '../../gym/phone/strengthHelpers'
 import type { ProgramState } from '../useProgram'
 import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep } from './programLog'
@@ -19,9 +20,9 @@ import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep 
  * PROGRAM ON A PHONE — pick the day, log it, here (COD-461, COD-464).
  *
  * OWNS: the phone page: Week and Day as one selection bar (two native
- * selects side by side), the day as ONE ROW PER LIFT — a round counter you
- * tap after each set, the row opening to Strength's set cards to change
- * weight and reps — and "Log workout", which saves a real Strength session
+ * selects side by side), the day as ONE CARD PER LIFT — weight − / +, one
+ * pill per set you tap after it, Strength's set cards in a sheet for a
+ * single set (COD-588) — and "Log workout", which saves a real Strength session
  * AND ticks the program day. Owner ask: the selection on one bar, the whole
  * day in one screen.
  * DOES NOT OWN: the program state (`useProgram`), the rest timer (the view's),
@@ -161,90 +162,72 @@ export function ProgramPhone({ s, onCheck, rest }: {
           </span>
         </div>
 
-        {/* ONE ROW PER LIFT. The round counter is tapped after each set; the
-            row opens to change weight and reps. Twenty-two set rows were four
-            phone screens; seven lift rows are one. */}
-        <div className="cells">
+        {/* ONE CARD PER LIFT, nothing folded (owner, 2026-11-13: "only
+            cards … no subparts"). Each card: name + Watch, what last time
+            was, the weight for every set (− / +), and one pill per set — tap
+            it after the set. Changing a single set's numbers is the sheet
+            behind "Edit sets"; the card itself never opens. COD-588. */}
+        <ol className="flex flex-col gap-3">
           {s.cur.exercises.map((e) => {
             const mine = rows.filter((r) => r.exercise === e.name)
             const n = mine.filter((r) => done.has(r.id)).length
             const all = mine.length > 0 && n === mine.length
-            const open = editing === e.name
             const first = mine[0]
+            const reps = /rep/i.test(e.qty)
             // Last time you did this lift, and what that says to lift today.
-            const prev = lastSetFor(data, e.name)
+            const prev = reps ? lastSetFor(data, e.name) : null
             const target = Number.parseInt(first?.reps || '', 10) || 0
             const next = suggestWeight(prev, target, unit)
             const cur = Number(first?.weight) || 0
             return (
-              <div key={e.name} className="lift-row" data-done={all || undefined}>
-                <div className="flex items-center gap-3 px-3">
-                  <button
-                    type="button"
-                    className="set-count"
-                    aria-pressed={all}
-                    aria-label={all ? `${e.name}: all ${mine.length} sets done, tap to clear` : `${e.name}: ${n}/${mine.length} sets done, tap after set ${n + 1}`}
-                    onClick={() => {
-                      if (all) { patch({ done: [...done].filter((id) => !mine.some((r) => r.id === id)) }); return }
-                      const next = mine.find((r) => !done.has(r.id))
-                      if (next) tick(next)
-                    }}
-                  >
-                    {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{mine.length}</span>}
-                  </button>
-                  {/* The name is the toggle, and its ::after stretches over
-                      the whole row (`.lift-toggle`) — so the form link can sit
-                      RIGHT AFTER the name, on the closed row, without nesting
-                      an anchor in a button. Owner ask (COD-541): "show the
-                      watch how button right after the workout name instead of
-                      me clicking on downside". */}
-                  <div className="relative min-w-0 flex-1 py-1.5">
-                    <span className="flex min-w-0 items-center gap-1">
-                      <button type="button" className={`lift-toggle min-w-0 text-left text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`} aria-expanded={open} onClick={() => setEditing(open ? null : e.name)}>
-                        {e.name}
-                      </button>
-                      <VideoLink name={e.name} label="Watch" size="sm" className="lift-watch" />
-                    </span>
-                    <span className="block text-label text-fg-2">
-                      {mine.length} × {first?.reps || e.qty}{/rep/i.test(e.qty) && <> · {first?.weight ? `${first.weight} ${unit}` : 'add weight'}</>}
+              <li key={e.name} className="ex-card" data-done={all || undefined}>
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
+                    <p className="text-label text-fg-2">
+                      {mine.length} × {first?.reps || e.qty}
                       {prev && <span> · last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}
-                    </span>
+                    </p>
                   </div>
-                  <Icon as={CaretDown} size="sm" className={`pointer-events-none shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
                 </div>
-                {open && (
-                  <div className="ios-form pb-1">
-                    {/* WEIGHT FOR EVERY SET, as ONE inset row: what last time
-                        was on the left, − value + on the right. − / + move all
-                        the sets you have not done yet by one plate. Before
-                        COD-541 this was three stacked lines — a wrapping
-                        sentence, a 17px bold value and a "Watch how" line of
-                        its own — read as "large kind of text". */}
-                    <div className="lift-weight">
-                      <span className="min-w-0 flex-1 truncate text-label text-fg-2">
-                        {prev
-                          ? <>Last <b className="font-semibold text-fg-1">{prev.weight > 0 ? `${prev.weight} ${unit} × ${prev.reps}` : `${prev.reps} reps`}</b></>
-                          : 'First time'}
-                      </span>
-                      <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
-                      <span className="min-w-[4.5rem] text-center text-body font-semibold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
-                      <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
-                    </div>
-                    {next != null && next !== cur && (
-                      <div className="px-3 pb-2">
-                        <button type="button" className="suggest inline-flex w-full items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
-                          <Icon as={ArrowLineUp} size="sm" />
-                          {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
-                        </button>
-                      </div>
-                    )}
-                    <SetCards bare rows={mine} onChange={(r) => replaceLift(e.name, r)} unit={unit} data={data} onRest={tick} done={done} />
+                {reps && (
+                  <div className="ex-weight">
+                    <span className="min-w-0 flex-1 text-label text-fg-2">Weight, every set</span>
+                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
+                    <span className="min-w-[4.5rem] text-center text-body font-semibold tabular-nums text-fg-1" aria-live="polite">{cur ? `${cur} ${unit}` : `– ${unit}`}</span>
+                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
                   </div>
                 )}
-              </div>
+                {next != null && next !== cur && (
+                  <button type="button" className="suggest mt-2 inline-flex w-full items-center justify-center gap-1.5" onClick={() => setLiftWeight(e.name, next)}>
+                    <Icon as={ArrowLineUp} size="sm" />
+                    {prev && next > prev.weight ? `All ${prev.reps} reps last time — try ${next} ${unit}` : `Same as last time — ${next} ${unit}`}
+                  </button>
+                )}
+                <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label={`${e.name} sets`}>
+                  {mine.map((r, j) => {
+                    const on = done.has(r.id)
+                    const what = r.weight ? `${r.weight}×${r.reps || '?'}` : (r.reps || e.qty)
+                    return (
+                      <button key={r.id} type="button" className="set-pill" aria-pressed={on} onClick={() => tick(r)}>
+                        {on && <Icon as={Check} size="sm" />}<span className="sr-only">Set {j + 1} </span>{what}
+                      </button>
+                    )
+                  })}
+                  {reps && <button type="button" className="ml-auto min-h-11 text-label font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(e.name)}>Edit sets</button>}
+                </div>
+              </li>
             )
           })}
-        </div>
+        </ol>
+        {editing && (
+          <Sheet open onOpenChange={(o) => { if (!o) setEditing(null) }} title={editing} description="Weight and reps, set by set">
+            <div className="ios-form">
+              <SetCards bare rows={rows.filter((r) => r.exercise === editing)} onChange={(r) => replaceLift(editing, r)} unit={unit} data={data} onRest={tick} done={done} />
+            </div>
+          </Sheet>
+        )}
 
         {/* Docked above the bottom nav, so Log is always one thumb away however
             many lifts are open — and the rest timer docks INSIDE it, above
@@ -259,11 +242,8 @@ export function ProgramPhone({ s, onCheck, rest }: {
             <Icon as={Check} size="md" />{ticked.length ? `Log workout · ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
           </button>
         </div>
-        {/* The block's standing guidance, one row per point — it was a
-            two-line paragraph under the list. */}
-        {/* Folded to one row (COD-543): open, it added ~110px below the
-            lifts and took the page 1.13 -> 1.30 screens. A button with
-            aria-expanded, not <details>, so the a11y gate opens it. */}
+        {/* The block's standing guidance, one row per point, open — a fold
+            here was a subpart (COD-588). */}
         {s.p.note && <WeekNotes notes={s.p.note} />}
       </section>
     </div>
@@ -272,21 +252,12 @@ export function ProgramPhone({ s, onCheck, rest }: {
 
 
 function WeekNotes({ notes }: { notes: string[] }) {
-  const [open, setOpen] = useState(false)
   return (
     <section aria-label="Block notes" className="cells">
-      <h2>
-        <button type="button" className="cell w-full gap-2 text-left" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <span className="min-w-0 flex-1 text-body text-fg-1">Every week</span>
-          <span className="text-label text-fg-2">{notes.length} notes</span>
-          <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
-      </h2>
-      {open && (
-        <ul className="border-t border-line">
-          {notes.map((n) => <li key={n} className="note-row">{n}</li>)}
-        </ul>
-      )}
+      <h2 className="cell text-body text-fg-1">Every week</h2>
+      <ul className="border-t border-line">
+        {notes.map((n) => <li key={n} className="note-row">{n}</li>)}
+      </ul>
     </section>
   )
 }
