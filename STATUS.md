@@ -1,10 +1,11 @@
 # STATUS
 
-**Stopped:** 2026-11-13, on `main` after #547. Phone pages are becoming
-cards with nothing that opens in place and no symbols (COD-590); a big hold
-timer sits on every timed exercise; the trainer's 25 sessions are a program.
-**Production is still at #524**: the owner runs
-`bash scripts/ship.sh --deploy-only` (blocked for this session).
+**Stopped:** 2026-11-13, on `main` after #553. Phone pages are becoming
+cards with nothing that opens in place and no symbols (COD-590); Pull-ups
+has an interval timer (Tabata, hold lists, EMOM) and a rest clock.
+**Production is at #553** (deployed 2026-11-13 by this session at the
+owner's ask, `bujo-journal.vercel.app`). The deploy reinstalled
+`node_modules`: reinstall the gate deps before `npm run a11y`.
 
 ## 2026-11-13: cards, no subparts, no symbols, no week
 
@@ -19,6 +20,11 @@ timer sits on every timed exercise; the trainer's 25 sessions are a program.
 | #545 | COD-595: `HoldTimer` (giant stopwatch, saves seconds) on timed cards; timed Program rows now count as done |
 | #546 | COD-596: no week/month on phone workout pages: one "Day N of M" picker |
 | #547 | COD-600: top bar day chips became one "Today" pill (native date wheel) |
+| #549 | COD-601: workout cards one row each (set counter, name + plan + Watch, weight / timer / input); `.set-pill` gone |
+| #550 | COD-602: `IntervalTimer`: Tabata 20/10 x 8 runs itself, "15,30,15 s" holds wait between; beeps (iPhone cannot vibrate) |
+| #551 | COD-603: `RestClock` in the dock after a set (up, or 3:00 down after a ladder); EMOM minute clock |
+| #552 | COD-608 (commit says 604): tune work/rest/rounds before Start; Round done, Skip rest, Back; every program day lands in History |
+| #553 | COD-614: Today's habits as two-column cards on the phone (tap anywhere, check pop, reduced-motion respected) |
 
 **Next:** COD-590, the remaining phone pages as cards: Recovery (8 folds),
 Insights (6), Trackers (4), Nutrition, Challenges, Cycle, Monthly (3 each);
