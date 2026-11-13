@@ -1,7 +1,7 @@
 import { Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState } from 'react'
-import { Card } from '../components/ui'
+import { Card, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { PageLayout, StatBar } from '../components/page'
 import { DayAnatomy, DayChecklist, ProgramMap, RestTimer, useProgram } from '../components/program'
@@ -41,9 +41,12 @@ import { ProgramPhone } from '../components/program/phone/ProgramPhone'
  * The pull-up program keeps its own home in `views/Pullups.tsx` — same hook,
  * same children, arranged as one card by `components/program/ProgramTracker`.
  */
+/** The programs this page offers; the pull-up one lives on Pull-ups. */
+const PROGRAM_PAGE = ['hyper12', 'trainer'] as const
+
 export function Program() {
   const navigate = useNav()
-  const s = useProgram('hyper12')
+  const s = useProgram(PROGRAM_PAGE)
 
   /**
    * The running rest, if any. Held here rather than inside the checklist so it
@@ -111,6 +114,7 @@ export function Program() {
           title={`${s.unit} ${s.week} · day ${s.day}`}
           subtitle={`${s.cur.focus} · ${s.stats.exercises} lifts · ${s.stats.sets} sets`}
         >
+          <div className="mb-3"><Segmented value={s.pid} onChange={s.pickProgram} options={s.programs.map((x) => ({ value: x.id, label: x.short }))} /></div>
           <div className="flex flex-wrap gap-2">
             {/* The logger lives on another tab, and its rows are local state,
                 so this hands the day's lifts over and follows them there. See

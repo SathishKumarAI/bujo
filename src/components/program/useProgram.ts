@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useJournal } from '../../store'
+import { useStickyState } from '../../lib/useStickyState'
 import {
   PROGRAMS, allDays, dayComplete as isDayComplete, dayStats, daysComplete, exerciseKey, resumeAt,
   type Program,
@@ -15,10 +16,13 @@ import {
  * held inside a fourth, and copying the derivations into the view is how the
  * pull-up data module went dead (see CLAUDE.md).
  */
-export function useProgram(only?: string) {
+export function useProgram(only?: string | readonly string[]) {
   const { data, setSettings } = useJournal()
-  const programs = only ? PROGRAMS.filter((p) => p.id === only) : PROGRAMS
-  const [pid, setPid] = useState(programs[0].id)
+  const ids = only === undefined ? null : typeof only === 'string' ? [only] : only
+  const programs = ids ? PROGRAMS.filter((p) => ids.includes(p.id)) : PROGRAMS
+  // Remembered when there is a choice (Program: Hypertrophy or Trainer); a
+  // single pinned program has nothing to remember.
+  const [pid, setPid] = useStickyState<string>(programs.length > 1 ? 'program.pick' : null, programs[0].id, programs.map((p) => p.id))
   const p: Program = programs.find((x) => x.id === pid) ?? programs[0]
   const done = data.settings.programDone ?? []
   const actuals = data.settings.programActuals ?? {}
