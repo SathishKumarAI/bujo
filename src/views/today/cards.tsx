@@ -80,7 +80,7 @@ export function DayMasthead({
   if (isFutureDay(date)) line = 'Not here yet. Plan it if you like.'
   else if (entryCount === 0) line = 'Blank page. Start with anything.'
   else if (taskCount > 0 && openTasks === 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today, every task closed.`
-  else if (openTasks > 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today · ${openTasks} still open.`
+  else if (openTasks > 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today, ${openTasks} still open.`
   else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
 
   return (
@@ -93,8 +93,8 @@ export function DayMasthead({
           {weekday}
           <span className="ml-3 font-sans text-body font-normal text-fg-2">
             {dayMonth}
-            {isToday && ' · today'}
-            {weather && <span title={weather.label}> · {weather.icon} {weather.tempC}°C</span>}
+            {isToday && ', today'}
+            {weather && <span title={weather.label}>, {weather.icon} {weather.tempC}°C</span>}
           </span>
         </h2>
         {right}
@@ -164,7 +164,7 @@ function DayHabitLine({ date }: { date: string }) {
       {done} of {due} habits done
       {atRisk > 0 && (
         <>
-          {' · '}
+          {', '}
           <span style={{ color: onRaised('peach') }}>
             {atRisk} streak{atRisk === 1 ? '' : 's'} at risk
           </span>
@@ -414,7 +414,9 @@ export function WellbeingCard({ date }: { date: string }) {
           than a bare "Edit", which is the shape that makes an icon-only toggle
           useless to a screen reader. */}
       <div className="mt-4 border-t border-line pt-3">
-        <button
+        {/* On a phone the chips are simply open: nothing on Today opens in
+            place (owner, 2026-11-13). COD-594. */}
+        {phone ? <h3 className="text-body text-fg-1">What shaped today</h3> : <button
           type="button"
           aria-expanded={reasonsOpen}
           onClick={() => setReasonsOpen((o) => !o)}
@@ -425,8 +427,8 @@ export function WellbeingCard({ date }: { date: string }) {
             {!reasonsOpen && reasonSummary && <span className="ml-2 text-label text-fg-2">{reasonSummary}</span>}
           </span>
           <span className="shrink-0 text-label text-mauve">{reasonsOpen ? 'Done' : reasonSummary ? 'Edit' : 'Add'}</span>
-        </button>
-        {reasonsOpen && (
+        </button>}
+        {(phone || reasonsOpen) && (
           <div className="collapse-in mt-3">
             {/* The legend says something DIFFERENT from the button above it.
                 `ChipPick`'s label is a real `<legend>` naming the fieldset, so
@@ -440,7 +442,7 @@ export function WellbeingCard({ date }: { date: string }) {
               value={reasons}
               onChange={toggleReason}
               options={MOOD_REASONS.map((r) => ({ value: r, label: MOOD_REASON_LABEL[r] }))}
-              hint="Optional. Tick anything that moved the day — it is what the mood charts read."
+              hint="Optional. Tick anything that moved the day. The mood charts read it."
             />
             <Input
               value={metric?.moodReasonNote ?? ''}
@@ -473,7 +475,10 @@ export function WritingCard({ date }: { date: string }) {
   const memoryRec = data.memories.find((m) => m.date === date)
   const memory = memoryRec?.text ?? ''
   // Collapsed again on a new day — via `key={date}`, see WellbeingCard.
-  const [expanded, setExpanded] = useState(false)
+  const [open, setExpanded] = useState(false)
+  // A phone shows all three fields; nothing opens in place there (COD-594).
+  const phone = useDevice() === 'mobile'
+  const expanded = phone || open
 
   return (
     <Card band title="Write one line" hideInfo>
@@ -492,7 +497,7 @@ export function WritingCard({ date }: { date: string }) {
         <p className="mt-1 text-label text-fg-2">Saved into today’s memory when you click away.</p>
       </Field>
 
-      <Button
+      {!phone && <Button
         variant="ghost"
         size="sm"
         aria-expanded={expanded}
@@ -500,7 +505,7 @@ export function WritingCard({ date }: { date: string }) {
         className="mt-3 h-auto p-0 text-label text-mauve"
       >
         <Icon as={PencilSimple} size="sm" /> {expanded ? 'Just the one' : 'Gratitude and a memory too'}
-      </Button>
+      </Button>}
 
       {expanded && (
         <div className="collapse-in mt-3 space-y-5 border-t border-line pt-4">

@@ -45,6 +45,9 @@ import { QuietSection as CollapsibleSection } from '../CollapsibleSection'
 import { useConfirm } from '../ConfirmDialog'
 import { useStickyState } from '../../lib/useStickyState'
 import { useJustCaptured } from '../CaptureReceipt'
+import { useDevice } from '../shell/device'
+import { Cell, Cells } from '../ui/cells'
+import { Sheet } from '../ui/sheet'
 import { METRIC_KEY } from '../../lib/recordKeys'
 import { notify } from '../../lib/notify'
 
@@ -107,6 +110,8 @@ const HABIT_PRESETS: { name: string; emoji: string; category: HabitCategory; col
  */
 export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
   const { data, toggleHabit, setHabitValue, addHabit, setSettings, updateHabit } = useJournal()
+  const phone = useDevice() === 'mobile'
+  const [adding, setAdding] = useState(false)
 
   /** Drag-reorder within a category: rewrite `order` to the new sequence. */
   function reorderHabits(category: HabitCategory, dragId: string, dropId: string) {
@@ -240,6 +245,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
         // taps (COD-500) with no box of its own, so the layout is untouched.
         <div id="today-habits" className="contents">
         <Card band
+          hideInfo
           title="Habits"
           subtitle="tap to mark the day"
           right={dueToday ? <span className="text-label tabular-nums text-fg-2">{todayDone} of {dueToday} done</span> : undefined}
@@ -261,6 +267,74 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
             </div>
           )}
           <HabitRows habits={visibleHabits} data={data} today={day} onToggle={toggleHabit} onSetValue={setHabitValue} />
+          {/* On a phone a row that opens a sheet, not a fold in the card
+              (owner, 2026-11-13: nothing that opens in place). COD-594. */}
+          {phone ? (
+            <>
+              <Cells>
+                <Cell icon={Plus} tone="mauve" title="Add a habit" subtitle="Quick add, or make your own" opensSheet onPress={() => setAdding(true)} />
+              </Cells>
+              <Sheet open={adding} onOpenChange={setAdding} title="Add a habit">
+                <div>
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-label text-fg-2">Quick add:</span>
+              {HABIT_PRESETS.map((p) => (
+                <button
+                  key={p.name}
+                  disabled={habitExists(p.name)}
+                  title={habitExists(p.name) ? 'Already added' : undefined}
+                  onClick={() => { if (habitExists(p.name)) return; addHabit({ name: p.name, emoji: p.emoji, category: p.category, color: p.color, type: p.type, target: p.target, unit: p.unit, weeklyGoal: p.weeklyGoal, avoid: p.avoid }) }}
+                  className="rounded-control border border-line-strong bg-ink-0 px-2.5 py-1 text-label text-fg-1 hover:border-mauve hover:text-fg-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:text-fg-1"
+                >
+                  {p.emoji} {p.name}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="w-full max-w-xs">
+                <SmartInput
+                  value={newHabit}
+                  onChange={setNewHabit}
+                  onSubmit={() => add()}
+                  suggestCtx={{ tags: [], recents: [], habits: data.habits.map((h) => h.name) }}
+                  dupItems={data.habits.map((h) => ({ id: h.id, text: h.name }))}
+                  onGoToDuplicate={(id) => { setEditing(id); setNewHabit('') }}
+                  placeholder="New habit / food / stimulant…"
+                />
+              </div>
+              {/* Named only by its options until COD-93 armed the a11y gate to
+                  open folds. It sits inside a DisclosureRow, so axe had never
+                  seen it — a screen reader announced "combo box" and nothing. */}
+              <select value={cat0} onChange={(e) => setCat0(e.target.value as HabitCategory)} aria-label="Category for the new habit" className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              {/* BUILD or CUT DOWN, asked at the moment it is decidable.
+
+                  A `<select>` and not a checkbox: "Habit to avoid" as a tick
+                  states one side and leaves the other implied, and the implied
+                  side is the one that was silently wrong for everybody. Two
+                  named options make the default visible, and the words say what
+                  happens rather than naming the flag — nobody adding "Vaping"
+                  is looking for a field called "avoid".
+
+                  The editor keeps its checkbox; this is the creation-time
+                  question, and `Habit.avoid` is still the one stored field. */}
+              <select
+                value={avoid0 ? 'cut' : 'build'}
+                onChange={(e) => setAvoid0(e.target.value === 'cut')}
+                aria-label="Is this a habit to build or to cut down on?"
+                className="rounded-control border border-line-strong bg-ink-0 px-2 py-2 text-body text-fg-1"
+              >
+                <option value="build">do more of</option>
+                <option value="cut">cut down on</option>
+              </select>
+              {/* The page's single primary button. */}
+              <Button onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
+            </div>
+</div>
+              </Sheet>
+            </>
+          ) : (
           <DisclosureRow label="Add a habit">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <span className="text-label text-fg-2">Quick add:</span>
@@ -318,6 +392,7 @@ export function HabitsSurface({ slot }: { slot: 'capture' | 'review' }) {
               <Button onClick={add} className="press-3d inline-flex items-center gap-1.5"><Icon as={Plus} size="sm" /> Add habit</Button>
             </div>
           </DisclosureRow>
+          )}
         </Card>
         </div>
       
