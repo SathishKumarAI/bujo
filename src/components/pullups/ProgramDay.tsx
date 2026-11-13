@@ -11,9 +11,9 @@ import { setLines } from '../../lib/pullups'
  * THE PULL-UP PROGRAM ON A PHONE — Starting From Zero, the page's main job.
  *
  * OWNS: the phone drawing of today's program day, Program's shape
- * (`program/phone/ProgramPhone`): Week and Day as one select bar, one row
- * per exercise with a tap-per-set counter, the row opening to "what you did"
- * and a how-to link, and a dock that logs the day.
+ * (`program/phone/ProgramPhone`): Week and Day as one select bar, one CARD
+ * per exercise carrying everything (tap-per-set counter, "what you did", a
+ * how-to link — nothing opens, COD-585), and a dock that logs the day.
  * DOES NOT OWN: where you are or what is done (`useProgram('pullup-zero')`,
  * the same state the desktop's `ProgramTracker` draws), nor the free-form
  * session log (`QuickLog`).
@@ -39,7 +39,6 @@ export function PullupProgramDay({ date }: {
   // Taps per exercise, per day, for the visit — peeking at tomorrow keeps today.
   const [taps, setTaps] = useState<Record<string, number[]>>({})
   const [notes, setNotes] = useState<Record<string, Record<number, string>>>({})
-  const [open, setOpen] = useState<string | null>(null)
   const count = (i: number) => taps[k]?.[i] ?? 0
   const setsOf = (i: number) => Math.max(1, Number.parseInt(s.cur.exercises[i].sets, 10) || 1)
   const did = (i: number) => notes[k]?.[i] ?? s.actuals[s.key(i)] ?? ''
@@ -101,48 +100,44 @@ export function PullupProgramDay({ date }: {
         </span>
       </div>
 
-      {/* ONE ROW PER EXERCISE: tap the counter after each set; the row opens
-          to write what you did and to a how-to video. */}
-      <div className="cells">
+      {/* ONE CARD PER EXERCISE, everything on it (owner, 2026-11-13: "only
+          cards with all the exercises planned … no subparts"): the plan, the
+          set counter, what you did and the how-to — nothing opens. */}
+      <ol className="flex flex-col gap-3" aria-label={`Week ${s.week}, day ${s.cur.day} · ${s.cur.focus}`}>
         {s.cur.exercises.map((e, i) => {
           const n = count(i)
           const total = setsOf(i)
           const all = n >= total
-          const isOpen = open === `${k}:${i}`
+          const assess = /assessment/i.test(e.name)
           return (
-            <div key={`${k}:${i}`} className="lift-row" data-done={all || undefined}>
-              <div className="flex items-center gap-3 px-3">
+            <li key={`${k}:${i}`} className="ex-card" data-done={all || undefined}>
+              <div className="flex items-center gap-3">
                 <button type="button" className="set-count" aria-pressed={all}
                   aria-label={all ? `${e.name}: all ${total} sets done, tap to clear` : `${e.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
                   onClick={() => bump(i)}>
                   {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
                 </button>
-                <button type="button" className="min-w-0 flex-1 py-1.5 text-left" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : `${k}:${i}`)}>
-                  <span className={`block truncate text-body font-medium ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</span>
-                  <span className="block text-label text-fg-2">{e.qty} × {total}{did(i) && <span> · did {did(i)}</span>}</span>
-                </button>
-                <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-              </div>
-              {isOpen && (
-                <div className="ios-form flex flex-col gap-2 px-3 pb-3">
-                  <label className="flex items-center gap-2">
-                    <span className="flex-1 text-label text-fg-2">{/assessment/i.test(e.name) ? 'Your max — strict reps' : 'What you did'}</span>
-                    <input
-                      value={did(i)}
-                      inputMode={/assessment/i.test(e.name) ? 'numeric' : 'text'}
-                      placeholder={/assessment/i.test(e.name) ? 'reps' : e.qty}
-                      onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
-                      aria-label={`${e.name}, what you did`}
-                      className="w-32 rounded-[0.625rem] bg-ink-2 px-3 py-2 text-right text-body text-fg-1"
-                    />
-                  </label>
-                  <VideoLink name={e.name} label="Watch how" size="sm" className="min-h-11 self-start" />
+                <div className="min-w-0 flex-1">
+                  <h3 className={`text-body font-semibold ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
+                  <p className="text-label text-fg-2">{e.qty} × {total} {total === 1 ? 'set' : 'sets'}</p>
                 </div>
-              )}
-            </div>
+                <VideoLink name={e.name} label="Watch" size="sm" className="min-h-11 shrink-0" />
+              </div>
+              <label className="ios-form mt-2 flex items-center gap-2">
+                <span className="flex-1 text-label text-fg-2">{assess ? 'Your max — strict reps' : 'What you did'}</span>
+                <input
+                  value={did(i)}
+                  inputMode={assess ? 'numeric' : 'text'}
+                  placeholder={assess ? 'reps' : e.qty}
+                  onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
+                  aria-label={`${e.name}, what you did`}
+                  className="w-32 rounded-[0.625rem] bg-ink-2 px-3 py-2 text-right text-body text-fg-1"
+                />
+              </label>
+            </li>
           )
         })}
-      </div>
+      </ol>
 
       <div className="log-dock">
         <button type="button" className="round-btn ml-auto" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
