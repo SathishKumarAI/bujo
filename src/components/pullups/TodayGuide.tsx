@@ -5,21 +5,21 @@ import { PULLUP_FORM, PULLUP_METHODS, methodSteps, type PullupAbility } from '..
 /**
  * THE PLAN, ON THE PULL-UPS PHONE PAGE — what to do today, in plain words.
  *
- * OWNS: your numbers (training set, today's and this week's volume), the four
+ * OWNS: your numbers (training set and today's volume — no week on a
+ * phone, owner 2026-11-13), the four
  * methods as steps built from your training set, and the form cues — all open,
  * nothing to tap (owner, 2026-11-13: "show everything in one page … mention
  * in the workout plan, not on the log session", and no symbols).
  * DOES NOT OWN: the words themselves (`lib/pullups.ts` — `methodSteps`,
  * `PULLUP_FORM`), nor logging (`ProgramDay`, `QuickLog`).
  */
-export function PullupTodayGuide({ ability, weekReps }: { ability: PullupAbility; weekReps: number }) {
+export function PullupTodayGuide({ ability }: { ability: PullupAbility }) {
   const set = ability.trainingSet
   return (
     <>
       <Cells title="Your numbers">
         <Cell chevron={false} title="Training set" subtitle={`${set} ${set === 1 ? 'rep' : 'reps'} a set, for ${ability.group}`} />
         <Cell chevron={false} title="Today" subtitle={plain(ability.daily)} />
-        <Cell chevron={false} title="This week" subtitle={`${weekReps} done, aim for ${ability.weeklyLow} to ${ability.weeklyHigh}`} />
       </Cells>
 
       <section aria-labelledby="pu-methods" className="flex flex-col gap-3">

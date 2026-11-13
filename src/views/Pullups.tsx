@@ -185,7 +185,7 @@ export function Pullups() {
         </Sheet>
         {/* THE PLAN for today, open on the page: numbers, the four methods
             in plain steps, the form cues (owner, 2026-11-13). */}
-        <PullupTodayGuide ability={ability} weekReps={weekReps} />
+        <PullupTodayGuide ability={ability} />
         {/* No chip rail on a phone (owner, 2026-11-13: "no more subparts"):
             the program is the page, and each part of the manual is one row
             that opens whole in a sheet. COD-585. */}
@@ -876,8 +876,12 @@ function Review(rest: ChapterProps) {
 function Chapter({
   id: chapter, sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove,
 }: ChapterProps & { id: string }) {
+  const phone = useDevice() === 'mobile'
   return (<>
           {chapter === 'history' && (<>
+        {/* A phone reads the sessions, not a calendar (owner, 2026-11-13: no
+            week or month on a phone) — Home workout's History does the same. */}
+        {!phone && <>
         <SummaryStrip items={[
     { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
     { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
@@ -888,6 +892,7 @@ function Chapter({
         <div className="mt-3">
     <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
         </div>
+        </>}
         {sessions.length === 0 ? (
     <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
         ) : (

@@ -2,6 +2,7 @@ import { Seg } from '../../ui/seg'
 import { useState } from 'react'
 import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { plain } from '../../../lib/plain'
 import { useJournal } from '../../../store'
 import { activityForSplit } from '../../../domain/activities'
 import { isNewPR, lastSetFor } from '../../../lib/fitness'
@@ -113,7 +114,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
     const next = s.days[at + 1]
     notify.success(
       pr ? `New PR · ${pr.exercise} ${pr.weight}${unit} × ${pr.reps}` : `${s.cur.focus} logged · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`,
-      next ? `Next up: day ${next.day} · ${next.focus}` : 'That was the last day of the block.',
+      next ? `Next up: day ${at + 2} of ${s.days.length}, ${next.focus}` : 'That was the last day of the program.',
     )
     // Land on the next day: the one thing you will open this page for next time.
     if (next) s.goTo(next.week, next.day)
@@ -125,7 +126,6 @@ export function ProgramPhone({ s, onCheck, rest }: {
      only (`notes` starts with its name, written by `log()` above), so a run on
      the same day is not read as a lift. */
   const setsOn = (d: string) => data.workouts.filter((w) => w.date === d && w.notes?.startsWith(s.p.name)).reduce((a, w) => a + w.sets.length, 0)
-  const sameDay = (w: (typeof s.p.weeks)[number]) => w.days.find((d) => d.day === s.cur.day)?.day ?? w.days[0].day
   return (
     <div className="flex flex-col gap-3 pb-4">
       <h1 className="sr-only">Program</h1>
@@ -140,26 +140,18 @@ export function ProgramPhone({ s, onCheck, rest }: {
       {s.programs.length > 1 && (
         <Seg label="Program" value={s.pid} onChange={(v) => { if (v) s.pickProgram(v) }} options={s.programs.map((x) => ({ value: x.id, label: x.short, name: x.name }))} />
       )}
-      <div className="select-bar" role="group" aria-label="Choose the day">
-        <label className="select-pill">
-          <span className="sr-only">{s.unit}</span>
-          <select value={s.week} onChange={(e) => { const w = s.p.weeks.find((x) => x.week === Number(e.target.value)); if (w) s.goTo(w.week, sameDay(w)) }}>
-            {s.p.weeks.map((w) => (
-              <option key={w.week} value={w.week}>{s.unit} {w.week}{s.weekComplete(w.week) ? ' ✓' : ''}</option>
-            ))}
-          </select>
-          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-        </label>
-        <label className="select-pill">
-          <span className="sr-only">Day</span>
-          <select value={s.cur.day} onChange={(e) => s.goTo(s.week, Number(e.target.value))}>
-            {s.curWeek.days.map((d) => (
-              <option key={d.day} value={d.day}>Day {d.day} · {d.focus}{s.dayComplete(s.week, d.day) ? ' ✓' : ''}</option>
-            ))}
-          </select>
-          <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
-        </label>
-      </div>
+      {/* ONE PICKER, the day of the program — no week or block on a phone
+          (owner, 2026-11-13: "I don't want to see week"). COD-596. */}
+      <label className="select-pill">
+        <span className="sr-only">Day of the program</span>
+        <select value={s.days.findIndex((d) => d.week === s.week && d.day === s.cur.day)}
+          onChange={(e) => { const d = s.days[Number(e.target.value)]; if (d) s.goTo(d.week, d.day) }}>
+          {s.days.map((d, n) => (
+            <option key={`${d.week}:${d.day}`} value={n}>Day {n + 1} of {s.days.length}: {plain(d.focus)}{s.dayComplete(d.week, d.day) ? ', done' : ''}</option>
+          ))}
+        </select>
+        <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
+      </label>
 
       <section aria-label={`${s.cur.focus} · day ${s.cur.day}`} className="flex flex-col gap-3">
         {/* The Day select above already says "Day 1 · Push", so the focus is
@@ -280,7 +272,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
 function WeekNotes({ notes }: { notes: string[] }) {
   return (
     <section aria-label="Block notes" className="cells">
-      <h2 className="cell text-body text-fg-1">Every week</h2>
+      <h2 className="cell text-body text-fg-1">Notes</h2>
       <ul className="border-t border-line">
         {notes.map((n) => <li key={n} className="note-row">{n}</li>)}
       </ul>
