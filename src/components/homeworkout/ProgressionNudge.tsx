@@ -1,3 +1,4 @@
+import { plain } from '../../lib/plain'
 import { Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Pill } from '../ui'
@@ -46,10 +47,12 @@ export function ProgressionNudge({ rows, onAdd }: {
   const more = rows.length - shown.length
 
   return (
+    /* `hideInfo`: the ⓘ only repeated the subtitle printed under the title. */
     <Card
+      hideInfo
       title="Ready to progress"
       subtitle={more > 0
-        ? `${shown.length} of ${rows.length} movements you have been completing — best evidenced first`
+        ? `${shown.length} of ${rows.length} movements you have been completing, best evidenced first`
         : `${rows.length} movement${rows.length === 1 ? '' : 's'} you have been completing`}
     >
       <ul className="space-y-2">
@@ -57,11 +60,8 @@ export function ProgressionNudge({ rows, onAdd }: {
           <li key={r.from.id} className="min-w-0 rounded-card bg-ink-2 p-3">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="text-label text-fg-2">{r.from.name}</span>
-              {/* The glyph carries the relation visually and nothing to a
-                  screen reader, which would otherwise hear two movement names
-                  side by side and no link between them. */}
-              <span className="text-label text-fg-2" aria-hidden>→</span>
-              <span className="sr-only">progresses to</span>
+              {/* In words, not an arrow (owner, 2026-11-13: no symbols). */}
+              <span className="text-label text-fg-2">moves up to</span>
               <span className="text-body font-medium text-fg-1">{r.to.name}</span>
               {r.to.equipment !== 'none' && (
                 <Pill tone="muted" size="micro" className="px-2">needs {EQUIPMENT_LABEL[r.to.equipment]}</Pill>
@@ -71,8 +71,8 @@ export function ProgressionNudge({ rows, onAdd }: {
                 `met` alone, so three good sessions out of nine cannot read the
                 same as three out of three. */}
             <p className="mt-1 text-label text-fg-2">
-              <span className="num">{r.target}</span> met in <span className="num">{r.met}</span> of{' '}
-              <span className="num">{r.logged}</span> session{r.logged === 1 ? '' : 's'} · best set{' '}
+              <span>{plain(r.target)}</span> met in <span className="num">{r.met}</span> of{' '}
+              <span className="num">{r.logged}</span> session{r.logged === 1 ? '' : 's'}, best set{' '}
               <span className="num">{r.bestReps}</span>
             </p>
             {/* `flex-wrap` on the cluster: `Card` caps its own slots and cannot
@@ -84,13 +84,13 @@ export function ProgressionNudge({ rows, onAdd }: {
                 onClick={() => onAdd(r.to)}
                 className="ml-auto text-fg-1 hover:border-mauve"
                 /* Leads with the painted "Add 3×12". */
-                aria-label={`Add ${r.to.reps} of ${r.to.name} to today’s session`}
+                aria-label={`Add ${plain(r.to.reps)} of ${r.to.name} to today’s session`}
               >
                 {/* "Add 3×12", not the bare spec the library tile uses — there
                     the movement name sits directly above the button, and here
                     the row already carries a different rep spec in its evidence
                     line. Two numbers, one of them a button, needs the verb. */}
-                <Icon as={Plus} size="sm" /> Add {r.to.reps}
+                <Icon as={Plus} size="sm" /> Add {plain(r.to.reps)}
               </Button>
             </div>
           </li>

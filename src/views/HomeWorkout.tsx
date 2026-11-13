@@ -139,8 +139,8 @@ export function HomeWorkout() {
         /* One line on a phone: the week against the guideline and the last
            session. "In this session" is the session itself, right below. */
         <p className="px-1 text-label text-fg-2">
-          <b className="text-fg-1">{weekDays} day{weekDays === 1 ? '' : 's'}</b> this week · {weekDays >= 2 ? 'guideline met' : `${2 - weekDays} more for the guideline`}
-          {last && <> · last {prettyDay(last.date)}</>}
+          <b className="text-fg-1">{weekDays} day{weekDays === 1 ? '' : 's'}</b> this week, {weekDays >= 2 ? 'guideline met' : `${2 - weekDays} more for the guideline`}
+          {last && <>, last {prettyDay(last.date)}</>}
         </p>
       ) : <StatBar facts={[
         { label: 'Trained this week', value: `${weekDays} day${weekDays === 1 ? '' : 's'}` },
@@ -165,11 +165,6 @@ export function HomeWorkout() {
             card, so it gets 12px before the one below it. On a phone it
             portals into the bar, and a wrapper would be an empty box. */}
         {phone ? strip : <div className="pb-3">{strip}</div>}
-        {/* Above the builder: "what should I do today" is the question you
-            arrive with, and this is the only thing on the page that answers it
-            from your own history. The builder below is where you act on it, and
-            it keeps the one primary button — these are secondary. */}
-        {!phone && <ProgressionNudge rows={progress} onAdd={add} />}
         {phone ? (
           <SessionPhone
             items={items}
@@ -190,9 +185,10 @@ export function HomeWorkout() {
           onLog={() => logSession()}
           onShut={logCol.close}
         />}
-        {/* A phone logs first (COD-468): the nudges were 452px between the
-            page top and the session builder. Same card, one slot lower. */}
-        {phone && <ProgressionNudge rows={progress} onAdd={add} />}
+        {/* The session first on both (COD-468 on a phone; COD-593 on a
+            desktop, where the nudges put the builder below the fold at 900px
+            tall). The nudges are a suggestion; the session is the act. */}
+        <ProgressionNudge rows={progress} onAdd={add} />
         </>
       )}
       zone3={
