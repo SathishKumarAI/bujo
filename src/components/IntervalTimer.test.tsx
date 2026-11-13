@@ -42,6 +42,41 @@ describe('IntervalTimer', () => {
   })
 })
 
+describe('IntervalTimer, your numbers and the controls', () => {
+  it('lets you change work, rest and rounds before you start, and runs what you set', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    const onSave = vi.fn()
+    render(<IntervalTimer name="Planks" plan={intervalsIn('Planks (Tabata 20s/10s)', '', 8)!} onSave={onSave} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Work, more' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Rest, less' }))
+    for (let n = 0; n < 6; n++) fireEvent.click(screen.getByRole('button', { name: 'Rounds, less' }))
+    expect(screen.getByText('2 rounds, 25 s work and 5 s rest')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    // The numbers cannot change under a running clock.
+    expect(screen.queryByRole('button', { name: 'Work, more' })).toBeNull()
+    run(25_000 + 5_000 + 25_000 + 100)
+    fireEvent.click(screen.getByRole('button', { name: 'Save 2 rounds' }))
+    expect(onSave).toHaveBeenCalledWith([25, 25])
+  })
+
+  it('Round done moves on and counts it; Back undoes it', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    render(<IntervalTimer name="Planks" plan={intervalsIn('Planks (Tabata 20s/10s)', '', 8)!} onSave={() => {}} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    run(5_000)
+    fireEvent.click(screen.getByRole('button', { name: 'Round done' }))
+    expect(screen.getByText('Rest')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Save 1 round' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Skip rest' }))
+    expect(screen.getByText('Round 2 of 8')).toBeTruthy()
+    // Just begun: Back goes to the step before (the rest), then the round.
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByText('Round 1 of 8')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Save 0 rounds' })).toBeTruthy()
+  })
+})
+
 describe('describeIntervals — the sheet never claims a rest the plan does not have', () => {
   const line = describeIntervals
   it('says EMOM is minutes with a beep, not work and rest', () => {

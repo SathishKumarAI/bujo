@@ -899,9 +899,13 @@ function Chapter({
     <ul className="mt-3">
       {history.shown.map((w) => (
         <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
-          <span className="flex min-w-0 flex-1 items-baseline gap-2">
-            <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
-            <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="flex min-w-0 items-baseline gap-2">
+              <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
+              <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
+            </span>
+            {/* A program day's lines: what you did, timer results included. */}
+            {w.notes.split('\n').slice(1).filter(Boolean).map((l) => <span key={l} className="text-label text-fg-2">{l}</span>)}
           </span>
           <span className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
             <span>{repsOf(w.sets)} reps</span>
