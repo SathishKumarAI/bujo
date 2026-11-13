@@ -1,10 +1,30 @@
 # STATUS
 
-**Stopped:** 2026-11-07, on `main` after #536. Settings is one drawing on
-every device (the desktop cards are deleted, COD-571); every backup carries
-its photos; Coaching's heading order is clean. **Production is still at
-#524** — the permission check blocks this session from deploying; the owner
-runs `bash scripts/ship.sh --deploy-only`.
+**Stopped:** 2026-11-13, on `main` after #547. Phone pages are becoming
+cards with nothing that opens in place and no symbols (COD-590); a big hold
+timer sits on every timed exercise; the trainer's 25 sessions are a program.
+**Production is still at #524**: the owner runs
+`bash scripts/ship.sh --deploy-only` (blocked for this session).
+
+## 2026-11-13: cards, no subparts, no symbols, no week
+
+| # | what |
+|---|---|
+| #539 | COD-585: Pull-ups phone, one card per exercise; manual rail became sheet rows |
+| #540 | COD-586: trainer's 25 sessions as a program (`lib/trainerPlan.ts`), Hypertrophy / Trainer picker |
+| #541 | COD-588: Program phone, one card per lift, a pill per set, Edit sets in a sheet |
+| #542 | COD-592: Pull-ups plan on one page: numbers, the four methods as plain steps (`methodSteps`), form |
+| #543 | COD-593: Home workout, routines and exercises as cards; `lib/plain.ts` turns symbols into words |
+| #544 | COD-594: Today, nothing opens in place on a phone |
+| #545 | COD-595: `HoldTimer` (giant stopwatch, saves seconds) on timed cards; timed Program rows now count as done |
+| #546 | COD-596: no week/month on phone workout pages: one "Day N of M" picker |
+| #547 | COD-600: top bar day chips became one "Today" pill (native date wheel) |
+
+**Next:** COD-590, the remaining phone pages as cards: Recovery (8 folds),
+Insights (6), Trackers (4), Nutrition, Challenges, Cycle, Monthly (3 each);
+Coaching and Focus still carry a chip rail. Check each page's desktop too.
+Owner's open question: "month" beyond the workout pages (Monthly page,
+Trackers' month layout)?
 
 ## Where it stands
 
