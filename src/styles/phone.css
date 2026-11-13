@@ -246,7 +246,7 @@
 .seg.seg-wrap > button {
   padding-block: 0.25rem;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   line-height: 1.15;
 }
 
@@ -1549,4 +1549,77 @@ button.cell:active {
 .bar-day:has(input:focus-visible) {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
+}
+
+/* TODAY'S HABITS AS CARDS (`trackers/HabitCards.tsx`): two to a row. A
+   done card takes the habit's colour (`--habit`) as a border — a graphic,
+   so the name stays fg-1 on the card ground — and its check pops in once.
+   A tap presses the card in. Both motions are off under reduced motion. */
+.habit-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.habit-card {
+  display: flex;
+  width: 100%;
+  min-height: 5.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+  color: var(--color-fg-1);
+  text-align: left;
+}
+
+.habit-card[data-on] {
+  box-shadow: 0 0 0 2px var(--habit);
+}
+
+.habit-name {
+  min-width: 0;
+  flex: 1;
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+
+.habit-tick {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px var(--color-line-strong);
+  color: var(--color-fg-2);
+}
+
+.habit-card[data-on] .habit-tick {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button.habit-card {
+    transition: transform 120ms ease-out, box-shadow 160ms ease-out;
+  }
+
+  button.habit-card:active {
+    transform: scale(0.96);
+  }
+
+  .habit-card[data-on] .habit-tick {
+    animation: habit-pop 260ms ease-out;
+  }
+}
+
+@keyframes habit-pop {
+  0% { transform: scale(0.4); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
