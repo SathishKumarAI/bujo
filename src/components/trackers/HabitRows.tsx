@@ -5,6 +5,9 @@ import { cat, onAccent, onRaised } from '../../lib/colors'
 import { HABIT_KEY } from '../../lib/recordKeys'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
 import type { Habit, JournalData } from '../../lib/types'
+import { useDevice } from '../shell/device'
+import { HabitCards } from './HabitCards'
+import { HabitWeek } from './HabitWeek'
 
 /** How many days of history ride along with each habit. A week reads as a week. */
 const WINDOW = 7
@@ -47,10 +50,13 @@ export function HabitRows({
   onSetValue: (date: string, id: string, value: number) => void
 }) {
   const justCaptured = useJustCaptured()
+  const phone = useDevice() === 'mobile'
   const todays = habits.filter((h) => isScheduledOn(h, today))
   if (todays.length === 0) return null
 
   const days = Array.from({ length: WINDOW }, (_, i) => addDays(today, -(WINDOW - 1 - i)))
+  // A phone draws the same habits as cards (owner, 2026-11-13).
+  if (phone) return <HabitCards habits={todays} data={data} today={today} days={days} onToggle={onToggle} onSetValue={onSetValue} />
   // `today` is the day being marked — Today's date cursor, not always the
   // calendar's today — so the control names the day it writes to.
   const when = today === todayISO() ? 'today' : `on ${prettyDay(today)}`
@@ -111,26 +117,7 @@ export function HabitRows({
                 Today's cell carries a ring so the strip has a right-hand
                 anchor: without it "four of the last seven" and "four, ending
                 three days ago" draw the same picture. */}
-            <span aria-hidden className="flex shrink-0 items-center gap-[2px] sm:gap-[3px]">
-              {days.map((d) => {
-                const met = habitDoneOn(data, h, d)
-                const scheduled = isScheduledOn(h, d)
-                const isToday = d === today
-                return (
-                  <span
-                    key={d}
-                    title={`${d}${scheduled ? (met ? ' · done' : ' · missed') : ' · not scheduled'}`}
-                    className="size-2.5 rounded-[3px] sm:size-3.5"
-                    style={{
-                      background: met ? accent : scheduled ? cat('surface1') : 'transparent',
-                      border: scheduled ? undefined : `1px solid ${cat('surface1')}`,
-                      outline: isToday ? `1px solid ${cat('overlay0')}` : undefined,
-                      outlineOffset: 1,
-                    }}
-                  />
-                )
-              })}
-            </span>
+            <HabitWeek h={h} data={data} days={days} today={today} />
 
             {isSteppableHabit(h) && !h.avoid ? (
               <span className="flex shrink-0 items-center gap-1">
@@ -185,3 +172,4 @@ export function HabitRows({
     </ul>
   )
 }
+
