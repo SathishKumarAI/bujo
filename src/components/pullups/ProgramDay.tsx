@@ -6,6 +6,7 @@ import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
 import { HoldTimer } from '../HoldTimer'
+import { RestClock } from '../RestClock'
 import { IntervalTimer } from '../IntervalTimer'
 import { intervalsIn, secondsIn } from '../../lib/holdTime'
 import { notify } from '../../lib/notify'
@@ -53,6 +54,11 @@ export function PullupProgramDay({ date }: {
     return { ...t, [k]: row }
   })
   const bump = (i: number) => setCount(i, count(i) >= setsOf(i) ? 0 : count(i) + 1)
+  // The rest since your last set, counted up: Starting From Zero gives no
+  // rest time, so the clock says how long, not how long to go.
+  /** Which rest this is (a remount key), or null for none. */
+  const [rest, setRest] = useState<number | null>(null)
+  const tapSet = (i: number) => { setRest((r) => (count(i) >= setsOf(i) ? null : (r ?? 0) + 1)); bump(i) }
   const ivOf = (i: number) => intervalsIn(s.cur.exercises[i].name, s.cur.exercises[i].qty, setsOf(i))
   const allDone = s.cur.exercises.every((_, i) => count(i) >= setsOf(i))
   const tickAll = () => setTaps((t) => ({ ...t, [k]: s.cur.exercises.map((_, i) => (allDone ? 0 : setsOf(i))) }))
@@ -120,7 +126,7 @@ export function PullupProgramDay({ date }: {
                   screens as three rows each. */}
               <button type="button" className="set-count" aria-pressed={all}
                 aria-label={all ? `${e.name}: all ${total} sets done, tap to clear` : `${e.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
-                onClick={() => bump(i)}>
+                onClick={() => tapSet(i)}>
                 {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
               </button>
               <div className="min-w-0 flex-1">
@@ -174,6 +180,7 @@ export function PullupProgramDay({ date }: {
           }} />
       )}
       <div className="log-dock">
+        {rest != null && <RestClock key={rest} target={null} onDismiss={() => setRest(null)} />}
         <button type="button" className="round-btn ml-auto" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
           <Icon as={ListChecks} size="md" />
         </button>

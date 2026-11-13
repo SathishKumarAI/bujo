@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { IntervalTimer } from './IntervalTimer'
-import { intervalsIn } from '../lib/holdTime'
+import { describeIntervals, emomSteps, intervalsIn } from '../lib/holdTime'
 
 afterEach(() => { cleanup(); vi.useRealTimers() })
 const run = (ms: number) => act(() => { vi.advanceTimersByTime(ms) })
@@ -39,5 +39,13 @@ describe('IntervalTimer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pause' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save 1 hold' }))
     expect(onSave).toHaveBeenCalledWith([15])
+  })
+})
+
+describe('describeIntervals — the sheet never claims a rest the plan does not have', () => {
+  const line = describeIntervals
+  it('says EMOM is minutes with a beep, not work and rest', () => {
+    expect(line(emomSteps(3, 3))).toBe('3 rounds of 60 s, a beep starts each')
+    expect(line(intervalsIn('Planks (Tabata 20s/10s)', '', 8)!)).toBe('8 rounds, 20 s work and 10 s rest')
   })
 })

@@ -62,3 +62,23 @@ export function stepAt(steps: Step[], ms: number): { i: number; left: number } {
 
 /** Seconds from the start to the beginning of step `i`. */
 export const startOf = (steps: Step[], i: number) => steps.slice(0, i).reduce((s, x) => s + x.secs, 0)
+
+/**
+ * EMOM as a clock: one 60-second step per minute, each a fresh start. The
+ * beep on every switch is the "go" — what is left of the minute is your rest.
+ */
+export function emomSteps(minutes: number, reps: number): Intervals {
+  const n = Math.max(1, minutes)
+  return {
+    manual: false,
+    steps: Array.from({ length: n }, (_, i) => ({ kind: 'work' as const, secs: 60, label: `Minute ${i + 1} of ${n}: ${reps} ${reps === 1 ? 'rep' : 'reps'}, then rest` })),
+  }
+}
+
+/** The sheet's one line: what this clock will do. */
+export function describeIntervals({ steps, manual }: Intervals): string {
+  const works = steps.filter((s) => s.kind === 'work').length
+  const rest = steps.find((s) => s.kind === 'rest')
+  if (manual) return `${works} holds, start each one when you are ready`
+  return rest ? `${works} rounds, ${steps[0].secs} s work and ${rest.secs} s rest` : `${works} rounds of ${steps[0].secs} s, a beep starts each`
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowCounterClockwise, CaretDown, Check, Minus, Plus, SlidersHorizontal } from '@/components/icons'
+import { ArrowCounterClockwise, CaretDown, Check, Minus, Plus, SlidersHorizontal, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Seg } from '../ui/seg'
 import { Cells, ControlCell } from '../ui/cells'
@@ -7,6 +7,9 @@ import { Sheet } from '../ui/sheet'
 import { prettyDay } from '../../lib/date'
 import { onRaised } from '../../lib/colors'
 import { PULLUP_METHODS, repScheme, type PullupMethod } from '../../lib/pullups'
+import { emomSteps } from '../../lib/holdTime'
+import { IntervalTimer } from '../IntervalTimer'
+import { RestClock } from '../RestClock'
 
 const DURATIONS = [10, 20, 30, 45] as const
 const ROUND_CHOICES = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -68,7 +71,18 @@ export function PullupQuickLog({
   const total = sets.reduce((a, n) => a + n, 0)
   const unit = emom ? 'Minute' : 'Round'
   const added = [rpe, duration, notes.trim() || undefined].filter((x) => x !== undefined).length
-  const toggle = (i: number) => setTicked((t) => (t.includes(i) ? t.filter((x) => x !== i) : [...t, i]))
+  /** Which rest this is (a remount key), or null for none. */
+  const [rest, setRest] = useState<number | null>(null)
+  const [clock, setClock] = useState(false)
+  // Rest after a ticked round, from the method's own words: a ladder or
+  // pyramid says "at least 3 minutes", straight says "as long as you need"
+  // (count up), and EMOM's rest is the rest of the minute — the clock's job.
+  const restTarget = method === 'ladder' || method === 'pyramid' ? 180 : null
+  const toggle = (i: number) => {
+    const on = ticked.includes(i)
+    setRest((x) => (on || emom ? null : (x ?? 0) + 1))
+    setTicked((t) => (on ? t.filter((x) => x !== i) : [...t, i]))
+  }
   const choices = ROUND_CHOICES.includes(r) || r === 0 ? ROUND_CHOICES : [...ROUND_CHOICES, r]
 
   return (
@@ -118,6 +132,17 @@ export function PullupQuickLog({
         </p>
       </div>
 
+      {/* EMOM's clock: a beep at the top of every minute (COD-603). */}
+      {emom && r > 0 && (
+        <button type="button" className="timer-btn self-start" aria-haspopup="dialog" onClick={() => setClock(true)}>
+          <Icon as={Timer} size="sm" />Start the minute clock
+        </button>
+      )}
+      {clock && (
+        <IntervalTimer name={`EMOM, ${r} min`} plan={emomSteps(r, top)} onClose={() => setClock(false)}
+          onSave={(worked) => setTicked(worked.map((_, i) => i))} />
+      )}
+
       {/* ONE ROW PER ROUND, ticked after you do it — Program's counter. */}
       <div className="flex items-center gap-3 px-1">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label={`${unit}s ticked`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={r ? Math.round((done.length / r) * 100) : 0}>
@@ -148,6 +173,7 @@ export function PullupQuickLog({
           sheet, so it pins to the sheet's bottom, not above the nav. The day
           is the page's `DayStrip`, in the top bar (COD-558). */}
       <div className="log-dock" style={{ bottom: 0 }}>
+        {rest != null && <RestClock key={rest} target={restTarget} onDismiss={() => setRest(null)} />}
         <button type="button" className="round-btn" onClick={() => setMore(true)} aria-label={`Effort, duration, notes${added ? `, ${added} added` : ''}`}>
           <Icon as={SlidersHorizontal} size="md" />
         </button>

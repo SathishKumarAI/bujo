@@ -33,3 +33,13 @@ describe('stepAt — where the clock is', () => {
     expect(stepAt(steps, 50_000)).toEqual({ i: 3, left: 0 })
   })
 })
+
+describe('emomSteps — a beep every minute', () => {
+  it('is one 60-second step per minute, saying the reps', async () => {
+    const { emomSteps } = await import('./holdTime')
+    const { steps } = emomSteps(10, 3)
+    expect(steps).toHaveLength(10)
+    expect(steps.every((s) => s.secs === 60)).toBe(true)
+    expect(steps[2].label).toBe('Minute 3 of 10: 3 reps, then rest')
+  })
+})
