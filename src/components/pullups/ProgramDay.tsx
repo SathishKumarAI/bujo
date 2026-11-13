@@ -6,7 +6,8 @@ import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
 import { HoldTimer } from '../HoldTimer'
-import { secondsIn } from '../../lib/holdTime'
+import { IntervalTimer } from '../IntervalTimer'
+import { intervalsIn, secondsIn } from '../../lib/holdTime'
 import { notify } from '../../lib/notify'
 import { setLines } from '../../lib/pullups'
 
@@ -46,11 +47,13 @@ export function PullupProgramDay({ date }: {
   const count = (i: number) => taps[k]?.[i] ?? 0
   const setsOf = (i: number) => Math.max(1, Number.parseInt(s.cur.exercises[i].sets, 10) || 1)
   const did = (i: number) => notes[k]?.[i] ?? s.actuals[s.key(i)] ?? ''
-  const bump = (i: number) => setTaps((t) => {
+  const setCount = (i: number, n: number) => setTaps((t) => {
     const row = [...(t[k] ?? s.cur.exercises.map(() => 0))]
-    row[i] = count(i) >= setsOf(i) ? 0 : count(i) + 1
+    row[i] = n
     return { ...t, [k]: row }
   })
+  const bump = (i: number) => setCount(i, count(i) >= setsOf(i) ? 0 : count(i) + 1)
+  const ivOf = (i: number) => intervalsIn(s.cur.exercises[i].name, s.cur.exercises[i].qty, setsOf(i))
   const allDone = s.cur.exercises.every((_, i) => count(i) >= setsOf(i))
   const tickAll = () => setTaps((t) => ({ ...t, [k]: s.cur.exercises.map((_, i) => (allDone ? 0 : setsOf(i))) }))
   const started = s.cur.exercises.map((_, i) => i).filter((i) => count(i) > 0 || did(i).trim())
@@ -108,6 +111,7 @@ export function PullupProgramDay({ date }: {
           const total = setsOf(i)
           const all = n >= total
           const assess = /assessment/i.test(e.name)
+          const iv = ivOf(i)
           return (
             <li key={`${k}:${i}`} className="ex-card flex items-center gap-2" data-done={all || undefined}>
               {/* ONE ROW (owner, 2026-11-13: "all the cards … in one page"):
@@ -122,7 +126,11 @@ export function PullupProgramDay({ date }: {
               <div className="min-w-0 flex-1">
                 <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
                 <p className="text-label text-fg-2">
-                  {e.qty}, {total} {total === 1 ? 'set' : 'sets'}{' '}
+                  {/* Say what the clock will do: "8 rounds, 20 s on, 10 s off",
+                      not "20s work, 8 sets". */}
+                  {iv && !iv.manual ? `${total} rounds, ${iv.steps[0].secs} s on, ${iv.steps[1]?.secs ?? 0} s off`
+                    : iv ? `${total} ${total === 1 ? 'set' : 'sets'}, hold ${iv.steps.map((x) => x.secs).join(', ')} s`
+                    : `${e.qty}, ${total} ${total === 1 ? 'set' : 'sets'}`}{' '}
                   <VideoLink name={e.name} label="Watch" size="sm" className="-my-3 py-3" />
                 </p>
               </div>
@@ -134,7 +142,7 @@ export function PullupProgramDay({ date }: {
               <span className="ios-form shrink-0"><input
                 value={did(i)}
                 inputMode={assess ? 'numeric' : 'text'}
-                placeholder={secondsIn(e.qty) != null ? 'secs' : 'reps'}
+                placeholder={iv && !iv.manual ? 'rounds' : secondsIn(e.qty) != null ? 'secs' : 'reps'}
                 onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
                 aria-label={`${e.name}, what you did`}
                 className="w-20 rounded-[0.625rem] bg-ink-2 px-2 py-2 text-right text-body text-fg-1"
@@ -144,7 +152,19 @@ export function PullupProgramDay({ date }: {
         })}
       </ol>
 
-      {timing != null && s.cur.exercises[timing] && (
+      {timing != null && s.cur.exercises[timing] && ivOf(timing) && (
+        <IntervalTimer name={s.cur.exercises[timing].name} plan={ivOf(timing)!} onClose={() => setTiming(null)}
+          onSave={(worked) => {
+            const i = timing
+            const tabata = !ivOf(i)!.manual
+            // Tabata: each round is a set. Holds: the run is one set.
+            const text = tabata ? `${worked.length} ${worked.length === 1 ? 'round' : 'rounds'} of ${worked[0]} s` : `${worked.join(', ')} s`
+            setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: did(i).trim() ? `${did(i).trim()}; ${text}` : text } }))
+            if (tabata) setCount(i, Math.min(setsOf(i), Math.max(count(i), worked.length)))
+            else if (count(i) < setsOf(i)) bump(i)
+          }} />
+      )}
+      {timing != null && s.cur.exercises[timing] && !ivOf(timing) && (
         <HoldTimer name={s.cur.exercises[timing].name} target={secondsIn(s.cur.exercises[timing].qty)} onClose={() => setTiming(null)}
           onSave={(secs) => {
             // The hold goes into "what you did" and ticks one set.
