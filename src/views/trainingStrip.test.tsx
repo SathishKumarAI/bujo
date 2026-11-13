@@ -56,7 +56,6 @@ describe('Pull-ups', () => {
     const { container } = wrap(<Pullups />)
     expect(container.querySelector('input[type="date"]')).toBeNull()
     const day = await pickTwoDaysAgo()
-    await userEvent.click(screen.getByRole('button', { name: /^Pull-up assessment/, expanded: false }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Pull-up assessment, what you did' }), '3')
     await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
     expect(journal().workouts.map((w) => w.date)).toEqual([day])

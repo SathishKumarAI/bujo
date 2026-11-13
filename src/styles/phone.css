@@ -925,6 +925,19 @@ button.cell:active {
   background: color-mix(in oklab, var(--color-green) 8%, var(--color-ink-1));
 }
 
+/* ONE CARD PER EXERCISE, nothing folded (Pull-ups, COD-585): the inset-group
+   ground and edge of `.cells`, one card each, so a day reads as its plan. */
+.ex-card {
+  padding: 0.75rem;
+  border-radius: 0.875rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+}
+
+.ex-card[data-done] {
+  background: color-mix(in oklab, var(--color-green) 8%, var(--color-ink-1));
+}
+
 /* The set counter: "2/3" in a ring, a filled check when the lift is done. */
 .set-count {
   display: grid;

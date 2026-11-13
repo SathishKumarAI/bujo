@@ -68,7 +68,10 @@ describe('Pull-ups log on a phone', () => {
     expect(screen.getByRole('region', { name: /Starting From Zero/ })).toBeTruthy()
     expect(screen.queryByRole('combobox', { name: 'Method' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: /^Hollow Rocks: 0\/\d+ sets done/ }))
-    await userEvent.click(screen.getByRole('button', { name: /^Pull-up assessment/, expanded: false }))
+    // COD-585: every exercise is a whole card — nothing opens, and no rail.
+    const day = screen.getByRole('region', { name: /Starting From Zero/ })
+    expect(day.querySelectorAll('[aria-expanded]')).toHaveLength(0)
+    expect(screen.queryByRole('navigation', { name: 'Pull-up sections' })).toBeNull()
     await userEvent.type(screen.getByRole('textbox', { name: 'Pull-up assessment, what you did' }), '3')
     await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
     const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)

@@ -144,6 +144,8 @@ export function Pullups() {
   )
   const phone = useDevice() === 'mobile'
   const [free, setFree] = useState(false)
+  const [sheet, setSheet] = useState<string | null>(null)
+  const open = PU_PANELS.find((c) => c.id === sheet)
 
   /* THE DAY TO LOG, one for the page (COD-558): the program day, the free
      session and Repeat all write to it. On a phone the strip portals into the
@@ -161,7 +163,7 @@ export function Pullups() {
 
   /* ON A PHONE THE PROGRAM IS THE PAGE (owner, 2026-10-30): Starting From
      Zero's day first (`PullupProgramDay`), a free session one row away in a
-     sheet, then the manual's rail without its own copy of the program. No
+     sheet, then History & guide: one row per manual panel, each a sheet. No
      `PageLayout`, no StatBar, no act strip. */
   if (phone) {
     return (
@@ -180,18 +182,23 @@ export function Pullups() {
             guide={{ group: ability.group, daily: ability.daily, weekly: `${ability.weeklyLow}–${ability.weeklyHigh}`, weekReps }}
           />
         </Sheet>
-        <Review
-          sessions={sessions}
-          history={history}
-          heat={heat}
-          totalReps={totalReps}
-          best={logged}
-          max={max}
-          maxInput={maxInput}
-          onMax={setMaxInput}
-          onRemove={removeWorkout}
-          skipProgram
-        />
+        {/* No chip rail on a phone (owner, 2026-11-13: "no more subparts"):
+            the program is the page, and each part of the manual is one row
+            that opens whole in a sheet. COD-585. */}
+        <Cells title="History & guide">
+          {PU_PANELS.filter((c) => c.id !== 'program').map((c) => (
+            <Cell key={c.id} title={c.label} subtitle={c.id === 'history' ? `${sessions.length} sessions · ${totalReps} reps` : c.blurb} opensSheet onPress={() => setSheet(c.id)} />
+          ))}
+        </Cells>
+        {open && (
+          <Sheet open onOpenChange={(o) => { if (!o) setSheet(null) }} title={open.label} description={open.blurb}>
+            <div className="flex flex-col gap-3">
+              <Chapter id={open.id} sessions={sessions} history={history} heat={heat} totalReps={totalReps}
+                best={logged} max={max} maxInput={maxInput} onMax={setMaxInput} onRemove={removeWorkout} />
+              {open.id === 'history' && <ShowMore list={history} />}
+            </div>
+          </Sheet>
+        )}
       </div>
     )
   }
@@ -810,9 +817,7 @@ const PU_PANELS = [
   { id: 'equipment', label: 'Equipment', blurb: 'Bar heights and what is worth buying' },
 ] as const
 
-function Review({
-  sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove, skipProgram,
-}: {
+type ChapterProps = {
   sessions: Workout[]
   history: CappedList<Workout>
   heat: { date: string; value: number }[]
@@ -822,13 +827,14 @@ function Review({
   maxInput: string
   onMax: (v: string) => void
   onRemove: (id: string) => void
-  /** Phone: the program is the top of the page, so it is not a rail row too. */
-  skipProgram?: boolean
-}) {
+}
+
+function Review(rest: ChapterProps) {
+  const { history } = rest
   const [stored, setChapter] = useStickyState<string>(
     'pullups.chapter', 'program', PU_PANELS.map((c) => c.id),
   )
-  const panels = skipProgram ? PU_PANELS.filter((c) => c.id !== 'program') : PU_PANELS
+  const panels = PU_PANELS
   const current = panels.find((c) => c.id === stored) ?? panels[0]
   const chapter = current.id
 
@@ -854,130 +860,139 @@ function Review({
             <p className="text-label text-fg-2">{current.blurb}</p>
             {chapter === 'history' && <span className="ml-auto"><ShowMore list={history} /></span>}
           </div>
-          {chapter === 'history' && (<>
-        <SummaryStrip items={[
-          { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
-          { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
-          { label: 'Best set', value: best, empty: best === 0 },
-        ]} />
-        {/* Same stranded grid as Fitness — measured at 188px in a 708px
-            column — and the same fix. See `DayGrid`'s `fluid`. */}
-        <div className="mt-3">
-          <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
-        </div>
-        {sessions.length === 0 ? (
-          <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
-        ) : (
-          <ul className="mt-3">
-            {history.shown.map((w) => (
-              <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
-                <span className="flex min-w-0 flex-1 items-baseline gap-2">
-                  <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
-                  <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
-                </span>
-                <span className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
-                  <span>{repsOf(w.sets)} reps</span>
-                  {w.durationMin != null && <span>{w.durationMin}m</span>}
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => onRemove(w.id)}
-                    aria-label={`Delete pull-up session on ${prettyDay(w.date)}`}
-                    className="text-fg-2 reveal hover:text-red"
-                  >×</Button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-          </>)}
-          {/* The programme was a peer section above the rail. It is 859px and 47
-              controls — the largest single thing on the page, and nothing you
-              need while logging today's set. */}
-          {chapter === 'program' && <ProgramTracker only="pullup-zero" />}
-          {chapter === 'form' && (
-            <PanelGrid>
-              {PULLUP_FORM.map((f, i) => (
-                <PanelCard key={f.phase} title={f.phase} right={<span className="num text-label text-fg-2">{i + 1}</span>}>
-                  <ul className="space-y-1 text-label text-fg-2">
-                    {f.cues.map((c) => <li key={c} className="pl-3 -indent-3">· {c}</li>)}
-                  </ul>
-                </PanelCard>
-              ))}
-            </PanelGrid>
-          )}
-          {chapter === 'principles' && (
-            <PanelGrid>
-              {PULLUP_PRINCIPLES.map((p) => (
-                /* The per-principle accent stays, and moves from a run-on
-                   `<strong>Name:</strong> body` to the card's title — same
-                   colour, same meaning, and the body is no longer a sentence
-                   that starts with a colon. */
-                <PanelCard key={p.name} title={p.name} titleColor={onRaised(p.color)}>
-                  <p className="text-label text-fg-2">{p.body}</p>
-                </PanelCard>
-              ))}
-            </PanelGrid>
-          )}
-          {chapter === 'ability' && (<>
-        <TrainingSetCalc max={max} maxInput={maxInput} onMax={onMax} logged={best} />
-        <table className="w-full text-left text-label">
-          <caption className="sr-only">Ability group by max strict pull-ups, with the training set and daily and weekly volume targets for each.</caption>
-          <thead>
-            <tr className="text-fg-2">
-              <th scope="col" className="py-1 pr-2 font-normal">Group</th>
-              <th scope="col" className="py-1 pr-2 font-normal">Max</th>
-              <th scope="col" className="py-1 pr-2 font-normal">Set</th>
-              <th scope="col" className="py-1 pr-2 font-normal">Daily</th>
-              <th scope="col" className="py-1 font-normal">Weekly</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PULLUP_ABILITY.map((a) => (
-              <tr key={a.group} className="border-t border-line">
-                <th scope="row" className="py-1 pr-2 text-left font-normal text-fg-1">{a.group}</th>
-                <td className="num py-1 pr-2 text-fg-2">{a.range}</td>
-                <td className="num py-1 pr-2" style={{ color: onRaised('mauve') }}>{a.trainingSet}</td>
-                <td className="py-1 pr-2 text-fg-2">{a.daily}</td>
-                <td className="py-1 text-fg-2">{a.weekly}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-          </>)}
-          {chapter === 'formats' && <Formats />}
-          {chapter === 'progressions' && (
-            <PanelGrid>
-              {PULLUP_PROGRESSIONS.map((p) => (
-                <PanelCard key={p.name} title={p.name} right={<VideoLink name={p.name} size="sm" />}>
-                  <DefList rows={[['Why', p.why], ['How', p.how]]} />
-                </PanelCard>
-              ))}
-            </PanelGrid>
-          )}
-          {chapter === 'equipment' && (
-            <PanelGrid>
-              {/* Every row, not the one that happened to carry a pinned URL.
-                  Measured: of these seven, exactly ONE had a `url`, so six
-                  rendered no link at all — the same count as Home Workout's
-                  seven of eight, and the same report ("the URLs in equipment
-                  are somewhat not working") was about both pages. The fault was
-                  never a dead link: both pinned URLs answer 200. */}
-              {PULLUP_EQUIPMENT.map((e) => (
-                <PanelCard key={e.item} title={e.item}>
-                  <p className="text-label text-fg-2">{e.spec}</p>
-                  {!e.noBuy && (
-                    <p className="mt-1.5 text-label">
-                      <a href={buyingGuideUrl(e.item, e.url)} target="_blank" rel="noreferrer">How to choose one</a>
-                    </p>
-                  )}
-                </PanelCard>
-              ))}
-            </PanelGrid>
-          )}
+          <Chapter id={chapter} {...rest} />
         </div>
       </div>
       </div>
     </section>
   )
+}
+
+/** One review panel's body — a rail panel on a desktop, a sheet on a phone. */
+function Chapter({
+  id: chapter, sessions, history, heat, totalReps, best, max, maxInput, onMax, onRemove,
+}: ChapterProps & { id: string }) {
+  return (<>
+          {chapter === 'history' && (<>
+        <SummaryStrip items={[
+    { label: 'Sessions', value: sessions.length, empty: sessions.length === 0 },
+    { label: 'Total reps', value: totalReps, empty: sessions.length === 0 },
+    { label: 'Best set', value: best, empty: best === 0 },
+        ]} />
+        {/* Same stranded grid as Fitness — measured at 188px in a 708px
+      column — and the same fix. See `DayGrid`'s `fluid`. */}
+        <div className="mt-3">
+    <CalendarHeatmap ranges storageKey="pullups" fluid data={heat} unit="reps" label="Pull-up reps per day" />
+        </div>
+        {sessions.length === 0 ? (
+    <div className="mt-3"><EmptyFrame>Log a session and it appears here, newest first.</EmptyFrame></div>
+        ) : (
+    <ul className="mt-3">
+      {history.shown.map((w) => (
+        <li key={w.id} className="group flex items-center justify-between gap-2 border-b border-line py-2 last:border-b-0">
+          <span className="flex min-w-0 flex-1 items-baseline gap-2">
+            <span className="truncate font-medium text-fg-1">{w.notes.split('\n')[0] || 'Pull-ups'}</span>
+            <span className="shrink-0 text-label text-fg-2">{prettyDay(w.date)}</span>
+          </span>
+          <span className="num flex shrink-0 items-center gap-2 text-label text-fg-2">
+            <span>{repsOf(w.sets)} reps</span>
+            {w.durationMin != null && <span>{w.durationMin}m</span>}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onRemove(w.id)}
+              aria-label={`Delete pull-up session on ${prettyDay(w.date)}`}
+              className="text-fg-2 reveal hover:text-red"
+            >×</Button>
+          </span>
+        </li>
+      ))}
+    </ul>
+        )}
+    </>)}
+    {/* The programme was a peer section above the rail. It is 859px and 47
+        controls — the largest single thing on the page, and nothing you
+        need while logging today's set. */}
+    {chapter === 'program' && <ProgramTracker only="pullup-zero" />}
+    {chapter === 'form' && (
+      <PanelGrid>
+        {PULLUP_FORM.map((f, i) => (
+          <PanelCard key={f.phase} title={f.phase} right={<span className="num text-label text-fg-2">{i + 1}</span>}>
+            <ul className="space-y-1 text-label text-fg-2">
+              {f.cues.map((c) => <li key={c} className="pl-3 -indent-3">· {c}</li>)}
+            </ul>
+          </PanelCard>
+        ))}
+      </PanelGrid>
+    )}
+    {chapter === 'principles' && (
+      <PanelGrid>
+        {PULLUP_PRINCIPLES.map((p) => (
+          /* The per-principle accent stays, and moves from a run-on
+             `<strong>Name:</strong> body` to the card's title — same
+             colour, same meaning, and the body is no longer a sentence
+             that starts with a colon. */
+          <PanelCard key={p.name} title={p.name} titleColor={onRaised(p.color)}>
+            <p className="text-label text-fg-2">{p.body}</p>
+          </PanelCard>
+        ))}
+      </PanelGrid>
+    )}
+    {chapter === 'ability' && (<>
+        <TrainingSetCalc max={max} maxInput={maxInput} onMax={onMax} logged={best} />
+        <table className="w-full text-left text-label">
+    <caption className="sr-only">Ability group by max strict pull-ups, with the training set and daily and weekly volume targets for each.</caption>
+    <thead>
+      <tr className="text-fg-2">
+        <th scope="col" className="py-1 pr-2 font-normal">Group</th>
+        <th scope="col" className="py-1 pr-2 font-normal">Max</th>
+        <th scope="col" className="py-1 pr-2 font-normal">Set</th>
+        <th scope="col" className="py-1 pr-2 font-normal">Daily</th>
+        <th scope="col" className="py-1 font-normal">Weekly</th>
+      </tr>
+    </thead>
+    <tbody>
+      {PULLUP_ABILITY.map((a) => (
+        <tr key={a.group} className="border-t border-line">
+          <th scope="row" className="py-1 pr-2 text-left font-normal text-fg-1">{a.group}</th>
+          <td className="num py-1 pr-2 text-fg-2">{a.range}</td>
+          <td className="num py-1 pr-2" style={{ color: onRaised('mauve') }}>{a.trainingSet}</td>
+          <td className="py-1 pr-2 text-fg-2">{a.daily}</td>
+          <td className="py-1 text-fg-2">{a.weekly}</td>
+        </tr>
+      ))}
+    </tbody>
+        </table>
+    </>)}
+    {chapter === 'formats' && <Formats />}
+    {chapter === 'progressions' && (
+      <PanelGrid>
+        {PULLUP_PROGRESSIONS.map((p) => (
+          <PanelCard key={p.name} title={p.name} right={<VideoLink name={p.name} size="sm" />}>
+            <DefList rows={[['Why', p.why], ['How', p.how]]} />
+          </PanelCard>
+        ))}
+      </PanelGrid>
+    )}
+    {chapter === 'equipment' && (
+      <PanelGrid>
+        {/* Every row, not the one that happened to carry a pinned URL.
+            Measured: of these seven, exactly ONE had a `url`, so six
+            rendered no link at all — the same count as Home Workout's
+            seven of eight, and the same report ("the URLs in equipment
+            are somewhat not working") was about both pages. The fault was
+            never a dead link: both pinned URLs answer 200. */}
+        {PULLUP_EQUIPMENT.map((e) => (
+          <PanelCard key={e.item} title={e.item}>
+            <p className="text-label text-fg-2">{e.spec}</p>
+            {!e.noBuy && (
+              <p className="mt-1.5 text-label">
+                <a href={buyingGuideUrl(e.item, e.url)} target="_blank" rel="noreferrer">How to choose one</a>
+              </p>
+            )}
+          </PanelCard>
+        ))}
+      </PanelGrid>
+    )}
+  </>)
 }
