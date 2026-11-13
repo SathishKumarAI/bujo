@@ -90,9 +90,9 @@ describe('Home workout', () => {
     phone()
     const { container } = wrap(<HomeWorkout />)
     const day = await pickTwoDaysAgo()
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Routine' }), HOME_ROUTINES[0].id)
+    await userEvent.click(screen.getAllByRole('button', { name: /^Start this routine/ })[0])
     expect(container.querySelector('input[type="date"]')).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: /^Log · \d+/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Log \d+ exercise/ }))
     expect(journal().workouts.map((w) => w.date)).toEqual([day])
   })
 

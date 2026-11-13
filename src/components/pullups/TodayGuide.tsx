@@ -1,4 +1,5 @@
 import { Cell, Cells } from '../ui/cells'
+import { plain } from '../../lib/plain'
 import { PULLUP_FORM, PULLUP_METHODS, methodSteps, type PullupAbility } from '../../lib/pullups'
 
 /**
@@ -48,7 +49,3 @@ export function PullupTodayGuide({ ability, weekReps }: { ability: PullupAbility
   )
 }
 
-/** The guide's ranges and asides in words: "25–50" reads "25 to 50", an em-dash aside a comma. */
-function plain(s: string) {
-  return s.replace(/(\d)\s*–\s*(\d)/g, '$1 to $2').replace(/\s—\s/g, ', ')
-}

@@ -12,6 +12,9 @@ import type { Workout } from '../../lib/types'
 import { ExerciseLibrary } from './ExerciseLibrary'
 import { useDevice } from '../shell/device'
 import { Programming, Equipment, Sources } from './Manual'
+import { Cell, Cells } from '../ui/cells'
+import { Sheet } from '../ui/sheet'
+import { plain } from '../../lib/plain'
 
 /**
  * ZONE 3 · the whole review zone, behind ONE bar.
@@ -67,30 +70,10 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
   // A phone logs, a desktop reads: the tiles and the month heatmap sat above
   // the sessions you can edit, so on a phone History opens on the sessions.
   const phone = useDevice() === 'mobile'
+  const [sheet, setSheet] = useState<string | null>(null)
+  const open = HW_PANELS.find((p) => p.id === sheet)
 
-  return (
-    <section>
-      {/* Container on the outer div, grid on the inner: an element cannot query
-          itself. Phone column spelled out, or the chip row's min-content sizes
-          the only implicit track and the page scrolls sideways. Both traps are
-          in docs/PAGE-SHAPE.md and both have been hit on this page before. */}
-      <div className="@container/page">
-        {/* One column: the bar is a ROW of this grid, not a column of it. */}
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
-          <SectionRail
-            label="Home workout sections"
-            railAt="never"
-            groups={HW_PANELS.map((p) => ({ id: p.id, label: p.label }))}
-            value={panel}
-            onChange={(id: string | null) => setPanel(id ?? 'history')}
-          />
-          <div className="min-w-0">
-            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
-              <h2 className="text-heading font-medium text-fg-1">{current.label}</h2>
-              <p className="text-label text-fg-2">{current.blurb}</p>
-              {panel === 'history' && <span className="ml-auto"><ShowMore list={history} /></span>}
-            </div>
-
+  const bodyOf = (panel: string) => (<>
             {panel === 'history' && (
               <>
                 {!phone && <>
@@ -165,8 +148,8 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
                             />
                           ) : (
                             <>
-                              <ul className="space-y-0.5 text-label text-fg-2">
-                                {w.sets.map((line, i) => <li key={i} className="pl-3 -indent-3">· {line}</li>)}
+                              <ul className="list-disc space-y-0.5 pl-5 text-label text-fg-2">
+                                {w.sets.map((line, i) => <li key={i}>{plain(line.replace(/\s+(\d+\s*[x×])/i, ', $1'))}</li>)}
                               </ul>
                               {w.notes && <p className="mt-2 border-t border-line pt-2 text-label text-fg-2 italic">“{w.notes}”</p>}
                             </>
@@ -183,6 +166,53 @@ export function Review({ sessions, history, heat, totalExercises, onAdd, onRemov
             {panel === 'programming' && <Programming />}
             {panel === 'equipment' && <Equipment />}
             {panel === 'sources' && <Sources />}
+  </>)
+
+  /* NO PART-SWITCHER ON A PHONE (owner, 2026-11-13: "no subparts"): each
+     part is a row that opens whole in a sheet. COD-593. */
+  if (phone) {
+    return (
+      <>
+        <Cells title="History & manual">
+          {HW_PANELS.map((p) => (
+            <Cell key={p.id} title={p.label} opensSheet onPress={() => setSheet(p.id)}
+              subtitle={p.id === 'history' ? `${sessions.length} sessions, ${totalExercises} exercises` : plain(p.blurb)} />
+          ))}
+        </Cells>
+        {open && (
+          <Sheet open onOpenChange={(o) => { if (!o) setSheet(null) }} title={open.label} description={plain(open.blurb)}>
+            {bodyOf(open.id)}
+            {open.id === 'history' && <div className="mt-3"><ShowMore list={history} /></div>}
+          </Sheet>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <section>
+      {/* Container on the outer div, grid on the inner: an element cannot query
+          itself. Phone column spelled out, or the chip row's min-content sizes
+          the only implicit track and the page scrolls sideways. Both traps are
+          in docs/PAGE-SHAPE.md and both have been hit on this page before. */}
+      <div className="@container/page">
+        {/* One column: the bar is a ROW of this grid, not a column of it. */}
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-y-3">
+          <SectionRail
+            label="Home workout sections"
+            railAt="never"
+            groups={HW_PANELS.map((p) => ({ id: p.id, label: p.label }))}
+            value={panel}
+            onChange={(id: string | null) => setPanel(id ?? 'history')}
+          />
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 border-b border-line pb-1.5">
+              <h2 className="text-heading font-medium text-fg-1">{current.label}</h2>
+              <p className="text-label text-fg-2">{current.blurb}</p>
+              {panel === 'history' && <span className="ml-auto"><ShowMore list={history} /></span>}
+            </div>
+
+            {bodyOf(panel)}
           </div>
         </div>
       </div>
