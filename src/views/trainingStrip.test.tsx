@@ -45,7 +45,7 @@ describe('Program on a phone', () => {
     expect(container.querySelector('input[type="date"]')).toBeNull()
     const day = await pickTwoDaysAgo()
     await userEvent.click(screen.getByRole('button', { name: 'Tick every set' }))
-    await userEvent.click(screen.getByRole('button', { name: /^Log workout/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Log (workout|\d+ sets?)/ }))
     expect(journal().workouts.map((w) => w.date)).toEqual([day])
   })
 })

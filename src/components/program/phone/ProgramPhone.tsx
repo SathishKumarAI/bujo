@@ -1,6 +1,6 @@
 import { Seg } from '../../ui/seg'
 import { useState } from 'react'
-import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
+import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus, Timer } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useJournal } from '../../../store'
 import { activityForSplit } from '../../../domain/activities'
@@ -12,6 +12,8 @@ import { SetCards } from '../../gym/phone/SetCards'
 import { VideoLink } from '../../VideoLink'
 import { DayStrip } from '../../ui/dayStrip'
 import { Sheet } from '../../ui/sheet'
+import { HoldTimer } from '../../HoldTimer'
+import { secondsIn } from '../../../lib/holdTime'
 import { storedSets } from '../../gym/phone/strengthHelpers'
 import type { ProgramState } from '../useProgram'
 import { actualOf, followOn, planRows, splitForFocus, suggestWeight, weightStep } from './programLog'
@@ -46,6 +48,9 @@ export function ProgramPhone({ s, onCheck, rest }: {
   const unit = data.settings.weightUnit
   const [drafts, setDrafts] = useState<Record<string, { rows: SetRow[]; done: string[] }>>({})
   const [editing, setEditing] = useState<string | null>(null)
+  const [timing, setTiming] = useState<string | null>(null)
+  /** Seconds held per timed exercise this visit, from the big timer. */
+  const [held, setHeld] = useState<Record<string, number[]>>({})
   // Which day the session is logged ON — today unless you are catching up a
   // missed one. Picked in the shared `DayStrip`, which sits in the phone bar;
   // it is not reset after a log, because the bar always shows the day.
@@ -93,9 +98,17 @@ export function ProgramPhone({ s, onCheck, rest }: {
     const pr = ticked.find((r) => r.kind !== 'warmup' && isNewPR(data, r.exercise.trim(), Number(r.weight), Number(r.reps)))
     const split = splitForFocus(s.cur.focus)
     addWorkout({ date, activity: activityForSplit(split), split, sets, setRows, notes: `${s.p.name} · ${s.unit} ${s.week}, day ${s.cur.day}` })
+    // A timed row (a plank, the treadmill) has no reps or weight, so
+    // `actualOf` says nothing; its held seconds, or its ticked count, does.
+    // Without this a ticked "Finisher: Treadmill" never marked the day done.
     s.logDay(s.cur.exercises
-      .map((e, i) => ({ i, actual: actualOf(ticked.filter((r) => r.exercise === e.name), unit) }))
+      .map((e, i) => {
+        const mine = ticked.filter((r) => r.exercise === e.name)
+        const actual = actualOf(mine, unit) || held[e.name]?.map((x) => `${x} s`).join(', ') || (mine.length ? `${mine.length} ${mine.length === 1 ? 'set' : 'sets'}` : '')
+        return { i, actual }
+      })
       .filter((x) => x.actual))
+    setHeld({})
     setDrafts((d) => { const n = { ...d }; delete n[k]; return n })
     const next = s.days[at + 1]
     notify.success(
@@ -216,11 +229,24 @@ export function ProgramPhone({ s, onCheck, rest }: {
                     )
                   })}
                   {reps && <button type="button" className="ml-auto min-h-11 text-label font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(e.name)}>Edit sets</button>}
+                  {secondsIn(e.qty) != null && (
+                    <button type="button" className="timer-btn ml-auto" aria-haspopup="dialog" onClick={() => setTiming(e.name)}>
+                      <Icon as={Timer} size="sm" />Timer<span className="sr-only"> for {e.name}</span>
+                    </button>
+                  )}
                 </div>
               </li>
             )
           })}
         </ol>
+        {timing && (
+          <HoldTimer name={timing} target={secondsIn(s.cur.exercises.find((e) => e.name === timing)?.qty ?? '')} onClose={() => setTiming(null)}
+            onSave={(secs) => {
+              setHeld((h) => ({ ...h, [timing]: [...(h[timing] ?? []), secs] }))
+              const next = rows.find((r) => r.exercise === timing && !done.has(r.id))
+              if (next) tick(next)
+            }} />
+        )}
         {editing && (
           <Sheet open onOpenChange={(o) => { if (!o) setEditing(null) }} title={editing} description="Weight and reps, set by set">
             <div className="ios-form">
@@ -239,7 +265,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
             <Icon as={ListChecks} size="md" />
           </button>
           <button type="button" className="cta cta-compact" onClick={log}>
-            <Icon as={Check} size="md" />{ticked.length ? `Log workout · ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
+            <Icon as={Check} size="md" />{ticked.length ? `Log ${ticked.length} ${ticked.length === 1 ? 'set' : 'sets'}` : 'Log workout'}
           </button>
         </div>
         {/* The block's standing guidance, one row per point, open — a fold
