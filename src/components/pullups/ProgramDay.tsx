@@ -128,10 +128,10 @@ export function PullupProgramDay({ date }: {
             <ExerciseCard key={`${k}:${i}`} name={e.name} n={count(i)} total={total} onTap={() => tapSet(i)}
               /* Say what the clock will do: "8 rounds, 20 s on, 10 s off",
                  not "20s work, 8 sets". What you did shows once written. */
-              plan={did(i).trim() ? `Did ${did(i).trim()}`
-                : iv && !iv.manual ? `${total} rounds, ${iv.steps[0].secs} s on, ${iv.steps[1]?.secs ?? 0} s off`
-                : iv ? `${total} ${total === 1 ? 'set' : 'sets'}, hold ${iv.steps.map((x) => x.secs).join(', ')} s`
-                : `${plain(e.qty)}, ${total} ${total === 1 ? 'set' : 'sets'}`}
+              plan={did(i).trim() ? [`Did ${did(i).trim()}`]
+                : iv && !iv.manual ? [`${total} rounds`, `${iv.steps[0].secs} s on`, `${iv.steps[1]?.secs ?? 0} s off`]
+                : iv ? [`${total} ${total === 1 ? 'set' : 'sets'}`, `hold ${iv.steps.map((x) => x.secs).join(', ')} s`]
+                : [plain(e.qty), `${total} ${total === 1 ? 'set' : 'sets'}`]}
               onEdit={() => setEditing(i)}
               onTimer={secondsIn(e.qty) != null ? () => setTiming(i) : undefined} />
           )

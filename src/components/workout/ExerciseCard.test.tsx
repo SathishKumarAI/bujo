@@ -20,6 +20,14 @@ describe('ExerciseCard', () => {
     expect(screen.getByRole('heading', { name: 'Push-ups' }).className).toContain('truncate')
   })
 
+  // The failure: "8 rounds, 20 s on, 10 s off" wrapped mid-phrase as one
+  // sentence (owner, 2026-11-14: "into a line like points").
+  it('draws a plan of several facts one per line, and says them with commas', () => {
+    render(<ul><ExerciseCard name="Planks" n={0} total={8} onTap={() => {}} plan={['8 rounds', '20 s on', '10 s off']} onEdit={() => {}} /></ul>)
+    const edit = screen.getByRole('button', { name: '8 rounds, 20 s on, 10 s off, edit Planks' })
+    expect([...edit.querySelectorAll(':scope > span > .block')].map((x) => x.textContent)).toEqual(['8 rounds', ', 20 s on', ', 10 s off'])
+  })
+
   it('draws no remove button when the page has nothing to remove', () => {
     render(<ul><ExerciseCard name="Dead hang" n={0} total={1} onTap={() => {}} plan="1 set" /></ul>)
     expect(screen.queryByRole('button', { name: /Remove/ })).toBeNull()

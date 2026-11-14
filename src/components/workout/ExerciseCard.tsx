@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { Check, PencilSimple, Timer, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { VideoLink } from '../VideoLink'
@@ -24,14 +23,20 @@ export function ExerciseCard({ name, n, total, onTap, plan, onEdit, onTimer, onR
   total: number
   /** Tap after a set; on a full counter it clears. */
   onTap: () => void
-  /** What to do, in words. Drawn as the Edit button when `onEdit` is given. */
-  plan: ReactNode
+  /** What to do, one fact per line (owner, 2026-11-14: "8 rounds", "20 s
+   *  on", "10 s off" as points, not one wrapped sentence). Drawn as the Edit
+   *  button when `onEdit` is given; said with commas between the lines. */
+  plan: string | string[]
   onEdit?: () => void
   onTimer?: () => void
   onRemove?: () => void
   watch?: boolean
 }) {
   const all = n >= total
+  const lines = typeof plan === 'string' ? [plan] : plan
+  const facts = lines.map((l, k) => (
+    <span key={l} className="block">{k > 0 && <><span className="sr-only">,</span>{' '}</>}{l}</span>
+  ))
   return (
     <li className="ex-card ex-row" data-done={all || undefined}>
       <button type="button" className="set-count" aria-pressed={all}
@@ -44,10 +49,10 @@ export function ExerciseCard({ name, n, total, onTap, plan, onEdit, onTimer, onR
         <div className="ex-actions">
           {onEdit ? (
             <button type="button" className="ex-act ex-plan" aria-haspopup="dialog" onClick={onEdit}>
-              <span className="min-w-0">{plan}</span><Icon as={PencilSimple} size="sm" className="shrink-0" />
+              <span className="min-w-0">{facts}</span><Icon as={PencilSimple} size="sm" className="shrink-0" />
               <span className="sr-only">, edit {name}</span>
             </button>
-          ) : <span className="ex-plan text-label text-fg-2">{plan}</span>}
+          ) : <span className="ex-plan text-label text-fg-2">{facts}</span>}
           {watch && <VideoLink name={name} label="Watch" size="sm" className="ex-act" />}
           {onTimer && (
             <button type="button" className="ex-act" aria-haspopup="dialog" onClick={onTimer}>
