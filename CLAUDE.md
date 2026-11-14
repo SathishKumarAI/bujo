@@ -121,6 +121,17 @@ Pickleball (COD-450). On a phone:
 | **The primary button is small and floats** | owner ask: a 44px pill at the right (`.cta.cta-compact` in `.log-dock`), not a full-width slab — the list shows around it |
 | **Every phone page gets `.phone-frame`** | `App.tsx` `ViewFrame`; unlayered CSS under it tightens every card band (24 → 16px) without touching desktop |
 
+Workout cards, timers and habit cards (2026-11-13, #539–#554):
+`docs/sessions/2026-11-13-workout-cards-and-timers.md`.
+
+Trap: **`Date.now()` in an arrow defined during render fails
+`react-hooks/purity`, and setState in an effect fails the compiler lint.** A
+timer that must start "now" on a tap: let the CHILD record its start on mount
+and remount it with a counter `key` (`RestClock`); a stop point is state set
+in the tap handler and read through a derived `Math.min` (`IntervalTimer`
+`cap`), never corrected in an effect. And guard `window.AudioContext` — jsdom
+has none, and nor does an old browser, so an unguarded `new` broke Start.
+
 The full page-by-page record: `docs/sessions/2026-10-29-phone-pages.md`. The
 prompt for the next phone page: `docs/MOBILE-BRIEF.md`. The procedure, as a
 skill: `.claude/skills/phone-page/SKILL.md`.

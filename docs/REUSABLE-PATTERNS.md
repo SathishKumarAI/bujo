@@ -1123,3 +1123,39 @@ value goes `sr-only` — the Day select already says "Day 1 · Push".
 Every phone page is wrapped in `.phone-frame` (`App.tsx` `ViewFrame`): put a
 rule there when it must hold on every phone page (it tightened every card
 band 24 → 16px) — unlayered, so it beats utilities, and desktop never sees it.
+
+## 34 · One-row exercise card — `.ex-card` + `.set-count`
+
+An exercise is ONE row: a 44px `.set-count` ring reading `n/total` (tap
+after each set; tapping a full one clears it), the name with its plan and an
+inline Watch link under it, a round Timer button when the plan is timed, and
+the input or weight on the right. Owner: "fit all in one card". Measured on
+Program's trainer day 1: **3.30 → 1.80 screens**, cards 68–88px. A pill per
+set (22 on one day) was the rejected shape. Used by `pullups/ProgramDay.tsx`,
+`program/phone/ProgramPhone.tsx`, `homeworkout/SessionPhone.tsx`.
+
+## 35 · Timers chosen by the plan text — `lib/holdTime.ts`
+
+Never a timer prop on the data: `secondsIn(plan)` decides whether a card gets
+a timer at all, `intervalsIn(name, plan, sets)` whether it is `IntervalTimer`
+(Tabata, or a hold list that stops between holds) or `HoldTimer`. The caller
+decides what a save ticks. Timed from `Date.now()` with a banked offset, so a
+dropped tick loses no time; the stop point (`cap`) is set on the Start tap,
+not in an effect. `AudioContext` made on the tap (iOS) and optional (no Web
+Audio = no beeps, never no timer). Tuning shows only before Start.
+
+## 36 · A rest clock in the dock — `RestClock`
+
+Counts up when the plan gives no rest, down to `target` when it does, inside
+the `.log-dock` (§33). It records its own start on mount; callers remount it
+with a counter `key` per set tapped, which keeps `Date.now()` out of render
+(`react-hooks/purity`). Untick clears it.
+
+## 37 · A tap-anywhere card for a yes/no item — `trackers/HabitCards.tsx`
+
+Two to a row (`.habit-cards`). A yes/no habit is a whole `<button
+aria-pressed>`; done, it takes the habit's colour as its border and the tick
+pops once (`habit-pop`, only under `prefers-reduced-motion: no-preference`).
+A counted habit keeps − value + at 44px. The accessible name contains the
+only visible text, the name (axe 2.5.3). The shared week strip is its own
+file (`HabitWeek.tsx`) so the row and card drawings do not import each other.

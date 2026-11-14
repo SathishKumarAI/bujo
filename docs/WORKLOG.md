@@ -26,6 +26,35 @@ Rules the three share:
 
 ---
 
+## 2026-11-13 — Workout cards, interval timers, habit cards on the phone (COD-585…614 · PRs #539–#554)
+
+Owner direction: phone workout pages as cards, "no subparts", the day "in one
+page", a Tabata timer ("20 seconds … a pause of 10 seconds … 8 times") that can
+be tuned and saved to History, and Today's habits as cards. Production deployed
+at #553. Full record: `docs/sessions/2026-11-13-workout-cards-and-timers.md`.
+
+**Shipped:** one card per exercise on Pull-ups (#539, 5.36 → 2.33 screens),
+Program (#541) and Home workout (#543); the trainer's 25 sessions as a program
+(#540); methods as plain steps and symbols to words (#542, #544, 13 and 14 → 0);
+`HoldTimer` on every timed card (#545); no week/month and one day pill (#546,
+#547); one-row cards (#549, Program day 3.30 → 1.80 screens); `IntervalTimer`
+for Tabata and hold lists (#550); `RestClock` and an EMOM clock (#551); tuning,
+Back / Round done / Reset, and every logged day in History (#552); habit cards
+(#553).
+
+**Defects found on the way:** a ticked timed row on Program never reached
+`programDone` (#545); Today's "not set" at 3.54:1 (#544); `IntervalTimer`'s
+Start threw with no Web Audio — jsdom found it, an old browser would have too.
+
+**Got wrong:** three-row cards (rejected, one row won); a pill per set (22 pills,
+replaced by one ring); #552 names COD-604 where the ticket is COD-608.
+
+**Learned, now in CLAUDE.md:** `Date.now()` in a render-defined handler fails
+`react-hooks/purity` — let the child record its own start and remount it by key;
+a stop point is derived state set on the tap, never setState in an effect.
+
+---
+
 ## 2026-11-01…07 — Settings becomes one drawing, every backup carries its photos (COD-560…575, 479, 481 · PRs #520–#537)
 
 Owner direction: the desktop Settings "follows the mobile version", in two
