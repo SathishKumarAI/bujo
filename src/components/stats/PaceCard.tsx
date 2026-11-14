@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { useJournal } from '../../store'
 import { Card } from '../ui'
 import { cat } from '../../lib/colors'
@@ -17,6 +19,7 @@ import { pace, type Span } from '../../lib/pace'
  * like.
  */
 export function PaceCard() {
+  const flat = useContext(FlatCards)
   const { data } = useJournal()
   const p = pace(data)
 
@@ -27,7 +30,7 @@ export function PaceCard() {
         <SpanRow label={String(p.year.year)} span={p.year} fill="mauve" />
       </div>
       <p className="mt-4 border-t border-line pt-3 text-label text-fg-2">
-        Week <span className="tabular-nums text-fg-1">{p.week.index}</span> of {p.week.total} ·{' '}
+        Week <span className="tabular-nums text-fg-1">{p.week.index}</span> of {p.week.total}{flat ? ', ' : ' · '}
         <span className="tabular-nums text-fg-1">{p.week.left}</span> week{p.week.left === 1 ? '' : 's'} left this year.
       </p>
     </Card>
@@ -44,6 +47,7 @@ export function PaceCard() {
  * numbers and the bar only carries the shape.
  */
 function SpanRow({ label, span, fill }: { label: string; span: Span; fill: string }) {
+  const flat = useContext(FlatCards)
   const pct = (n: number) => `${(n / span.total) * 100}%`
   const spent = span.past + 1 // today is under way
   const missed = Math.max(0, Math.min(spent, span.total) - span.logged)
@@ -70,7 +74,7 @@ function SpanRow({ label, span, fill }: { label: string; span: Span; fill: strin
         <span className="tabular-nums">{span.logged}</span> of the{' '}
         <span className="tabular-nums">{spent}</span> day{spent === 1 ? '' : 's'} so far logged
         {span.projected != null && (
-          <> · on pace for <span className="tabular-nums text-fg-1">{span.projected}</span> of {span.total}</>
+          <>{flat ? ', on pace for ' : ' · on pace for '}<span className="tabular-nums text-fg-1">{span.projected}</span> of {span.total}</>
         )}
       </p>
     </div>
