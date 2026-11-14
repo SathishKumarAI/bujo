@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from './flatCards'
 import type { ReactNode } from 'react'
 import { cat } from '../../lib/colors'
 
@@ -252,6 +254,7 @@ export function Stat({
   answer = false,
   className = '',
 }: StatProps) {
+  const flat = useContext(FlatCards)
   const known = value != null && Number.isFinite(value)
   const hasRange = of != null && of > 0
   const over = known && hasRange && value > of
@@ -285,11 +288,11 @@ export function Stat({
         </span>
         {hasRange && known ? (
           <span className="shrink-0 text-label tabular-nums text-fg-3">
-            {over ? 'of' : '/'} {of.toLocaleString()}
+            {over || flat ? 'of' : '/'} {of.toLocaleString()}
           </span>
         ) : delta != null && delta !== 0 ? (
           <span className="shrink-0 text-label tabular-nums" style={{ color: cat(deltaTone) }}>
-            {deltaUp ? '↑' : '↓'} {Math.abs(delta).toFixed(decimals)}
+            {deltaUp ? (flat ? 'up' : '↑') : (flat ? 'down' : '↓')} {Math.abs(delta).toFixed(decimals)}
           </span>
         ) : null}
       </div>

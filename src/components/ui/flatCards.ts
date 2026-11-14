@@ -1,4 +1,5 @@
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
+import { plain } from '../../lib/plain'
 
 /**
  * Under this provider a `Card` is a card, not a fold: no collapse caret (its
@@ -10,3 +11,11 @@ import { createContext } from 'react'
  * (COD-590; Recovery's `RecoveryReview` first).
  */
 export const FlatCards = createContext(false)
+
+const same = (s: string) => s
+
+/** `plain` under `FlatCards`, the string unchanged elsewhere — for a card's
+ *  own lines, so the desktop drawing keeps its separators. */
+export function usePlain(): (s: string) => string {
+  return useContext(FlatCards) ? plain : same
+}

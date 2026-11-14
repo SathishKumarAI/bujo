@@ -192,7 +192,7 @@ export function SectionRail({ label, groups, value, onChange, allLabel = 'All', 
         <select value={value ?? 'all'} onChange={(e) => onChange(e.target.value === 'all' ? null : e.target.value)}>
           {rows.map((r) => (
             <option key={r.key} value={r.key} disabled={r.count === 0}>
-              {r.count == null ? r.label : `${r.label} · ${r.count}`}
+              {r.count == null ? r.label : `${r.label} (${r.count})`}
             </option>
           ))}
         </select>

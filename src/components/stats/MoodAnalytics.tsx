@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { PersonSimpleRun, Smiley, Sun } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
 import { useJournal } from '../../store'
@@ -18,6 +20,7 @@ import { bestWorstWeekday, metricVolatility, weekdayWeekendSplit } from '../../l
  * all on an empty journal and its host fold degrades to the calendar alone.
  */
 export function MoodAnalytics() {
+  const flat = useContext(FlatCards)
   const { data } = useJournal()
   const moodWd = bestWorstWeekday(data, 'mood')
   const split = weekdayWeekendSplit(data)
@@ -32,8 +35,8 @@ export function MoodAnalytics() {
           <div className="mb-3 flex items-center gap-2 text-body">
             <AppIcon as={Sun} size="sm" style={{ color: onRaised('yellow') }} />
             <span className="text-fg-1">
-              Brightest on <strong className="text-fg-1">{moodWd.best.label}</strong> ({moodWd.best.avg}/10),
-              dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}/10).
+              Brightest on <strong className="text-fg-1">{moodWd.best.label}</strong> ({moodWd.best.avg}{flat ? ' of 10' : '/10'}),
+              dimmest on <strong className="text-fg-1">{moodWd.worst.label}</strong> ({moodWd.worst.avg}{flat ? ' of 10' : '/10'}).
             </span>
           </div>
           {/* `items-stretch`, not `items-end`. Cross-axis `end` sizes each
@@ -71,11 +74,11 @@ export function MoodAnalytics() {
       {moodVol.band && (
         <Card band title="Mood stability" subtitle={`Last ${moodVol.days} logged days, how steady you've felt`}>
           <p className="text-display font-medium" style={{ color: onRaised(moodVol.stability! >= 70 ? 'green' : moodVol.stability! >= 40 ? 'yellow' : 'peach') }}>
-            {moodVol.stability}<span className="text-heading text-fg-2">/100</span>
+            {moodVol.stability}<span className="text-heading text-fg-2">{flat ? ' of 100' : '/100'}</span>
           </p>
           <p className="mt-1 text-body capitalize text-fg-1">
             <span className="mr-1.5 rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: moodVol.band === 'steady' ? cat('green') : moodVol.band === 'volatile' ? cat('peach') : cat('subtext0') }}>{moodVol.band}</span>
-            avg {moodVol.mean}/10 · swing ±{moodVol.sd}
+            {flat ? `average ${moodVol.mean} of 10, swing ${moodVol.sd}` : `avg ${moodVol.mean}/10 · swing ±${moodVol.sd}`}
           </p>
           <p className="mt-2 text-label text-fg-2">Stability ignores the average — it measures how much your days swing, not how high they sit.</p>
         </Card>
@@ -85,6 +88,7 @@ export function MoodAnalytics() {
 }
 
 function SplitCol({ label, habit, mood, days }: { label: string; habit: number | null; mood: number | null; days: number }) {
+  const flat = useContext(FlatCards)
   return (
     <div className="rounded-card bg-ink-2 p-3">
       <p className="mb-2 text-label font-medium text-fg-2">{label}</p>
@@ -95,7 +99,7 @@ function SplitCol({ label, habit, mood, days }: { label: string; habit: number |
       </p>
       <p className="mt-1 flex items-center gap-1.5 text-fg-1">
         <AppIcon as={Smiley} size="sm" style={{ color: onRaised('green') }} />
-        <strong className="tabular-nums">{mood == null ? '—' : `${mood}/10`}</strong>
+        <strong className="tabular-nums">{mood == null ? (flat ? 'none' : '—') : flat ? `${mood} of 10` : `${mood}/10`}</strong>
         <span className="text-label text-fg-2">mood</span>
       </p>
       {days > 0 && <p className="mt-1 text-micro text-fg-2">{days} scheduled day{days === 1 ? '' : 's'}</p>}

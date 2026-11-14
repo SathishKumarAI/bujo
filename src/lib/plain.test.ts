@@ -10,6 +10,12 @@ describe('plain, copy without symbols', () => {
     ['Full body · no kit', 'Full body, no kit'],
     ['Tuck the pelvis — hold it', 'Tuck the pelvis, hold it'],
     ['25–50 progression reps', '25 to 50 progression reps'],
+    ['Vegetables, 5× this week', 'Vegetables, 5 times this week'],
+    ['5/10 ↑ from 4.7', '5 of 10 up from 4.7'],
+    ['avg 4.8/10 · swing ±1.98', 'avg 4.8 of 10, swing 1.98'],
+    ['4/7 this week — do it today', '4 of 7 this week, do it today'],
+    ['33% (13/40)', '33% (13 of 40)'],
+    ['due 11/13/2026', 'due 11/13/2026'],
   ])('%s', (from, to) => expect(plain(from)).toBe(to))
 
   it('leaves no symbol behind in any home routine or exercise', async () => {

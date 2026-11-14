@@ -1,4 +1,5 @@
-import { ArrowsOut, X } from '@/components/icons'
+import { useDevice } from '../shell/device'
+import { ArrowsOut, CaretLeft, CaretRight, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, PolarAngleAxis, PolarGrid,
@@ -68,6 +69,8 @@ export interface StatsCards {
 
 export function useStatsCards(): StatsCards {
   const { data } = useJournal()
+  // Built here, outside `FlatCards`, so the phone is asked directly (COD-590).
+  const phone = useDevice() === 'mobile'
   const [ym, setYm] = useState(ymOf(todayISO()))
   const [heatWeeks, setHeatWeeks] = useState(26)
   // Merged mood view: one card toggles between the month calendar and the
@@ -282,7 +285,7 @@ export function useStatsCards(): StatsCards {
 <Card band
   enlargeable={false}
   title="Mood calendar"
-  subtitle={`Each day tinted by your mood (0–10)${lapses.size > 0 ? ' · a ring marks a logged lapse' : ''}, tap ⛶ to enlarge`}
+  subtitle={`Each day tinted by your mood (0–10)${lapses.size > 0 ? ' · a ring marks a logged lapse' : ''}${phone ? '' : ', tap ⛶ to enlarge'}`}
   right={
     /* Five controls do not fit a 390px row, and `Card` can only cap the
        width of the slot — it cannot wrap a cluster whose markup it does
@@ -290,9 +293,9 @@ export function useStatsCards(): StatsCards {
        x=-38. Same fix as the Trackers toolbar. */
     <div className="flex flex-wrap justify-end gap-1">
       <Segmented value={moodView} onChange={setMoodView} options={[{ value: 'calendar', label: 'Calendar' }, { value: 'pixels', label: 'Year' }]} />
-      <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d">←</Button>
+      <Button variant="secondary" onClick={() => shift(-1)} aria-label="Previous month" className="press-3d">{phone ? <Icon as={CaretLeft} size="sm" /> : '←'}</Button>
       <Button variant="secondary" onClick={() => setYm(ymOf(todayISO()))} className="press-3d">This month</Button>
-      <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d">→</Button>
+      <Button variant="secondary" onClick={() => shift(1)} aria-label="Next month" className="press-3d">{phone ? <Icon as={CaretRight} size="sm" /> : '→'}</Button>
       <Button variant="secondary" onClick={() => setEnlarged('mood')} aria-label="Enlarge mood calendar" title="Enlarge" className="press-3d"><Icon as={ArrowsOut} size="sm" /></Button>
     </div>
   }
@@ -304,9 +307,9 @@ export function useStatsCards(): StatsCards {
     for (const d of monthDays(ym)) if (best == null || (moods.get(d) ?? -1) > (moods.get(best) ?? -1)) if (moods.has(d)) best = d
     return (
       <p className="mb-3 text-body text-fg-2">
-        {prettyMonth(ym)} ·{' '}
+        {prettyMonth(ym)}{phone ? ', ' : ' · '}
         {avg == null ? <span className="text-fg-2">no mood logged yet</span> : (
-          <>avg mood <span className="font-medium text-fg-1"><span aria-hidden className="mr-1 inline-block size-2 rounded-pill align-middle" style={{ background: moodColor(Math.round(avg)) }} />{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <> · best {best.slice(8)}</>}</>
+          <>avg mood <span className="font-medium text-fg-1"><span aria-hidden className="mr-1 inline-block size-2 rounded-pill align-middle" style={{ background: moodColor(Math.round(avg)) }} />{avg}</span> over {rated.length} day{rated.length === 1 ? '' : 's'}{best && <>{phone ? ', best day ' : ' · best '}{best.slice(8)}</>}</>
         )}
       </p>
     )

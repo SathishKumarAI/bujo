@@ -6,6 +6,8 @@ import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { Card, Empty, Input, Segmented } from '../components/ui'
 import { Button } from '../components/ui/button'
 import { cat, onRaised } from '../lib/colors'
+import { plain } from '../lib/plain'
+import { FlatCards } from '../components/ui/flatCards'
 import { currentStreak, search, taskCompletion } from '../lib/stats'
 import { insights, weeklyDigest, digestRangeLabel, momentumIndicator } from '../lib/correlations'
 import { weeklyRadar } from '../lib/viz'
@@ -116,6 +118,8 @@ export function Insights() {
    */
   const stats = useStatsCards()
   const phone = useDevice() === 'mobile'
+  // Phone copy in words (COD-590); the desktop keeps its separators.
+  const say = phone ? plain : (t: string) => t
   const built: Record<string, React.ReactNode> = {
     ...stats.cards,
     digest: (<Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
@@ -123,7 +127,7 @@ export function Insights() {
     {digest.lines.map((l) => (
       <li key={l.label} className="flex items-center justify-between gap-2">
         <span className="text-fg-2">{l.label}</span>
-        <strong className="text-fg-1">{l.value}</strong>
+        <strong className="text-fg-1">{phone ? plain(l.value.replace(/ → from /, ' steady from ')) : l.value}</strong>
       </li>
     ))}
   </ul>
@@ -132,13 +136,13 @@ export function Insights() {
       {digest.win && (
         <p className="flex items-center gap-2">
           <AppIcon as={Trophy} size="sm" style={{ color: onRaised('green') }} />
-          <span className="text-fg-1">{digest.win}</span>
+          <span className="text-fg-1">{say(digest.win)}</span>
         </p>
       )}
       {digest.slip && (
         <p className="flex items-center gap-2">
           <AppIcon as={Warning} size="sm" style={{ color: onRaised('peach') }} />
-          <span className="text-fg-1">{digest.slip}</span>
+          <span className="text-fg-1">{say(digest.slip)}</span>
         </p>
       )}
     </div>
@@ -158,7 +162,7 @@ export function Insights() {
             className="w-full rounded-control bg-ink-2 px-3 py-2 text-left hover:border-mauve"
           >
             <span className="font-medium text-fg-1">{t.title}</span>
-            <span className="block text-label text-fg-2">{t.detail}</span>
+            <span className="block text-label text-fg-2">{say(t.detail)}</span>
           </button>
         </li>
       ))}
@@ -178,7 +182,7 @@ export function Insights() {
     {found.map((ins, i) => (
       <li key={i} className="flex items-center gap-2 text-body">
         <span className="rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: ins.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
-          r={ins.r} · {ins.strength}
+          {say(`r=${ins.r} · ${ins.strength}`)}
         </span>
         <span className="text-fg-1">{ins.text}</span>
       </li>
@@ -219,7 +223,7 @@ export function Insights() {
             <span className="text-label text-fg-2">{m.label}</span>
             <AppIcon as={Icon} size="sm" style={{ color: onRaised(color) }} />
           </div>
-          <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">/10</span></p>
+          <p className="mt-1 text-heading font-medium tabular-nums text-fg-1">{m.recent}<span className="text-label text-fg-2">{phone ? ' of 10' : '/10'}</span></p>
           <p className="text-label" style={{ color: onRaised(color) }}>
             {m.dir === 'flat' ? 'steady' : `${m.delta > 0 ? '+' : ''}${m.delta} vs last week`}
           </p>
@@ -262,6 +266,8 @@ export function Insights() {
   const all = forDevice(built, phone)
 
   return (
+    /* Cards, not folds, on a phone: no ⓘ, subtitles drawn (COD-590). */
+    <FlatCards.Provider value={phone}>
     <PageLayout
       /* The dashboard tier. Twenty-three analytics cards in a masonry whose
          third column needs a 1280px container — at 1180 this page drew two
@@ -338,7 +344,7 @@ export function Insights() {
           <Input
             value={q}
             onChange={(e) => { setQ(e.target.value); setKind('all') }}
-            placeholder="Search entries, workouts, or a measure — “sleep debt”, “streak”, “r”…"
+            placeholder={phone ? 'Search entries, workouts, or a measure' : "Search entries, workouts, or a measure — “sleep debt”, “streak”, “r”…"}
             aria-label="Search the journal and this page"
             className="pl-8"
           />
@@ -351,7 +357,7 @@ export function Insights() {
         {filtering && (
           <p className="mt-2 text-label text-fg-2">
             Showing <strong className="text-fg-1">{visible.size}</strong> of {CARDS.length} panels
-            {q.trim() && <> · {allResults.length} journal match{allResults.length === 1 ? '' : 'es'} for “{q}”</>}
+            {q.trim() && <>{phone ? ', ' : ' · '}{allResults.length} journal match{allResults.length === 1 ? '' : 'es'} for “{q}”</>}
           </p>
         )}
 
@@ -493,10 +499,11 @@ export function Insights() {
           {stats.modal}
           <p className="text-label text-fg-2">
             Task migration &amp; aging live in{' '}
-            <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">Plan →</Button>
+            <Button variant="ghost" size="sm" onClick={() => nav('plan')} className="h-auto p-0">{phone ? 'Plan' : 'Plan →'}</Button>
           </p>
         </>
       }
     />
+    </FlatCards.Provider>
   )
 }

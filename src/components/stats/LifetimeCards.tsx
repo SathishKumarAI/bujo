@@ -1,3 +1,4 @@
+import { usePlain } from '../ui/flatCards'
 import { Barbell, BookOpen, Cake, FileText, Flame, Image, Smiley } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
@@ -22,6 +23,7 @@ import { prettyDay, prettyMonth } from '../../lib/date'
  * subject Achievements already covers, so they read as one region.
  */
 export function LifetimeCards() {
+  const say = usePlain()
   const { data } = useJournal()
   const nav = useNav()
   const { setMonth } = useCursor()
@@ -40,10 +42,10 @@ export function LifetimeCards() {
   const busiest = Object.entries(entriesByDay).sort((a, b) => b[1] - a[1])[0]
   const records: { label: string; value: string }[] = []
   if (best > 0) records.push({ label: 'Longest streak', value: `${best} days` })
-  if (bestMood?.mood != null) records.push({ label: 'Best mood', value: `${bestMood.mood}/10 · ${prettyDay(bestMood.date)}` })
-  if (bigWorkout) records.push({ label: 'Longest workout', value: `${bigWorkout.durationMin}m · ${fullLabelOf(bigWorkout.activity, bigWorkout.subActivity)}` })
-  if (pickBest) records.push({ label: 'Best pickleball', value: `${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}` })
-  if (busiest) records.push({ label: 'Busiest day', value: `${busiest[1]} entries · ${prettyDay(busiest[0])}` })
+  if (bestMood?.mood != null) records.push({ label: 'Best mood', value: say(`${bestMood.mood}/10 · ${prettyDay(bestMood.date)}`) })
+  if (bigWorkout) records.push({ label: 'Longest workout', value: say(`${bigWorkout.durationMin}m · ${fullLabelOf(bigWorkout.activity, bigWorkout.subActivity)}`) })
+  if (pickBest) records.push({ label: 'Best pickleball', value: say(`${pickBest.gamesWon} wins · ${prettyDay(pickBest.date)}`) })
+  if (busiest) records.push({ label: 'Busiest day', value: say(`${busiest[1]} entries · ${prettyDay(busiest[0])}`) })
 
   // Months that have any data.
   const months = [...new Set([

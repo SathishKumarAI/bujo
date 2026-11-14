@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import {
   Area, CartesianGrid, ComposedChart, Line, LineChart, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -83,6 +85,7 @@ const AXIS = { stroke: cat('surface1'), tick: { fill: cat('subtext0'), fontSize:
  * paragraph about.
  */
 export function MoodReasonsCard() {
+  const flat = useContext(FlatCards)
   const { data } = useJournal()
   const rows = moodReasonImpact(data)
   const tagged = data.metrics.filter((m) => m.moodReasons?.length).length
@@ -129,7 +132,7 @@ export function MoodReasonsCard() {
               </span>
               <span className="w-24 shrink-0 text-right text-label tabular-nums" style={{ color: onRaised(hue) }}>
                 {r.delta > 0 ? '+' : ''}{r.delta}
-                <span className="ml-1 text-fg-2">· {r.days}d</span>
+                <span className="ml-1 text-fg-2">{flat ? `, ${r.days} days` : `· ${r.days}d`}</span>
               </span>
               {/* The sentence a screen reader gets, and the one the bar is a
                   picture of. Both averages, both directions, and the n. */}
@@ -358,6 +361,7 @@ const BAND_MIN_DAYS = 3
  * are bright" and "you have not rated a bright day" are opposite findings.
  */
 export function MoodBandRiskCard() {
+  const flat = useContext(FlatCards)
   const { data } = useJournal()
   const rows = moodBandRisk(data)
   if (rows.length === 0) {
@@ -403,12 +407,12 @@ export function MoodBandRiskCard() {
                     </span>
                   </div>
                   <p className="mt-1 text-micro text-fg-2">
-                    <span className="tabular-nums">{r.lapseDays}</span> of {r.days} days ·{' '}
+                    <span className="tabular-nums">{r.lapseDays}</span> of {r.days} days{flat ? ', ' : ' · '}
                     {r.urges === 0
                       ? 'no urge logged'
                       : <>
                           <span className="tabular-nums">{r.urges}</span> urge{r.urges === 1 ? '' : 's'} logged,
-                          intensity {r.intensity == null ? '—' : <span className="tabular-nums">{r.intensity}/5</span>}
+                          intensity {r.intensity == null ? (flat ? 'not rated' : '—') : <span className="tabular-nums">{r.intensity}{flat ? ' of 5' : '/5'}</span>}
                         </>}
                   </p>
                 </>

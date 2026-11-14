@@ -438,6 +438,7 @@ export function StatTile({
   | { icon: ReactNode; color?: string }
   | { icon?: undefined; color?: never }
 )) {
+  const flat = useContext(FlatCards)
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag
@@ -457,7 +458,7 @@ export function StatTile({
         className={cn('num flex items-center justify-center gap-1 font-medium text-fg-1', compact ? 'text-heading' : 'text-title sm:text-title')}
       >
         {icon && <span style={{ color: onRaised(color) }}>{icon}</span>}
-        {value}
+        {flat && typeof value === 'string' ? plain(value) : value}
       </div>
       <div className={cn('text-fg-2', compact ? 'text-micro' : 'mt-0.5 text-label')}>{label}</div>
     </Tag>
