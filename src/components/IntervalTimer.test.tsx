@@ -50,7 +50,7 @@ describe('IntervalTimer, your numbers and the controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Work, more' }))
     fireEvent.click(screen.getByRole('button', { name: 'Rest, less' }))
     for (let n = 0; n < 6; n++) fireEvent.click(screen.getByRole('button', { name: 'Rounds, less' }))
-    expect(screen.getByText('2 rounds, 25 s work and 5 s rest')).toBeTruthy()
+    expect(screen.getByRole('dialog').textContent).toContain('2 rounds, 25 s on, 5 s off')
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
     // Once it runs, the numbers sit behind Edit plan, out of a sweaty thumb's way.
     expect(screen.queryByRole('button', { name: 'Work, more' })).toBeNull()
@@ -179,7 +179,7 @@ describe('IntervalTimer forgives a real gym-goer', () => {
 describe('describeIntervals — the sheet never claims a rest the plan does not have', () => {
   const line = describeIntervals
   it('says EMOM is minutes with a beep, not work and rest', () => {
-    expect(line(emomSteps(3, 3))).toBe('3 rounds of 60 s, a beep starts each')
-    expect(line(intervalsIn('Planks (Tabata 20s/10s)', '', 8)!)).toBe('8 rounds, 20 s work and 10 s rest')
+    expect(line(emomSteps(3, 3))).toEqual(['3 rounds of 60 s', 'A beep starts each'])
+    expect(line(intervalsIn('Planks (Tabata 20s/10s)', '', 8)!)).toEqual(['8 rounds', '20 s on', '10 s off'])
   })
 })

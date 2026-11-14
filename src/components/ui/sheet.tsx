@@ -19,7 +19,8 @@ export function Sheet({ open, onOpenChange, title, description, children }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  description?: string
+  /** A line, or several (one fact each, drawn one per line, said with commas). */
+  description?: string | string[]
   children: ReactNode
 }) {
   // Focus goes back to whatever opened the sheet. Radix returns it to a
@@ -40,7 +41,8 @@ export function Sheet({ open, onOpenChange, title, description, children }: {
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 pt-1 pb-3">
           <div className="min-w-0">
             <DialogTitle className="text-heading font-semibold">{title}</DialogTitle>
-            {description && <DialogDescription className="mt-0.5 text-label text-fg-2">{description}</DialogDescription>}
+            {description && <DialogDescription className="mt-0.5 text-label text-fg-2">{typeof description === 'string' ? description
+              : description.map((l, k) => <span key={l} className="block">{k > 0 && <><span className="sr-only">,</span>{' '}</>}{l}</span>)}</DialogDescription>}
           </div>
           {/* iOS's sheet Done: bold brand TEXT, no fill — a wash button here
               competed with the sheet's own content for attention. */}
