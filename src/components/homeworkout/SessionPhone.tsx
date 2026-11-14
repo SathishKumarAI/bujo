@@ -116,7 +116,7 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
       )}
 
       {items.length > 0 && (
-        <div className="log-dock">
+        <div className="log-dock log-dock-end">
           <button type="button" className="round-btn ml-auto" onClick={() => setMore(true)} aria-label={`Minutes and notes${dur || notes.trim() ? ', added' : ''}`}>
             <Icon as={SlidersHorizontal} size="md" />
           </button>

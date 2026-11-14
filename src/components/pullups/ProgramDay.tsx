@@ -177,7 +177,7 @@ export function PullupProgramDay({ date }: {
             if (count(i) < setsOf(i)) bump(i)
           }} />
       )}
-      <div className="log-dock">
+      <div className="log-dock log-dock-end">
         {rest != null && <RestClock key={rest} target={null} onDismiss={() => setRest(null)} />}
         <button type="button" className="round-btn ml-auto" aria-pressed={allDone} aria-label={allDone ? 'Untick every set' : 'Tick every set'} onClick={tickAll}>
           <Icon as={ListChecks} size="md" />

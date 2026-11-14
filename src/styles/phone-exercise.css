@@ -86,3 +86,22 @@
 :root[data-hand='left'] .log-dock > .ml-auto {
   margin-left: 0;
 }
+
+/* THE LOG GOES AT THE END on a workout day (owner, 2026-11-14: Log and
+   Tick all "overlapping with the workout", "move the log down"): the dock
+   stops floating and sits after the last card. A running rest still floats
+   — it is the one thing you need while scrolling — at the foot of the
+   screen, which has no tab bar on these pages (`AppShell` NO_TAB_BAR). */
+.log-dock.log-dock-end {
+  position: static;
+  margin-top: 0.25rem;
+}
+
+.log-dock-end > .rest-clock,
+.log-dock-end > .dock-rest {
+  position: fixed;
+  inset-inline: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 30;
+  width: auto;
+}
