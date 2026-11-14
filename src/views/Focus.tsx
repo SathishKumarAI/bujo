@@ -9,6 +9,7 @@ import { LogSession } from '../components/focus/LogSession'
 import { SessionHistory } from '../components/focus/SessionHistory'
 import { TypingDrill, TypingStats } from '../components/focus/TypingBand'
 import { FindingsList, InterruptionCost } from '../components/focus/Findings'
+import { FlatCards } from '../components/ui/flatCards'
 import { useDevice } from '../components/shell/device'
 import { FocusPhone } from '../components/focus/FocusPhone'
 import {
@@ -259,6 +260,8 @@ export function Focus() {
   // (`FocusPhone`), with the same rail below holding what a phone keeps.
   if (phone) {
     return (
+      /* A phone draws cards that open nothing in place (COD-590). */
+      <FlatCards.Provider value>
       <FocusPhone
         sessions={sessions}
         recentProjects={byProject.map((p) => p.project).filter((p) => p !== '(no project)')}
@@ -266,6 +269,7 @@ export function Focus() {
         onLog={addDevSession}
         review={rail}
       />
+      </FlatCards.Provider>
     )
   }
 

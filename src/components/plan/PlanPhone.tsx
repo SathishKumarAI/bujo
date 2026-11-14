@@ -51,7 +51,7 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
 
   return (
     <div className="flex flex-col gap-6 pb-4">
-      <h1 className="sr-only">Plan · week</h1>
+      <h1 className="sr-only">Plan, tasks</h1>
 
       <DayStrip mode="week" weekStart={data.settings.weekStart ?? 0} value={sel} onChange={setSel} today={today} label="Days"
         mark={(d) => { const n = openOn(d); return n ? <>{n}<span className="sr-only"> open</span></> : null }} />
@@ -96,7 +96,7 @@ export function PlanPhone({ today, overdue, onImport, importNote }: {
       )}
 
       <Cells>
-        <Cell icon={ArrowsClockwise} tone="teal" title="Recurring" subtitle={`${data.recurrences.length} ${data.recurrences.length === 1 ? 'rule' : 'rules'} put things on the week`} onPress={() => setRules(true)} />
+        <Cell icon={ArrowsClockwise} tone="teal" title="Recurring" subtitle={`${data.recurrences.length} ${data.recurrences.length === 1 ? 'rule' : 'rules'} that repeat a task`} onPress={() => setRules(true)} />
         <Cell icon={CalendarPlus} tone="sky" title="Import a calendar" subtitle={importNote ?? 'An .ics file from Google or Apple'} onPress={onImport} />
       </Cells>
 

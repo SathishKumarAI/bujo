@@ -5,7 +5,6 @@ import { habitDoneOn, habitTarget, habitValueOn, isNumericHabit, isSteppableHabi
 import { cat, onAccent, onRaised } from '../../lib/colors'
 import { HABIT_KEY } from '../../lib/recordKeys'
 import { justCapturedProps, useJustCaptured } from '../CaptureReceipt'
-import { HabitWeek } from './HabitWeek'
 import type { Habit, JournalData } from '../../lib/types'
 
 /**
@@ -15,7 +14,8 @@ import type { Habit, JournalData } from '../../lib/types'
  * OWNS: the phone drawing of `HabitRows`. A yes/no habit is ONE card you tap
  * anywhere; done, it takes the habit's colour as its border and the check
  * pops in once. A counted habit (water, minutes, a limit) has − value + at
- * full 44px size. Same week squares (`HabitWeek`). No "●" before a name.
+ * full 44px size. No week squares: a phone shows no week or month (owner,
+ * 2026-11-14, COD-590), and figures are words ("8 of 8"). No "●" before a name.
  * DOES NOT OWN: what a tap writes — `HabitRows`' props, the same helpers.
  *
  * Accessible names keep `HabitRows`' wording ("Read — mark done today"),
@@ -23,11 +23,10 @@ import type { Habit, JournalData } from '../../lib/types'
  * Motion: `.habit-card` styles in `styles/phone.css`, off under
  * prefers-reduced-motion.
  */
-export function HabitCards({ habits, data, today, days, onToggle, onSetValue }: {
+export function HabitCards({ habits, data, today, onToggle, onSetValue }: {
   habits: Habit[]
   data: JournalData
   today: string
-  days: string[]
   onToggle: (date: string, id: string) => void
   onSetValue: (date: string, id: string, value: number) => void
 }) {
@@ -52,11 +51,10 @@ export function HabitCards({ habits, data, today, days, onToggle, onSetValue }: 
           return (
             <li key={h.id} {...justCapturedProps(fresh)} className="habit-card habit-count" data-on={on || undefined} style={{ ['--habit' as string]: accent }}>
               {name}
-              <HabitWeek h={h} data={data} days={days} today={today} />
               <div className="flex items-center justify-between gap-1">
                 <button type="button" className="round-btn" disabled={val <= 0} aria-label={`Decrease ${h.name}`} onClick={() => onSetValue(today, h.id, Math.max(0, val - step))}><Icon as={Minus} size="sm" /></button>
                 <span className="whitespace-nowrap font-sans text-label font-semibold tabular-nums" style={{ color: limit === 'over' ? onRaised('peach') : undefined }}>
-                  {val}/{target}{type === 'timer' ? 'm' : type === 'limit' ? ' max' : ''}
+                  {val} of {target}{type === 'timer' ? ' min' : type === 'limit' ? ' max' : ''}
                 </span>
                 <button type="button" className="round-btn" aria-label={`Increase ${h.name}`} onClick={() => onSetValue(today, h.id, val + step)}><Icon as={Plus} size="sm" /></button>
               </div>
@@ -83,7 +81,6 @@ export function HabitCards({ habits, data, today, days, onToggle, onSetValue }: 
                   {on ? <Icon as={h.avoid ? Warning : Check} size="sm" /> : h.avoid && <Icon as={Check} size="sm" />}
                 </span>
               </span>
-              <HabitWeek h={h} data={data} days={days} today={today} />
             </button>
           </li>
         )

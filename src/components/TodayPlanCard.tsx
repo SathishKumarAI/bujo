@@ -140,7 +140,7 @@ export function TodayPlanCard({ date: day = todayISO() }: { date?: string }) {
               className={`press-3d inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-body ${c.done ? 'text-fg-2' : 'text-fg-1'}`}
               style={{ borderColor: cat(c.color) + '55', background: cat(c.color) + (c.done ? '14' : '22') }}
             >
-              <AppIcon as={Icon} size="sm" style={{ color: onRaised(c.color) }} /> {c.label}{c.done ? ' ✓' : ''}
+              <AppIcon as={Icon} size="sm" style={{ color: onRaised(c.color) }} /> {c.label}{c.done && (phone ? <span className="sr-only">, done</span> : ' ✓')}
             </button>
           )
         })}

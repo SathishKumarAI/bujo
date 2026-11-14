@@ -57,7 +57,7 @@ export function PhoneTopBar({ view, gates, onNavigate, onQuickAdd }: {
   const [allOpen, setAllOpen] = useState(false)
   const chrome = VIEW_CHROME[view]
   const current = sectionOf(view)
-  const tabs = current ? tabsOf(current, gates) : []
+  const tabs = current ? tabsOf(current, gates, true) : []
   const hasTabs = tabs.length > 1
   const sectionLabel = SECTIONS.find((s) => s.id === current)?.label
   // The grid's own word for this page, so the bar and the tile agree ("Month",

@@ -59,6 +59,10 @@ export interface SectionTab {
   label: string
   /** Hidden unless the gate passes (opt-in trackers). */
   gate?: keyof SectionGates
+  /** Not on a phone: no week or month views there (owner, 2026-11-14, COD-590). */
+  desktopOnly?: true
+  /** The name on a phone, where the page is not the week it is on a desktop. */
+  phoneLabel?: string
 }
 
 export interface SectionGates {
@@ -117,8 +121,8 @@ export const SECTIONS: Section[] = [
     jump: 'p',
     icon: ArrowsClockwise,
     tabs: [
-      { view: 'plan', label: 'Week' },
-      { view: 'monthly', label: 'Month' },
+      { view: 'plan', label: 'Week', phoneLabel: 'Tasks' },
+      { view: 'monthly', label: 'Month', desktopOnly: true },
       { view: 'goals', label: 'Goals' },
     ],
   },
@@ -251,10 +255,11 @@ export const MEMBERS: Partial<Record<ViewId, SectionId>> = (() => {
 export const sectionOf = (view: ViewId): SectionId | undefined => MEMBERS[view]
 
 /** The tabs of a section, minus anything its settings gate turns off. */
-export function tabsOf(id: SectionId, gates: SectionGates): SectionTab[] {
+export function tabsOf(id: SectionId, gates: SectionGates, phone = false): SectionTab[] {
   const s = SECTIONS.find((x) => x.id === id)
   if (!s) return []
-  return s.tabs.filter((t) => !t.gate || gates[t.gate])
+  const tabs = s.tabs.filter((t) => !t.gate || gates[t.gate])
+  return phone ? tabs.filter((t) => !t.desktopOnly).map((t) => (t.phoneLabel ? { ...t, label: t.phoneLabel } : t)) : tabs
 }
 
 /** Where a rail click lands: the section's first *visible* tab. */
