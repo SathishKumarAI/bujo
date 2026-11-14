@@ -210,8 +210,8 @@ export function ProgramPhone({ s, onCheck, rest }: {
         {/* Docked above the bottom nav, so Log is always one thumb away however
             many lifts are open — and the rest timer docks INSIDE it, above
             the buttons, rather than as a second fixed layer on top of them. */}
-        <div className="log-dock">
-          {rest && <div className="w-full">{rest}</div>}
+        <div className="log-dock log-dock-end">
+          {rest && <div className="dock-rest w-full">{rest}</div>}
           <button type="button" className="round-btn ml-auto" aria-pressed={allTicked} aria-label={allTicked ? 'Untick every set' : 'Tick every set'}
             onClick={() => patch({ done: allTicked ? [] : rows.map((r) => r.id) })}>
             <Icon as={ListChecks} size="md" />

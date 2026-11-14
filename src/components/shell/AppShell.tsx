@@ -20,6 +20,9 @@ import { useDevice } from './device'
 import { useHeaderHeight } from './useHeaderHeight'
 import { EXTRA_JUMPS, SECTIONS, landingOf, type SectionGates } from './sections'
 import type { ViewId } from './viewChrome'
+
+/** Phone pages drawn without the bottom tab bar: the workout days. */
+const NO_TAB_BAR: ViewId[] = ['program', 'pullups', 'homeworkout']
 import { useFocusTimerRunner } from '../../lib/useFocusTimerRunner'
 
 /**
@@ -70,6 +73,10 @@ export function AppShell({
   useFocusTimerRunner()
 
   const isMobile = useDevice() === 'mobile'
+  // A workout on a phone is "do it, log it, leave" (owner, 2026-11-14: the
+  // bottom bar is not needed there). The top bar's menu and page picker
+  // still go anywhere; the bar's 5rem goes back to the exercises.
+  const tabBar = isMobile && !NO_TAB_BAR.includes(view)
 
   // Desktop rail visibility. `useJournal` rather than local state: the whole
   // point is that the choice survives a reload.
@@ -204,14 +211,14 @@ export function AppShell({
               Extra bottom padding on mobile clears the fixed bottom nav. */}
           <main
             id="main"
-            className={`min-w-0 flex-1 overflow-x-clip p-4 sm:p-6 ${isMobile ? 'pb-24' : 'pb-6'}`}
+            className={`min-w-0 flex-1 overflow-x-clip p-4 sm:p-6 ${tabBar ? 'pb-24' : 'pb-6'}`}
           >
             {children}
           </main>
         </div>
       </div>
 
-      {isMobile && <BottomNav view={view} gates={gates} onNavigate={onNavigate} />}
+      {tabBar && <BottomNav view={view} gates={gates} onNavigate={onNavigate} />}
 
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent>

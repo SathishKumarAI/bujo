@@ -6,6 +6,16 @@ Monthly, Focus (#561) and Coaching are cards on the phone. **Production is
 still at #553**: everything from #557 on is not deployed. The owner deploys
 with `bash scripts/ship.sh --deploy-only`.
 
+## 2026-11-14: workout days without the tab bar, Log at the end; timer push (#565)
+
+Owner: Log and Tick all floated over the exercises; the bottom bar is not
+needed on a workout. Program, Pull-ups, Home workout: no tab bar
+(`AppShell` NO_TAB_BAR), Log after the last card (`.log-dock-end`), a
+running rest still floats at the foot. The way out is the title's All
+pages grid. `a11y-axe.mjs` `go()` reaches a section through that grid when
+its tab is absent (101 of 101 scans, as before). #565: a ring round Start
+and a line that changes ("Past halfway", "Last 3 s. Push!").
+
 ## 2026-11-14: one exercise card, hand setting (COD-630), timers (#563)
 
 | what | where |

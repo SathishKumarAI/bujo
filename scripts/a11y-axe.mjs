@@ -601,6 +601,29 @@ async function go(w, name) {
       }
     }
   }
+  /**
+   * A WORKOUT DAY HAS NO TAB BAR (owner, 2026-11-14; `AppShell` NO_TAB_BAR),
+   * so a SECTION ("Body", "Mind") has no tab there. A person leaves by the
+   * title's All pages grid, where every section is a group of its pages; so
+   * does the gate: the section's first page, as a tab tap would land on one.
+   * Only when the name is still nowhere visible, so other pages are untouched.
+   */
+  if ((await items.filter({ hasText: name }).filter({ visible: true }).count()) === 0) {
+    const all = w.page.getByRole('button', { name: /, all pages$/ })
+    if (await all.count()) {
+      await all.first().click()
+      await w.page.waitForTimeout(400)
+      const group = w.page.getByRole('navigation', { name: 'All pages' }).getByRole('region', { name, exact: true })
+      if (await group.count()) {
+        await group.getByRole('button').first().click()
+        await w.page.waitForTimeout(300)
+        await settle(w)
+        return true
+      }
+      await w.page.keyboard.press('Escape')
+      await w.page.waitForTimeout(300)
+    }
+  }
   await items
     .filter({ hasText: name })
     .first()
