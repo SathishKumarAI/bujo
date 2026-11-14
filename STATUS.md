@@ -1,9 +1,28 @@
 # STATUS
 
-**Stopped:** 2026-11-14, after #560. COD-590 continues page by page:
-Recovery (#557), Insights (#558), Nutrition, Challenges and Cycle (#560)
-are cards on the phone. **Production is still at #553**: #557 to #560 are
-not deployed. The owner deploys with `bash scripts/ship.sh --deploy-only`.
+**Stopped:** 2026-11-14, after #561. COD-590 continues page by page:
+Recovery (#557), Insights (#558), Nutrition, Challenges, Cycle (#560),
+Trackers, Monthly and Focus (#561) are done on the phone. **Production is
+still at #553**: #557 to #561 are not deployed. The owner deploys with
+`bash scripts/ship.sh --deploy-only`.
+
+## 2026-11-14: no week or month on a phone (#561)
+
+Owner: "stop all monthly and weekly things for mobile version", desktop
+keeps them.
+
+| page | phone |
+|---|---|
+| Monthly | not offered (`desktopOnly` tab); `?view=monthly` on a phone goes to Plan |
+| Plan | the "Week" tab is "Tasks" (`phoneLabel`); it was already one day |
+| Trackers (Today's habit cards) | no week squares; "8 of 8", "19 of 15 min", "4 of 2 max"; plan chips drop the ✓ (said to a screen reader) |
+| Focus | inside `FlatCards`; a session's editor opens in a `Sheet`, delete is a trash icon; presets "25 min"; words not dots |
+
+**Next:** COD-590 Coaching, the last page: 22 folds (14 shots, 8 drill
+groups), a 12-week roadmap, symbols on every panel. Its weeks are a
+curriculum, not a calendar: on a phone, one "Step N of 12" picker with
+that step's card, like Program's "Day N of M" (#546), and no week list. COD-575 (scan phone-page sheets in the
+a11y gate) is still open.
 
 ## 2026-11-14: COD-590 Nutrition, Challenges, Cycle
 

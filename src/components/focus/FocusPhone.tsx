@@ -53,7 +53,7 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
     const s = toSession(f)
     if (!s) return
     onLog(s)
-    setJustLogged(`${formatMinutes(s.durationMin)}${s.project ? ` · ${s.project}` : ''}`)
+    setJustLogged(`${formatMinutes(s.durationMin)}${s.project ? `, ${s.project}` : ''}`)
     // The next block starts from this one — the same carry-over as a fresh visit.
     setF(draftFrom({ ...s, id: '' }, today))
   }
@@ -72,7 +72,7 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
               landed. One line: the heading wrapping cost the row Log needed. */}
           <span aria-live="polite" className="min-w-0 truncate text-label"
             style={justLogged ? { color: onRaised('green') } : undefined}>
-            {justLogged ? `Logged · ${justLogged}` : last && <span className="text-fg-2">last {shortMin(last.durationMin)}{last.project && ` · ${last.project}`}<span className="sr-only">, {prettyDay(last.date)}</span></span>}
+            {justLogged ? `Logged, ${justLogged}` : last && <span className="text-fg-2">last {shortMin(last.durationMin)}{last.project && `, ${last.project}`}<span className="sr-only">, {prettyDay(last.date)}</span></span>}
           </span>
         </div>
         <div className="cells">
@@ -125,7 +125,7 @@ export function FocusPhone({ sessions, recentProjects, recentTags, onLog, review
 
       {review}
 
-      <Sheet open={more} onOpenChange={setMore} title="This session" description="All optional · focus and stress start from last time">
+      <Sheet open={more} onOpenChange={setMore} title="This session" description="All optional, focus and stress start from last time">
         <div className="flex flex-col gap-4">
           <Cells>
             {(['focus', 'stress'] as const).map((k) => (

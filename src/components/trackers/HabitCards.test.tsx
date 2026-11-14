@@ -16,7 +16,7 @@ describe('HabitCards, today on a phone', () => {
     const onToggle = vi.fn()
     const onSetValue = vi.fn()
     const today = todayISO()
-    const { container } = render(<HabitCards habits={[read, water]} data={{ ...emptyJournal(), habits: [read, water] }} today={today} days={[today]} onToggle={onToggle} onSetValue={onSetValue} />)
+    const { container } = render(<HabitCards habits={[read, water]} data={{ ...emptyJournal(), habits: [read, water] }} today={today} onToggle={onToggle} onSetValue={onSetValue} />)
     const card = screen.getByRole('button', { name: 'Read — mark done today' })
     expect(card.className).toContain('habit-card')
     await userEvent.click(card)
@@ -24,5 +24,14 @@ describe('HabitCards, today on a phone', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Increase Water' }))
     expect(onSetValue).toHaveBeenCalledWith(today, 'h2', 1)
     expect(container.textContent).not.toContain('●')
+  })
+
+  // The failure: a week coming back onto the phone (owner, 2026-11-14: no
+  // week or month on a phone), or a count drawn as "0/8".
+  it('draws no week squares and says a count in words', () => {
+    const { container } = render(<HabitCards habits={[read, water]} data={{ ...emptyJournal(), habits: [read, water] }} today={todayISO()} onToggle={() => {}} onSetValue={() => {}} />)
+    expect(container.querySelector('[class*="rounded-[3px]"]')).toBeNull()
+    expect(container.textContent).toContain('0 of 8')
+    expect(container.textContent).not.toMatch(/\d\/\d/)
   })
 })

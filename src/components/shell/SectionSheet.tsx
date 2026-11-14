@@ -39,7 +39,7 @@ export function SectionSheet({ view, gates, open, onOpenChange, onNavigate }: {
               <Icon as={s.icon} size="sm" />{s.label}
             </h2>
             <ul className="grid grid-cols-3 gap-1.5">
-              {tabsOf(s.id, gates).map((t) => {
+              {tabsOf(s.id, gates, true).map((t) => {
                 const here = t.view === view
                 return (
                   <li key={t.view}>

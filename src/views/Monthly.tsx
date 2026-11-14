@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useJournal } from '../store'
 import { notify } from '../lib/notify'
 import { monthDays, prettyDay, prettyMonth, todayISO, weekColumn, weekdayLabels } from '../lib/date'
@@ -14,12 +14,18 @@ import { bulletTypeBreakdown, entriesPerDay, journalingStreak, monthlyEntryCount
 import { habitDoneOn } from '../lib/stats'
 import { fetchWeather, getPosition, reverseGeocode } from '../lib/weather'
 
+/** No month on a phone (owner, 2026-11-14, COD-590): a phone that lands here goes to Plan. */
 export function Monthly() {
+  const phone = useDevice() === 'mobile'
+  const nav = useNav()
+  useEffect(() => { if (phone) nav('plan') }, [phone, nav])
+  return phone ? null : <MonthlyPage />
+}
+
+function MonthlyPage() {
   const { data, setMonthly, setWeather } = useJournal()
   const { month: ym, setDay } = useCursor()
   const nav = useNav()
-  // A phone logs, a desktop reads: the analytics fold is charts only.
-  const phone = useDevice() === 'mobile'
   const [geoBusy, setGeoBusy] = useState(false)
 
   async function autoFill() {
@@ -207,7 +213,7 @@ export function Monthly() {
       </div>
 
       {/* Month analytics · deep charts, collapsed by default below the calendar + inputs */}
-      {!phone && (monthEntries.length > 0 || monthlyTotal > 0) && (
+      {(monthEntries.length > 0 || monthlyTotal > 0) && (
         <QuietSection title="Month analytics" subtitle={<>month pulse &amp; trailing-year rhythm</>} defaultOpen={false} stickyKey="monthly.analytics">
             <>
       {/* Month pulse · entry rhythm, bullet-type mix, task completion */}

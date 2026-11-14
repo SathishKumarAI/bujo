@@ -1,4 +1,8 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+import { Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
+import { FlatCards } from '../ui/flatCards'
+import { Sheet } from '../ui/sheet'
 import { Button } from '../ui/button'
 import { SegmentScale } from '../fields/SegmentScale'
 import { formatMinutes } from '../../lib/focus'
@@ -9,7 +13,8 @@ import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
 
 /**
- * Every logged deep-work session, newest first, editable in place.
+ * Every logged deep-work session, newest first, editable in place (in a
+ * sheet on a phone, COD-590).
  *
  * Editing matters more than it looks: deleting and re-logging a mistyped
  * duration also re-dates the session and skews the duration-weighted focus
@@ -66,6 +71,7 @@ const draftOfSession = (s: DevSession) => ({
 
 function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Partial<DevSession>) => void; onDelete: () => void }) {
   const [editing, setEditing] = useState(false)
+  const flat = useContext(FlatCards)
   /**
    * The draft is re-seeded when the editor OPENS — which the Edit button
    * already did inline; `startEditing` is that same re-seed, named once
@@ -100,43 +106,42 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
     setEditing(false)
   }
 
-  if (editing) {
-    return (
-      <li className="border-t border-line py-3">
-        <div className="grid max-w-[26rem] gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <label className="text-label text-fg-2">
-              Minutes
-              <input
-                type="number"
-                value={d.durationMin}
-                onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))}
-                className={field}
-              />
-            </label>
-            <label className="text-label text-fg-2">
-              Project
-              <input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className={field} />
-            </label>
-          </div>
-          <SegmentScale label="Focus / flow" value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" />
-          <SegmentScale label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" />
-          <label className="text-label text-fg-2">
-            Notes
-            <input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className={field} />
-          </label>
-          <div className="flex gap-3">
-            <Button variant="primary" onClick={save} className="flex-1">
-              Save
-            </Button>
-            <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </li>
-    )
-  }
+  const editor = (
+    <div className="grid max-w-[26rem] gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <label className="text-label text-fg-2">
+          Minutes
+          <input
+            type="number"
+            value={d.durationMin}
+            onChange={(e) => setD((c) => ({ ...c, durationMin: e.target.value }))}
+            className={field}
+          />
+        </label>
+        <label className="text-label text-fg-2">
+          Project
+          <input value={d.project} onChange={(e) => setD((c) => ({ ...c, project: e.target.value }))} className={field} />
+        </label>
+      </div>
+      <SegmentScale label={flat ? 'Focus and flow' : 'Focus / flow'} value={d.focus} onChange={(v) => setD((c) => ({ ...c, focus: v }))} color="mauve" />
+      <SegmentScale label="Stress" value={d.stress} onChange={(v) => setD((c) => ({ ...c, stress: v }))} color="red" />
+      <label className="text-label text-fg-2">
+        Notes
+        <input value={d.notes} onChange={(e) => setD((c) => ({ ...c, notes: e.target.value }))} className={field} />
+      </label>
+      <div className="flex gap-3">
+        <Button variant="primary" onClick={save} className="flex-1">
+          Save
+        </Button>
+        <Button variant="secondary" onClick={() => setEditing(false)} className="flex-1">
+          Cancel
+        </Button>
+      </div>
+    </div>
+  )
+
+  // On a phone the editor opens in a sheet, never in place (COD-590).
+  if (editing && !flat) return <li className="border-t border-line py-3">{editor}</li>
 
   return (
     <li className="group border-t border-line py-2.5">
@@ -158,7 +163,7 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
             aria-label={`Delete session on ${prettyDay(s.date)}`}
             className="min-h-11 rounded-control px-2.5 text-label text-fg-2 hover:bg-ink-2 hover:text-danger-text"
           >
-            ×
+            {flat ? <Icon as={Trash} size="sm" /> : '×'}
           </button>
         </div>
       </div>
@@ -172,6 +177,7 @@ function SessionRow({ s, onSave, onDelete }: { s: DevSession; onSave: (patch: Pa
         ))}
       </div>
       {s.notes && <p className="mt-1 text-label text-fg-3 italic">{s.notes}</p>}
+      {flat && <Sheet open={editing} onOpenChange={setEditing} title={`Edit the session on ${prettyDay(s.date)}`}>{editor}</Sheet>}
     </li>
   )
 }

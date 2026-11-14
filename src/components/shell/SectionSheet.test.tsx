@@ -32,7 +32,9 @@ describe('every page is one tap from anywhere on a phone', () => {
     render(<JournalProvider><PhoneTopBar view="fitness" gates={gates} onNavigate={nav} onQuickAdd={() => {}} /></JournalProvider>)
     await userEvent.click(screen.getByRole('button', { name: 'Body Fitness, all pages' }))
     const grid = screen.getByRole('navigation', { name: 'All pages' })
-    const all = PHONE_SECTIONS.flatMap((s) => tabsOf(s.id, gates))
+    const all = PHONE_SECTIONS.flatMap((s) => tabsOf(s.id, gates, true))
+    // No week or month on a phone (owner, 2026-11-14): Month is not offered.
+    expect(within(grid).queryByRole('button', { name: 'Month' })).toBeNull()
     expect(within(grid).getAllByRole('button')).toHaveLength(all.length)
     expect(within(grid).getByRole('button', { name: 'Fitness' }).getAttribute('aria-current')).toBe('page')
     await userEvent.click(within(grid).getByRole('button', { name: 'Insights' }))
@@ -40,8 +42,8 @@ describe('every page is one tap from anywhere on a phone', () => {
   })
 
   it('names the bar with the grid’s word for the page, not the view title', () => {
-    render(<JournalProvider><CursorProvider><PhoneTopBar view="monthly" gates={gates} onNavigate={() => {}} onQuickAdd={() => {}} /></CursorProvider></JournalProvider>)
-    expect(screen.getByRole('button', { name: 'Plan Month, all pages' })).toBeTruthy()
+    render(<JournalProvider><CursorProvider><PhoneTopBar view="plan" gates={gates} onNavigate={() => {}} onQuickAdd={() => {}} /></CursorProvider></JournalProvider>)
+    expect(screen.getByRole('button', { name: 'Plan Tasks, all pages' })).toBeTruthy()
   })
 
   // Owner: "not able to navigate from today to other pages". Today's row is

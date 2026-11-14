@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useJournal } from '../../store'
 import { Button } from '../ui/button'
@@ -55,6 +56,7 @@ export function TypingDrill() {
   const goalMin = data.settings.typingGoalMin ?? DEFAULT_TYPING_GOAL_MIN
   const goal = typingGoalProgress(data, today, goalMin)
   const weekday = isWeekday(today)
+  const flat = useContext(FlatCards)
 
   function log() {
     if (!f.durationMin) { notify.info('How long did you type for?', 'Minutes is the one field this needs.'); return }
@@ -114,7 +116,7 @@ export function TypingDrill() {
       <div className="mt-5 border-t border-line pt-4">
         <div className="flex items-baseline justify-between text-label">
           <span className="text-fg-1">
-            {weekday ? 'Today’s goal' : 'Bonus today'} · {formatMinutes(goal.minutes)} / {formatMinutes(goal.goalMin)}
+            {weekday ? 'Today’s goal' : 'Bonus today'}{flat ? ', ' : ' · '}{formatMinutes(goal.minutes)}{flat ? ' of ' : ' / '}{formatMinutes(goal.goalMin)}
           </span>
           <span className={goal.met ? 'text-brand-text' : 'text-fg-2'}>
             {goal.met ? 'met' : weekday ? `${goal.pct}%` : 'optional'}

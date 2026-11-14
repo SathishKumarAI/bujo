@@ -120,6 +120,7 @@ Pickleball (COD-450). On a phone:
 | **Pre-fill from last time and show it** | `lastSetFor` fills the weight AND the row says "last 35×12"; − / + move every unticked set one plate; `suggestWeight` offers +1 plate after a session that hit every rep |
 | **The primary button is small and floats** | owner ask: a 44px pill at the right (`.cta.cta-compact` in `.log-dock`), not a full-width slab — the list shows around it |
 | **Every phone page gets `.phone-frame`** | `App.tsx` `ViewFrame`; unlayered CSS under it tightens every card band (24 → 16px) without touching desktop |
+| **No week or month on a phone** (owner, 2026-11-14) | a phone picks one day; a tab that is a week or month is `desktopOnly` in `shell/sections.ts` (`tabsOf(…, phone)`), its view sends a phone elsewhere (`Monthly` → Plan), and a week inside a page goes (habit cards' week squares, Cycle's month grid) |
 
 Workout cards, timers and habit cards (2026-11-13, #539–#554):
 `docs/sessions/2026-11-13-workout-cards-and-timers.md`.

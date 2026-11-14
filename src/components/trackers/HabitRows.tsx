@@ -56,7 +56,7 @@ export function HabitRows({
 
   const days = Array.from({ length: WINDOW }, (_, i) => addDays(today, -(WINDOW - 1 - i)))
   // A phone draws the same habits as cards (owner, 2026-11-13).
-  if (phone) return <HabitCards habits={todays} data={data} today={today} days={days} onToggle={onToggle} onSetValue={onSetValue} />
+  if (phone) return <HabitCards habits={todays} data={data} today={today} onToggle={onToggle} onSetValue={onSetValue} />
   // `today` is the day being marked — Today's date cursor, not always the
   // calendar's today — so the control names the day it writes to.
   const when = today === todayISO() ? 'today' : `on ${prettyDay(today)}`

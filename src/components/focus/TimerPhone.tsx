@@ -42,7 +42,7 @@ export function TimerPhone() {
           <p className="truncate text-label text-fg-2" aria-live="polite">
             {/* The mode and the blocks done today — the week's total was here and
                 cut to "1h 40m thi…" beside three buttons. */}
-            <span className="capitalize">{t.mode}</span>{t.blocks > 0 && ` · ${t.blocks} done today`}
+            <span className="capitalize">{t.mode}</span>{t.blocks > 0 && `, ${t.blocks} done today`}
           </p>
         </div>
         <button type="button" className="cta cta-compact focus-start" onClick={() => (running ? pause() : (shown < total ? resume() : start('work')))}>
@@ -57,7 +57,7 @@ export function TimerPhone() {
       <div className="px-4 pt-2 pb-3">
         {/* Always holds a preset, so no `allowNone` — a tap on the lit one confirms it. */}
         <Seg label="Work and break length" value={t.presetIndex} onChange={(i) => i != null && setPreset(i)}
-          options={PRESETS.map((p, i) => ({ value: i, label: p.label }))} />
+          options={PRESETS.map((p, i) => ({ value: i, label: `${p.w} min`, name: `${p.w} min work, ${p.b} min break` }))} />
       </div>
     </section>
   )
