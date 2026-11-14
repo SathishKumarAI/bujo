@@ -16,6 +16,7 @@
 @import './styles/layout.css';
 @import './styles/section-screen.css';
 @import './styles/phone.css';
+@import './styles/phone-timer.css';
 @import './styles/touch-motion.css';
 @import './styles/phone-settings.css';
 @import './styles/phone-help.css';

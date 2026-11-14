@@ -52,7 +52,7 @@ describe('IntervalTimer, your numbers and the controls', () => {
     for (let n = 0; n < 6; n++) fireEvent.click(screen.getByRole('button', { name: 'Rounds, less' }))
     expect(screen.getByText('2 rounds, 25 s work and 5 s rest')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Start' }))
-    // The numbers cannot change under a running clock.
+    // Once it runs, the numbers sit behind Edit plan, out of a sweaty thumb's way.
     expect(screen.queryByRole('button', { name: 'Work, more' })).toBeNull()
     run(25_000 + 5_000 + 25_000 + 100)
     fireEvent.click(screen.getByRole('button', { name: 'Save 2 rounds' }))
@@ -74,6 +74,105 @@ describe('IntervalTimer, your numbers and the controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByText('Round 1 of 8')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Save 0 rounds' })).toBeTruthy()
+  })
+})
+
+describe('IntervalTimer forgives a real gym-goer', () => {
+  const tabata = () => intervalsIn('Planks (Tabata 20s/10s)', '', 8)!
+  const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }))
+  const clock = () => screen.getByRole('status', { name: /seconds left/ }).textContent
+
+  it('pause stops the clock in work and in rest: paused time does not count', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={() => {}} onClose={() => {}} />)
+    tap('Start')
+    run(5_000)
+    tap('Pause')
+    run(60_000)
+    expect(clock()).toBe('0:15')
+    tap('Resume')
+    run(17_000) // into the rest, 2 s gone
+    tap('Pause')
+    run(60_000)
+    expect(screen.getByText('Rest')).toBeTruthy()
+    expect(clock()).toBe('0:08')
+  })
+
+  it('+15 s extends the rest you are in and −15 s never takes it below now', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={() => {}} onClose={() => {}} />)
+    tap('Start')
+    run(22_000) // 2 s into the 10 s rest
+    tap('Rest +15 s')
+    expect(clock()).toBe('0:23')
+    run(10_000)
+    expect(screen.getByText('Rest')).toBeTruthy() // the old rest would be over by now
+    tap('Rest −15 s')
+    // 13 s left: −15 s ends the rest now, and round 2 starts whole, not 2 s in
+    expect(screen.getByText('Work')).toBeTruthy()
+    expect(screen.getByText('Round 2 of 8')).toBeTruthy()
+    expect(clock()).toBe('0:20')
+  })
+
+  it('undo restores the previous round count and the clock after a mis-tapped Round done', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={() => {}} onClose={() => {}} />)
+    tap('Start')
+    run(30_000 + 5_000) // round 1 done, 5 s into round 2
+    tap('Round done')
+    expect(screen.getByRole('button', { name: 'Save 2 rounds' })).toBeTruthy()
+    tap('Undo')
+    expect(screen.getByRole('button', { name: 'Save 1 round' })).toBeTruthy()
+    expect(screen.getByText('Round 2 of 8')).toBeTruthy()
+    expect(clock()).toBe('0:15')
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull()
+  })
+
+  it('redo round repeats the round just missed without losing the rounds before it', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    const onSave = vi.fn()
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={onSave} onClose={() => {}} />)
+    tap('Start')
+    run(30_000 + 20_000 + 1_000) // rounds 1 and 2 done, 1 s into the rest after 2
+    expect(screen.getByRole('button', { name: 'Save 2 rounds' })).toBeTruthy()
+    tap('Redo round')
+    expect(screen.getByText('Round 2 of 8')).toBeTruthy()
+    expect(screen.getByText('Work')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Save 1 round' })).toBeTruthy()
+    run(20_100)
+    tap('Pause')
+    tap('Save 2 rounds')
+    expect(onSave).toHaveBeenCalledWith([20, 20])
+  })
+
+  it('edit changes the remaining rounds and timings mid-session without restarting', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    const onSave = vi.fn()
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={onSave} onClose={() => {}} />)
+    tap('Start')
+    run(5_000)
+    tap('Edit plan')
+    for (let n = 0; n < 5; n++) tap('Rounds, less') // 8 → 3
+    tap('Work, more') // later rounds 25 s; the one you are in stays 20 s
+    expect(clock()).toBe('0:15')
+    expect(screen.getByText('Round 1 of 3')).toBeTruthy()
+    run(15_000 + 10_000 + 25_000 + 10_000 + 25_000 + 100)
+    expect(screen.getByText('3 of 3 finished')).toBeTruthy()
+    tap('Save 3 rounds')
+    expect(onSave).toHaveBeenCalledWith([20, 25, 25])
+  })
+
+  it('edit cannot take away a round already done or the one you are in', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    render(<IntervalTimer name="Planks" plan={tabata()} onSave={() => {}} onClose={() => {}} />)
+    tap('Start')
+    run(30_000 + 1_000) // in round 2
+    tap('Edit plan')
+    for (let n = 0; n < 10; n++) {
+      const less = screen.getByRole('button', { name: 'Rounds, less' }) as HTMLButtonElement
+      if (!less.disabled) fireEvent.click(less)
+    }
+    expect(screen.getByRole('status', { name: 'Rounds 2' })).toBeTruthy()
   })
 })
 

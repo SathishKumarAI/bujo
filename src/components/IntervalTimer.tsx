@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sheet } from './ui/sheet'
 import { Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { describeIntervals, mmss, retune, startOf, stepAt, type Intervals, type Tune } from '../lib/holdTime'
+import { describeIntervals, mmss, retune, startOf, stepAt, type Intervals, type Step, type Tune } from '../lib/holdTime'
 
 /**
  * THE INTERVAL TIMER — Tabata (20 s work, 10 s rest, eight rounds) and a run
@@ -16,6 +16,13 @@ import { describeIntervals, mmss, retune, startOf, stepAt, type Intervals, type 
  * DOES NOT OWN: which cards get it (`lib/holdTime.ts` `intervalsIn`, Pull-ups only so far: COD-603) or what a
  * save ticks — each caller decides. A single hold is `HoldTimer`.
  *
+ * FORGIVING (owner, 2026-11-14): Pause; Rest +15 s / −15 s on the rest you
+ * are in; Undo puts the clock back where a mis-tapped Round done, Hold done
+ * or Skip rest found it; Redo runs the round you just missed again (it stops
+ * counting, the ones before it stay); Edit plan changes work, rest and rounds
+ * for every step AFTER the one you are in. Each edits `steps` or the clock
+ * position, so `onSave(worked)` means what it always did.
+ *
  * Timed from `Date.now()`, so a skipped interval tick loses no time. No
  * animation: the numbers and the word change, nothing moves.
  */
@@ -26,22 +33,29 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
   onSave: (worked: number[]) => void
   onClose: () => void
 }) {
-  // Your numbers, before Start (owner, 2026-11-13: "they can change based
-  // upon their needs"): work, rest and rounds, from the plan's.
+  // Your numbers (owner, 2026-11-13: "they can change based upon their
+  // needs"): work, rest and rounds, from the plan's.
   const [tune, setTune] = useState<Tune | undefined>(plan.tune)
-  const cur = tune ? retune(tune) : plan
-  const { steps, manual } = cur
+  // The session as it stands: retuned, a rest stretched, a round redone.
+  const [steps, setSteps] = useState<Step[]>(() => (plan.tune ? retune(plan.tune) : plan).steps)
+  const { manual } = plan
   const [banked, setBanked] = useState(0)
   const [since, setSince] = useState<number | null>(null)
   const [now, setNow] = useState(() => Date.now())
   const audio = useRef<AudioContext | null>(null)
   const beeped = useRef('')
-  /** Where this run stops on its own: the end of the hold when `manual`,
-   *  the end of every round otherwise. Derived, not set in an effect. */
-  const [cap, setCap] = useState(0)
+  /** The step this run stops at on its own: the end of the hold when
+   *  `manual`, null for the end of every round. The cap is derived from it,
+   *  so an edit to the steps moves it without an effect. */
+  const [stopAt, setStopAt] = useState<number | null>(0)
+  const cap = 1000 * startOf(steps, stopAt ?? steps.length)
+  /** Where the clock was before the last Round done, for Undo. */
+  const [undo, setUndo] = useState<number | null>(null)
+  const [editing, setEditing] = useState(false)
 
   const ms = Math.min(banked + (since == null ? 0 : now - since), since == null ? Infinity : cap)
   const running = since != null && ms < cap
+  const started = since != null || ms > 0
   const { i, left } = stepAt(steps, ms)
   const step = steps[i]
   const over = i >= steps.length
@@ -49,6 +63,12 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
   const works = steps.filter((s) => s.kind === 'work').length
   // Between holds the clock waits for you: that is your rest.
   const phase = over ? 'done' : manual && !running && ms > 0 && left === step.secs ? 'rest' : step.kind
+  /** The last work step finished: what Redo runs again. */
+  let last = -1
+  for (let k = 0; k < i && k < steps.length; k++) if (steps[k].kind === 'work') last = k
+  const unit = manual ? 'hold' : 'round'
+  /** Rounds Edit cannot take away: the ones done and the one you are in. */
+  const floor = !started ? 1 : Math.max(1, worked.length + (step?.kind === 'work' ? 1 : 0))
 
   useEffect(() => {
     if (!running) return
@@ -78,21 +98,40 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
       const Ctx = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
       if (Ctx) { audio.current ??= new Ctx(); void audio.current.resume() }
       const t = Date.now(); setBanked(ms); setSince(t); setNow(t)
-      setCap(1000 * (manual ? startOf(steps, i + 1) : startOf(steps, steps.length)))
+      setStopAt(manual ? i + 1 : null)
     } else { setBanked(ms); setSince(null) }
   }
-  function reset() { setBanked(0); setSince(null); beeped.current = '' }
-  /** Move the clock to the start of step `to`; a hold list waits there. */
-  function jump(to: number) {
-    setBanked(startOf(steps, Math.max(0, Math.min(steps.length, to))) * 1000)
+  function reset() { setBanked(0); setSince(null); setUndo(null); beeped.current = '' }
+  /** Put the clock at `to` ms: a running round list keeps running, a hold list waits. */
+  function seek(to: number) {
+    setBanked(to)
     if (running && !manual) { const t = Date.now(); setSince(t); setNow(t) } else setSince(null)
   }
+  /** Move the clock to the start of step `to`. */
+  function jump(to: number) { seek(startOf(steps, Math.max(0, Math.min(steps.length, to))) * 1000) }
   // Back: to the start of this step, or the one before if it only just began.
-  function back() { jump(ms / 1000 - startOf(steps, i) > 2 || i === 0 ? i : i - 1) }
+  function back() { setUndo(null); jump(ms / 1000 - startOf(steps, i) > 2 || i === 0 ? i : i - 1) }
+  function done() { setUndo(ms); jump(i + 1) }
+  function redo() { setUndo(null); jump(last) }
+  /** Rest +15 s / −15 s on the rest you are in; −15 s never ends it before now. */
+  function stretch(d: number) {
+    const into = ms / 1000 - startOf(steps, i)
+    setSteps(steps.map((s, k) => (k === i ? { ...s, secs: Math.max(into, s.secs + d) } : s)))
+  }
+  /** New numbers for every step after the one you are in (all of them before Start). */
+  function edit(t: Tune) {
+    setTune(t)
+    const head = steps.slice(0, started ? i + 1 : 0)
+    const more = t.rounds - head.filter((s) => s.kind === 'work').length
+    const tail = more > 0 ? retune({ ...t, rounds: more }).steps : []
+    const gap: Step[] = head.at(-1)?.kind === 'work' && tail.length > 0 && t.reps == null && t.off > 0
+      ? [{ kind: 'rest', secs: t.off, label: 'Round 1 of 1 next' }] : []
+    setSteps(relabel([...head, ...gap, ...tail]))
+  }
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onClose() }} title={name}
-      description={describeIntervals(cur)}>
+      description={describeIntervals(tune ? retune(tune) : { steps, manual })}>
       <div className="interval flex flex-col items-center gap-4 py-4" data-phase={phase}>
         <p className="interval-word" aria-live="assertive">{phase === 'done' ? 'Done' : phase === 'work' ? 'Work' : 'Rest'}</p>
         <output className="hold-clock" aria-live="off" aria-label={`${left} seconds left`}>{mmss(over ? 0 : left)}</output>
@@ -102,30 +141,42 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
             {running ? 'Pause' : ms > 0 ? (manual && left === step.secs ? `Start hold ${worked.length + 1}` : 'Resume') : 'Start'}
           </button>
         )}
-        {/* YOUR NUMBERS, only before you start: a run is never retimed
-            under you. */}
-        {tune && since == null && ms === 0 && (
-          <div className="cells w-full" role="group" aria-label="Your timer">
-            {tune.reps == null && <TuneRow label="Work" unit="s" value={tune.on} min={5} max={300} step={5} onChange={(on) => setTune({ ...tune, on })} />}
-            {tune.reps == null && <TuneRow label="Rest" unit="s" value={tune.off} min={0} max={180} step={5} onChange={(off) => setTune({ ...tune, off })} />}
-            <TuneRow label={tune.reps == null ? 'Rounds' : 'Minutes'} unit="" value={tune.rounds} min={1} max={30} step={1} onChange={(rounds) => setTune({ ...tune, rounds })} />
+        {/* Rows of three at most, so Save stays on a 390 x 844 screen while
+            you rest (measured: four rows of two pushed it to y 869). */}
+        {phase === 'rest' && !manual && (
+          <div className="timer-row" role="group" aria-label="This rest">
+            <button type="button" className="hold-sub" aria-label="Rest −15 s" onClick={() => stretch(-15)}>−15 s</button>
+            <button type="button" className="hold-sub" aria-label="Rest +15 s" onClick={() => stretch(15)}>+15 s</button>
+            <button type="button" className="hold-sub" onClick={done}>Skip rest</button>
           </div>
         )}
         {ms > 0 && (
-          <div className="flex w-full gap-3">
+          <div className="timer-row">
             <button type="button" className="hold-sub" onClick={back}>Back</button>
-            {!over && (
-              <button type="button" className="hold-sub" onClick={() => jump(i + 1)}>
-                {phase === 'rest' && !manual ? 'Skip rest' : manual ? 'Hold done' : 'Round done'}
-              </button>
+            {!over && !(phase === 'rest' && !manual) && (
+              <button type="button" className="hold-sub" onClick={done}>{manual ? 'Hold done' : 'Round done'}</button>
             )}
+            {undo != null && <button type="button" className="hold-sub" onClick={() => { seek(undo); setUndo(null) }}>Undo</button>}
+            {last >= 0 && phase !== 'work' && <button type="button" className="hold-sub" onClick={redo}>Redo {unit}</button>}
           </div>
         )}
-        <div className="flex w-full gap-3">
+        {/* YOUR NUMBERS: open before Start; after it, behind Edit plan and
+            only for the steps still to come, so nothing done is retimed. */}
+        {tune && !over && (!started || editing) && (
+          <div className="cells w-full" role="group" aria-label={started ? 'Rest of the session' : 'Your timer'}>
+            {tune.reps == null && <TuneRow label="Work" unit="s" value={tune.on} min={5} max={300} step={5} onChange={(on) => edit({ ...tune, on })} />}
+            {tune.reps == null && <TuneRow label="Rest" unit="s" value={tune.off} min={0} max={180} step={5} onChange={(off) => edit({ ...tune, off })} />}
+            <TuneRow label={tune.reps == null ? 'Rounds' : 'Minutes'} unit="" value={tune.rounds} min={floor} max={30} step={1} onChange={(rounds) => edit({ ...tune, rounds })} />
+          </div>
+        )}
+        <div className="timer-row">
           <button type="button" className="hold-sub" onClick={reset} disabled={ms === 0}>Reset</button>
+          {tune && started && !over && (
+            <button type="button" className="hold-sub" aria-expanded={editing} onClick={() => setEditing(!editing)}>Edit plan</button>
+          )}
           <button type="button" className="hold-sub hold-save" disabled={worked.length === 0}
             onClick={() => { onSave(worked); onClose() }}>
-            Save {worked.length} {manual ? (worked.length === 1 ? 'hold' : 'holds') : (worked.length === 1 ? 'round' : 'rounds')}
+            Save {worked.length} {worked.length === 1 ? unit : `${unit}s`}
           </button>
         </div>
       </div>
@@ -146,6 +197,16 @@ function TuneRow({ label, unit, value, min, max, step, onChange }: {
       <button type="button" className="round-btn" aria-label={`${label}, more`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + step))}><Icon as={Plus} size="sm" /></button>
     </div>
   )
+}
+
+/** "N of M" in every label from where each step now sits, after an edit moved them. */
+function relabel(steps: Step[]): Step[] {
+  const n = steps.filter((s) => s.kind === 'work').length
+  let k = 0
+  return steps.map((s) => {
+    if (s.kind === 'work') k++
+    return { ...s, label: s.label.replace(/\d+ of \d+/, `${s.kind === 'work' ? k : k + 1} of ${n}`) }
+  })
 }
 
 function beep(ctx: AudioContext | null, hz: number, secs: number) {
