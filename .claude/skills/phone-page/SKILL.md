@@ -10,7 +10,7 @@ no charts, the log is first and fits one screen without scrolling, iOS look,
 and the desktop does not change at all. Decided by `useDevice()` (width), never
 a mode. Background: `CLAUDE.md` "A phone logs, a desktop reads", the
 prompt in `docs/MOBILE-BRIEF.md`, the accepted pieces in
-`docs/REUSABLE-PATTERNS.md` §28–33, the history in
+`docs/REUSABLE-PATTERNS.md` §28–37, the history in
 `docs/sessions/2026-10-29-phone-pages.md`.
 
 ## 1 · Measure before touching anything
@@ -43,6 +43,9 @@ And the desktop contract at 1440×900: the same numbers, saved, to diff after.
 | a big primary slab | 44px pill at the right in a sticky dock; use the space left of it | `.cta-compact`, `.log-dock`, `.dock-chip` |
 | empty bands between cards | `.phone-frame` rule (every phone page) | `styles/phone.css`, `App.tsx` `ViewFrame` |
 | a heading that repeats a select | `sr-only` it | Program's focus heading |
+| an exercise or lift list | one-row `.ex-card`: `.set-count` ring, name + plan + Watch, timer, input | §34, `pullups/ProgramDay.tsx` |
+| a timed plan ("30 s", Tabata, "15,30,15 s") | let `intervalsIn` / `secondsIn` pick the timer | §35, `lib/holdTime.ts` |
+| yes/no items to tick | tap-anywhere card, two per row | §37, `trackers/HabitCards.tsx` |
 
 The owner's taste, from their own words: wants judgment, not a menu; "all fit
 in one space"; "usability is more important"; side-by-side over stacked;
