@@ -26,6 +26,45 @@ Rules the three share:
 
 ---
 
+## 2026-11-14 — Every phone page as cards; a workout day you finish and leave (COD-590, COD-630 · PRs #557–#566)
+
+Owner direction: COD-590 finished page by page (nothing opens in place, no
+symbols, no charts, desktop unchanged); "stop all monthly and weekly things
+for mobile"; then the workout day: one card, name on one line, actions in one
+row, a left/right-hand setting, a how-to note in points, forgiving timers that
+push you, and Log out of the way. **Not deployed: production is at #553.**
+Full record: `docs/sessions/2026-11-14-phone-cards-and-workout-day.md`.
+
+**Shipped:**
+- Recovery (#557, folds 8 → 0) and Insights (#558).
+- Gates green again (#559, 249/249 scans).
+- Nutrition, Challenges and Cycle (#560).
+- No week or month on a phone (#561, week squares 84 → 0).
+- Coaching as steps, with shots and drills in sheets (#562, folds 22 → 0,
+  desktop byte-identical).
+- `ExerciseCard`, Hand and `PageHint` (#564, two-line names 6 → 0, cards
+  68–106 → 77px).
+- Timer controls (#563): pause, rest ±15 s, undo, redo round, edit plan.
+- Timer ring and cheer line (#565).
+- Workout days with no tab bar and Log after the last card (#566, floats over
+  cards 1 → 0).
+
+**Got wrong:**
+- The timer ring pushed the clock under the sheet header.
+- The plan was truncated at 95 of 149px.
+- The counter's accessible name stopped containing its painted "0/3".
+- The gate's first fallback opened the ☰ Menu, which holds notifications, not
+  sections.
+
+Each was caught by a measurement, not a read.
+
+**Learned, now in CLAUDE.md:**
+- A page without the tab bar needs the gate to leave through the All pages
+  grid.
+- A course counted in weeks is STEPS on a phone.
+
+---
+
 ## 2026-11-13 — Workout cards, interval timers, habit cards on the phone (COD-585…614 · PRs #539–#554)
 
 Owner direction: phone workout pages as cards, "no subparts", the day "in one
