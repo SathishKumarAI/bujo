@@ -1,14 +1,13 @@
 # STATUS
 
-**Stopped:** 2026-11-14, after #566. COD-590 is done (every phone page as
-cards) and COD-630 is done (exercise card, Hand, timers, no tab bar on a
-workout day). **Production is still at #553**: #557 to #566 are not deployed.
-The owner deploys with `bash scripts/ship.sh --deploy-only` (this session's
-permission check blocks it). Session record:
+**Stopped:** 2026-11-14, after #568, **deployed**: bujo-journal.vercel.app
+serves `index-C4YxHVrz.js`, the same bundle as a local build of #568. COD-590
+(every phone page as cards) and COD-630 (exercise card, Hand, timers, no tab
+bar on a workout day, plan as lines) are done. Session record:
 `docs/sessions/2026-11-14-phone-cards-and-workout-day.md`.
 
-**Next:** deploy; then COD-575 (a11y gate scans phone-page sheets). Ask
-before taking the tab bar off any page beyond the three workout days.
+**Next:** COD-575 (a11y gate scans phone-page sheets). COD-631: `api/` typecheck errors seen only in
+`vercel build`. Ask before taking the tab bar off any page beyond the three workout days.
 
 ## 2026-11-14: workout days without the tab bar, Log at the end; timer push (#565)
 
