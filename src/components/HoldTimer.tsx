@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Sheet } from './ui/sheet'
 import { mmss } from '../lib/holdTime'
+import { cheer } from '../lib/cheer'
 
 /**
  * THE BIG TIMER for a timed exercise — a plank, a dead hang, a Tabata round,
@@ -69,9 +70,17 @@ export function HoldTimer({ name, target, onSave, onClose }: {
         <p className="text-body text-fg-2" aria-live="polite">
           {reached ? 'Target reached' : target != null ? `of ${mmss(target)}` : since == null && secs === 0 ? 'Tap start' : ' '}
         </p>
-        <button type="button" className="hold-go" aria-pressed={since != null} onClick={toggle}>
-          {since != null ? 'Pause' : secs > 0 ? 'Resume' : 'Start'}
-        </button>
+        {/* THE PUSH (owner, 2026-11-14): a line for the moment, and a ring
+            that fills to the target — or goes round once a minute when
+            there is none. */}
+        {!reached && (since != null || secs > 0) && (
+          <p className="timer-cheer">{cheer({ phase: 'work', idle: false, left: target == null ? null : target - secs, frac: target == null ? null : secs / target })}</p>
+        )}
+        <span className="go-ring" data-phase={reached ? 'done' : 'work'} style={{ '--p': target == null ? (ms % 60000) / 60000 : Math.min(1, ms / (target * 1000)) } as CSSProperties}>
+          <button type="button" className="hold-go" aria-pressed={since != null} onClick={toggle}>
+            {since != null ? 'Pause' : secs > 0 ? 'Resume' : 'Start'}
+          </button>
+        </span>
         <div className="flex w-full gap-3">
           <button type="button" className="hold-sub" onClick={reset} disabled={secs === 0}>Reset</button>
           <button type="button" className="hold-sub hold-save" disabled={secs === 0}
