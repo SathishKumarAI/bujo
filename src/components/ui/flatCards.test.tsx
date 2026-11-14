@@ -4,6 +4,9 @@ import { Card, StatTile } from '../ui'
 import { Stat } from './Stat'
 import { FlatCards } from './flatCards'
 import { CARDS } from '../../lib/recoveryCards'
+import { CYCLE_CARDS } from '../../lib/cycleCards'
+import { Abbr } from '../Abbr'
+import { FertileWindow, InfoTip, LutealCard } from '../cycle'
 
 describe('FlatCards', () => {
   it('a collapsible card under FlatCards opens nothing in place and draws its subtitle in words', () => {
@@ -40,5 +43,21 @@ describe('FlatCards', () => {
     expect(container.textContent).toMatch(/of 10/)
     expect(container.textContent).toMatch(/up 0/)
     expect(container.textContent).toMatch(/6 of 9/)
+  })
+
+  it('Cycle under FlatCards: no info popover, no diagram, no bars, and the two heatmaps are charts', () => {
+    const { container } = render(
+      <FlatCards.Provider value>
+        <Abbr term="local-only">Stored on this device only</Abbr>
+        <InfoTip tip="confidence" />
+        <FertileWindow bands={[]} length={28} />
+        <LutealCard lengths={[18, 13, 16]} />
+      </FlatCards.Provider>,
+    )
+    expect(container.querySelectorAll('button, svg')).toHaveLength(0)
+    expect(container.textContent).toMatch(/Stored on this device only/)
+    expect(container.textContent).toMatch(/range 13 to 18 days/)
+    expect(container.textContent).toMatch(/18 days/)
+    expect(CYCLE_CARDS.filter((c) => c.chart).map((c) => c.id).sort()).toEqual(['bbt', 'drivephase', 'grid', 'length', 'moodphase', 'symptoms', 'wheel'])
   })
 })

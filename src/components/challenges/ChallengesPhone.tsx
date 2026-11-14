@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Archive, CaretDown, Check, ListChecks, Plus, SlidersHorizontal, Trash, Trophy } from '@/components/icons'
+import { Archive, CaretDown, CaretRight, Check, ListChecks, Plus, SlidersHorizontal, Trash, Trophy } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells, Cell } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
@@ -21,7 +21,7 @@ import {
  * running; the shared `DayStrip` for the day being ticked (each chip says if
  * it was complete; arrows reach any past week); one scoreboard (day n of N, the next-step sentence, done /
  * missed / streak); one row per rule with a tap-to-tick circle and its record
- * so far ("8 of 10 days"), opening in place to "what was it"; a dock with
+ * so far ("8 of 10 days"), a ticked one opening a sheet for "what was it"; a dock with
  * Manage (archive, delete, every past day, a new challenge) and "Tick all".
  * DOES NOT OWN: any arithmetic (`lib/challenges.ts`) or the note editor, the
  * day calendar and the new-challenge form, which the view hands in — the
@@ -99,7 +99,7 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
         <DayStrip value={d} onChange={pick} today={today} label="Day to tick" min={start} max={dayDiff(end, today) > 0 ? end : today}
           mark={(x) => isDayComplete(data, c, x)
             ? <span style={{ color: cat('green') }}><Icon as={Check} size="sm" /><span className="sr-only"> every rule ticked</span></span>
-            : rulesDoneOn(data, c.id, x).length ? <>{rulesDoneOn(data, c.id, x).length}/{c.rules.length}<span className="sr-only"> rules ticked</span></> : null} />
+            : rulesDoneOn(data, c.id, x).length ? <>{rulesDoneOn(data, c.id, x).length} of {c.rules.length}<span className="sr-only"> rules ticked</span></> : null} />
       )}
 
       {/* THE SCOREBOARD: where you are, what to do, and the three counts that
@@ -107,7 +107,7 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
       <section aria-label={`${c.name} so far`} className="cells px-4 py-3">
         <div className="flex items-baseline gap-2">
           <span className="score-num text-fg-1">{notStarted ? 0 : elapsedDay(c, today)}</span>
-          <span className="min-w-0 truncate text-label text-fg-2">of {c.durationDays} days · {c.name}{c.strict ? ' · strict' : ''}</span>
+          <span className="min-w-0 truncate text-label text-fg-2">of {c.durationDays} days, {c.name}{c.strict ? ', strict' : ''}</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Days complete" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentComplete(data, c, today)}>
           <div className="h-full rounded-pill bg-green transition-[width]" style={{ width: `${percentComplete(data, c, today)}%` }} />
@@ -129,11 +129,10 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
           <Cell icon={Trophy} tone="green" title={`${c.durationDays} days done`} subtitle="Archive it to close it out" onPress={() => updateChallenge(c.id, { archived: true })} label="Archive" />
         </Cells>
       ) : (
-        <Cells title={notStarted ? 'Rules' : `Day ${n} · ${dayName}`} aside={notStarted ? `starts ${prettyDay(start)}` : `${done.length} of ${c.rules.length}`}>
+        <Cells title={notStarted ? 'Rules' : `Day ${n}, ${dayName}`} aside={notStarted ? `starts ${prettyDay(start)}` : `${done.length} of ${c.rules.length}`}>
           {c.rules.length === 0 && <p className="cell text-label text-fg-2">No rules, so every day counts as done.</p>}
           {c.rules.map((rule, i) => {
             const on = done.includes(i)
-            const isOpen = open === i && on
             const r = records[i]
             return (
               <div key={i} className="lift-row" data-done={on || undefined}>
@@ -142,19 +141,24 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
                     aria-label={`${rule}: ${on ? 'done, tap to untick' : 'tap when done'}`} onClick={() => toggleChallengeRule(c.id, d, i)}>
                     <span aria-hidden><Icon as={Check} size="md" /></span>
                   </button>
-                  <button type="button" className="min-w-0 flex-1 py-2.5 text-left" aria-expanded={on ? isOpen : undefined} disabled={!on}
-                    onClick={() => setOpen(isOpen ? null : i)}>
+                  <button type="button" className="min-w-0 flex-1 py-2.5 text-left" aria-haspopup={on ? 'dialog' : undefined} disabled={!on}
+                    onClick={() => setOpen(i)}>
                     <span className={`block text-body font-medium ${on ? 'text-fg-2' : 'text-fg-1'}`}>{rule}</span>
-                    {r && <span className="block text-label text-fg-2">{r.done} of {r.of} days{on && ' · tap to say what it was'}</span>}
+                    {r && <span className="block text-label text-fg-2">{r.done} of {r.of} days{on && ', tap to say what it was'}</span>}
                   </button>
-                  {on && <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
+                  {on && <Icon as={CaretRight} size="sm" className="shrink-0 text-fg-2" />}
                 </div>
-                {isOpen && <div className="px-3 pb-3">{note(i, d)}</div>}
               </div>
             )
           })}
         </Cells>
       )}
+
+      {/* What a ticked rule was, in a sheet rather than in place (COD-590). */}
+      <Sheet open={open != null && done.includes(open)} onOpenChange={(o) => { if (!o) setOpen(null) }}
+        title={open != null ? c.rules[open] ?? '' : ''} description={`What it was, ${dayName === 'Today' ? 'today' : dayName}`}>
+        {open != null && note(open, d)}
+      </Sheet>
 
       <div className="log-dock">
         <button type="button" className="round-btn" aria-label="Manage challenge" onClick={() => setManage(true)}>
@@ -162,7 +166,7 @@ export function ChallengesPhone({ active, focused, onFocus, today, note, calenda
         </button>
         {!notStarted && c.rules.length > 0 && (
           <button type="button" className="cta cta-compact" disabled={allDone} onClick={tickAll}>
-            <Icon as={allDone ? Check : ListChecks} size="md" />{allDone ? `Day ${n} done` : `Tick all · ${done.length}/${c.rules.length}`}
+            <Icon as={allDone ? Check : ListChecks} size="md" />{allDone ? `Day ${n} done` : `Tick all, ${done.length} of ${c.rules.length}`}
           </button>
         )}
       </div>

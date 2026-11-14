@@ -2,6 +2,8 @@ import { Info } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { cycleHelp } from '../../lib/cycleHelp'
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * INFO TIP · the ⓘ beside a number on this page.
@@ -33,7 +35,9 @@ export function InfoTip({ tip, onMore }: {
   onMore?: (section: string) => void
 }) {
   const entry = cycleHelp(tip)
-  if (!entry) return null
+  // A phone card opens nothing in place (COD-590).
+  const flat = useContext(FlatCards)
+  if (!entry || flat) return null
 
   return (
     <Popover>

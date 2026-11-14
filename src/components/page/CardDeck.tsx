@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CaretLeft, CaretRight } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * ONE CARD AT A TIME, and the next one is a swipe away.
@@ -58,6 +59,7 @@ export function CardDeck({ items, label, minCards = 2 }: {
 }) {
   const track = useRef<HTMLDivElement>(null)
   const [at, setAt] = useState(0)
+  const flat = useContext(FlatCards)
   /*
     THE TRACK IS AS TALL AS THE CARD YOU ARE LOOKING AT, not as its tallest.
 
@@ -121,7 +123,7 @@ export function CardDeck({ items, label, minCards = 2 }: {
           where you are without needing the dots to be counted. */}
       <div className="mb-2 flex items-center gap-2">
         <p className="text-label text-fg-2">
-          <span className="num text-fg-1">{at + 1}</span> of <span className="num">{items.length}</span> · {items[at]?.title}
+          <span className="num text-fg-1">{at + 1}</span> of <span className="num">{items.length}</span>{flat ? ', ' : ' · '}{items[at]?.title}
         </p>
         <div className="ml-auto flex items-center gap-1">
           <button

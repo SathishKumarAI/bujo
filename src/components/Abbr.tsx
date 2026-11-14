@@ -2,6 +2,8 @@ import { Info } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { glossaryTerm } from '../lib/glossary'
+import { useContext } from 'react'
+import { FlatCards } from './ui/flatCards'
 
 /**
  * ABBR · an abbreviation with its meaning one press away.
@@ -41,7 +43,9 @@ export function Abbr({ term, children, className = '' }: {
 }) {
   const entry = glossaryTerm(term)
   const shown = children ?? term
-  if (!entry) return <span className={className}>{shown}</span>
+  // A phone card opens nothing in place (COD-590): the word, no popover.
+  const flat = useContext(FlatCards)
+  if (!entry || flat) return <span className={className}>{shown}</span>
 
   return (
     <span className={`inline-flex items-baseline gap-0.5 ${className}`}>

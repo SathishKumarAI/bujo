@@ -25,6 +25,7 @@ import {
 import { STEP_ICON, STEP_TONE } from '../components/cycle/stepStyle'
 import { useDevice } from '../components/shell/device'
 import { DayStrip } from '../components/ui/dayStrip'
+import { FlatCards } from '../components/ui/flatCards'
 import { cat } from '../lib/colors'
 import {
   BbtChart, CycleDataCard, CycleHistoryChart, CyclePrivacyLine, CycleWheel, CycleWelcome, DayLog,
@@ -498,7 +499,8 @@ export function Cycle() {
               rather than behind it.
               Sticky only where the two are side by side — stacked, a sticky
               calendar would pin itself over the list it sits above. */}
-          <div className="@2xl/page:sticky @2xl/page:top-[calc(var(--header-h,3.5rem)+1rem)] @2xl/page:self-start">
+          {/* No month on a phone (COD-590): the day strip on top picks the day. */}
+          {!phone && <div className="@2xl/page:sticky @2xl/page:top-[calc(var(--header-h,3.5rem)+1rem)] @2xl/page:self-start">
             {/* Each half says what it is. Without the captions this is a
                 calendar next to a list with no statement of how they differ —
                 and they do differ: the grid is ONE month, the list is every
@@ -511,7 +513,7 @@ export function Cycle() {
               today={today}
               onSelect={pickDay}
             />
-          </div>
+          </div>}
           <div className="min-w-0">
             <p className="mb-1.5 text-label font-medium text-fg-1">Everything you logged</p>
             <DayLog
@@ -579,7 +581,8 @@ export function Cycle() {
   )
 
   return (
-    <>
+    /* A phone draws cards that open nothing in place (COD-590). */
+    <FlatCards.Provider value={phone}>
     {strip}
     <PageLayout
       tier={1180}
@@ -609,9 +612,9 @@ export function Cycle() {
         <div className="cells px-4 py-2.5">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-title font-bold text-fg-1 tabular-nums">
-              {day ?? '—'} <span className="text-body font-medium text-fg-2">{day != null ? `of ~${length ?? 28} days` : 'not started'}</span>
+              {day} <span className="text-body font-medium text-fg-2">{day != null ? `of about ${length ?? 28} days` : 'Not started'}</span>
             </span>
-            {phase && <Pill color={phase.color} size="micro" className="px-2">{phase.label} · {analysis.current.confidence}</Pill>}
+            {phase && <Pill color={phase.color} size="micro" className="px-2">{phase.label}, {analysis.current.confidence}</Pill>}
           </div>
           {day != null && (
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Cycle day against your average" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(100, (day / (length ?? 28)) * 100))}>
@@ -620,7 +623,7 @@ export function Cycle() {
           )}
           <p className="mt-1 text-label text-fg-2">
             {nextPeriod && untilNext != null
-              ? untilNext === 0 ? 'Period due today' : untilNext > 0 ? `Next period in ${untilNext} days · ~${prettyDay(nextPeriod)}` : `${-untilNext} days late`
+              ? untilNext === 0 ? 'Period due today' : untilNext > 0 ? `Next period in ${untilNext} days, about ${prettyDay(nextPeriod)}` : `${-untilNext} days late`
               : 'Next period needs two logged periods'}
           </p>
           {(step.id === 'late' || step.id === 'due') && (
@@ -826,7 +829,8 @@ export function Cycle() {
                 Back to today
               </button>
             )}
-<ActHide what="the log" onHide={logCol.close} />
+{/* A phone stacks: hiding the log there is a fold (COD-590). */}
+{!phone && <ActHide what="the log" onHide={logCol.close} />}
             </div>
           }
         >
@@ -1035,7 +1039,7 @@ export function Cycle() {
         </>
       }
     />
-    </>
+    </FlatCards.Provider>
   )
 }
 

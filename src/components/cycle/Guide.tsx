@@ -2,6 +2,8 @@ import { CYCLE_PHASES } from '../../lib/cycleGuide'
 import { onRaised } from '../../lib/colors'
 import { Card, Pill } from '../ui'
 import { PhaseNutrition } from './PhaseNutrition'
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * THE GUIDE CARDS · the reference shelf, out of the view.
@@ -65,7 +67,10 @@ export function PhasesCard() {
  * as one line with no bullet, because a one-item bullet list is a bullet
  * pretending to be structure.
  */
-function Points({ items, label, tone }: { items: string[]; label?: string; tone?: string }) {
+function Points({ items: raw, label, tone }: { items: string[]; label?: string; tone?: string }) {
+  // On a phone a range is words and the painted bullet goes (COD-590); the <li> still lists.
+  const flat = useContext(FlatCards)
+  const items = flat ? raw.map((t) => t.replace(/(\d)\s*–\s*(\d)/g, '$1 to $2')) : raw
   if (items.length === 0) return null
   return (
     <div className="mt-1 first:mt-0">
@@ -83,7 +88,7 @@ function Points({ items, label, tone }: { items: string[]; label?: string; tone?
               {/* A real bullet, `aria-hidden`: the `<li>` is what announces
                   the item, and a painted "·" read out before every line is
                   noise in a screen reader. */}
-              <span aria-hidden className="shrink-0 text-fg-3">·</span>
+              {!flat && <span aria-hidden className="shrink-0 text-fg-3">·</span>}
               <span className="min-w-0">{t}</span>
             </li>
           ))}
