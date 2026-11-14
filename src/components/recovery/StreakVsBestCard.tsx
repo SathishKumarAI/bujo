@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { ArrowCounterClockwise, Target, Trophy, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
@@ -25,6 +27,7 @@ export function StreakVsBestCard({
   pace: Pace
   approachCopy: { color: string; text: string } | null
 }) {
+  const flat = useContext(FlatCards)
   return (
     <Card band hideInfo title="Current vs your best" subtitle={vsBest.isRecord ? 'You’re writing a new record right now' : `${vsBest.daysToBeat} day${vsBest.daysToBeat === 1 ? '' : 's'} to match your best`}>
       <div className="relative h-4 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
@@ -41,14 +44,14 @@ export function StreakVsBestCard({
       {comeback.isComeback && (
         <div className="mt-3 inline-flex w-full items-center gap-2 rounded-card p-2.5 text-body" style={{ background: cat('green') + '14', border: `1px solid ${cat('green')}44` }}>
           <Icon as={ArrowCounterClockwise} size="sm" style={{ color: onRaised('green') }} className="shrink-0" />
-          <span className="text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: onRaised('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong> · the slip didn’t win.</span>
+          <span className="text-fg-2"><span className="font-medium" style={{ color: onRaised('green') }}>Comeback unlocked.</span> This run beats your last streak ({comeback.prevStreak}d) by <strong style={{ color: onRaised('green') }}>{comeback.by} day{comeback.by === 1 ? '' : 's'}</strong>{flat ? '. The slip didn’t win.' : ' · the slip didn’t win.'}</span>
         </div>
       )}
       {/* Pace-to-record projection (#298) · concrete calendar target */}
       {!pace.alreadyRecord && pace.matchDate && (
         <div className="mt-3 inline-flex w-full items-center gap-2 rounded-card p-2.5 text-label" style={{ background: cat('mauve') + '12', border: `1px solid ${cat('mauve')}33` }}>
           <Icon as={Target} size="sm" style={{ color: onRaised('mauve') }} className="shrink-0" />
-          <span className="text-fg-2">Stay clean and you’ll <strong style={{ color: onRaised('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong> · a new record the very next day ({pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
+          <span className="text-fg-2">Stay clean and you’ll <strong style={{ color: onRaised('mauve') }}>match your best on {prettyDay(pace.matchDate)}</strong>{flat ? ', a new record the very next day (' : ' · a new record the very next day ('}{pace.beatDate && prettyDay(pace.beatDate)}). {pace.daysToMatch} day{pace.daysToMatch === 1 ? '' : 's'} away.</span>
         </div>
       )}
       {/* Record-approach escalation (#321) · the cost of slipping rises near your best */}

@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { FlatCards } from '../ui/flatCards'
+import { Trash } from '@/components/icons'
+import { Icon } from '@/components/Icon'
+import { useState, useContext } from 'react'
 import { useJournal } from '../../store'
 import { Card, Input, Pill } from '../ui'
 import { Button } from '../ui/button'
@@ -12,6 +15,7 @@ import { Button } from '../ui/button'
  * two zones is the kind of link a file split breaks silently.
  */
 export function TriggerPlansCard() {
+  const flat = useContext(FlatCards)
   const { data, addTriggerPlan, removeTriggerPlan } = useJournal()
   const [plan, setPlan] = useState({ addiction: '', trigger: '', coping: '' })
   const plans = data.nofap.plans ?? []
@@ -37,9 +41,9 @@ export function TriggerPlansCard() {
               <div className="flex items-center gap-2">
                 <Pill color="mauve" size="caption">{pl.addiction}</Pill>
                 <span className="text-fg-1"><span className="text-fg-2">when</span> {pl.trigger}</span>
-                <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-fg-2 reveal hover:text-red">×</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => removeTriggerPlan(pl.id)} aria-label="Remove plan" className="ml-auto text-fg-2 reveal hover:text-red">{flat ? <Icon as={Trash} size="sm" /> : '×'}</Button>
               </div>
-              {pl.coping && <p className="mt-0.5 text-label text-fg-2"><span className="text-teal">→ then</span> {pl.coping}</p>}
+              {pl.coping && <p className="mt-0.5 text-label text-fg-2"><span className="text-teal">{flat ? 'then' : '→ then'}</span> {pl.coping}</p>}
             </li>
           ))}
         </ul>

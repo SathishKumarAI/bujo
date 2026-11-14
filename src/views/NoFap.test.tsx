@@ -390,14 +390,19 @@ describe('Recovery on a phone · one select picks the panel', () => {
     expect([...container.querySelectorAll('[data-card]')].map((e) => e.getAttribute('data-card'))).toEqual([target.id])
   })
 
-  it('opens an urge for editing by tapping its row, and asks before deleting it', async () => {
+  it('opens an urge for editing in a sheet, not in place, and asks before deleting it', async () => {
     phone()
     await userEvent.selectOptions(within(screen.getByRole('navigation', { name: 'Recovery panels' })).getByRole('combobox'), 'urgehistory')
     const card = screen.getAllByRole('button', { name: /^Edit/ })[0].closest('ul')!
     const row = within(card).getAllByRole('button', { name: /^Edit/ })[0]
+    // Nothing on a phone opens in place (COD-590): the row opens a sheet.
+    expect(card.querySelector('[aria-expanded]')).toBeNull()
+    expect(row).toHaveAttribute('aria-haspopup', 'dialog')
     await userEvent.click(row)
-    expect(row).toHaveAttribute('aria-expanded', 'true')
-    expect(within(card).getAllByRole('textbox').length).toBeGreaterThan(0)
+    const sheet = screen.getByRole('dialog')
+    expect(within(sheet).getAllByRole('textbox').length).toBeGreaterThan(0)
+    expect(within(card).queryAllByRole('textbox')).toHaveLength(0)
+    await userEvent.keyboard('{Escape}')
     const before = card.querySelectorAll('li').length
     await userEvent.click(within(card).getAllByRole('button', { name: /^Delete the urge on / })[0])
     // The dialog names what goes; the list is untouched until it is confirmed.

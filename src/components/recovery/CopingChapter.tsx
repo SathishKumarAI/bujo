@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { FlatCards } from '../ui/flatCards'
+import { plain } from '../../lib/plain'
+import { useState, useContext } from 'react'
 import { BookOpen, Heart } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
@@ -32,6 +34,7 @@ import { LAPSE_TRUTH, TECHNIQUES } from '../../lib/coping'
  * it — and `coping.test.ts` fails if a source is missing or is not a URL.
  */
 export function CopingChapter() {
+  const flat = useContext(FlatCards)
   const [open, setOpen] = useState(TECHNIQUES[0].id)
   const t = TECHNIQUES.find((x) => x.id === open) ?? TECHNIQUES[0]
 
@@ -77,7 +80,7 @@ export function CopingChapter() {
       <div className="mt-3 border-t border-line pt-2.5">
         <p className="mb-1 text-label font-medium text-fg-2">Why this one</p>
         <ul className="space-y-1 text-label text-fg-2">
-          {t.why.map((w) => <li key={w} className="flex gap-2"><span aria-hidden className="text-fg-3">·</span><span className="min-w-0">{w}</span></li>)}
+          {t.why.map((w) => <li key={w} className="flex gap-2">{!flat && <span aria-hidden className="text-fg-3">·</span>}<span className="min-w-0">{w}</span></li>)}
         </ul>
         {/* Built as a real link with an underline. `.prose-doc a` is the only
             anchor rule in the app, so an inline link outside it inherits its
@@ -107,6 +110,7 @@ export function CopingChapter() {
  * something to do with it.
  */
 export function LapseTruthCard() {
+  const flat = useContext(FlatCards)
   return (
     <Card
       band
@@ -125,7 +129,7 @@ export function LapseTruthCard() {
       <p className="mt-3 text-micro text-fg-2">
         Source:{' '}
         <a href={LAPSE_TRUTH.source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg-1">
-          {LAPSE_TRUTH.source.label}
+          {flat ? plain(LAPSE_TRUTH.source.label) : LAPSE_TRUTH.source.label}
         </a>
       </p>
     </Card>

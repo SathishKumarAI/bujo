@@ -100,6 +100,8 @@ export interface CardMeta {
   title: string
   group: Group
   words: string
+  /** A chart, heatmap or calendar — not offered on a phone (CLAUDE.md, "a phone logs"). */
+  chart?: true
   /**
    * Take the whole row of `CardGrid` instead of one column.
    *
@@ -171,16 +173,16 @@ export const CARDS: CardMeta[] = [
      selected — `docs/PAGE-SHAPE.md`: "Summary, the signature visual, then the
      list". A registry row for it would put the page's one always-visible chart
      inside a group you have to pick. */
-  { id: 'urgetrend', title: 'Urge trend', group: 'patterns', words: 'urge frequency trend per week rising falling bars' , facet: 'urges' },
-  { id: 'intensity', title: 'Urge intensity', group: 'patterns', words: 'intensity strength 1 5 rated average distribution' , facet: 'urges' },
+  { id: 'urgetrend', title: 'Urge trend', group: 'patterns', chart: true, words: 'urge frequency trend per week rising falling bars' , facet: 'urges' },
+  { id: 'intensity', title: 'Urge intensity', group: 'patterns', chart: true, words: 'intensity strength 1 5 rated average distribution' , facet: 'urges' },
   { id: 'cleanrollup', title: 'Clean rollup', group: 'patterns', words: 'clean weeks rollup perfect window run' , facet: 'when' },
-  { id: 'riskhours', title: 'High-risk hours', group: 'patterns', words: 'hour time of day heatmap peak late night risk when' , facet: 'when' },
-  { id: 'riskdays', title: 'Riskiest days', group: 'patterns', words: 'weekday day of week relapse reset pattern saturday risk' , facet: 'when' },
+  { id: 'riskhours', title: 'High-risk hours', group: 'patterns', chart: true, words: 'hour time of day heatmap peak late night risk when' , facet: 'when' },
+  { id: 'riskdays', title: 'Riskiest days', group: 'patterns', chart: true, words: 'weekday day of week relapse reset pattern saturday risk' , facet: 'when' },
   /* One id for the whole set, the way Insights registers `habitgrids`: there
      is one card per counted streak and the number of them is the user's data,
      not the registry's. A per-streak id would make the registry disagree with
      the page the moment somebody adds an addiction. */
-  { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', words: 'how many count quantity weekday average lapse times per day' , facet: 'when' },
+  { id: 'lapsecounts', title: 'How many, by weekday', group: 'patterns', chart: true, words: 'how many count quantity weekday average lapse times per day' , facet: 'when' },
   /* Per-addiction "how much · on what days · at what times", one card per
      tracked addiction under one id — the same shape as `lapsecounts` above and
      for the same reason: how many addictions there are is the user's data, not
@@ -202,9 +204,9 @@ export const CARDS: CardMeta[] = [
      buys the 412px back. A phone is unaffected: one column either way, and the
      card is legible there (24px calendar cells, `document.body.scrollWidth` 390,
      no overflow). */
-  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate', wide: true , facet: 'what' },
+  { id: 'addictionbreakdown', title: 'Each addiction, on its own', group: 'patterns', chart: true, words: 'per addiction how much on what days at what times calendar hours clock smoking sugar scrolling nicotine breakdown separate', wide: true , facet: 'what' },
   { id: 'triggers', title: 'Trigger patterns', group: 'patterns', words: 'trigger reason cause pattern top gap between resets' , facet: 'what' },
-  { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', words: 'urges by type addiction mix what you resist most bar' , facet: 'urges' },
+  { id: 'urgemix', title: 'Urges by addiction', group: 'patterns', chart: true, words: 'urges by type addiction mix what you resist most bar' , facet: 'urges' },
 
   { id: 'commitment', title: 'My commitment', group: 'plan', words: 'commitment contract quit date reason why promise' },
   { id: 'triggerplans', title: 'Trigger plans', group: 'plan', words: 'trigger plan if then coping response when i will' },

@@ -1,7 +1,7 @@
 import { ArrowsOut, CaretDown, Info, X } from '@/components/icons'
 import type { Icon as IconGlyph } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { isValidElement, useState, type MouseEvent, type ReactNode } from 'react'
+import { isValidElement, useContext, useState, type MouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cat, onAccent, onRaised, readableOn, washStyle } from '../lib/colors'
 import { cn } from '../lib/cn'
@@ -9,6 +9,8 @@ import { useFocusTrap } from '../lib/useFocusTrap'
 import { Button as SButton } from './ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
+import { FlatCards } from './ui/flatCards'
+import { plain } from '../lib/plain'
 
 // ── Small Tailwind-styled primitives (Catppuccin tokens) ─────────────────────
 
@@ -120,14 +122,14 @@ export function Card({
   children,
   className = '',
   onClick,
-  collapsible = false,
+  collapsible: collapsibleProp = false,
   defaultCollapsed = false,
   open: openProp,
   onOpenChange,
   defer = false,
   enlargeable = false,
   help,
-  hideInfo = false,
+  hideInfo: hideInfoProp = false,
   band = false,
 }: {
   title?: ReactNode
@@ -155,7 +157,12 @@ export function Card({
   /** Render as a Modernist band — flat, ruled, flush-left. See `CARD.band`. */
   band?: boolean
 }) {
-  const [openState, setOpenState] = useState(!defaultCollapsed)
+  // Under `FlatCards` (a phone page's cards) nothing opens in place: the body
+  // is always drawn, and the subtitle is a line rather than an ⓘ popover.
+  const flat = useContext(FlatCards)
+  const collapsible = collapsibleProp && !flat
+  const hideInfo = hideInfoProp || flat
+  const [openState, setOpenState] = useState(!defaultCollapsed || flat)
   const open = openProp ?? openState
   const toggle = () => {
     if (openProp === undefined) setOpenState((o) => !o)
@@ -294,7 +301,7 @@ export function Card({
                 on every card in the app whose subtitle runs past one line. The
                 body token's own 1.55 is the readable figure; tightening leading
                 is for titles, which do not wrap into paragraphs. */}
-              {subtitle && <p className="hidden text-body text-fg-2 sm:block">{subtitle}</p>}
+              {subtitle && <p className={flat ? 'text-body text-fg-2' : 'hidden text-body text-fg-2 sm:block'}>{flat && typeof subtitle === 'string' ? plain(subtitle) : subtitle}</p>}
             </div>
           </div>
           {/* `max-w-full` + `flex-wrap`, because `shrink-0` alone lets this

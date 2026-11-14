@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { Sparkle, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import type { ReactNode } from 'react'
@@ -69,10 +71,11 @@ export function TechniquesBlock({ plans, next, daysToNext }: {
   next?: Milestone
   daysToNext: number
 }) {
+  const flat = useContext(FlatCards)
   return (
     <RefBlock
       title={<span className="inline-flex items-center gap-2"><Icon as={Sparkle} size="sm" className="text-mauve" /> Beat the urge</span>}
-      subtitle="Proven techniques, an urge peaks and passes in ~15–20 min"
+      subtitle={flat ? 'Proven techniques. An urge peaks and passes in about 15 to 20 minutes' : 'Proven techniques, an urge peaks and passes in ~15–20 min'}
     >
       <div className="@container/tech">
         <ol className="grid grid-cols-[minmax(0,1fr)] gap-2 @md/tech:grid-cols-2 @4xl/tech:grid-cols-3">
@@ -88,14 +91,14 @@ export function TechniquesBlock({ plans, next, daysToNext }: {
                   on why `npm run a11y` cannot be). `onRaised('teal')` was tried
                   and returns the raw token in every theme, so it would have
                   been an inline style buying nothing. */}
-              <span className="font-medium text-teal">{t.term}</span> · {t.how}
+              <span className="font-medium text-teal">{t.term}</span>{flat ? ': ' : ' · '}{t.how}
             </li>
           ))}
         </ol>
       </div>
       {plans.length > 0 && (
         <div className="mt-3 rounded-card bg-secondary/50 p-2 text-label text-fg-2">
-          <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(' · ')}
+          <span className="font-medium text-mauve">Your plan:</span> {plans.map((pl) => `${pl.addiction} → ${pl.coping || pl.trigger}`).slice(0, 2).join(flat ? '; ' : ' · ').replace(/ → /g, flat ? ': ' : ' → ')}
         </div>
       )}
       {next && <p className="mt-2 inline-flex items-center gap-1.5 rounded-card bg-peach/10 p-2 text-label text-fg-2"><Icon as={Warning} size="sm" className="text-peach" /> You’re {daysToNext} day{daysToNext === 1 ? '' : 's'} from {next.label}. Don’t trade weeks of progress for 10 minutes.</p>}

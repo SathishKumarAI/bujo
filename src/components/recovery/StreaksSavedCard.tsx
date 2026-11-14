@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { ShieldCheck } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card } from '../ui'
@@ -8,6 +10,7 @@ type Saved = ReturnType<typeof streaksSaved>
 
 /** Streak-saved counter (#334) · resisted urges reframed as streaks protected. */
 export function StreaksSavedCard({ saved }: { saved: Saved }) {
+  const flat = useContext(FlatCards)
   return (
     <Card band hideInfo title={<span className="inline-flex items-center gap-2"><Icon as={ShieldCheck} size="sm" className="text-green" /> Streaks you saved</span>} subtitle="Every resisted urge was a reset that didn’t happen">
       <div className="flex items-center gap-4">
@@ -17,7 +20,7 @@ export function StreaksSavedCard({ saved }: { saved: Saved }) {
         </div>
         <p className="flex-1 text-body text-fg-2">
           That’s <strong style={{ color: onRaised('green') }}>{saved.saved} streak{saved.saved === 1 ? '' : 's'}</strong> you might have lost.
-          {saved.savedToday > 0 && <> <span className="text-fg-2">{saved.savedToday} saved today</span> · keep the count climbing.</>}
+          {saved.savedToday > 0 && <> <span className="text-fg-2">{saved.savedToday} saved today</span>{flat ? ', keep the count climbing.' : ' · keep the count climbing.'}</>}
         </p>
       </div>
     </Card>

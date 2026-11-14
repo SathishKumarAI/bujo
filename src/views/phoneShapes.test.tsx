@@ -274,7 +274,7 @@ describe('Recovery on a phone', () => {
     phone()
     wrap(<NoFap />)
     expect(screen.queryByRole('region', { name: 'Today' })).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: /tap to fix today/ }))
+    await userEvent.click(screen.getByRole('button', { name: /tap to fix today/i }))
     await userEvent.click(screen.getByRole('button', { name: /^More Main streak today/ }))
     expect(nofap().relapses.at(-1)).toMatchObject({ count: 1 })
     // A minus never deletes a logged day (it would undo a reset silently)…

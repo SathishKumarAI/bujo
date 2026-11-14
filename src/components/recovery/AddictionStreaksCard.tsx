@@ -1,6 +1,7 @@
-import { Flame } from '@/components/icons'
+import { FlatCards } from '../ui/flatCards'
+import { Flame, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useJournal } from '../../store'
 import { Card, Empty, Input } from '../ui'
 import { Button } from '../ui/button'
@@ -38,6 +39,7 @@ import { discreetly } from '../../lib/discreet'
  * they have no actions, not because reading the store here would be wrong.
  */
 export function AddictionStreaksCard() {
+  const flat = useContext(FlatCards)
   const confirm = useConfirm()
   const { data, addAddiction, removeAddiction, relapseAddiction, setAddictionCost } = useJournal()
   const [newAddiction, setNewAddiction] = useState('')
@@ -54,7 +56,7 @@ export function AddictionStreaksCard() {
         <Button variant="secondary" onClick={() => { addAddiction(newAddiction); setNewAddiction('') }}>Add</Button>
       </div>
       {addictions.length === 0 ? (
-        <Empty>No separate addictions yet · add one to track it on its own streak.</Empty>
+        <Empty>No separate addictions yet{flat ? '. Add' : ' · add'} one to track it on its own streak.</Empty>
       ) : (
         /* Side by side from 30rem of the PANEL, not of the window — this card
            sits in a review column whose width is decided by the page split and
@@ -95,9 +97,9 @@ export function AddictionStreaksCard() {
                     <div className="flex flex-wrap items-baseline gap-x-2">
                       <span className="num text-heading font-medium" style={{ color: onRaised(reset ? 'red' : 'mauve') }}>{st.current}</span>
                       <span className="text-label text-fg-2">day{st.current === 1 ? '' : 's'} clean</span>
-                      <span className="text-label text-fg-2">· best {st.best}d</span>
-                      {st.relapseCount > 0 && <span className="text-label text-fg-2">· {st.relapseCount} reset{st.relapseCount === 1 ? '' : 's'}</span>}
-                      {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: onRaised('green') }}>· {currency}{aSaved.toLocaleString()} saved</span>}
+                      <span className="text-label text-fg-2">{flat ? `best ${st.best} days` : `· best ${st.best}d`}</span>
+                      {st.relapseCount > 0 && <span className="text-label text-fg-2">{flat ? '' : '· '}{st.relapseCount} reset{st.relapseCount === 1 ? '' : 's'}</span>}
+                      {a.costPerDay && aSaved > 0 && <span className="text-label" style={{ color: onRaised('green') }}>{flat ? '' : '· '}{currency}{aSaved.toLocaleString()} saved</span>}
                     </div>
                   </div>
                   {/* `text-red` on `bg-ink-2` measured **4.14:1** on vscode
@@ -120,7 +122,7 @@ export function AddictionStreaksCard() {
                     title: `Stop tracking ${a.name}?`,
                     description: 'Its streak and full reset history are deleted. This cannot be undone.',
                     confirmLabel: 'Stop tracking', destructive: true,
-                  })) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-fg-2 reveal hover:text-red">×</Button>
+                  })) removeAddiction(a.id) }} aria-label={`Remove ${a.name}`} className="shrink-0 text-fg-2 reveal hover:text-red">{flat ? <Icon as={Trash} size="sm" /> : '×'}</Button>
                 </div>
                 {/* #123 per-addiction cost/day → money saved */}
                 <div className="mt-2 flex items-center gap-2 pl-7 text-label text-fg-2">

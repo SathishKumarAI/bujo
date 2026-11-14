@@ -46,6 +46,7 @@ And the desktop contract at 1440×900: the same numbers, saved, to diff after.
 | an exercise or lift list | one-row `.ex-card`: `.set-count` ring, name + plan + Watch, timer, input | §34, `pullups/ProgramDay.tsx` |
 | a timed plan ("30 s", Tabata, "15,30,15 s") | let `intervalsIn` / `secondsIn` pick the timer | §35, `lib/holdTime.ts` |
 | yes/no items to tick | tap-anywhere card, two per row | §37, `trackers/HabitCards.tsx` |
+| cards that fold or carry an ⓘ (a phone review) | wrap the drawn card in `FlatCards.Provider`: no caret, no popover, subtitle as a line in words; a row editor goes in a `Sheet`; chart panels flagged `chart: true` | `ui/flatCards.ts`, Recovery `Review.tsx` (COD-590) |
 
 The owner's taste, from their own words: wants judgment, not a menu; "all fit
 in one space"; "usability is more important"; side-by-side over stacked;
