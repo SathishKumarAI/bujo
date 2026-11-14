@@ -1,6 +1,6 @@
 import { Seg } from '../../ui/seg'
 import { useState } from 'react'
-import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus, Timer } from '@/components/icons'
+import { ArrowLineUp, CaretDown, Check, CheckCircle, ListChecks, Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { plain } from '../../../lib/plain'
 import { useJournal } from '../../../store'
@@ -10,7 +10,7 @@ import { todayISO } from '../../../lib/date'
 import { notify } from '../../../lib/notify'
 import type { SetRow } from '../../gym/setRow'
 import { SetCards } from '../../gym/phone/SetCards'
-import { VideoLink } from '../../VideoLink'
+import { ExerciseCard, WorkoutHint } from '../../workout/ExerciseCard'
 import { DayStrip } from '../../ui/dayStrip'
 import { Sheet } from '../../ui/sheet'
 import { HoldTimer } from '../../HoldTimer'
@@ -152,6 +152,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
         <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
       </label>
 
+      <WorkoutHint />
       <section aria-label={`${s.cur.focus} · day ${s.cur.day}`} className="flex flex-col gap-3">
         {/* The Day select above already says "Day 1 · Push", so the focus is
             a heading for screen readers only and the row is just progress. */}
@@ -166,65 +167,25 @@ export function ProgramPhone({ s, onCheck, rest }: {
           </span>
         </div>
 
-        {/* ONE CARD PER LIFT, nothing folded, one row each (COD-588). */}
+        {/* ONE CARD PER LIFT (`workout/ExerciseCard`): the counter, the name,
+            the plan that opens the set-by-set sheet, Watch, the timer. */}
         <ol className="flex flex-col gap-3">
           {s.cur.exercises.map((e) => {
             const mine = rows.filter((r) => r.exercise === e.name)
             const n = mine.filter((r) => done.has(r.id)).length
             const all = mine.length > 0 && n === mine.length
             const first = mine[0]
-            const reps = /rep/i.test(e.qty)
-            // Last time you did this lift, and what that says to lift today.
-            const prev = reps ? lastSetFor(data, e.name) : null
-            const target = Number.parseInt(first?.reps || '', 10) || 0
-            const next = suggestWeight(prev, target, unit)
             const cur = Number(first?.weight) || 0
             return (
-              <li key={e.name} className="ex-card flex items-center gap-2" data-done={all || undefined}>
-                {/* ONE ROW, Pull-ups' shape (owner, 2026-11-13: "fit all in
-                    the one card"): a set counter — tap after each set, tap a
-                    full one to clear —, the name with plan, last time and
-                    Watch, then the weight. Tapping the weight opens the sheet
-                    for set-by-set numbers. Was a pill per set on a second row. */}
-                <button type="button" className="set-count" aria-pressed={all}
-                  aria-label={all ? `${e.name}: all ${mine.length} sets done, tap to clear` : `${e.name}: ${n}/${mine.length} sets done, tap after set ${n + 1}`}
-                  onClick={() => {
-                    if (all) { patch({ done: [...done].filter((id) => !mine.some((r) => r.id === id)) }); return }
-                    const nextSet = mine.find((r) => !done.has(r.id))
-                    if (nextSet) tick(nextSet)
-                  }}>
-                  {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{mine.length}</span>}
-                </button>
-                <div className="min-w-0 flex-1">
-                  <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
-                  <p className="text-label text-fg-2">
-                    {mine.length} × {first?.reps || e.qty}
-                    {prev && <span>, last {prev.weight > 0 ? `${prev.weight}×${prev.reps}` : `${prev.reps} reps`}</span>}{' '}
-                    <VideoLink name={e.name} label="Watch" size="sm" className="-my-3 py-3" />
-                  </p>
-                  {next != null && next !== cur && (
-                    <button type="button" className="suggest mt-1 inline-flex items-center gap-1" onClick={() => setLiftWeight(e.name, next)}>
-                      <Icon as={ArrowLineUp} size="sm" />Try {next} {unit}
-                    </button>
-                  )}
-                </div>
-                {reps && (
-                  <div className="ex-weight" role="group" aria-label={`${e.name}, weight for every set`}>
-                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
-                    <button type="button" className="min-h-11 min-w-[3.25rem] text-center text-label font-semibold tabular-nums text-fg-1" aria-haspopup="dialog"
-                      aria-label={`${cur ? `${cur} ${unit}` : 'Add weight'}: edit ${e.name} sets`} onClick={() => setEditing(e.name)}>
-                      {/* The name must contain the painted text (axe 2.5.3), and no dash glyph. */}
-                      {cur ? `${cur} ${unit}` : 'Add'}
-                    </button>
-                    <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
-                  </div>
-                )}
-                {secondsIn(e.qty) != null && (
-                  <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${e.name}`} onClick={() => setTiming(e.name)}>
-                    <Icon as={Timer} size="md" />
-                  </button>
-                )}
-              </li>
+              <ExerciseCard key={e.name} name={e.name} n={n} total={mine.length}
+                onTap={() => {
+                  if (all) { patch({ done: [...done].filter((id) => !mine.some((r) => r.id === id)) }); return }
+                  const nextSet = mine.find((r) => !done.has(r.id))
+                  if (nextSet) tick(nextSet)
+                }}
+                plan={`${mine.length} ${mine.length === 1 ? 'set' : 'sets'} of ${plain(first?.reps || e.qty)}${cur ? `, ${cur} ${unit}` : ''}`}
+                onEdit={() => setEditing(e.name)}
+                onTimer={secondsIn(e.qty) != null ? () => setTiming(e.name) : undefined} />
             )
           })}
         </ol>
@@ -238,6 +199,8 @@ export function ProgramPhone({ s, onCheck, rest }: {
         )}
         {editing && (
           <Sheet open onOpenChange={(o) => { if (!o) setEditing(null) }} title={editing} description="Weight and reps, set by set">
+            <LiftNotes name={editing} qty={s.cur.exercises.find((e) => e.name === editing)?.qty ?? ''} rows={rows.filter((r) => r.exercise === editing)}
+              unit={unit} onWeight={(w) => setLiftWeight(editing, w)} />
             <div className="ios-form">
               <SetCards bare rows={rows.filter((r) => r.exercise === editing)} onChange={(r) => replaceLift(editing, r)} unit={unit} data={data} onRest={tick} done={done} />
             </div>
@@ -265,6 +228,43 @@ export function ProgramPhone({ s, onCheck, rest }: {
   )
 }
 
+
+/**
+ * What a lift card used to say on itself, behind its Edit now (owner,
+ * 2026-11-14: the card is what to do, the rest is notes): last time, the
+ * weight to try, and − / + for every set not yet ticked.
+ */
+function LiftNotes({ name, qty, rows, unit, onWeight }: {
+  name: string
+  qty: string
+  rows: SetRow[]
+  unit: 'kg' | 'lb'
+  onWeight: (w: number) => void
+}) {
+  const { data } = useJournal()
+  const reps = /rep/i.test(qty)
+  if (!reps) return null
+  const prev = lastSetFor(data, name)
+  const target = Number.parseInt(rows[0]?.reps || '', 10) || 0
+  const next = suggestWeight(prev, target, unit)
+  const cur = Number(rows[0]?.weight) || 0
+  return (
+    <div className="cells mb-3">
+      <div className="cell gap-2" role="group" aria-label={`${name}, weight for every set`}>
+        <span className="flex-1 text-body text-fg-1">Every set</span>
+        <button type="button" className="round-btn" aria-label={`${name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => onWeight(cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
+        <span className="min-w-[3.25rem] text-center text-body font-semibold tabular-nums text-fg-1">{cur ? `${cur} ${unit}` : 'None'}</span>
+        <button type="button" className="round-btn" aria-label={`${name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => onWeight(cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
+      </div>
+      {prev && <p className="cell text-body text-fg-2">Last time {prev.weight > 0 ? `${prev.weight} ${unit} for ${prev.reps}` : `${prev.reps} reps`}</p>}
+      {next != null && next !== cur && (
+        <button type="button" className="cell text-body font-semibold text-brand-text" onClick={() => onWeight(next)}>
+          <Icon as={ArrowLineUp} size="sm" />Try {next} {unit}
+        </button>
+      )}
+    </div>
+  )
+}
 
 function WeekNotes({ notes }: { notes: string[] }) {
   return (

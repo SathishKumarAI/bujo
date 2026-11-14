@@ -6,6 +6,20 @@ Monthly, Focus (#561) and Coaching are cards on the phone. **Production is
 still at #553**: everything from #557 on is not deployed. The owner deploys
 with `bash scripts/ship.sh --deploy-only`.
 
+## 2026-11-14: one exercise card, hand setting (COD-630), timers (#563)
+
+| what | where |
+|---|---|
+| one card on Program, Pull-ups, Home workout | `workout/ExerciseCard.tsx`: counter, name on one line (was 6 names wrapping), remove small at the edge; one row: plan (opens Edit), Watch, Timer. Every card 77px (was 68 to 106) |
+| behind Edit | Program: − / + every set, last time, Try N; Pull-ups: what you did (the assessment max too); Home: the plan |
+| Hand | Settings, Workouts, Hand: right (default) puts the counter left; left mirrors card and log dock (`:root[data-hand]`, `styles/phone-exercise.css`) |
+| how-to note | `ui/pageHint.tsx`, points, "Got it" hides it for good: workout pages (one key) and Today's habit cards |
+| timers | #563 (agent): pause, rest +15 / −15 s, undo, redo round, edit plan mid-session |
+
+Desktop: the three workout pages and Today identical to main (Pull-ups'
+total-reps tile jitters between two runs of main itself). Settings gains a
+Workouts group on both, on purpose (one drawing, `AsPhone`).
+
 ## 2026-11-14: Coaching on a phone (COD-590, last page)
 
 | section | phone |

@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { CaretDown, Check, CheckCircle, ListChecks, Timer } from '@/components/icons'
+import { CaretDown, Check, CheckCircle, ListChecks } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { plain } from '../../lib/plain'
 import { useJournal } from '../../store'
 import { useProgram } from '../program/useProgram'
 import { VideoLink } from '../VideoLink'
+import { Sheet } from '../ui/sheet'
+import { Cells } from '../ui/cells'
+import { ExerciseCard, WorkoutHint } from '../workout/ExerciseCard'
 import { HoldTimer } from '../HoldTimer'
 import { RestClock } from '../RestClock'
 import { IntervalTimer } from '../IntervalTimer'
@@ -44,6 +47,7 @@ export function PullupProgramDay({ date }: {
   // Taps per exercise, per day, for the visit — peeking at tomorrow keeps today.
   const [taps, setTaps] = useState<Record<string, number[]>>({})
   const [timing, setTiming] = useState<number | null>(null)
+  const [editing, setEditing] = useState<number | null>(null)
   const [notes, setNotes] = useState<Record<string, Record<number, string>>>({})
   const count = (i: number) => taps[k]?.[i] ?? 0
   const setsOf = (i: number) => Math.max(1, Number.parseInt(s.cur.exercises[i].sets, 10) || 1)
@@ -102,6 +106,7 @@ export function PullupProgramDay({ date }: {
         <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
       </label>
 
+      <WorkoutHint />
       <div className="flex items-center gap-3 px-1">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Program days done" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((s.doneCount / s.totalDays) * 100)}>
           <div className="h-full rounded-pill bg-green" style={{ width: `${(s.doneCount / s.totalDays) * 100}%` }} />
@@ -117,51 +122,40 @@ export function PullupProgramDay({ date }: {
           set counter, what you did and the how-to — nothing opens. */}
       <ol className="flex flex-col gap-3" aria-label={`Today's exercises, ${s.cur.focus}`}>
         {s.cur.exercises.map((e, i) => {
-          const n = count(i)
           const total = setsOf(i)
-          const all = n >= total
-          const assess = /assessment/i.test(e.name)
           const iv = ivOf(i)
           return (
-            <li key={`${k}:${i}`} className="ex-card flex items-center gap-2" data-done={all || undefined}>
-              {/* ONE ROW (owner, 2026-11-13: "all the cards … in one page"):
-                  counter, name and plan with Watch under it, the timer when
-                  the plan is timed, and what you did. Five cards were 1.5
-                  screens as three rows each. */}
-              <button type="button" className="set-count" aria-pressed={all}
-                aria-label={all ? `${e.name}: all ${total} sets done, tap to clear` : `${e.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
-                onClick={() => tapSet(i)}>
-                {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
-              </button>
-              <div className="min-w-0 flex-1">
-                <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{e.name}</h3>
-                <p className="text-label text-fg-2">
-                  {/* Say what the clock will do: "8 rounds, 20 s on, 10 s off",
-                      not "20s work, 8 sets". */}
-                  {iv && !iv.manual ? `${total} rounds, ${iv.steps[0].secs} s on, ${iv.steps[1]?.secs ?? 0} s off`
-                    : iv ? `${total} ${total === 1 ? 'set' : 'sets'}, hold ${iv.steps.map((x) => x.secs).join(', ')} s`
-                    : `${e.qty}, ${total} ${total === 1 ? 'set' : 'sets'}`}{' '}
-                  <VideoLink name={e.name} label="Watch" size="sm" className="-my-3 py-3" />
-                </p>
-              </div>
-              {secondsIn(e.qty) != null && (
-                <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${e.name}`} onClick={() => setTiming(i)}>
-                  <Icon as={Timer} size="md" />
-                </button>
-              )}
-              <span className="ios-form shrink-0"><input
-                value={did(i)}
-                inputMode={assess ? 'numeric' : 'text'}
-                placeholder={iv && !iv.manual ? 'rounds' : secondsIn(e.qty) != null ? 'secs' : 'reps'}
-                onChange={(ev) => setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } }))}
-                aria-label={`${e.name}, what you did`}
-                className="w-20 rounded-[0.625rem] bg-ink-2 px-2 py-2 text-right text-body text-fg-1"
-              /></span>
-            </li>
+            <ExerciseCard key={`${k}:${i}`} name={e.name} n={count(i)} total={total} onTap={() => tapSet(i)}
+              /* Say what the clock will do: "8 rounds, 20 s on, 10 s off",
+                 not "20s work, 8 sets". What you did shows once written. */
+              plan={did(i).trim() ? `Did ${did(i).trim()}`
+                : iv && !iv.manual ? `${total} rounds, ${iv.steps[0].secs} s on, ${iv.steps[1]?.secs ?? 0} s off`
+                : iv ? `${total} ${total === 1 ? 'set' : 'sets'}, hold ${iv.steps.map((x) => x.secs).join(', ')} s`
+                : `${plain(e.qty)}, ${total} ${total === 1 ? 'set' : 'sets'}`}
+              onEdit={() => setEditing(i)}
+              onTimer={secondsIn(e.qty) != null ? () => setTiming(i) : undefined} />
           )
         })}
       </ol>
 
+      {editing != null && s.cur.exercises[editing] && (
+        /* What you did, the one field a card carried inline — behind the
+           plan now, so the card is the plan and the counter only. */
+        <Sheet open onOpenChange={(o) => { if (!o) setEditing(null) }} title={s.cur.exercises[editing].name} description={plain(s.cur.exercises[editing].qty)}>
+          <Cells>
+            <label className="cell">
+              <span className="flex-1 text-body text-fg-1">What you did</span>
+              <input value={did(editing)} inputMode={/assessment/i.test(s.cur.exercises[editing].name) ? 'numeric' : 'text'}
+                placeholder={ivOf(editing) && !ivOf(editing)!.manual ? 'rounds' : secondsIn(s.cur.exercises[editing].qty) != null ? 'secs' : 'reps'}
+                onChange={(ev) => { const i = editing; setNotes((m) => ({ ...m, [k]: { ...m[k], [i]: ev.target.value } })) }}
+                aria-label={`${s.cur.exercises[editing].name}, what you did`} className="cell-input w-36" />
+            </label>
+            <div className="cell">
+              <VideoLink name={s.cur.exercises[editing].name} label="Watch how" size="sm" />
+            </div>
+          </Cells>
+        </Sheet>
+      )}
       {timing != null && s.cur.exercises[timing] && ivOf(timing) && (
         <IntervalTimer name={s.cur.exercises[timing].name} plan={ivOf(timing)!} onClose={() => setTiming(null)}
           onSave={(worked) => {

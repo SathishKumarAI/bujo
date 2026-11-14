@@ -69,6 +69,17 @@ export function UnitsCells() {
   )
 }
 
+/** Which hand holds the phone: the workout cards' counter and Log go under
+ *  that thumb's side (`styles/phone-exercise.css`). */
+export function HandCells() {
+  const { data, setSettings } = useJournal()
+  return (
+    <Cells title="Workouts">
+      <SegRow label="Hand" value={data.settings.hand ?? 'right'} onChange={(v) => setSettings({ hand: v })} options={[{ value: 'right', label: 'Right' }, { value: 'left', label: 'Left' }]} />
+    </Cells>
+  )
+}
+
 /** A label on the left, a short one-tap choice at the right edge. */
 export function SegRow<T extends string | number>({ label, value, onChange, options }: {
   label: string

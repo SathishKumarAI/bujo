@@ -1,0 +1,88 @@
+/* ── One exercise on a phone (`components/workout/ExerciseCard.tsx`) ────────
+   Program, Pull-ups and Home workout draw the same card: line 1 the set
+   counter, the name and a small remove; line 2 one row of actions. Its own
+   file so the timer styles (`phone-timer.css`) and this never collide. */
+.ex-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.ex-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.125rem;
+}
+
+/* An action: a 44px tall target drawn as a small pill, so a row of three
+   does not make the card taller than the counter beside it. */
+.ex-act {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  margin-block: -0.5rem;
+  padding-inline: 0.5rem;
+  border-radius: 999px;
+  color: var(--color-brand-text);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+
+/* The plan is the Edit button: it may shrink and WRAP, never cut — it is
+   what to do (clipped-text caught "8 rounds, 20 s on, 10 s off" at 95px of
+   149 beside Watch and Timer). The actions keep their width. */
+.ex-plan {
+  min-width: 0;
+  flex: 0 1 auto;
+  padding-left: 0;
+  text-align: left;
+  color: var(--color-fg-2);
+  font-weight: 500;
+}
+
+/* Remove: small and quiet at the far edge, away from the counter. */
+.ex-del {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  margin-right: -0.5rem;
+  color: var(--color-fg-2);
+}
+
+.ex-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.875rem;
+  background: var(--color-ink-1);
+  box-shadow: 0 0 0 1px var(--color-line);
+  color: var(--color-fg-2);
+  font-size: var(--text-label);
+}
+
+/* LEFT-HANDED (Settings, Hand): the card and the dock mirror, so the
+   counter and Log sit under the left thumb and remove under the right. */
+:root[data-hand='left'] .ex-row {
+  flex-direction: row-reverse;
+}
+
+:root[data-hand='left'] .ex-del {
+  margin-right: 0;
+  margin-left: -0.5rem;
+}
+
+:root[data-hand='left'] .log-dock {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+:root[data-hand='left'] .log-dock > .ml-auto {
+  margin-left: 0;
+}
