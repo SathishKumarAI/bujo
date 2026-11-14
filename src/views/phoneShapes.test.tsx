@@ -75,7 +75,9 @@ describe('Pull-ups log on a phone', () => {
     // No week on a phone (owner, 2026-11-13): one day-of-the-program picker.
     expect(screen.queryByRole('combobox', { name: 'Week' })).toBeNull()
     expect(screen.getByRole('combobox', { name: 'Day of the program' })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: /, edit Pull-up assessment$/ }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Pull-up assessment, what you did' }), '3')
+    await userEvent.keyboard('{Escape}')
     await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
     const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
     expect(journal.settings.programDone).toEqual(expect.arrayContaining(['pullup-zero-w1d1-e0', 'pullup-zero-w1d1-e1']))
@@ -87,7 +89,9 @@ describe('Pull-ups log on a phone', () => {
     // Owner, 2026-11-13: timer results "saving them into the history".
     phone()
     wrap(<Pullups />)
+    await userEvent.click(screen.getByRole('button', { name: /, edit Planks \(Tabata 20s\/10s\)$/ }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Planks (Tabata 20s/10s), what you did' }), '8 rounds of 20 s')
+    await userEvent.keyboard('{Escape}')
     await userEvent.click(screen.getByRole('button', { name: /^Log day 1/ }))
     const journal = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"workouts"'))!)
     const logged = journal.workouts.filter((w: { activity: string }) => w.activity === 'pullups')

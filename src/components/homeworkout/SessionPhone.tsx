@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Check, SlidersHorizontal, Timer, Trash } from '@/components/icons'
+import { Check, SlidersHorizontal } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Cells } from '../ui/cells'
 import { Sheet } from '../ui/sheet'
-import { VideoLink } from '../VideoLink'
+import { ExerciseCard, WorkoutHint } from '../workout/ExerciseCard'
 import { HOME_ROUTINES } from '../../lib/homeProgramming'
 import { exerciseById } from '../../lib/homeExercises'
 import type { SessionItem } from './SessionCard'
@@ -90,47 +90,25 @@ export function SessionPhone({ items, onReps, onDrop, onLoadRoutine, dur, onDur,
         </>
       ) : (
         <>
+          <WorkoutHint />
           <div className="ex-card">
             <h2 className="text-body font-semibold text-fg-1">{loaded ? plain(loaded.name) : 'Today’s session'}</h2>
             {loaded && <p className="mt-1 text-label text-fg-1">{plain(loaded.how)}</p>}
             <button type="button" className="mt-1 min-h-11 text-label font-semibold text-brand-text"
               onClick={() => { onLoadRoutine([]); setRoutine(''); setTaps({}) }}>Change routine</button>
           </div>
-          {/* ONE CARD PER EXERCISE, nothing folded: the plan, a set counter,
-              the reps to change, how to do it, and remove. */}
+          {/* ONE CARD PER EXERCISE (`workout/ExerciseCard`): the counter, the
+              name, the plan that opens its edit, Watch, the timer, remove. */}
           <ol className="flex flex-col gap-3">
             {items.map((i) => {
               const n = taps[i.id] ?? 0
               const total = setsIn(i.reps)
-              const all = n >= total
               return (
-                <li key={i.id} className="ex-card flex items-center gap-2" data-done={all || undefined}>
-                  {/* One row, Pull-ups' shape: a set counter, the plan with
-                      Change and Watch, the timer when timed, remove. */}
-                  <button type="button" className="set-count" aria-pressed={all}
-                    aria-label={all ? `${i.name}: all ${total} sets done, tap to clear` : `${i.name}: ${n}/${total} sets done, tap after set ${n + 1}`}
-                    onClick={() => setTaps((t) => ({ ...t, [i.id]: all ? 0 : n + 1 }))}>
-                    {all ? <Icon as={Check} size="md" /> : <span aria-hidden><b>{n}</b>/{total}</span>}
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <h3 className={`text-body font-semibold leading-snug ${all ? 'text-fg-2' : 'text-fg-1'}`}>{i.name}</h3>
-                    <p className="text-label text-fg-2">
-                      {plain(i.reps)}{' '}
-                      <button type="button" className="-my-3 px-1 py-3 font-semibold text-brand-text" aria-haspopup="dialog" onClick={() => setEditing(i.id)}>
-                        Change<span className="sr-only"> {i.name}</span>
-                      </button>{' '}
-                      <VideoLink name={i.name} label="Watch" size="sm" className="-my-3 py-3" />
-                    </p>
-                  </div>
-                  {secondsIn(i.reps) != null && (
-                    <button type="button" className="round-btn shrink-0" aria-haspopup="dialog" aria-label={`Timer for ${i.name}`} onClick={() => setTiming(i.id)}>
-                      <Icon as={Timer} size="md" />
-                    </button>
-                  )}
-                  <button type="button" className="round-btn shrink-0" aria-label={`Remove ${i.name} from the session`} onClick={() => onDrop(i.id)}>
-                    <Icon as={Trash} size="sm" />
-                  </button>
-                </li>
+                <ExerciseCard key={i.id} name={i.name} n={n} total={total}
+                  onTap={() => setTaps((t) => ({ ...t, [i.id]: n >= total ? 0 : n + 1 }))}
+                  plan={plain(i.reps)} onEdit={() => setEditing(i.id)}
+                  onTimer={secondsIn(i.reps) != null ? () => setTiming(i.id) : undefined}
+                  onRemove={() => onDrop(i.id)} />
               )
             })}
           </ol>

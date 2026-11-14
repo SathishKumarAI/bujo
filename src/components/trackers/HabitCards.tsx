@@ -1,5 +1,6 @@
 import { Check, Minus, Plus, Warning } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { PageHint } from '../ui/pageHint'
 import { prettyDay, todayISO } from '../../lib/date'
 import { habitDoneOn, habitTarget, habitValueOn, isNumericHabit, isSteppableHabit, limitStatus, nextHabitValue } from '../../lib/stats'
 import { cat, onAccent, onRaised } from '../../lib/colors'
@@ -34,6 +35,8 @@ export function HabitCards({ habits, data, today, onToggle, onSetValue }: {
   const when = today === todayISO() ? 'today' : `on ${prettyDay(today)}`
 
   return (
+    <>
+    <PageHint id="habits" points={['Tap a card when the habit is done.', 'Use minus and plus for a count or minutes.', 'Tap it again to undo.']} />
     <ul className="habit-cards">
       {habits.map((h) => {
         const type = h.type ?? 'check'
@@ -86,5 +89,6 @@ export function HabitCards({ habits, data, today, onToggle, onSetValue }: {
         )
       })}
     </ul>
+    </>
   )
 }

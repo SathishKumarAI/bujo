@@ -732,6 +732,12 @@ export interface Settings {
    * `!== false` is the read, which makes "absent" mean "on".
    */
   voiceReplies?: boolean
+  /**
+   * Which hand holds the phone. Right (the default, absent) puts a workout
+   * card's set counter on the left and remove on the right; left mirrors
+   * them and the log dock (`styles/phone-exercise.css`, `:root[data-hand]`).
+   */
+  hand?: 'right' | 'left'
   /** Weight unit for gym/body-metrics — user choice (kg = metric, lb = US). */
   weightUnit: WeightUnit
   /** Distance unit for cardio — km (metric) or mi (US). */

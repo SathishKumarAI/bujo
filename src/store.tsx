@@ -316,6 +316,11 @@ export function JournalProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document !== 'undefined') document.documentElement.dataset.theme = resolvedTheme
   }, [resolvedTheme])
+  // Apply <html data-hand> — which side a workout card's counter sits on.
+  const hand = data.settings.hand ?? 'right'
+  useEffect(() => {
+    if (typeof document !== 'undefined') document.documentElement.dataset.hand = hand
+  }, [hand])
 
   // Global text size → scale the rem root so all token-based text/spacing grows
   // or shrinks together. `--font-scale` lets figure/chart cards counter-scale

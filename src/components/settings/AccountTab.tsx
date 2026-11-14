@@ -1,6 +1,6 @@
 import { useJournal } from '../../store'
 import type { Gender } from '../../lib/types'
-import { AboutYouCells, UnitsCells } from './AccountPhone'
+import { AboutYouCells, HandCells, UnitsCells } from './AccountPhone'
 import { SyncAccountCells, YouCells } from '../account/AccountPhoneCells'
 
 /**
@@ -64,6 +64,7 @@ export function AccountTab() {
       <SyncAccountCells />
       <AboutYouCells setGender={setGender} />
       <UnitsCells />
+      <HandCells />
     </>
   )
 }
