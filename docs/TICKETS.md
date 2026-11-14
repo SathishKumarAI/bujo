@@ -778,3 +778,26 @@ of frame and read that as a deleted destination (**COD-202**, fixed in #252;
 194 rows, exit 0). Its sibling is open as **COD-208**: a crash inside `scan()`
 escapes and the summary table never prints, so a reader cannot tell whether it
 checked nothing or everything.
+
+## Epic PHONE-CARDS — workout cards, timers, habit cards (2026-11-13, appended)
+
+Tracked in Plane under COD-590. Full record: `docs/sessions/2026-11-13-workout-cards-and-timers.md`.
+
+| ID | Title | Status |
+|---|---|---|
+| COD-585 | Pull-ups phone: one card per exercise, no rail or opening rows (#539) | ✅ |
+| COD-586 | Trainer's 25 sessions as a program, program picker (#540) | ✅ |
+| COD-588 | Program phone: one card per lift (#541) | ✅ |
+| COD-592 | Pull-ups: day on one page, methods as plain steps, no symbols (#542) | ✅ |
+| COD-593 | Home workout: routines and exercises as cards (#543) | ✅ |
+| COD-594 | Today phone: nothing opens in place, symbols to words (#544) | ✅ |
+| COD-595 | Big hold timer on timed cards; timed rows count as done (#545) | ✅ |
+| COD-596 | No week or month on the workout pages (#546) | ✅ |
+| COD-600 | One "Today" day pill in the phone bar (#547) | ✅ |
+| COD-601 | One-row workout cards, the day on one screen (#549) | ✅ |
+| COD-602 | Interval timer: Tabata and hold lists (#550) | ✅ |
+| COD-603 | Rest clock between sets, EMOM minute clock (#551); intervals on Program / Home workout not needed, since no plan uses them | ✅ |
+| COD-608 | Tunable timer, Round done / Back / Reset, days in History (#552; that PR says COD-604) | ✅ |
+| COD-614 | Today's habits as cards (#553) | ✅ |
+| COD-590 | Remaining pages as cards: Recovery, Insights, Trackers, Nutrition, Challenges, Cycle, Monthly, Coaching, Focus | 🔜 |
+| COD-575 | a11y gate scans the phone-page sheets | 🔜 |
