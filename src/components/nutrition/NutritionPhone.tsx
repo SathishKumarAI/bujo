@@ -132,7 +132,7 @@ export function NutritionPhone({
               <button type="button" className="cell" aria-expanded={isOpen} onClick={() => { setOpen(isOpen ? null : f.id); setEditing(null) }}>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-body font-medium text-fg-1">{f.name}{servings > 1 && <span className="font-normal text-fg-2"> ×{servings}</span>}</span>
-                  <span className="block truncate text-label text-fg-2">{f.protein} g protein · {f.carbs} g carbs · {f.fat} g fat</span>
+                  <span className="block text-label text-fg-2">{f.protein} g protein, {f.carbs} g carbs, {f.fat} g fat</span>
                 </span>
                 <span className="shrink-0 text-body font-semibold text-fg-1 tabular-nums">{f.kcal}<span className="text-label font-normal text-fg-2"> kcal</span></span>
                 <Icon as={CaretDown} size="sm" className={`shrink-0 text-fg-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -227,7 +227,7 @@ function FoodRow({ food: f, n, to, onAdd, pinned, onPin }: {
     <div className="cell">
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-medium text-fg-1">{f.name}{n > 0 && <span className="font-normal text-fg-2"> · ×{n}</span>}</span>
-        <span className="block truncate text-label text-fg-2">{f.kcal} kcal · {f.protein} g protein · {f.serving}</span>
+        <span className="block text-label text-fg-2">{f.kcal} kcal, {f.protein} g protein, {f.serving}</span>
       </span>
       {/* Icon-only at 44px: the row's own text already names the food (COD-479). */}
       <VideoLink name={f.name} query={recipeQuery(f.name)} label="" size="md" quiet className="min-h-11 min-w-11 justify-center" />
