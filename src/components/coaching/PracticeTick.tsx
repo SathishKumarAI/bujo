@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { useJournal } from '../../store'
 import { prettyDay, todayISO } from '../../lib/date'
 import { practiceKey, practiceStat, togglePractice } from '../../lib/practiceLog'
+import { usePlain } from '../ui/flatCards'
 
 /**
  * "Did you practise this?" — one tick, beside a drill or a shot.
@@ -44,6 +45,7 @@ export function PracticeTick({ kind, name, className = '', variant = 'pill' }: {
   const today = todayISO()
   const key = practiceKey(kind, name)
   const stat = practiceStat(data.settings.practiceLog, key, today)
+  const say = usePlain()
   const verb = kind === 'drill' ? 'Drilled' : 'Practised'
   /* MOTION TIED TO THE STATE CHANGE, NOT TO THE PAGE EXISTING.
      `node-pop` is cleared on `animationend`, so a page that loads with the
@@ -91,9 +93,9 @@ export function PracticeTick({ kind, name, className = '', variant = 'pill' }: {
       {/* The name is the painted text with words said AROUND it, never
           instead of it (COD-481): an `aria-label` replacing "3× · Oct 22"
           failed axe's label-content-name-mismatch on every chip. */}
-      <span className="sr-only">{name} — </span>
+      <span className="sr-only">{say(`${name} — `)}</span>
       <span>
-        {stat.onDate ? `${verb} today` : stat.days.length > 0 ? `${stat.days.length}× · ${prettyDay(stat.last!)}` : verb}
+        {stat.onDate ? `${verb} today` : stat.days.length > 0 ? say(`${stat.days.length}× · ${prettyDay(stat.last!)}`) : verb}
       </span>
       <span className="sr-only">{stat.onDate ? '. Press to remove today.' : `. Mark ${verb.toLowerCase()} today.`}</span>
     </button>

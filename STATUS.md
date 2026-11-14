@@ -1,10 +1,27 @@
 # STATUS
 
-**Stopped:** 2026-11-14, after #561. COD-590 continues page by page:
-Recovery (#557), Insights (#558), Nutrition, Challenges, Cycle (#560),
-Trackers, Monthly and Focus (#561) are done on the phone. **Production is
-still at #553**: #557 to #561 are not deployed. The owner deploys with
-`bash scripts/ship.sh --deploy-only`.
+**Stopped:** 2026-11-14, after Coaching. COD-590 is done: Recovery
+(#557), Insights (#558), Nutrition, Challenges, Cycle (#560), Trackers,
+Monthly, Focus (#561) and Coaching are cards on the phone. **Production is
+still at #553**: everything from #557 on is not deployed. The owner deploys
+with `bash scripts/ship.sh --deploy-only`.
+
+## 2026-11-14: Coaching on a phone (COD-590, last page)
+
+| section | phone |
+|---|---|
+| Program | the 12 weeks are a course, so a phone calls them steps: "Step 6 of 12", one select ("Step 3, Positioning", ", done", ", now"), "Mark step 3 done"; no progress bar |
+| Shots | one row per shot (`coaching/ManualPhone.tsx`), the how-to in a `Sheet`; 14 folds to 0 |
+| Drills | one row per skill, its drills in a `Sheet`; 8 folds to 0 |
+| Ladder, Warm-up, Injuries, Mental, Formats | words not symbols (`usePlain`, `ui/dot.tsx` drops the "·" bullet under `FlatCards`) |
+
+Desktop `#main` byte-identical to main over all 8 sections plus a pinned
+shot and drill group. The "45 to 60 min session" row had no
+`aria-haspopup`; it has now.
+
+**Next:** deploy. COD-575 (scan phone-page sheets in the a11y gate) is
+still open. Not done: "+" in drill text ("50+", "accuracy + decisions")
+is left as is; `plain()` does not touch it.
 
 ## 2026-11-14: no week or month on a phone (#561)
 

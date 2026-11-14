@@ -336,18 +336,37 @@ describe('Home workout on a phone', () => {
 
 describe('Coaching on a phone', () => {
   // The failure: the program as a roadmap card with its own stepper, a
-  // template of timed paragraphs and the record, all open (1,685px). One week
-  // from a select, drills as rows, and a dock that marks it done — then offers
-  // the next week rather than unticking this one.
-  it('starts the program, marks the week done from the dock, and moves on', async () => {
+  // template of timed paragraphs and the record, all open (1,685px). One step
+  // from a select (no week on a phone, owner 2026-11-14), drills as rows, and
+  // a dock that marks it done — then offers the next step rather than
+  // unticking this one.
+  it('starts the program, marks the step done from the dock, and moves on', async () => {
     phone()
     wrap(<Coaching />)
     await userEvent.click(screen.getByRole('button', { name: /Start the program/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Mark week 1 done' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mark step 1 done' }))
     const j = JSON.parse(Object.values({ ...localStorage }).find((v) => String(v).includes('"coachingWeeksDone"'))!)
     expect(j.settings.coachingWeeksDone).toEqual([1])
-    await userEvent.click(screen.getByRole('button', { name: /Week 1 done · next/ }))
-    expect((screen.getByRole('combobox', { name: 'Week' }) as HTMLSelectElement).value).toBe('2')
+    await userEvent.click(screen.getByRole('button', { name: /Step 1 done, next/ }))
+    const step = screen.getByRole('combobox', { name: 'Step' }) as HTMLSelectElement
+    expect(step.value).toBe('2')
+    expect(step.textContent).not.toMatch(/Week|[·✓]/)
+  })
+
+  // The failure: 14 shots and 8 drill groups opening in place (COD-590).
+  it('opens a shot and a drill group in a sheet, never in place', async () => {
+    phone()
+    const { container } = wrap(<Coaching />)
+    const sections = screen.getByRole('combobox', { name: 'Coaching sections' })
+    await userEvent.selectOptions(sections, 'shots')
+    expect(container.querySelector('#main [aria-expanded], [aria-expanded]')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /^Dink/ }))
+    expect(within(screen.getByRole('dialog')).getByText('When to hit it')).toBeTruthy()
+    await userEvent.keyboard('{Escape}')
+    await userEvent.selectOptions(sections, 'drills')
+    expect(container.querySelector('[aria-expanded]')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /^Dinking/ }))
+    expect(within(screen.getByRole('dialog')).getByText('Figure-8')).toBeTruthy()
   })
 })
 

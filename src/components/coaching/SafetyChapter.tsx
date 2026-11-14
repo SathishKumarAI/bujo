@@ -6,6 +6,8 @@ import { ChipPick } from '../ui/quickpick'
 import { ShowMore } from '../ShowMore'
 import { useCappedList } from '../../lib/useCappedList'
 import { onRaised } from '../../lib/colors'
+import { usePlain } from '../ui/flatCards'
+import { Dot } from '../ui/dot'
 import { KNEE_REHAB, type RehabEquip } from '../../lib/pickleballAcademy'
 import {
   AFTER_PLAY, COURT_INJURIES, PROTECTIVE_GEAR, SAFETY_SOURCES, WARMUP, sourceSearchUrl,
@@ -46,11 +48,12 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
   const rehab = KNEE_REHAB.filter((e) => equip === 'all' || e.equip === equip)
   const injuries = useCappedList(COURT_INJURIES, 2)
   const exercises = useCappedList(rehab, 8)
+  const say = usePlain()
 
   return (
     <>
       {part === 'prep' && <>
-      <Section icon={Timer} title="Warm up — eight minutes, in this order"
+      <Section icon={Timer} title={say('Warm up — eight minutes, in this order')}
         blurb="Temperature, then range, then load, then the movements of the game, then the shot at 60%.">
         {/* Two columns from 512px of CONTAINER. Seven short blocks in one
             column left most of a 1110px panel empty — reported as "why do I
@@ -60,13 +63,13 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
         <ol className="scroll-settle grid grid-cols-[minmax(0,1fr)] gap-1.5 @lg/page:grid-cols-2">
           {WARMUP.map((w) => (
             <li key={w.name} className="grid grid-cols-[3.2rem_minmax(0,1fr)] gap-x-2 rounded-card bg-ink-2 p-2.5 transition-colors hover:bg-ink-1">
-              <span className="num text-label text-fg-2">{w.mins}</span>
+              <span className="num text-label text-fg-2">{say(w.mins)}</span>
               <span className="min-w-0">
-                <span className="block text-body font-medium text-fg-1">{w.name}</span>
-                <span className="block text-label text-fg-2">{w.how}</span>
+                <span className="block text-body font-medium text-fg-1">{say(w.name)}</span>
+                <span className="block text-label text-fg-2">{say(w.how)}</span>
                 {/* Every block says which injury it is for. A warm-up nobody
                     believes in is a warm-up nobody does. */}
-                <span className="mt-0.5 block text-label" style={{ color: onRaised('green') }}>{w.why}</span>
+                <span className="mt-0.5 block text-label" style={{ color: onRaised('green') }}>{say(w.why)}</span>
               </span>
             </li>
           ))}
@@ -76,7 +79,7 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
       <Section icon={Timer} title="After the last point"
         blurb="The half people skip twice. Static stretching belongs here, not before you play.">
         <ul className="grid gap-1.5 sm:grid-cols-2">
-          {AFTER_PLAY.map((t) => <li key={t} className="rounded-card bg-ink-2 p-2.5 text-label text-fg-2">{t}</li>)}
+          {AFTER_PLAY.map((t) => <li key={t} className="rounded-card bg-ink-2 p-2.5 text-label text-fg-2">{say(t)}</li>)}
         </ul>
       </Section>
 
@@ -86,8 +89,8 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
           {PROTECTIVE_GEAR.map((g) => (
             <li key={g.item} className="rounded-card bg-ink-2 p-2.5">
               <p className="text-body font-medium text-fg-1">{g.item}</p>
-              <p className="text-label text-fg-2">{g.helps}</p>
-              <p className="mt-0.5 text-label text-fg-2"><span className="font-medium text-fg-1">Will not:</span> {g.limit}</p>
+              <p className="text-label text-fg-2">{say(g.helps)}</p>
+              <p className="mt-0.5 text-label text-fg-2"><span className="font-medium text-fg-1">Will not:</span> {say(g.limit)}</p>
             </li>
           ))}
         </ul>
@@ -102,17 +105,17 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
           {injuries.shown.map((x) => (
             <li key={x.id} className="rounded-card border border-line bg-ink-1 p-3">
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <h4 className="text-body font-medium text-fg-1">{x.name}</h4>
+                <h4 className="text-body font-medium text-fg-1">{say(x.name)}</h4>
                 <Pill color="sky" size="micro">{x.area}</Pill>
               </div>
               {/* THE MOMENT, first and in the body size. "Protect the ankles"
                   is true and unusable; the shot you were playing when it
                   happened is the part you can train. Points, not prose. */}
               <ul className="space-y-0.5 text-body text-fg-1">
-                {x.where.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden className="text-fg-2">·</span><span className="min-w-0">{t}</span></li>)}
+                {x.where.map((t) => <li key={t} className="flex gap-1.5"><Dot className="text-fg-2" /><span className="min-w-0">{say(t)}</span></li>)}
               </ul>
               <ul className="mt-1 space-y-0.5 text-label text-fg-2">
-                {x.mechanism.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{t}</span></li>)}
+                {x.mechanism.map((t) => <li key={t} className="flex gap-1.5"><Dot /><span className="min-w-0">{say(t)}</span></li>)}
               </ul>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 <Lines title="If it just happened" items={x.now} />
@@ -121,7 +124,7 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
               <div className="mt-2 rounded-card bg-red/10 p-2">
                 <p className="mb-0.5 text-label font-medium" style={{ color: onRaised('red') }}>Stop and see somebody if</p>
                 <ul className="space-y-0.5">
-                  {x.redFlags.map((f) => <li key={f} className="text-label text-fg-2">{f}</li>)}
+                  {x.redFlags.map((f) => <li key={f} className="text-label text-fg-2">{say(f)}</li>)}
                 </ul>
               </div>
             </li>
@@ -160,11 +163,11 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
             {exercises.shown.map((e) => (
               <li key={e.name} className="rounded-card bg-ink-2 p-2.5">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-body font-medium text-fg-1">{e.name}</span>
+                  <span className="text-body font-medium text-fg-1">{say(e.name)}</span>
                   <Pill color="sky" size="micro">{e.target}</Pill>
                   <span className="rounded-pill bg-ink-0 px-1.5 py-0.5 text-micro text-fg-2">{e.phase}</span>
                 </div>
-                <p className="mt-0.5 text-label text-fg-2">{e.how}</p>
+                <p className="mt-0.5 text-label text-fg-2">{say(e.how)}</p>
               </li>
             ))}
           </ul>
@@ -178,10 +181,10 @@ export function SafetyChapter({ part }: { part: 'prep' | 'injury' }) {
           Gathered from:{' '}
           {SAFETY_SOURCES.map((s, i) => (
             <span key={s.name}>
-              {i > 0 && ' · '}
+              {i > 0 && say(' · ')}
               {/* Built from the name, never pinned — a pinned page rots and a
                   search always lands (`lib/video.ts`, and CLAUDE.md). */}
-              <a href={sourceSearchUrl(s.name, s.topic)} target="_blank" rel="noreferrer" title={s.good}>{s.name}</a>
+              <a href={sourceSearchUrl(s.name, s.topic)} target="_blank" rel="noreferrer" title={s.good}>{say(s.name)}</a>
             </span>
           ))}
         </p>
@@ -200,13 +203,14 @@ function Section({ icon, title, blurb, right, children }: {
   right?: ReactNode
   children: ReactNode
 }) {
+  const say = usePlain()
   return (
     <section className="mb-5">
       <div className="mb-2 flex flex-wrap items-baseline gap-x-2.5">
         <h4 className="flex items-center gap-1.5 text-body font-medium text-fg-1">
           <Icon as={icon} size="sm" className="text-fg-2" /> {title}
         </h4>
-        <p className="min-w-0 flex-1 text-label text-fg-2">{blurb}</p>
+        <p className="min-w-0 flex-1 text-label text-fg-2">{say(blurb)}</p>
         {right}
       </div>
       {children}
@@ -215,13 +219,14 @@ function Section({ icon, title, blurb, right, children }: {
 }
 
 function Lines({ title, color, items }: { title: string; color?: string; items: string[] }) {
+  const say = usePlain()
   return (
     <div>
       {/* Colour only when it carries meaning — green for the half that
           prevents harm. The other half is a heading. */}
       <p className="mb-0.5 text-label font-medium text-fg-1" style={color ? { color: onRaised(color) } : undefined}>{title}</p>
       <ul className="space-y-0.5">
-        {items.map((t) => <li key={t} className="text-label text-fg-2">{t}</li>)}
+        {items.map((t) => <li key={t} className="text-label text-fg-2">{say(t)}</li>)}
       </ul>
     </div>
   )

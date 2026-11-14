@@ -1,6 +1,6 @@
-import { Barbell, BookOpen, Brain, CaretLeft, CaretRight, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
+import { Barbell, BookOpen, Brain, Check, Heartbeat, ListChecks, Medal, ShieldPlus, ShieldWarning, Target } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useState, type CSSProperties } from 'react'
+import { useContext, useState, type CSSProperties } from 'react'
 import { useJournal } from '../store'
 import { Card, Input, Pill } from '../components/ui'
 import { CommitField } from '../components/CommitField'
@@ -26,6 +26,10 @@ import { SafetyChapter } from '../components/coaching/SafetyChapter'
 import { PracticeTick } from '../components/coaching/PracticeTick'
 import { VideoLink } from '../components/VideoLink'
 import { drillQuery } from '../lib/video'
+import { plain } from '../lib/plain'
+import { FlatCards } from '../components/ui/flatCards'
+import { Dot } from '../components/ui/dot'
+import { DrillsPhone, ShotsPhone } from '../components/coaching/ManualPhone'
 
 /**
  * COACHING · the 12-week pickleball program, and the manual that teaches it.
@@ -135,10 +139,11 @@ export function Coaching() {
   // find their place on a page whose whole promise is "follow this in order".
   const firstUnfinished = TWELVE_WEEK.find((w) => !done.includes(w.week))?.week ?? ACADEMY_TOTAL_WEEKS
   const [openWeek, setOpenWeek] = useState<number | null>(start ? firstUnfinished : 1)
-  // A phone shows ONE week of the roadmap with a ‹ Week n › stepper, the way
-  // Program does — twelve stacked rows were 2,222px of a 4.4-screen page
-  // (COD-468). The open week, else the calendar week.
+  // A phone shows ONE step of the roadmap from a select (`CoachingPhone`) —
+  // twelve stacked rows were 2,222px of a 4.4-screen page (COD-468). The open
+  // week, else the calendar week.
   const phone = useDevice() === 'mobile'
+  const say = phone ? plain : String
   const phoneWeek = openWeek ?? (week || 1)
 
   /* Sticky so the section survives a reload — the seven folds this page
@@ -169,6 +174,7 @@ export function Coaching() {
   ]
 
   return (
+    <FlatCards.Provider value={phone}>
     <PageLayout
       tier={1180}
       /**
@@ -233,7 +239,7 @@ export function Coaching() {
                 className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-peach/15 px-2 py-0.5 text-label text-fg-2">
                 <Icon as={ShieldWarning} size="sm" className="text-peach" />
                 Educational only
-                <span className="sr-only">{SAFETY_DISCLAIMER.short}</span>
+                <span className="sr-only">{say(SAFETY_DISCLAIMER.short)}</span>
               </span>
             )}
           </div>
@@ -268,13 +274,13 @@ export function Coaching() {
               <Icon as={ShieldWarning} size="sm" className="mt-0.5 shrink-0 text-red" />
               <ul className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-x-5 gap-y-0.5 @lg/page:grid-cols-2">
                 {SAFETY_DISCLAIMER.long.map((t) => (
-                  <li key={t} className="flex gap-1.5"><span aria-hidden>·</span><span className="min-w-0">{t}</span></li>
+                  <li key={t} className="flex gap-1.5"><Dot /><span className="min-w-0">{say(t)}</span></li>
                 ))}
               </ul>
             </div>
           )}
           {section !== 'program' ? <Manual chapter={section} /> : phone ? (
-            /* A phone: the program as the Pull-ups program day — one week at a
+            /* A phone: the program as the Pull-ups program day — one step at a
                time from a select, drills as rows, the record, a dock. */
             <CoachingPhone
               started={!!start}
@@ -441,16 +447,8 @@ export function Coaching() {
                   </div>
                 )}
               </aside>}
-              {phone && (
-                <div className="flex items-center justify-between gap-2">
-                  <button type="button" className="round-btn" aria-label="Previous week" disabled={phoneWeek <= 1} onClick={() => setOpenWeek(phoneWeek - 1)}><Icon as={CaretLeft} size="sm" /></button>
-                  <span className="text-body font-semibold text-fg-1">Week {phoneWeek} of {ACADEMY_TOTAL_WEEKS}</span>
-                  <button type="button" className="round-btn" aria-label="Next week" disabled={phoneWeek >= ACADEMY_TOTAL_WEEKS} onClick={() => setOpenWeek(phoneWeek + 1)}><Icon as={CaretRight} size="sm" /></button>
-                </div>
-              )}
               <ol className="space-y-1.5 @3xl/page:col-start-1 @3xl/page:row-start-1">
               {TWELVE_WEEK.map((w, i) => {
-                if (phone && w.week !== phoneWeek) return null
                 const isDone = done.includes(w.week)
                 const isNow = start && w.week === week
                 const isOpen = openWeek === w.week
@@ -459,7 +457,7 @@ export function Coaching() {
                 // one. See `lib/coachingWeek.ts`.
                 const played = start ? rowsInCoachingWeek(sessions, start, w.week) : []
                 const note = weekNotes[String(w.week)] ?? ''
-                const last = phone || i === TWELVE_WEEK.length - 1
+                const last = i === TWELVE_WEEK.length - 1
                 return (
                   <li key={w.week} className="settle-in flex gap-3" style={{ '--i': i } as CSSProperties}>
                     {/* The gutter: the node, then the line down to the next
@@ -547,6 +545,7 @@ export function Coaching() {
         </>
       }
     />
+    </FlatCards.Provider>
   )
 }
 
@@ -581,33 +580,32 @@ function WeekRecord({ week, start, played, note, onNote }: {
   note: string
   onNote: (week: number, text: string) => void
 }) {
+  const flat = useContext(FlatCards)
   // Before the program is started a week covers no actual days, so there is
   // nothing to join and nothing to note *about* — the card above this already
   // shows "Start the program" as the act.
   if (!start) return null
   const range = coachingWeekRange(start, week)
+  const say = flat ? plain : String
   const play = weekPlay(played)
 
   return (
     <div className="space-y-2 border-t border-line pt-2.5">
       <p className="text-label font-medium text-fg-2">
-        What you did · {prettyDay(range.from)} – {prettyDay(range.to)}
+        {say(`What you did · ${prettyDay(range.from)}${flat ? ' to ' : ' – '}${prettyDay(range.to)}`)}
       </p>
 
       {played.length > 0 ? (
         <>
           <p className="num text-label text-fg-1">
-            {play.sessions} session{play.sessions === 1 ? '' : 's'} · {play.games} games, {play.won} won
-            {play.minutes > 0 && ` · ${Math.round((play.minutes / 60) * 10) / 10}h`}
+            {say(`${play.sessions} session${play.sessions === 1 ? '' : 's'} · ${play.games} games, ${play.won} won${play.minutes > 0 ? ` · ${Math.round((play.minutes / 60) * 10) / 10}h` : ''}`)}
           </p>
           <ul className="space-y-0.5">
             {played.map((p) => (
               <li key={p.id} className="text-label text-fg-2">
-                <span className="num text-fg-1">{prettyDay(p.date)}</span> · {p.format} {p.gamesWon}–{p.gamesLost}
-                {p.partner && ` · with ${p.partner}`}
-                {p.location && ` · ${p.location}`}
+                <span className="num text-fg-1">{prettyDay(p.date)}</span>{say(` · ${p.format} ${p.gamesWon}–${p.gamesLost}${p.partner ? ` · with ${p.partner}` : ''}${p.location ? ` · ${p.location}` : ''}`)}
                 {/* The session's OWN note, read here rather than re-asked. */}
-                {p.notes && <span className="italic"> · “{p.notes}”</span>}
+                {p.notes && <span className="italic">{say(' · ')}“{p.notes}”</span>}
               </li>
             ))}
           </ul>
@@ -623,8 +621,8 @@ function WeekRecord({ week, start, played, note, onNote }: {
 
       <label className="block">
         <span className="mb-1.5 block text-label text-fg-2">
-          <span className="font-medium text-fg-1">Drills &amp; how it went</span> · which of the drills above you
-          actually ran, and what to carry into next week
+          <span className="font-medium text-fg-1">Drills &amp; how it went</span>{flat ? ', which of the drills above you actually ran, and what to carry into the next step' : <> · which of the drills above you
+          actually ran, and what to carry into next week</>}
         </span>
         {/* `key` is load-bearing: `CommitField` flushes its draft on unmount, so
             a re-seeded component would write the previous week's text into this
@@ -635,7 +633,7 @@ function WeekRecord({ week, start, played, note, onNote }: {
           value={note}
           onCommit={(v) => onNote(week, v)}
           placeholder="Cross-court dink rally got to 38, not 50. Backhand dink still popping up."
-          label={`What you drilled in week ${week}`}
+          label={`What you drilled in ${flat ? 'step' : 'week'} ${week}`}
           className="w-full"
         />
       </label>
@@ -757,6 +755,8 @@ function Manual({ chapter }: { chapter: string }) {
   const behind = hereIndex < 0 ? [] : ACADEMY_LEVELS.slice(0, hereIndex).map((l) => l.id)
 
   const mindset = useCappedList(MINDSET, 8)
+  const flat = useContext(FlatCards)
+  const say = flat ? plain : String
   const current = CHAPTERS.find((c) => c.id === chapter) ?? CHAPTERS[0]
 
   return (
@@ -787,9 +787,10 @@ function Manual({ chapter }: { chapter: string }) {
               <Icon as={current.icon} size="md" className="text-fg-2" />
               {'title' in current ? current.title : current.label}
             </h2>
-            <p className="text-label text-fg-2">{current.blurb}</p>
+            <p className="text-label text-fg-2">{say(current.blurb)}</p>
           </div>
-          {chapter === 'shots' && (<>
+          {chapter === 'shots' && flat && <ShotsPhone />}
+          {chapter === 'shots' && !flat && (<>
         {[...new Set(TECHNIQUES.map((t) => t.group))].map((group) => (
           <div key={group} className="mb-2">
             <p className="mb-1 border-b border-line pb-1 text-caption font-medium tracking-wider text-fg-2 uppercase">{group}</p>
@@ -886,7 +887,8 @@ function Manual({ chapter }: { chapter: string }) {
           </div>
         ))}
           </>)}
-          {chapter === 'drills' && (<>
+          {chapter === 'drills' && flat && <DrillsPhone />}
+          {chapter === 'drills' && !flat && (<>
         <div className="space-y-2">
           {drillSkills.map((skill, i) => {
             const list = ACADEMY_DRILLS.filter((d) => d.skill === skill)
@@ -979,20 +981,20 @@ function Manual({ chapter }: { chapter: string }) {
               <div className={`min-w-0 flex-1 rounded-card bg-ink-2 p-3 ring-1 transition-[transform,box-shadow] hover:-translate-y-px ${here === lvl.id ? 'ring-mauve' : 'ring-transparent hover:ring-line-strong'}`}>
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <span className="text-body font-medium" style={{ color: onRaised(lvl.color) }}>{lvl.name}</span>
-                <Pill color={lvl.color} size="micro" className="px-2">DUPR {lvl.dupr}</Pill>
-                {here === lvl.id && <span className="rounded-pill bg-mauve/15 px-2 py-0.5 text-micro text-fg-1">You are here · {rating}</span>}
+                <Pill color={lvl.color} size="micro" className="px-2">DUPR {say(lvl.dupr)}</Pill>
+                {here === lvl.id && <span className="rounded-pill bg-mauve/15 px-2 py-0.5 text-micro text-fg-1">You are here{flat ? ', ' : ' · '}{rating}</span>}
               </div>
               {/* The symptoms before the syllabus. A DUPR band is a number;
                   this is what the number feels like from inside a game, and
                   it is how anybody actually places themselves. */}
               <ul className="mb-1.5 space-y-0.5 text-body text-fg-1">
-                {lvl.youAreHere.map((t) => <li key={t} className="flex gap-1.5"><span aria-hidden className="text-fg-2">·</span><span className="min-w-0">{t}</span></li>)}
+                {lvl.youAreHere.map((t) => <li key={t} className="flex gap-1.5"><Dot className="text-fg-2" /><span className="min-w-0">{say(t)}</span></li>)}
               </ul>
               <p className="mb-2 rounded-card bg-ink-0 p-2 text-label text-fg-2">
-                <span className="font-medium text-fg-1">The one thing that moves you up · </span>{lvl.unlock}
+                <span className="font-medium text-fg-1">The one thing that moves you up{flat ? ': ' : ' · '}</span>{say(lvl.unlock)}
               </p>
               <ul className="grid gap-1 sm:grid-cols-2">
-                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2"><span style={{ color: onRaised(lvl.color) }}>•</span> {sk}</li>)}
+                {lvl.skills.map((sk) => <li key={sk} className="flex gap-1.5 text-label text-fg-2">{!flat && <><span style={{ color: onRaised(lvl.color) }}>•</span> </>}{say(sk)}</li>)}
               </ul>
               </div>
             </li>
@@ -1013,13 +1015,13 @@ function Manual({ chapter }: { chapter: string }) {
                hover: a border changes the box and shifts every card beside it,
                and a row of sixteen that twitches is worse than a flat one. */
             <li key={m.title} className="settle-in rounded-card bg-ink-2 p-2.5 ring-1 ring-transparent transition-[transform,box-shadow] hover:-translate-y-px hover:ring-line-strong" style={{ '--i': i } as CSSProperties}>
-              <p className="text-body font-medium text-fg-1">{m.title}</p>
-              <p className="text-label text-fg-2">{m.why}</p>
+              <p className="text-body font-medium text-fg-1">{say(m.title)}</p>
+              <p className="text-label text-fg-2">{say(m.why)}</p>
               {/* A principle with no scenario is a poster. The moment is what
                   makes it recallable at 9–9, and the move is what you do with
                   it — "stay calm" is neither. */}
-              <p className="mt-1.5 text-label text-fg-2"><span className="font-medium text-fg-1">When · </span>{m.when}</p>
-              <p className="mt-0.5 text-label text-fg-1"><span className="font-medium" style={{ color: onRaised('green') }}>Do · </span>{m.do}</p>
+              <p className="mt-1.5 text-label text-fg-2"><span className="font-medium text-fg-1">When{flat ? ': ' : ' · '}</span>{say(m.when)}</p>
+              <p className="mt-0.5 text-label text-fg-1"><span className="font-medium" style={{ color: onRaised('green') }}>Do{flat ? ': ' : ' · '}</span>{say(m.do)}</p>
             </li>
           ))}
         </ul>
@@ -1029,10 +1031,10 @@ function Manual({ chapter }: { chapter: string }) {
           {PICKLE_FORMATS.map((fm, i) => (
             <li key={fm.id} className="settle-in rounded-card bg-ink-2 p-3 ring-1 ring-transparent transition-[transform,box-shadow] hover:-translate-y-px hover:ring-line-strong" style={{ '--i': i } as CSSProperties}>
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-body font-medium text-fg-1">{fm.label}</span>
-                <span className="text-micro text-fg-2">{fm.size}</span>
+                <span className="text-body font-medium text-fg-1">{say(fm.label)}</span>
+                <span className="text-micro text-fg-2">{say(fm.size)}</span>
               </div>
-              <p className="text-label text-fg-2">{fm.how}</p>
+              <p className="text-label text-fg-2">{say(fm.how)}</p>
             </li>
           ))}
         </ul>
