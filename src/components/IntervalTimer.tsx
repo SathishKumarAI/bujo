@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Sheet } from './ui/sheet'
 import { Minus, Plus } from '@/components/icons'
 import { Icon } from '@/components/Icon'
+import { cheer } from '../lib/cheer'
 import { describeIntervals, mmss, retune, startOf, stepAt, type Intervals, type Step, type Tune } from '../lib/holdTime'
 
 /**
@@ -58,6 +59,8 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
   const started = since != null || ms > 0
   const { i, left } = stepAt(steps, ms)
   const step = steps[i]
+  /** How far through this step, 0 to 1 (a 0 s rest counts as finished). */
+  const done01 = !step || step.secs <= 0 ? 1 : 1 - left / step.secs
   const over = i >= steps.length
   const worked = steps.slice(0, i).filter((s) => s.kind === 'work').map((s) => s.secs)
   const works = steps.filter((s) => s.kind === 'work').length
@@ -136,10 +139,15 @@ export function IntervalTimer({ name, plan, onSave, onClose }: {
         <p className="interval-word" aria-live="assertive">{phase === 'done' ? 'Done' : phase === 'work' ? 'Work' : 'Rest'}</p>
         <output className="hold-clock" aria-live="off" aria-label={`${left} seconds left`}>{mmss(over ? 0 : left)}</output>
         <p className="text-body text-fg-2">{over ? `${worked.length} of ${works} finished` : step.label}</p>
+        {/* THE PUSH (owner, 2026-11-14): a line that changes with the
+            moment, and the ring round Start filling as the step runs. */}
+        <p className="timer-cheer">{cheer({ phase, idle: !started, left: over ? 0 : left, frac: over ? 1 : done01, lastRound: step?.kind === 'work' && worked.length + 1 === works })}</p>
         {!over && (
-          <button type="button" className="hold-go" aria-pressed={running} onClick={toggle}>
-            {running ? 'Pause' : ms > 0 ? (manual && left === step.secs ? `Start hold ${worked.length + 1}` : 'Resume') : 'Start'}
-          </button>
+          <span className="go-ring" data-phase={phase} style={{ '--p': done01 } as CSSProperties}>
+            <button type="button" className="hold-go" aria-pressed={running} onClick={toggle}>
+              {running ? 'Pause' : ms > 0 ? (manual && left === step.secs ? `Start hold ${worked.length + 1}` : 'Resume') : 'Start'}
+            </button>
+          </span>
         )}
         {/* Rows of three at most, so Save stays on a 390 x 844 screen while
             you rest (measured: four rows of two pushed it to y 869). */}

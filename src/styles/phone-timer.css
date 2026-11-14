@@ -56,3 +56,33 @@
   min-width: 6rem;
   padding-inline: 0.5rem;
 }
+
+/* THE PUSH (owner, 2026-11-14): a ring round Start that fills as the step
+   runs — green for work, sky for a rest — and a line under the clock that
+   changes with the moment (`lib/cheer.ts`). `--p` is 0 to 1, set inline. */
+.go-ring {
+  --ring: var(--color-green);
+  display: grid;
+  padding: 0.5rem;
+  border-radius: 999px;
+  background: conic-gradient(var(--ring) calc(var(--p, 0) * 1turn), var(--color-line) 0);
+}
+
+.go-ring[data-phase='rest'] {
+  --ring: var(--color-sky);
+}
+
+.go-ring > .hold-go {
+  /* 10rem less the ring, so the ring costs the sheet no height: the clock
+     must stay on screen while you hold (first draft scrolled it half off). */
+  width: 8rem;
+  height: 8rem;
+  box-shadow: 0 0 0 0.25rem var(--color-ink-0);
+}
+
+.timer-cheer {
+  color: var(--color-fg-1);
+  font-size: var(--text-heading);
+  font-weight: 600;
+  text-align: center;
+}
