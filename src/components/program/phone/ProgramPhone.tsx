@@ -212,8 +212,9 @@ export function ProgramPhone({ s, onCheck, rest }: {
                   <div className="ex-weight" role="group" aria-label={`${e.name}, weight for every set`}>
                     <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} lighter`} onClick={() => setLiftWeight(e.name, cur - weightStep(unit))}><Icon as={Minus} size="sm" /></button>
                     <button type="button" className="min-h-11 min-w-[3.25rem] text-center text-label font-semibold tabular-nums text-fg-1" aria-haspopup="dialog"
-                      aria-label={`${cur ? `${cur} ${unit}` : `No weight`}: edit ${e.name} sets`} onClick={() => setEditing(e.name)}>
-                      {cur ? `${cur} ${unit}` : `– ${unit}`}
+                      aria-label={`${cur ? `${cur} ${unit}` : 'Add weight'}: edit ${e.name} sets`} onClick={() => setEditing(e.name)}>
+                      {/* The name must contain the painted text (axe 2.5.3), and no dash glyph. */}
+                      {cur ? `${cur} ${unit}` : 'Add'}
                     </button>
                     <button type="button" className="round-btn" aria-label={`${e.name}: ${weightStep(unit)} ${unit} heavier`} onClick={() => setLiftWeight(e.name, cur + weightStep(unit))}><Icon as={Plus} size="sm" /></button>
                   </div>
