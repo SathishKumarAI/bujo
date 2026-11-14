@@ -85,10 +85,11 @@ export function emomSteps(minutes: number, reps: number): Intervals {
   }
 }
 
-/** The sheet's one line: what this clock will do. */
-export function describeIntervals({ steps, manual }: Intervals): string {
+/** What this clock will do, one fact per line (owner, 2026-11-14: as
+ *  points, "8 rounds" / "20 s on" / "10 s off", like the exercise card). */
+export function describeIntervals({ steps, manual }: Intervals): string[] {
   const works = steps.filter((s) => s.kind === 'work').length
   const rest = steps.find((s) => s.kind === 'rest')
-  if (manual) return `${works} holds, start each one when you are ready`
-  return rest ? `${works} rounds, ${steps[0].secs} s work and ${rest.secs} s rest` : `${works} rounds of ${steps[0].secs} s, a beep starts each`
+  if (manual) return [`${works} holds`, 'Start each one when you are ready']
+  return rest ? [`${works} rounds`, `${steps[0].secs} s on`, `${rest.secs} s off`] : [`${works} rounds of ${steps[0].secs} s`, 'A beep starts each']
 }
