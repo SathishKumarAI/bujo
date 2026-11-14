@@ -181,9 +181,15 @@ describe('Nutrition on a phone', () => {
     await userEvent.click(screen.getByRole('button', { name: /^Add Plain dosa, 133 kcal/ }))
     expect(today()).toMatchObject({ calories: 133 })
     await userEvent.click(screen.getByRole('button', { name: 'Done' }))
-    await userEvent.click(screen.getByRole('button', { name: /^Plain dosa/, expanded: false }))
-    await userEvent.click(screen.getByRole('button', { name: 'One more serving of Plain dosa' }))
+    // The logged row opens a sheet, never in place (COD-590).
+    const row = screen.getByRole('button', { name: /^Plain dosa/ })
+    expect(row.getAttribute('aria-haspopup')).toBe('dialog')
+    expect(row.hasAttribute('aria-expanded')).toBe(false)
+    await userEvent.click(row)
+    const sheet = screen.getByRole('dialog', { name: 'Plain dosa' })
+    await userEvent.click(within(sheet).getByRole('button', { name: 'One more serving of Plain dosa' }))
     expect(today()).toMatchObject({ calories: 266, foodLog: [expect.objectContaining({ servings: 2 })] })
+    expect(within(sheet).getByText('2 servings')).toBeTruthy()
   })
 
   // The failure: the source switch going back to a native picker (two taps
@@ -235,6 +241,12 @@ describe('Challenges on a phone', () => {
     const ticks = screen.getAllByRole('button', { name: /: tap when done$/ })
     await userEvent.click(ticks[0])
     expect(Object.values(log()!)[0]).toEqual([0])
+    // A ticked rule says what it was in a sheet, never in place (COD-590).
+    const said = screen.getAllByRole('button').find((x) => x.getAttribute('aria-haspopup') === 'dialog' && /tap to say what it was/.test(x.textContent ?? ''))!
+    expect(said.hasAttribute('aria-expanded')).toBe(false)
+    await userEvent.click(said)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    await userEvent.keyboard('{Escape}')
     await userEvent.click(screen.getByRole('button', { name: /^Tick all/ }))
     expect(Object.values(log()!)[0]).toHaveLength(ticks.length)
     // Done is a state: the button that says it cannot untick the day.

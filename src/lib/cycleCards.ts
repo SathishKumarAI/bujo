@@ -145,8 +145,8 @@ export const CYCLE_CARDS: CycleCardMeta[] = [
   { id: 'luteal', title: 'Your luteal length', group: 'fertility' },
   { id: 'bbt', title: 'Basal temperature', group: 'fertility', wide: true, chart: true },
 
-  { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true },
-  { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true },
+  { id: 'symptoms', title: 'Symptom pattern', group: 'patterns', wide: true, chart: true },
+  { id: 'grid', title: 'What lands on which day', group: 'patterns', wide: true, chart: true },
 
   /**
    * THE RECORD ITSELF, which the page did not have.

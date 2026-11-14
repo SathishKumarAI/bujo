@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { CONCEIVE_FOOD_NOTE, FOOD_FOOTER, PHASE_FOOD, type CycleGoal } from '../../lib/cycleHelp'
 
 /**
@@ -14,13 +16,14 @@ import { CONCEIVE_FOOD_NOTE, FOOD_FOOTER, PHASE_FOOD, type CycleGoal } from '../
  * might screenshot on its own.
  */
 export function PhaseFoodCard({ phase, goal }: { phase: string | null; goal: CycleGoal }) {
+  const sep = useContext(FlatCards) ? ': ' : ' · '
   const current = PHASE_FOOD.find((p) => p.phase.toLowerCase() === (phase ?? '').toLowerCase())
 
   return (
     <div>
       {current ? (
         <p className="text-body text-fg-1">
-          <span className="font-medium">{current.phase}</span> · {current.focus}
+          <span className="font-medium">{current.phase}</span>{sep}{current.focus}
         </p>
       ) : (
         <p className="text-body text-fg-2">Log a period start and this shows the focus for where you are.</p>
@@ -33,7 +36,7 @@ export function PhaseFoodCard({ phase, goal }: { phase: string | null; goal: Cyc
       <ul className="mt-3 space-y-1 border-t border-line pt-2">
         {PHASE_FOOD.filter((p) => p !== current).map((p) => (
           <li key={p.phase} className="text-label text-fg-2">
-            <span className="text-fg-1">{p.phase}</span> · {p.focus}
+            <span className="text-fg-1">{p.phase}</span>{sep}{p.focus}
           </li>
         ))}
       </ul>

@@ -1,6 +1,9 @@
 import { CYCLE_PHASES } from '../../lib/cycleGuide'
 import { onRaised } from '../../lib/colors'
 import { Pill } from '../ui'
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
+import { plain } from '../../lib/plain'
 
 /**
  * FOOD BY PHASE · what the cravings tend to be, what is worth eating, and who
@@ -27,6 +30,7 @@ import { Pill } from '../ui'
  * phase about whether it suits hard sessions, written once.
  */
 export function PhaseNutrition() {
+  const flat = useContext(FlatCards)
   return (
     /* Two columns from `sm` up, one on a phone, spelled out — the same shape
        the four-phases fold beside it already uses. Not decoration: four
@@ -60,8 +64,8 @@ export function PhaseNutrition() {
             {ph.sources.length === 1 ? 'Source: ' : 'Sources: '}
             {ph.sources.map((s, i) => (
               <span key={s.url}>
-                {i > 0 && ' · '}
-                <a href={s.url} target="_blank" rel="noreferrer">{s.label}</a>
+                {i > 0 && (flat ? ', ' : ' · ')}
+                <a href={s.url} target="_blank" rel="noreferrer">{flat ? plain(s.label) : s.label}</a>
               </span>
             ))}
           </p>

@@ -2,6 +2,8 @@ import { useCappedList } from '../../lib/useCappedList'
 import { ShowMore } from '../ShowMore'
 import { prettyDay } from '../../lib/date'
 import type { CyclePoint } from '../../lib/types'
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * EVERY DAY YOU LOGGED, AND EVERYTHING YOU PUT ON IT.
@@ -56,6 +58,7 @@ export function DayLog({ entries, unit, cycleDayOf, today, selected, onPick }: {
     .filter((e) => e.date <= today && hasSomething(e))
     .sort((a, b) => b.date.localeCompare(a.date))
   const list = useCappedList(logged, 10)
+  const flat = useContext(FlatCards)
 
   if (logged.length === 0) {
     return (
@@ -105,7 +108,7 @@ export function DayLog({ entries, unit, cycleDayOf, today, selected, onPick }: {
                   </span>
                 )}
                 <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                  {details(e).map((d) => (
+                  {details(e, flat).map((d) => (
                     <span key={d} className="text-label text-fg-2">{d}</span>
                   ))}
                 </span>
@@ -135,19 +138,22 @@ function hasSomething(e: CyclePoint): boolean {
  * and this row sits beside four other numbers. A 1–5 rating carries its scale
  * (`mood 3/5`) because the scale is the half that makes it readable.
  */
-function details(e: CyclePoint): string[] {
+function details(e: CyclePoint, flat = false): string[] {
   const out: string[] = []
-  if (e.flags.length > 0) out.push(e.flags.join(' · '))
+  // On a phone, words: "mood 3 of 5", lists joined by commas (COD-590).
+  const of5 = flat ? ' of 5' : '/5'
+  const join = (xs: string[]) => xs.join(flat ? ', ' : ' · ')
+  if (e.flags.length > 0) out.push(join(e.flags))
   if (e.flow) out.push(`flow ${e.flow.replace('-', ' ')}`)
   if (e.mucus) out.push(`mucus ${e.mucus.replace('-', ' ')}`)
   if (e.lh && e.lh !== 'not-taken') out.push(`LH ${e.lh}`)
   if (e.intimacy && e.intimacy !== 'none') out.push(`intimacy ${e.intimacy}`)
-  if (e.drive != null) out.push(`drive ${e.drive}/5`)
-  if (e.mood != null) out.push(`mood ${e.mood}/5`)
-  if (e.energy != null) out.push(`energy ${e.energy}/5`)
-  if (e.moodTags?.length) out.push(e.moodTags.join(' · '))
-  if (e.symptoms?.length) out.push(e.symptoms.join(' · '))
-  if (e.cravings?.length) out.push(`craving ${e.cravings.join(' · ')}`)
+  if (e.drive != null) out.push(`drive ${e.drive}${of5}`)
+  if (e.mood != null) out.push(`mood ${e.mood}${of5}`)
+  if (e.energy != null) out.push(`energy ${e.energy}${of5}`)
+  if (e.moodTags?.length) out.push(join(e.moodTags))
+  if (e.symptoms?.length) out.push(join(e.symptoms))
+  if (e.cravings?.length) out.push(`craving ${join(e.cravings)}`)
   if (e.note) out.push(`“${e.note}”`)
   return out
 }

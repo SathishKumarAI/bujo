@@ -1,6 +1,8 @@
 import { cat, onRaised } from '../../lib/colors'
 import type { PhaseBand } from '../../lib/cycleInsights'
 import { Abbr } from '../Abbr'
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * OVULATION, LAID OUT IN TIME · what it is, and how it differs from the phases
@@ -30,6 +32,8 @@ export function FertileWindow({ bands, length }: {
   /** Cycle length the bands were built for. */
   length: number
 }) {
+  // A diagram: not drawn on a phone (COD-590); the card's sentences stay.
+  if (useContext(FlatCards)) return null
   const W = 360
   const H = 128
   const PAD = 12

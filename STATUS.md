@@ -1,9 +1,34 @@
 # STATUS
 
-**Stopped:** 2026-11-14, on `main` after #559. COD-590 continues page by
-page: Recovery (#557) and Insights (#558) are cards on the phone.
-**Production is still at #553**: #557–#559 are not deployed. The owner
-deploys with `bash scripts/ship.sh --deploy-only`.
+**Stopped:** 2026-11-14, after #560. COD-590 continues page by page:
+Recovery (#557), Insights (#558), Nutrition, Challenges and Cycle (#560)
+are cards on the phone. **Production is still at #553**: #557 to #560 are
+not deployed. The owner deploys with `bash scripts/ship.sh --deploy-only`.
+
+## 2026-11-14: COD-590 Nutrition, Challenges, Cycle
+
+| page | what |
+|---|---|
+| Nutrition | a logged food opens a `Sheet` (servings, edit, remove), not the row; "154 of 120 g", "2 servings", "1 logged" |
+| Challenges | a ticked rule's "what was it" note opens a `Sheet`; "Tick all, 3 of 5", "of 75 days, 75 Hard, strict" |
+| Cycle | page inside `FlatCards`: `Abbr` and `InfoTip` draw no popover, `FertileWindow` no diagram, `LutealCard` rows not bars; `symptoms` and `grid` heatmaps `chart: true` (Patterns shows as disabled, 0); no month grid in Your log; no "Hide the log"; Mood row opens its sheet with `aria-haspopup` |
+
+Kept on purpose: em dashes and a few "21–35" ranges inside Cycle's guide
+and manual prose (sentences, like Insights). Rail rows with 0 cards stay
+disabled, not hidden (`SectionRail`'s own rule).
+
+**Next:** COD-590 Trackers, Monthly, Coaching, Focus. Owner, 2026-11-14:
+"stop all monthly and weekly things for mobile version", desktop keeps
+them. So on a phone: no Monthly month view, no Trackers month layout, no
+Coaching weeks, no Focus week or month; a day picker instead. COD-575
+(scan phone-page sheets in the a11y gate) is still open.
+
+**How a page goes:** wrap its phone drawing in `FlatCards.Provider`; read
+its lines through `usePlain()`; a row editor moves into a `Sheet`; probe
+every panel at 390 for `[aria-expanded]`, charts and symbol lines; diff
+desktop `#main` against a main build at 1440 (Recharts path decimals jitter
+between two runs of main, and Nutrition's weekly kcal moves too, so
+normalise or run each side twice).
 
 ## 2026-11-14: COD-590 Recovery and Insights, gates green again
 

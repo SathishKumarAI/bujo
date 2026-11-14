@@ -1,4 +1,6 @@
+import { useContext } from 'react'
 import { cat, onRaised } from '../../lib/colors'
+import { FlatCards } from '../ui/flatCards'
 
 /**
  * LUTEAL LENGTH · the most clinically useful number a BBT chart produces.
@@ -18,6 +20,8 @@ import { cat, onRaised } from '../../lib/colors'
  * is a normal thing that happens.
  */
 export function LutealCard({ lengths }: { lengths: number[] }) {
+  // On a phone: one row per cycle and no bar (COD-590).
+  const flat = useContext(FlatCards)
   if (lengths.length === 0) {
     return (
       <p className="text-body text-fg-2">
@@ -39,7 +43,7 @@ export function LutealCard({ lengths }: { lengths: number[] }) {
         <span className="text-body text-fg-2">days on average</span>
       </p>
       <p className="mt-1 text-label text-fg-2">
-        From {lengths.length} confirmed cycle{lengths.length === 1 ? '' : 's'} · range {span} days
+        From {lengths.length} confirmed cycle{lengths.length === 1 ? '' : 's'}{flat ? ', range ' : ' · range '}{flat ? span.replace('–', ' to ') : span} days
       </p>
 
       {/* One bar per cycle against a fixed 0–18, so a short phase reads short.
@@ -49,13 +53,13 @@ export function LutealCard({ lengths }: { lengths: number[] }) {
         {lengths.map((n, i) => (
           <li key={i} className="flex items-center gap-2">
             <span className="w-16 shrink-0 text-label text-fg-2">cycle {i + 1}</span>
-            <span className="h-2 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
+            {flat ? <span className="flex-1" /> : <span className="h-2 flex-1 overflow-hidden rounded-pill" style={{ background: cat('surface0') }}>
               <span
                 className="block h-full rounded-pill"
                 style={{ width: `${Math.min(100, (n / 18) * 100)}%`, background: cat(n < 10 ? 'peach' : 'blue') }}
               />
-            </span>
-            <span className="w-10 shrink-0 text-right text-label tabular-nums text-fg-2">{n}d</span>
+            </span>}
+            {flat ? <span className="shrink-0 text-right text-label tabular-nums text-fg-2">{n} days</span> : <span className="w-10 shrink-0 text-right text-label tabular-nums text-fg-2">{n}d</span>}
           </li>
         ))}
       </ul>

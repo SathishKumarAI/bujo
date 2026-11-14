@@ -799,5 +799,5 @@ Tracked in Plane under COD-590. Full record: `docs/sessions/2026-11-13-workout-c
 | COD-603 | Rest clock between sets, EMOM minute clock (#551); intervals on Program / Home workout not needed, since no plan uses them | ✅ |
 | COD-608 | Tunable timer, Round done / Back / Reset, days in History (#552; that PR says COD-604) | ✅ |
 | COD-614 | Today's habits as cards (#553) | ✅ |
-| COD-590 | Remaining pages as cards: Recovery (done, `FlatCards`), Insights (done, `usePlain`), Trackers, Nutrition, Challenges, Cycle, Monthly, Coaching, Focus | 🔜 |
+| COD-590 | Remaining pages as cards: Recovery (done, `FlatCards`), Insights (done, `usePlain`), Nutrition, Challenges, Cycle (done, #560), Trackers, Monthly, Coaching, Focus | 🔜 |
 | COD-575 | a11y gate scans the phone-page sheets | 🔜 |

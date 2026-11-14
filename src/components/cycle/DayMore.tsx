@@ -61,7 +61,8 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
     <div className="mt-3 border-t border-line pt-2">
       <button
         type="button"
-        aria-expanded={isOpen}
+        aria-expanded={phone ? undefined : isOpen}
+        aria-haspopup={phone ? 'dialog' : undefined}
         onClick={() => (phone ? setSheet(true) : setOpen(isOpen ? '0' : '1'))}
         className="flex min-h-11 w-full items-center gap-3 text-left"
       >
@@ -94,7 +95,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
             the summary, so it is the one word that costs nothing to drop. */}
         <span className="shrink-0 text-body font-medium text-fg-1">Mood, mucus, LH &amp; more</span>
         <span className="ml-auto min-w-0 truncate text-label text-fg-2">
-          {isOpen && !phone ? 'tap to close' : (summary(entry) || 'tap to add')}
+          {isOpen && !phone ? 'tap to close' : (summary(entry, phone) || 'tap to add')}
         </span>
 
       </button>
@@ -238,7 +239,7 @@ export function DayMore({ entry, onPatch, fertilityFirst = false }: {
 }
 
 /** What is already recorded, so folding hides the controls and not the answers. */
-function summary(entry: CyclePoint | undefined): string {
+function summary(entry: CyclePoint | undefined, phone = false): string {
   if (!entry) return ''
   const parts: string[] = []
   if (entry.mood != null) parts.push(`mood ${entry.mood}`)
@@ -265,6 +266,8 @@ function summary(entry: CyclePoint | undefined): string {
      anything on this day, roughly what", and two names plus a remainder
      answers that in a width that always fits. The detail is one press away,
      which is the whole point of the row. */
+  // A phone says it in words and keeps one name to fit (COD-590): "mood 3, 4 more".
+  if (phone) return parts.length <= 1 ? parts.join('') : `${parts[0]}, ${parts.length - 1} more`
   if (parts.length <= 2) return parts.join(' · ')
   return `${parts.slice(0, 2).join(' · ')} · +${parts.length - 2}`
 }
