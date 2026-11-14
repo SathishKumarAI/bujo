@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { Card } from '../ui'
 import { cat, onRaised } from '../../lib/colors'
 
@@ -11,6 +13,7 @@ export function TriggerPatternsCard({
   relapseCount: number
   avgGap: number
 }) {
+  const flat = useContext(FlatCards)
   return (
     <Card band hideInfo title="Trigger patterns" subtitle="Your most common reasons, name them to beat them">
       <ul className="space-y-2">
@@ -20,14 +23,14 @@ export function TriggerPatternsCard({
             <li key={t.trigger}>
               <div className="mb-1 flex justify-between text-body">
                 <span className="capitalize text-fg-1">{t.trigger}</span>
-                <span className="text-fg-2">{t.count}× · {pct}%</span>
+                <span className="text-fg-2">{flat ? `${t.count} times, ${pct}%` : `${t.count}× · ${pct}%`}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-pill bg-ink-2"><div className="h-full rounded-pill" style={{ width: `${pct}%`, background: cat('peach') }} /></div>
             </li>
           )
         })}
       </ul>
-      {avgGap > 0 && <p className="mt-3 text-label text-fg-2">Average <span style={{ color: onRaised('teal') }}>{avgGap} days</span> between resets · aim to stretch it.</p>}
+      {avgGap > 0 && <p className="mt-3 text-label text-fg-2">Average <span style={{ color: onRaised('teal') }}>{avgGap} days</span> between resets{flat ? ', aim to stretch it.' : ' · aim to stretch it.'}</p>}
     </Card>
   )
 }

@@ -70,12 +70,12 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
       <button type="button" className="cells block w-full px-4 py-2.5 text-left" onClick={() => setFixing(null)}>
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-title font-bold text-fg-1 tabular-nums">{current} <span className="text-body font-medium text-fg-2">{current === 1 ? 'day' : 'days'} clean</span></span>
-          <span className="text-label text-fg-2">best {best}{current < best && ` · ${best - current} to go`}</span>
+          <span className="text-label text-fg-2">best {best}{current < best && `, ${best - current} to go`}</span>
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-ink-2" role="progressbar" aria-label="Days clean against your best" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
           <div className="h-full rounded-pill bg-green" style={{ width: `${pct}%` }} />
         </div>
-        <span className="mt-1 block text-label" style={{ color: onRaised(tallyOf(null)?.count ? 'red' : 'green') }}>Main streak · {todayLine(tallyOf(null))}<span className="sr-only"> — tap to fix today</span></span>
+        <span className="mt-1 block text-label" style={{ color: onRaised(tallyOf(null)?.count ? 'red' : 'green') }}>Main streak, {todayLine(tallyOf(null))}<span className="sr-only">. Tap to fix today</span></span>
       </button>
 
       {/* THE URGE, ONE TAP: a row each for what you usually log. */}
@@ -83,8 +83,8 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
         <div className="flex items-center justify-between px-1">
           <h2 className="text-heading font-semibold text-fg-1">Log an urge</h2>
           <button type="button" className="inline-flex min-h-11 items-center gap-1.5 text-label font-semibold" style={{ color: 'var(--color-brand-text)' }}
-            onClick={() => setMore(true)} aria-label={`Details${extras ? ` · ${extras}` : ''}: what helped and HALT, for the next urge`}>
-            <Icon as={SlidersHorizontal} size="sm" />Details{extras ? ` · ${extras}` : ''}
+            onClick={() => setMore(true)} aria-label={`Details${extras ? `, ${extras} picked` : ''}: what helped and HALT, for the next urge`}>
+            <Icon as={SlidersHorizontal} size="sm" />Details{extras ? `, ${extras}` : ''}
           </button>
         </div>
         <div className="cells">
@@ -97,11 +97,11 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
                   {t ? (
                     // Tracked: what today holds, in its own unit — tap to fix it.
                     <span className="block truncate text-label" style={{ color: onRaised(t.count > 0 ? 'red' : 'green') }}>
-                      {todayLine(t)}{u.held ? <span className="text-fg-2"> · held {u.held}</span> : null}
+                      {todayLine(t)}{u.held ? <span className="text-fg-2">, held {u.held}</span> : null}
                     </span>
                   ) : (
                     <span className="block truncate text-label text-fg-2">
-                      {u.held + u.gaveIn ? `held ${u.held} · gave in ${u.gaveIn} · 30 days` : 'Not logged yet'}
+                      {u.held + u.gaveIn ? `held ${u.held}, gave in ${u.gaveIn}, last 30 days` : 'Not logged yet'}
                     </span>
                   )}
                 </>)
@@ -122,7 +122,7 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
 
 
       <Cells>
-        <Cell icon={ArrowCounterClockwise} tone="red" title="Log a reset" subtitle={`Restarts the count · best ${best}d kept`} onPress={() => setResetting(true)} />
+        <Cell icon={ArrowCounterClockwise} tone="red" title="Log a reset" subtitle="Restarts the count, keeps your best" onPress={() => setResetting(true)} />
       </Cells>
 
       {review}
@@ -147,7 +147,7 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
           actions for five answers, behind a placeholder option. Now pills
           at their own width, like Fitness's activity type. All three start
           empty, so a second tap clearing one is safe (the `Seg` trap). */}
-      <Sheet open={more} onOpenChange={setMore} title="Details" description="Optional · added to the next urge you log">
+      <Sheet open={more} onOpenChange={setMore} title="Details" description="Optional. Added to the next urge you log">
         <Cells>
           <ControlCell label="What helped">
             <Seg label="What helped" allowNone value={d.technique ?? null} onChange={(v) => d.setTechnique(v ?? undefined)}
@@ -208,7 +208,7 @@ export function RecoveryPhone({ current, best, tally, onStep, resetForm, review 
               {u.quick.length > 1 && (
                 <div className="flex flex-wrap justify-center gap-2" role="group" aria-label="Add an amount">
                   {u.quick.map((q) => (
-                    <button key={q} type="button" className="urge-gave" onClick={() => onStep(fix.id, q)}>+{formatAmount(q, fix.unit)}</button>
+                    <button key={q} type="button" className="urge-gave" onClick={() => onStep(fix.id, q)}>Add {formatAmount(q, fix.unit)}</button>
                   ))}
                 </div>
               )}

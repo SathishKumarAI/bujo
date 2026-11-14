@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { HandFist } from '@/components/icons'
+import { HandFist, Trash } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Card, Empty, Input, Pill } from '../ui'
 import { Button } from '../ui/button'
+import { Sheet } from '../ui/sheet'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
 import { useDevice } from '../shell/device'
@@ -70,6 +71,48 @@ export function UrgeHistoryCard() {
       destructive: true,
     })) { setEditing(null); removeUrge(u.id) }
   }
+  /* The editor: inline under the row on desktop, in a sheet on a phone —
+     nothing opens in place there (owner, 2026-11-13; COD-590). */
+  const editor = (u: (typeof urges)[number]) => (
+    <div className={phone ? 'flex flex-col gap-3' : 'mt-2 grid grid-cols-1 gap-2 @min-[22rem]/urge:grid-cols-[1fr_auto_auto]'}>
+      <label className="block text-micro text-fg-2">
+        What it was
+        <Input
+          value={u.trigger ?? ''}
+          onChange={(e) => updateUrge(u.id, { trigger: e.target.value })}
+          placeholder="What set it off"
+          aria-label={`What the urge on ${prettyDay(u.date)} was`}
+          className="mt-0.5 py-1"
+        />
+      </label>
+      <label className="block text-micro text-fg-2">
+        Day
+        <Input
+          type="date"
+          value={u.date}
+          onChange={(e) => e.target.value && updateUrge(u.id, { date: e.target.value })}
+          aria-label={`Day of the urge logged on ${prettyDay(u.date)}`}
+          className="mt-0.5 py-1"
+        />
+      </label>
+      <label className="block text-micro text-fg-2">
+        Intensity
+        <Input
+          type="number"
+          min={1}
+          max={5}
+          value={u.intensity ?? ''}
+          onChange={(e) => {
+            const n = Number(e.target.value)
+            updateUrge(u.id, { intensity: n >= 1 && n <= 5 ? (n as 1 | 2 | 3 | 4 | 5) : undefined })
+          }}
+          aria-label={`Intensity of the urge on ${prettyDay(u.date)}, 1 to 5`}
+          className={phone ? 'num mt-0.5 py-1' : 'num mt-0.5 w-20 py-1 text-right'}
+        />
+      </label>
+    </div>
+  )
+  const open = phone ? urges.find((u) => u.id === editing) : undefined
   const before = data.nofap.urgesResisted ?? 0
   const label = discreetly(data.settings)
 
@@ -86,7 +129,7 @@ export function UrgeHistoryCard() {
         <div className="mb-2 rounded-card bg-ink-2 p-2.5 text-label">
           <div className="mb-1 text-fg-1">
             {techTop.length > 1 ? 'Most-used, tied: ' : 'Most-used technique: '}
-            <span className="font-medium" style={{ color: onRaised('teal') }}>{tiedLabel(techTop.map((t) => TECH_LABEL[t.technique]))}</span> · {techTop[0].count}×
+            <span className="font-medium" style={{ color: onRaised('teal') }}>{tiedLabel(techTop.map((t) => TECH_LABEL[t.technique]))}</span>{phone ? `, ${techTop[0].count} times` : ` · ${techTop[0].count}×`}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {techRank.map((t) => <Pill key={t.technique} tone="muted">{TECH_LABEL[t.technique]} {t.count}</Pill>)}
@@ -97,7 +140,9 @@ export function UrgeHistoryCard() {
         <div className="mb-2 rounded-card bg-ink-2 p-2.5 text-label">
           <div className="mb-1 text-fg-1">
             HALT pattern: <span className="font-medium" style={{ color: onRaised('peach') }}>{tiedLabel(haltTop.map((h) => h.label))}</span>
-            {haltTop.length > 1 ? ' tied on ' : ' most often · '}{haltTop[0].count}×
+            {phone
+              ? `${haltTop.length > 1 ? ', tied on ' : ' most often, '}${haltTop[0].count} times`
+              : <>{haltTop.length > 1 ? ' tied on ' : ' most often · '}{haltTop[0].count}×</>}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {haltRank.map((h) => <Pill key={h.state} tone="muted">{h.label} {h.count}</Pill>)}
@@ -106,7 +151,7 @@ export function UrgeHistoryCard() {
       )}
 
       {urges.length === 0 ? (
-        <Empty>Nothing logged yet · ride one out and it lands here.</Empty>
+        <Empty>Nothing logged yet. Ride one out and it lands here.</Empty>
       ) : (<>
         <ul className="space-y-1.5">
           {list.shown.map((u) => (
@@ -130,14 +175,14 @@ export function UrgeHistoryCard() {
                   <button
                     type="button"
                     className="urge-row-main"
-                    onClick={() => setEditing(editing === u.id ? null : u.id)}
-                    aria-expanded={editing === u.id}
+                    onClick={() => setEditing(u.id)}
+                    aria-haspopup="dialog"
                   >
-                    <span className="sr-only">{editing === u.id ? 'Close the editor for' : 'Edit'} </span>
+                    <span className="sr-only">Edit </span>
                     <Icon as={HandFist} size="sm" style={{ color: onRaised(u.outcome === 'followed' ? 'peach' : 'green') }} className="shrink-0" />
                     <span className="min-w-0 flex-1 text-fg-1">
                       {label(u.trigger || 'Urge')}
-                      {u.intensity && <span className="num text-label text-fg-2"> {u.intensity}/5</span>}
+                      {u.intensity && <span className="text-label text-fg-2">, {u.intensity} of 5</span>}
                     </span>
                     <span className="urge-row-when">
                       <span>{prettyDay(u.date)}</span>
@@ -149,7 +194,7 @@ export function UrgeHistoryCard() {
                     className="urge-row-del"
                     onClick={() => remove(u)}
                     aria-label={`Delete the urge on ${prettyDay(u.date)}`}
-                  >×</button>
+                  ><Icon as={Trash} size="sm" /></button>
                 </div>
               ) : (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -180,53 +225,22 @@ export function UrgeHistoryCard() {
               </div>
               )}
 
-              {editing === u.id && (
-                <div className="mt-2 grid grid-cols-1 gap-2 @min-[22rem]/urge:grid-cols-[1fr_auto_auto]">
-                  <label className="block text-micro text-fg-2">
-                    What it was
-                    <Input
-                      value={u.trigger ?? ''}
-                      onChange={(e) => updateUrge(u.id, { trigger: e.target.value })}
-                      placeholder="What set it off"
-                      aria-label={`What the urge on ${prettyDay(u.date)} was`}
-                      className="mt-0.5 py-1"
-                    />
-                  </label>
-                  <label className="block text-micro text-fg-2">
-                    Day
-                    <Input
-                      type="date"
-                      value={u.date}
-                      onChange={(e) => e.target.value && updateUrge(u.id, { date: e.target.value })}
-                      aria-label={`Day of the urge logged on ${prettyDay(u.date)}`}
-                      className="mt-0.5 py-1"
-                    />
-                  </label>
-                  <label className="block text-micro text-fg-2">
-                    Intensity
-                    <Input
-                      type="number"
-                      min={1}
-                      max={5}
-                      value={u.intensity ?? ''}
-                      onChange={(e) => {
-                        const n = Number(e.target.value)
-                        updateUrge(u.id, { intensity: n >= 1 && n <= 5 ? (n as 1 | 2 | 3 | 4 | 5) : undefined })
-                      }}
-                      aria-label={`Intensity of the urge on ${prettyDay(u.date)}, 1 to 5`}
-                      className="num mt-0.5 w-20 py-1 text-right"
-                    />
-                  </label>
-                </div>
-              )}
+              {!phone && editing === u.id && editor(u)}
             </li>
           ))}
         </ul>
         <ShowMore list={list} />
+        {phone && (
+          <Sheet open={!!open} onOpenChange={(o) => { if (!o) setEditing(null) }}
+            title={open ? `Edit ${label(open.trigger || 'Urge')}` : 'Edit urge'}
+            description={open ? `${prettyDay(open.date)}${fmtTime(open.at) ? `, ${fmtTime(open.at)}` : ''}` : undefined}>
+            {open && editor(open)}
+          </Sheet>
+        )}
       </>)}
 
       {before > 0 && (
-        <p className="mt-2 text-label text-fg-2">+ {before} logged before dated entries existed.</p>
+        <p className="mt-2 text-label text-fg-2">{phone ? `${before} more` : `+ ${before}`} logged before dated entries existed.</p>
       )}
     </Card>
   )

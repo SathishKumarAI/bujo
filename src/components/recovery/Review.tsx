@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { Empty, Input } from '../ui'
 import { useDevice } from '../shell/device'
 import { CardDeck, SectionRail } from '../page'
+import { FlatCards } from '../ui/flatCards'
 import {
   CARDS, FACETS, FACET_LABEL, GROUPS, GROUP_BLURB, GROUP_LABEL, DEFAULT_GROUP,
   visibleCards, type Facet, type Group,
@@ -95,7 +96,7 @@ export function RecoveryReview({ group, onGroup, q, onQ, cards, signature }: {
   */
   if (phone) {
     const byGroup = GROUPS
-      .map((g) => [g, CARDS.filter((c) => c.group === g && cards[c.id])] as const)
+      .map((g) => [g, CARDS.filter((c) => c.group === g && !c.chart && cards[c.id])] as const)
       .filter(([, ids]) => ids.length > 0)
     const inGroup = byGroup.find(([g]) => g === group)?.[1] ?? byGroup[0]?.[1] ?? []
     const pick = inGroup.find((c) => c.id === cardId) ?? inGroup[0]
@@ -122,7 +123,8 @@ export function RecoveryReview({ group, onGroup, q, onQ, cards, signature }: {
           <Icon as={CaretDown} size="sm" className="pointer-events-none text-fg-2" />
         </label>
       </nav>
-      {pick && <section data-domain={pick.group} data-card={pick.id} className="min-w-0">{cards[pick.id]}</section>}
+      {/* Cards, not folds: no collapse caret, no info popover (COD-590). */}
+      {pick && <FlatCards.Provider value><section data-domain={pick.group} data-card={pick.id} className="min-w-0">{cards[pick.id]}</section></FlatCards.Provider>}
     </>)
   }
 

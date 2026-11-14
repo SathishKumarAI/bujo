@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { FlatCards } from '../ui/flatCards'
 import { cat, onRaised } from '../../lib/colors'
 import { formatDuration } from '../../lib/addictionUnits'
 import {
@@ -62,6 +64,7 @@ export function FeedbackLedgerCard({ ledger }: { ledger: Ledger }) {
 }
 
 function Row({ row }: { row: FeedbackRow }) {
+  const flat = useContext(FlatCards)
   const verdict = verdictOf(row)
   const copy = VERDICT_COPY[verdict]
   const steps = nextSteps(row)
@@ -105,7 +108,7 @@ function Row({ row }: { row: FeedbackRow }) {
             <span className="num text-fg-1">{pct}%</span> of the pulls you logged, you did not follow
             {trend != null && Math.abs(trend) >= 0.1 && (
               <span style={{ color: onRaised(trend > 0 ? 'green' : 'peach') }}>
-                {' · '}{trend > 0 ? 'up' : 'down'} {Math.abs(Math.round(trend * 100))} points on the month before
+                {flat ? ', ' : ' · '}{trend > 0 ? 'up' : 'down'} {Math.abs(Math.round(trend * 100))} points on the month before
               </span>
             )}
           </p>

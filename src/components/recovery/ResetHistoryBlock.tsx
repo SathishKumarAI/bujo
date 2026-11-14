@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { X } from '@/components/icons'
+import { Trash, X } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { Empty, Input } from '../ui'
 import { Button } from '../ui/button'
+import { Sheet } from '../ui/sheet'
+import { useDevice } from '../shell/device'
 import { useJournal } from '../../store'
 import { useConfirm } from '../ConfirmDialog'
 import { cat, onRaised } from '../../lib/colors'
@@ -11,6 +13,7 @@ import { useCappedList } from '../../lib/useCappedList'
 import { ShowMore } from '../ShowMore'
 import type { Relapse } from '../../lib/types'
 import { RefBlock } from './RefBlock'
+import { plain } from '../../lib/plain'
 
 /**
  * RESET HISTORY · every logged reset, newest first, and now correctable.
@@ -43,70 +46,14 @@ export function ResetHistoryBlock({ relapses }: { relapses: Relapse[] }) {
   const { updateRelapse, removeRelapse } = useJournal()
   const confirm = useConfirm()
   const [editing, setEditing] = useState<string | null>(null)
+  // On a phone the editor is a sheet: nothing opens in place (COD-590).
+  const phone = useDevice() === 'mobile'
 
   /* Newest first, and capped: a year of resets is not a reference section, it
      is a scroll. `ShowMore` carries the total so the cap is never a surprise. */
   const newest = [...relapses].reverse()
-  const list = useCappedList(newest, 5)
-
-  return (
-    <RefBlock
-      title="Reset history"
-      subtitle={relapses.length ? `${relapses.length} reset${relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data'}
-    >
-      {relapses.length === 0 ? (
-        <Empty>No resets logged. Keep going.</Empty>
-      ) : (<>
-        <ul className="space-y-2 text-body">
-          {list.shown.map((r) => (
-            /* `@container/reset` DECLARED HERE, on the row, because the grid
-               inside it asks `@min-[26rem]/reset` — and a container query
-               against a container nobody declared never matches, with no
-               error and a perfectly valid class list. Third trap in CLAUDE.md
-               and the one easiest to reintroduce. The row, not the grid: an
-               element cannot query itself. */
-            <li key={r.id} className="@container/reset rounded-card border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                {/* `count` shown only when it says something: a bare row
-                    means "once", and "×1" on every line before this field
-                    existed would be a number the user never entered. */}
-                <span className="flex items-center gap-1.5 font-medium" style={{ color: onRaised('red') }}>
-                  <Icon as={X} size="sm" /> Reset · {prettyDay(r.date)}
-                </span>
-                {(r.count ?? 1) > 1 && <span className="text-label text-fg-2">×{r.count}</span>}
-
-                {/* The reversible action first, and named — a bare glyph is
-                    the affordance `USER-CONTROL.md` says is not one. */}
-                <span className="ml-auto flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditing(editing === r.id ? null : r.id)}
-                    aria-expanded={editing === r.id}
-                    aria-label={editing === r.id
-                      ? `Close the editor for the reset on ${prettyDay(r.date)}`
-                      : `Edit the reset on ${prettyDay(r.date)}`}
-                    className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
-                  >{editing === r.id ? 'Close' : 'Edit'}</Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={async () => {
-                      if (await confirm({
-                        title: 'Delete this reset?',
-                        description: `The reset on ${prettyDay(r.date)}${r.trigger ? ` (${r.trigger})` : ''} is removed from your history, and your streak restarts from whatever reset is left. This cannot be undone from here.`,
-                        confirmLabel: 'Delete reset',
-                        destructive: true,
-                      })) { setEditing(null); removeRelapse(r.id) }
-                    }}
-                    aria-label={`Delete the reset on ${prettyDay(r.date)}`}
-                    className="shrink-0 text-fg-2 reveal hover:text-red"
-                  >×</Button>
-                </span>
-              </div>
-
-              {editing === r.id ? (
-                <div className="mt-2 grid grid-cols-1 gap-2 @min-[26rem]/reset:grid-cols-2">
+  const editor = (r: Relapse) => (
+                <div className={phone ? 'flex flex-col gap-3' : 'mt-2 grid grid-cols-1 gap-2 @min-[26rem]/reset:grid-cols-2'}>
                   <label className="block text-micro text-fg-2">
                     Day
                     <Input
@@ -149,10 +96,72 @@ export function ResetHistoryBlock({ relapses }: { relapses: Relapse[] }) {
                     />
                   </label>
                   <p className="text-micro text-fg-2 @min-[26rem]/reset:col-span-2">
-                    Changing the day moves the streak with it — it counts from your latest reset.
+                    {phone ? 'Changing the day moves the streak with it. It counts from your latest reset.' : 'Changing the day moves the streak with it — it counts from your latest reset.'}
                   </p>
                 </div>
-              ) : (<>
+  )
+  const open = phone ? relapses.find((r) => r.id === editing) : undefined
+  const remove = async (r: Relapse) => {
+    if (await confirm({
+      title: 'Delete this reset?',
+      description: `The reset on ${prettyDay(r.date)}${r.trigger ? ` (${r.trigger})` : ''} is removed from your history, and your streak restarts from whatever reset is left. This cannot be undone from here.`,
+      confirmLabel: 'Delete reset',
+      destructive: true,
+    })) { setEditing(null); removeRelapse(r.id) }
+  }
+  const list = useCappedList(newest, 5)
+
+  return (
+    <RefBlock
+      title="Reset history"
+      subtitle={(phone ? plain : String)(relapses.length ? `${relapses.length} reset${relapses.length === 1 ? '' : 's'} · no shame, patterns are data` : 'No shame · patterns are data')}
+    >
+      {relapses.length === 0 ? (
+        <Empty>No resets logged. Keep going.</Empty>
+      ) : (<>
+        <ul className="space-y-2 text-body">
+          {list.shown.map((r) => (
+            /* `@container/reset` DECLARED HERE, on the row, because the grid
+               inside it asks `@min-[26rem]/reset` — and a container query
+               against a container nobody declared never matches, with no
+               error and a perfectly valid class list. Third trap in CLAUDE.md
+               and the one easiest to reintroduce. The row, not the grid: an
+               element cannot query itself. */
+            <li key={r.id} className="@container/reset rounded-card border p-2" style={{ borderColor: cat('red') + '55', background: cat('red') + '12' }}>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* `count` shown only when it says something: a bare row
+                    means "once", and "×1" on every line before this field
+                    existed would be a number the user never entered. */}
+                <span className="flex items-center gap-1.5 font-medium" style={{ color: onRaised('red') }}>
+                  <Icon as={X} size="sm" /> Reset{phone ? ', ' : ' · '}{prettyDay(r.date)}
+                </span>
+                {(r.count ?? 1) > 1 && <span className="text-label text-fg-2">{phone ? `${r.count} times` : `×${r.count}`}</span>}
+
+                {/* The reversible action first, and named — a bare glyph is
+                    the affordance `USER-CONTROL.md` says is not one. */}
+                <span className="ml-auto flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditing(editing === r.id ? null : r.id)}
+                    aria-expanded={phone ? undefined : editing === r.id}
+                    aria-haspopup={phone ? 'dialog' : undefined}
+                    aria-label={editing === r.id
+                      ? `Close the editor for the reset on ${prettyDay(r.date)}`
+                      : `Edit the reset on ${prettyDay(r.date)}`}
+                    className="h-auto p-0 text-label text-fg-2 hover:text-fg-1"
+                  >{editing === r.id ? 'Close' : 'Edit'}</Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => remove(r)}
+                    aria-label={`Delete the reset on ${prettyDay(r.date)}`}
+                    className="shrink-0 text-fg-2 reveal hover:text-red"
+                  >{phone ? <Icon as={Trash} size="sm" /> : '×'}</Button>
+                </span>
+              </div>
+
+              {!phone && editing === r.id ? editor(r) : (<>
                 {r.trigger && <div className="mt-0.5 text-fg-1"><span className="text-fg-2">Reason:</span> {r.trigger}</div>}
                 {r.note && <div className="text-fg-2 italic">{r.note}</div>}
               </>)}
@@ -160,6 +169,12 @@ export function ResetHistoryBlock({ relapses }: { relapses: Relapse[] }) {
           ))}
         </ul>
         <ShowMore list={list} />
+        {phone && (
+          <Sheet open={!!open} onOpenChange={(o) => { if (!o) setEditing(null) }}
+            title={open ? `Edit the reset on ${prettyDay(open.date)}` : 'Edit reset'}>
+            {open && editor(open)}
+          </Sheet>
+        )}
       </>)}
     </RefBlock>
   )
