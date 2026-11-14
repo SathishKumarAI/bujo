@@ -301,7 +301,7 @@ export function Card({
                 on every card in the app whose subtitle runs past one line. The
                 body token's own 1.55 is the readable figure; tightening leading
                 is for titles, which do not wrap into paragraphs. */}
-              {subtitle && <p className={cn('text-body text-fg-2', !flat && 'hidden sm:block')}>{flat && typeof subtitle === 'string' ? plain(subtitle) : subtitle}</p>}
+              {subtitle && <p className={flat ? 'text-body text-fg-2' : 'hidden text-body text-fg-2 sm:block'}>{flat && typeof subtitle === 'string' ? plain(subtitle) : subtitle}</p>}
             </div>
           </div>
           {/* `max-w-full` + `flex-wrap`, because `shrink-0` alone lets this

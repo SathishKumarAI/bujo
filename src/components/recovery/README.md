@@ -18,6 +18,7 @@ near 300; it is **358** now, and everything that left is below.
 | The urge form's DRAWING on desktop — chips, intensity buttons, technique, HALT | `UrgeSurfingCard.tsx` |
 | The urge draft and its write, for both drawings — a new urge field goes HERE | `useUrgeDraft.ts` |
 | The whole phone page — scoreboard, urge card, I held / I gave in dock, today rows, reset sheet | `RecoveryPhone.tsx` |
+| Which panels a phone is offered (`chart: true` panels are desktop-only) and the cards-not-folds wrapper (`FlatCards`) | `../../lib/recoveryCards.ts`, `Review.tsx` |
 | The reset form | `LogResetCard.tsx` |
 | "How many times today", per tracked thing | `DayTallyCard.tsx` |
 | The in-crisis overlay: timer, breathing pacer, plan lookup — not mounted since the SOS button went | `SosOverlay.tsx` |
