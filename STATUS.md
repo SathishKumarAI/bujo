@@ -1,11 +1,28 @@
 # STATUS
 
-**Stopped:** 2026-11-13, on `main` after #553. Phone pages are becoming
-cards with nothing that opens in place and no symbols (COD-590); Pull-ups
-has an interval timer (Tabata, hold lists, EMOM) and a rest clock.
-**Production is at #553** (deployed 2026-11-13 by this session at the
-owner's ask, `bujo-journal.vercel.app`). The deploy reinstalled
-`node_modules`: reinstall the gate deps before `npm run a11y`.
+**Stopped:** 2026-11-14, on `main` after #559. COD-590 continues page by
+page: Recovery (#557) and Insights (#558) are cards on the phone.
+**Production is still at #553**: #557–#559 are not deployed. The owner
+deploys with `bash scripts/ship.sh --deploy-only`.
+
+## 2026-11-14: COD-590 Recovery and Insights, gates green again
+
+| # | what |
+|---|---|
+| #557 | Recovery phone: `FlatCards` (no caret, no ⓘ, subtitle drawn), row editors in a `Sheet`, 7 chart panels `chart: true`, symbols as words |
+| #558 | Insights phone: inside `FlatCards`; `usePlain()`; `plain()` handles ×, a/b, ↑↓, ±; `Stat`/`StatTile` speak words; rail select reads `Overview (4)` |
+| #559 | a11y was red on main since #551: Program "– lb" name mismatch and Nutrition food rows clipped. Both fixed, 249/249 scans clean |
+
+**Next:** COD-590 Nutrition, Challenges, Cycle (3 folds each), then Coaching
+and Focus (chip rails). Trackers and Monthly wait on the owner's answer:
+does "no month" cover the Monthly page and Trackers' month layout on a
+phone? Insights' four `phone: true` charts stay (owner, 2026-10-31).
+
+**How a page goes:** wrap its phone drawing in `FlatCards.Provider`; read
+its lines through `usePlain()`; a row editor moves into a `Sheet`; probe
+every panel at 390 for `[aria-expanded]`, charts and symbol lines; diff
+desktop `#main` against a main build at 1440 (Recharts path decimals jitter
+between two runs of main, so normalise them).
 
 ## 2026-11-13: cards, no subparts, no symbols, no week
 
