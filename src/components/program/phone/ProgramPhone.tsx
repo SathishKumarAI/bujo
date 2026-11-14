@@ -183,7 +183,7 @@ export function ProgramPhone({ s, onCheck, rest }: {
                   const nextSet = mine.find((r) => !done.has(r.id))
                   if (nextSet) tick(nextSet)
                 }}
-                plan={`${mine.length} ${mine.length === 1 ? 'set' : 'sets'} of ${plain(first?.reps || e.qty)}${cur ? `, ${cur} ${unit}` : ''}`}
+                plan={[`${mine.length} ${mine.length === 1 ? 'set' : 'sets'} of ${plain(first?.reps || e.qty)}`, ...(cur ? [`${cur} ${unit}`] : [])]}
                 onEdit={() => setEditing(e.name)}
                 onTimer={secondsIn(e.qty) != null ? () => setTiming(e.name) : undefined} />
             )
