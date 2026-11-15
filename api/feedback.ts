@@ -1,3 +1,6 @@
+/// <reference types="node" />
+// The reference is for Vercel: it typechecks each function with its own
+// defaults, not tsconfig.node.json, and reported `process` unknown (COD-631).
 // Anonymous in-app feedback → GitHub issue. The client POSTs a short message;
 // this function files it on the repo using a server-side token the browser
 // never sees. Public endpoint, so it is deliberately defensive: tight input
