@@ -126,6 +126,8 @@ Pickleball (COD-450). On a phone:
 
 Workout cards, timers and habit cards (2026-11-13, #539–#554):
 `docs/sessions/2026-11-13-workout-cards-and-timers.md`.
+Today said once, Insights in two columns, Mindset's year of cards
+(2026-11-15, #570–#583): `docs/sessions/2026-11-15-today-insights-mindset.md`.
 
 Trap: **`Date.now()` in an arrow defined during render fails
 `react-hooks/purity`, and setState in an effect fails the compiler lint.** A
@@ -182,7 +184,15 @@ is one now: `settings/download.ts` `downloadBackup`.
 Trap: **a deploy breaks local `verify`.** `vercel build` leaves
 `.vercel/output` (eslint scanned its bundle, vitest counted +19 tests — both
 now ignore it) and reinstalls `node_modules`, wiping the `--no-save`
-playwright/axe packages. Reinstall after `scripts/ship.sh`.
+playwright/axe packages. Reinstall after `scripts/ship.sh`. It also pulls
+`node_modules` out from under a running dev server: Vite then answers
+`504 (Outdated Optimize Dep)` and the page is blank. Restart the dev server.
+
+Trap (fixed, COD-631): **every file under `api/` is a Vercel function.**
+`api/sync.test.ts` was deployed to production as `/api/sync.test` until it
+became `_sync.test.ts` (an underscore keeps a file out; vitest still runs
+it). `vercel build` also typechecks each function with its own defaults,
+not `tsconfig.node.json` — hence the `/// <reference types="node" />`.
 
 Trap (fixed, COD-467): `useActColumn` shut the act column whenever the page
 STACKED, which on a phone hid the form behind a strip — the measured "before"

@@ -26,6 +26,38 @@ Rules the three share:
 
 ---
 
+## 2026-11-15 — Today said once, Insights in two columns, a year of Mindset cards (COD-575, COD-631, COD-632, COD-634 · PRs #570–#583)
+
+Owner direction: remove what Today says twice and keep one date; put the
+status line in the desktop top bar; fix desktop Insights ("too bad", wasted
+scroll, duplicated content); add quotes and practice to Mindset, 365 of them,
+more leadership and development; then finish everything pending. **Deployed:
+production is at #583.** Full record:
+`docs/sessions/2026-11-15-today-insights-mindset.md`.
+
+**Shipped:**
+- Today: one date, no repeated count or week (#572, desktop 1.60 → 1.35
+  screens), status line in the top bar (#573, → 1.26).
+- Insights two columns, repeats gone (#575, Mood & sleep 5.27 → 3.17).
+- Mindset: library on one shelf (#576, 3.7 → 1.4); 365 daily cards and 100
+  principles (#578).
+- `api/sync.test.ts` was a live production function (#579, now 404).
+- "+" in words on a phone (#580); timer controls on a short screen (#581).
+- The a11y gate scans phone-page sheets (#582, 101 → 135 scans).
+
+**Got wrong:**
+- Four parallel content files shared 53 quotations; the uniqueness test
+  caught it.
+- Three quotations had no findable source; rewritten without a name.
+- A size token that does not exist (`text-body-lg`) was nearly used.
+
+**Learned, now in CLAUDE.md or STATUS:**
+- A deploy breaks a running dev server (Vite `504 Outdated Optimize Dep`).
+- Every file under `api/` is a Vercel function.
+- One date on Today, said once.
+
+---
+
 ## 2026-11-14 — Every phone page as cards; a workout day you finish and leave (COD-590, COD-630 · PRs #557–#566)
 
 Owner direction: COD-590 finished page by page (nothing opens in place, no

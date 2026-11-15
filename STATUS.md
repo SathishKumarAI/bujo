@@ -1,11 +1,9 @@
 # STATUS
 
-**Stopped:** 2026-11-15, main at #582, **production at #576**
-(`index-o2kuvru8.js`). #577–#582 are merged and NOT deployed: the deploy
-command was refused by this session's permission check. Deploy with
-`! bash scripts/ship.sh --deploy-only`, then
-`npm i -D --no-save playwright @axe-core/playwright`, then check the live
-bundle against `.vercel/output/static/index.html`.
+**Stopped:** 2026-11-15, after #583, **deployed**: bujo-journal.vercel.app
+serves `index-7rjXFzie.js`, the same bundle as a local build of #583, and
+`/api/sync.test` answers 404. Session record:
+`docs/sessions/2026-11-15-today-insights-mindset.md`.
 
 **Next:** nothing queued. Open question for the owner: take the tab bar
 off any page beyond the three workout days? A Mindset card has no "done
