@@ -16,6 +16,9 @@ describe('plain, copy without symbols', () => {
     ['4/7 this week — do it today', '4 of 7 this week, do it today'],
     ['33% (13/40)', '33% (13 of 40)'],
     ['due 11/13/2026', 'due 11/13/2026'],
+    ['aim for 50+ in a row', 'aim for 50 or more in a row'],
+    ['for accuracy + decisions', 'for accuracy and decisions'],
+    ['+0.3 vs last week', '+0.3 vs last week'],
   ])('%s', (from, to) => expect(plain(from)).toBe(to))
 
   it('leaves no symbol behind in any home routine or exercise', async () => {
