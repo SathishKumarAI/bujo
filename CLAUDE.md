@@ -170,7 +170,9 @@ cut "Continue with Google" short on a 1024px laptop; `columns: 2 22rem`
 Trap: **a sheet is invisible to `openFolds()`.** Rows that open a sheet have
 no `aria-expanded`; from #524 to #535 no Settings sheet was scanned. A new
 sheet-opening row needs `Cell opensSheet` (`aria-haspopup="dialog"`), which
-`scanSheets()` finds. Phone pages outside Settings: COD-575.
+`scanSheets()` finds. Phone pages: the first three sheets per page on
+every phone walk since COD-575 (34 sheets, mocha and latte), armed to fail
+if a walk opens none.
 
 Trap: **a hand-written copy of an export drifts.** Three copies of the backup
 file existed; Apple Health's skipped `inlineImages`, so the backup offered
