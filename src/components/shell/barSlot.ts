@@ -1,26 +1,35 @@
 import { useSyncExternalStore } from 'react'
 
 /**
- * THE GAP IN THE PHONE BAR, as somewhere a page can draw (COD-537).
+ * GAPS IN THE SHELL'S BARS, as somewhere a page can draw.
  *
- * OWNS: the one element `PhoneTopBar` leaves between its title and Quick add,
- * and telling the page when it appears or goes. The bar is the page's sibling,
- * not its parent, so a context cannot reach; a ref store can.
- * DOES NOT OWN: what is drawn there — `DayStrip` portals itself in when the
- * slot exists and draws inline when it does not (component tests, which
- * render a page without the shell).
+ * OWNS: one element per bar that the bar leaves empty, and telling the page
+ * when it appears or goes. A bar is the page's sibling, not its parent, so a
+ * context cannot reach; a ref store can.
+ * DOES NOT OWN: what is drawn there — the page portals in when the slot
+ * exists and draws inline when it does not (component tests, which render a
+ * page without the shell).
+ *
+ * - `barSlot`: the phone bar's gap between title and Quick add (COD-537);
+ *   `DayStrip` draws its day pill there.
+ * - `headerSlot`: the desktop page header's space beside the date stepper;
+ *   Today's status line draws there (owner, 2026-11-14: "include this into
+ *   the top bar, why waste space").
  */
-let slot: HTMLElement | null = null
-const subs = new Set<() => void>()
-
-export function setBarSlot(el: HTMLElement | null) {
-  slot = el
-  subs.forEach((f) => f())
+function slotStore() {
+  let slot: HTMLElement | null = null
+  const subs = new Set<() => void>()
+  const set = (el: HTMLElement | null) => {
+    slot = el
+    subs.forEach((f) => f())
+  }
+  const subscribe = (f: () => void) => {
+    subs.add(f)
+    return () => { subs.delete(f) }
+  }
+  const use = () => useSyncExternalStore(subscribe, () => slot, () => null)
+  return [set, use] as const
 }
 
-const subscribe = (f: () => void) => {
-  subs.add(f)
-  return () => { subs.delete(f) }
-}
-
-export const useBarSlot = () => useSyncExternalStore(subscribe, () => slot, () => null)
+export const [setBarSlot, useBarSlot] = slotStore()
+export const [setHeaderSlot, useHeaderSlot] = slotStore()

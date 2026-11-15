@@ -98,7 +98,7 @@ function TodayFocused() {
           one word twice. Backfilling a day lives on Plan and the log pages. */}
       <DayHeader date={date} />
 
-      <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[340px_minmax(0,1fr)_380px]">
+      <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 md:mt-0 lg:grid-cols-[340px_minmax(0,1fr)_380px]">
         {/* THREE ROWS, so each side column stacks with no hole. Row 1 holds
             only the log, so it is the log's height; the check-in spans 1–2
             and "one line" spans 2–3, so writing starts right under the log

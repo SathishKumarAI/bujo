@@ -1,6 +1,8 @@
 import { NotePencil, PencilSimple } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { useHeaderSlot } from '../../components/shell/barSlot'
 import { useJournal } from '../../store'
 import { addDays, fromISODay, isFutureDay, todayISO } from '../../lib/date'
 import { Card, Empty, Input } from '../../components/ui'
@@ -72,6 +74,8 @@ export function DayMasthead({
   // `floor`: across a spring-forward boundary the span is 213.96 days, and
   // flooring that printed Aug 2 as № 213 instead of 214.
   const pageNo = Math.round((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86_400_000)
+  const slot = useHeaderSlot()
+  const phone = useDevice() === 'mobile'
 
   // One sentence about where the day stands. An empty page is an invitation,
   // not a report of nothing.
@@ -82,30 +86,47 @@ export function DayMasthead({
   else if (openTasks > 0) line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today, ${openTasks} still open.`
   else line = `${entryCount} ${entryCount === 1 ? 'line' : 'lines'} today.`
 
+  const heading = (
+    <h2 className="day-masthead-date font-display text-title leading-tight font-medium text-fg-1 sm:text-display">
+      {weekday}
+      <span className="ml-3 font-sans text-body font-normal text-fg-2">
+        {dayMonth}
+        {isToday && ', today'}
+        {weather && <span title={weather.label}>, {weather.icon} {weather.tempC}°C</span>}
+      </span>
+    </h2>
+  )
+  const status = (
+    <>
+      <p className="min-w-0 truncate text-body text-fg-1">{line}</p>
+      <span className="flex shrink-0 items-baseline gap-3">
+        {habits}
+        <span className="font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
+          № {pageNo}
+        </span>
+      </span>
+    </>
+  )
+
+  // IN THE TOP BAR ON A DESKTOP. The page header there held only the date
+  // stepper and left ~1100px of its 60px band empty, while this status line
+  // took a band of its own under it (owner, 2026-11-14: "include this into
+  // the top bar, why waste space"). With the shell's slot present the line
+  // portals beside the stepper and the page keeps only its (sr-only) heading.
+  // A phone has no room in its bar, and `right` (surface tabs) needs the band.
+  if (slot && !phone && !right) return <>{heading}{createPortal(status, slot)}</>
+
   return (
     <header className="day-masthead mb-4 border-b-2 border-line pb-3">
       {/* `items-baseline` so the date sits on the weekday's baseline rather than
           in the middle of a 40px display line, and `flex-wrap` so the tabs drop
           to their own row on a phone instead of squeezing the dateline. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-3">
-        <h2 className="day-masthead-date font-display text-title leading-tight font-medium text-fg-1 sm:text-display">
-          {weekday}
-          <span className="ml-3 font-sans text-body font-normal text-fg-2">
-            {dayMonth}
-            {isToday && ', today'}
-            {weather && <span title={weather.label}>, {weather.icon} {weather.tempC}°C</span>}
-          </span>
-        </h2>
+        {heading}
         {right}
       </div>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-line pt-2">
-        <p className="min-w-0 text-body text-fg-1">{line}</p>
-        <span className="flex shrink-0 items-baseline gap-3">
-          {habits}
-          <span className="font-mono text-caption tabular-nums text-fg-2" title={`Day ${pageNo} of the year`}>
-            № {pageNo}
-          </span>
-        </span>
+        {status}
       </div>
     </header>
   )
