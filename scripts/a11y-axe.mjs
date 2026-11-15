@@ -987,12 +987,12 @@ async function scan(w, label) {
  * caller can fail on a zero — a hook that stopped matching would otherwise
  * print a reassuring nothing.
  */
-async function scanSheets(w, label) {
+async function scanSheets(w, label, max = Infinity) {
   const rows = w.page.locator('#main [aria-haspopup="dialog"]')
   const dialog = w.page.locator('[role="dialog"]')
   const n = await rows.count()
   let scanned = 0
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n && scanned < max; i++) {
     const row = rows.nth(i)
     if (!(await row.isVisible())) continue
     w.at = `${label} · sheet ${i + 1} of ${n}`
@@ -1237,6 +1237,7 @@ async function runUnit(w, unit) {
   }
 
   await setTheme(w, unit.theme)
+  let phoneSheets = 0
   for (const [section, tab] of VIEWS) {
     // Mind is not a phone destination (owner, 2026-10-29; `PHONE_SECTIONS`):
     // no bottom tab, no grid tile, so there is no door to walk through. Its
@@ -1252,6 +1253,12 @@ async function runUnit(w, unit) {
     await goOrDie(w, section, 'no rail row with that name — the gate could not reach it.')
     if (tab) await goOrDie(w, tab, `no tab with that name inside ${section}.`)
     await scan(w, label)
+    // COD-575: a phone page keeps its detail in bottom sheets (exercise Edit,
+    // Coaching's shots and drills, Nutrition's add-food), portalled outside
+    // `#main`, so `scan` never saw one. The first three per page: a page's
+    // sheets are mostly one component repeated per row, and three keeps the
+    // pass to seconds per page rather than a minute.
+    if (w.viewport === 'phone') phoneSheets += await scanSheets(w, label, 3)
 
     // Today used to be four screens behind one name — morning, day, evening
     // and habits, each a tab this loop clicked and scanned. They are one page
@@ -1259,6 +1266,12 @@ async function runUnit(w, unit) {
     // there is no surface control left to click. The fold-opening inside
     // `scan` is what reaches the deep-analytics section that used to be the
     // habits surface's own.
+  }
+  // Armed like the Settings count below: a hook that matches nothing passes.
+  if (w.viewport === 'phone' && phoneSheets === 0) {
+    fail(`
+[${unit.label}] the phone walk opened 0 sheets across every page.`,
+      '  No row in #main carries aria-haspopup="dialog" any more (Cell `opensSheet`), or the selector moved — the pass is scanning nothing.')
   }
 
   // Insights again, with its domain rail on All — see `scanInsightsAll`. The
