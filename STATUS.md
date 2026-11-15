@@ -1,7 +1,7 @@
 # STATUS
 
-**Stopped:** 2026-11-14, after #573, **deployed**: bujo-journal.vercel.app
-serves `index-z4Sz6O9w.js`, the same bundle as a local build of #573. COD-590
+**Stopped:** 2026-11-14, after #576, **deployed**: bujo-journal.vercel.app
+serves `index-o2kuvru8.js`, the same bundle as a local build of #576. COD-590
 (every phone page as cards) and COD-630 (exercise card, Hand, timers, no tab
 bar on a workout day, plan as lines) are done. Session record:
 `docs/sessions/2026-11-14-phone-cards-and-workout-day.md`.
