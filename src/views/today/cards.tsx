@@ -1,6 +1,6 @@
-import { Barbell, NotePencil, PencilSimple, Timer } from '@/components/icons'
+import { NotePencil, PencilSimple } from '@/components/icons'
 import { Icon } from '@/components/Icon'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useJournal } from '../../store'
 import { addDays, fromISODay, isFutureDay, todayISO } from '../../lib/date'
 import { Card, Empty, Input } from '../../components/ui'
@@ -18,9 +18,8 @@ import type { MoodReason } from '../../lib/types'
 import { SegmentScale } from '../../components/fields/SegmentScale'
 import { currentStreak } from '../../lib/stats'
 import { dayHabitSummary } from '../../lib/streak'
-import { cat, onRaised } from '../../lib/colors'
+import { onRaised } from '../../lib/colors'
 import { promptForDay } from '../../lib/prompts'
-import { DEFAULT_FAST_TARGET, elapsedHours, fmtDuration } from '../../lib/fasting'
 
 /**
  * The cards Today is made of, extracted so the three time-of-day surfaces can
@@ -140,36 +139,24 @@ export function DayHeader({ date, right }: { date: string; right?: ReactNode }) 
 }
 
 /**
- * "3 of 8 habits done · 2 streaks at risk", beside the page number.
- *
- * Both numbers come from `dayHabitSummary`, not from anything counted here —
- * the habits card below renders the same ratio, and two independent counts of
- * the same fact a few hundred pixels apart is the duplication the masthead was
- * rewritten to stop.
- *
- * Renders nothing when no habit is scheduled: a journal with no habits has not
- * failed at them, and "0 of 0 done" is a verdict on a question nobody asked.
- * The at-risk clause is dropped at zero rather than printed as "0 at risk",
- * which reads as a warning that resolves to nothing.
+ * "3 streaks at risk", beside the page number — and only that. The habit
+ * count ("4 of 8 done") is the Habits card's own header, a few hundred pixels
+ * below, so the masthead no longer repeats it (owner, 2026-11-14: "remove the
+ * duplicated things"). Nothing at zero: "0 at risk" is a warning that
+ * resolves to nothing.
  *
  * `onRaised('peach')` rather than a faded token — a warning that recedes is one
  * no contrast gate can check, and this sits on the page ground, not a card.
  */
 function DayHabitLine({ date }: { date: string }) {
   const { data } = useJournal()
-  const { due, done, atRisk } = dayHabitSummary(data, date)
-  if (due === 0) return null
+  const { atRisk } = dayHabitSummary(data, date)
+  if (atRisk === 0) return null
   return (
     <span className="text-label tabular-nums text-fg-2">
-      {done} of {due} habits done
-      {atRisk > 0 && (
-        <>
-          {', '}
-          <span style={{ color: onRaised('peach') }}>
-            {atRisk} streak{atRisk === 1 ? '' : 's'} at risk
-          </span>
-        </>
-      )}
+      <span style={{ color: onRaised('peach') }}>
+        {atRisk} streak{atRisk === 1 ? '' : 's'} at risk
+      </span>
     </span>
   )
 }
@@ -534,61 +521,5 @@ export function WritingCard({ date }: { date: string }) {
         </div>
       )}
     </Card>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * STATUS STRIP · the three derived facts the Day surface still needs.
- *
- * Not cards. The Day surface is "the rapid log, and nothing competing with it",
- * so what used to be the Fasting card, the habit ring and the workout state
- * become one row of read-only text at the bottom. Each is a link into the card
- * that owns it — the strip reports, it does not edit.
- */
-export function StatusStrip({ date, onNavigate }: { date: string; onNavigate?: (view: 'fitness') => void }) {
-  const { data } = useJournal()
-  const active = data.settings.fastActiveStart
-  const target = data.settings.fastTargetHours ?? DEFAULT_FAST_TARGET
-
-  // Tick only while a fast is running, and only once a minute — this is a
-  // status line, not a stopwatch.
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!active) return
-    const t = setInterval(() => setNow(Date.now()), 60_000)
-    return () => clearInterval(t)
-  }, [active])
-
-  const workouts = data.workouts.filter((w) => w.date === date)
-
-  // No habit count here. The pill row directly above already ends with one,
-  // and two copies of `5/8` a few hundred pixels apart is the same fact in two
-  // framings — the thing the day masthead was rewritten to stop doing. The
-  // strip carries what has no other home on this surface.
-  const items: { icon: typeof Timer; label: string; tone?: string }[] = [
-    active
-      ? { icon: Timer, label: `Fasting ${fmtDuration(elapsedHours(active, now))} of ${target}h`, tone: 'mauve' }
-      : { icon: Timer, label: 'No fast running' },
-    workouts.length > 0
-      ? { icon: Barbell, label: `${workouts.length} session${workouts.length === 1 ? '' : 's'} logged`, tone: 'green' }
-      : { icon: Barbell, label: 'No training logged' },
-  ]
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line px-0 py-2 text-label">
-      {items.map((it) => (
-        <span key={it.label} className="inline-flex items-center gap-1.5" style={{ color: it.tone ? cat(it.tone) : undefined }}>
-          <Icon as={it.icon} size="sm" className={it.tone ? undefined : 'text-fg-2'} />
-          <span className={it.tone ? undefined : 'text-fg-2'}>{it.label}</span>
-        </span>
-      ))}
-      {onNavigate && (
-        <Button variant="ghost" size="sm" onClick={() => onNavigate('fitness')} className="ml-auto h-auto p-0 text-label text-mauve">
-          Open Body
-        </Button>
-      )}
-    </div>
   )
 }

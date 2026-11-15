@@ -4,7 +4,6 @@ import { useJournal } from '../store'
 import { isFutureDay, todayISO } from '../lib/date'
 import { Card } from '../components/ui'
 import { Page, useCursor } from '../components/shell/Page'
-import { useNav } from '../components/shell/nav'
 import { FastingCard } from '../components/FastingCard'
 import { PenaltyCard } from '../components/PenaltyCard'
 import { TodayPlanCard } from '../components/TodayPlanCard'
@@ -12,13 +11,12 @@ import { TodayHabits } from '../components/TodayHabits'
 import { CoachCard } from '../components/CoachCard'
 import { habitTarget, habitValueOn, habitDoneOn, isNumericHabit, onThisDay } from '../lib/stats'
 import { isScheduledOn } from '../lib/schedule'
-import { atRiskHabits, dayHabitSummary, weeklyGoalProgress } from '../lib/streak'
+import { atRiskHabits, weeklyGoalProgress } from '../lib/streak'
 import { cat, washStyle } from '../lib/colors'
-import { DayHeader, DayLogCard, StatusStrip, WellbeingCard, WritingCard } from './today/cards'
+import { DayHeader, DayLogCard, WellbeingCard, WritingCard } from './today/cards'
 import { HabitsSurface } from '../components/today/HabitsSurface'
 import { CollapsibleSection } from '../components/CollapsibleSection'
 import { useDevice } from '../components/shell/device'
-import { DayStrip } from '../components/ui/dayStrip'
 
 /**
  * TODAY · two shapes, one set of cards.
@@ -77,9 +75,7 @@ export function Today() {
  * card drags every sibling off the right edge. See the trap in CLAUDE.md.
  */
 function TodayFocused() {
-  const { day: date, setDay } = useCursor()
-  const { data } = useJournal()
-  const nav = useNav()
+  const { day: date } = useCursor()
   const future = isFutureDay(date)
   // A phone logs (CLAUDE.md, COD-468): the goal rings and the review fold's
   // trend cards are charts, so a phone draws neither — the plan stays.
@@ -94,57 +90,45 @@ function TodayFocused() {
     // `Page`'s responsive `sm:gap-5` survives a base-only override (see the
     // note in views/Mindset.tsx).
     <Page width="wide" className="gap-0 sm:gap-0">
-      {/* The dateline heads the *page*, not the log card. It used to live
-          inside `DayLogCard`, which only the Day surface renders — so Morning
-          and Evening printed no date at all and the day cursor could be walked
-          with nothing on screen to say so. It spans all three columns because
-          zone 1 orients the whole page, not the left of it. */}
-      {/* THE WEEK ON THE TOP BAR (a phone): the shared strip, pinned under the
-          header, each day marked with its habits done. It moves the same
-          cursor every card on Today reads. */}
-      {phone && (
-        <DayStrip value={date} onChange={setDay} today={todayISO()} label="Day"
-          mark={(d) => { const x = dayHabitSummary(data, d, { includeArchived: data.settings.trackerShowArchived }); return x.due ? <>{x.done}/{x.due}<span className="sr-only"> habits done</span></> : null }} />
-      )}
+      {/* ONE DATE. The page heads itself with the day, and the shell's top
+          bar already carries the day stepper (desktop) — the dateline is
+          drawn for screen readers only (`.day-masthead-date`). A phone logs
+          TODAY (owner, 2026-11-14: "I don't think we need the calendar in
+          mobile"): the bar's "Today" pill beside a page titled "Today" said
+          one word twice. Backfilling a day lives on Plan and the log pages. */}
       <DayHeader date={date} />
 
       <div className="mt-4 grid grid-cols-1 items-start gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[340px_minmax(0,1fr)_380px]">
-        <div className="lg:col-start-1 lg:row-start-1 flex flex-col gap-4 sm:gap-5">
+        {/* THREE ROWS, so each side column stacks with no hole. Row 1 holds
+            only the log, so it is the log's height; the check-in spans 1–2
+            and "one line" spans 2–3, so writing starts right under the log
+            and fasting right under the check-in, whatever their heights.
+            With two rows, row 1 took the check-in's height and left 278px of
+            nothing under the log — once filled by weekly-goal rings, which
+            drew the week every habit row already draws as squares. */}
+        <div className="lg:col-start-1 lg:row-start-1">
           <DayLogCard date={date} />
-          {/* THE WEEK, IN THE HOLE THE GRID LEAVES.
-
-              Measured at 1512x950 on `?demo=1`: the log ends at y 254 and
-              "Write one line" starts at y 532, because the middle column spans
-              both rows and is 636px tall while the log is 218. That is
-              **278 x 340px of nothing** in the first screen of the page — and
-              the one card that answers "how is this week going" was rendering
-              only in `TodayClassic`, a layout this one replaced. So the
-              question had no answer on the default Today at any width, and the
-              space to answer it in was already paid for. */}
-          {!phone && <WeeklyGoalRings date={date} />}
         </div>
 
-        {/* Habits spans both rows: it is the tallest card and the one whose
-            width the month grid below actually cares about. */}
-        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        {/* Habits spans every row: it is the tallest card and the one whose
+            width the week squares actually care about. */}
+        <div className="lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <HabitsSurface slot="capture" />
         </div>
 
-        <div className="lg:col-start-3 lg:row-start-1">
+        <div className="lg:col-start-3 lg:row-span-2 lg:row-start-1">
           <WellbeingCard key={`w-${date}`} date={date} />
         </div>
 
-        <div className="lg:col-start-1 lg:row-start-2">
+        <div className="lg:col-start-1 lg:row-span-2 lg:row-start-2">
           <WritingCard key={`x-${date}`} date={date} />
         </div>
 
-        {/* A future day has no fast to run, and the column simply ends. */}
-        <div className="lg:col-start-3 lg:row-start-2">
+        {/* A future day has no fast to run, and the column simply ends. No
+            status strip under it: "No fast running" was this card's own state
+            and "1 session logged" is the plan's, each said twice. */}
+        <div className="lg:col-start-3 lg:row-start-3">
           {!future && <FastingCard date={date} />}
-          {/* Not on a phone: "No fast running" is the fasting card's own
-              state and "No training logged" is Today's plan's "No workout
-              yet" — two strips saying the same two things, a screen apart. */}
-          {!phone && <StatusStrip date={date} onNavigate={nav} />}
         </div>
       </div>
 

@@ -1174,14 +1174,15 @@ button.cell:active {
   padding-block: 1rem;
 }
 
-/* Today's dateline repeats the top bar's date stepper ("Wed, Oct 28") on a
-   phone. Kept for screen readers — a page needs its heading — not drawn. */
+/* Today's dateline repeats the top bar's date stepper ("Wed, Oct 28") on
+   EVERY width (owner, 2026-11-14: "keep only one"), so it is drawn nowhere —
+   kept for screen readers, since a page needs its heading. */
 .phone-frame .day-masthead {
   margin-bottom: 0;
   padding-bottom: 0.5rem;
 }
 
-.phone-frame .day-masthead-date {
+.day-masthead-date {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1190,7 +1191,7 @@ button.cell:active {
   white-space: nowrap;
 }
 
-.phone-frame .day-masthead > div + div {
+.day-masthead > div + div {
   margin-top: 0;
   border-top: 0;
 }
@@ -1554,7 +1555,10 @@ button.cell:active {
 /* TODAY'S HABITS AS CARDS (`trackers/HabitCards.tsx`): two to a row. A
    done card takes the habit's colour (`--habit`) as a border — a graphic,
    so the name stays fg-1 on the card ground — and its check pops in once.
-   A tap presses the card in. Both motions are off under reduced motion. */
+   A tap presses the card in. Both motions are off under reduced motion.
+   A tick card is its name and its tick, so it is one 56px row; it was a
+   fixed 88px with 32px of nothing under every name (eight habits cost a
+   screen). A count card grows to its stepper on its own. */
 .habit-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1564,7 +1568,7 @@ button.cell:active {
 .habit-card {
   display: flex;
   width: 100%;
-  min-height: 5.5rem;
+  min-height: 3.5rem;
   flex-direction: column;
   justify-content: space-between;
   gap: 0.5rem;
