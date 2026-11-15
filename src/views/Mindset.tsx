@@ -95,7 +95,7 @@ export function Mindset() {
 
       {/* Today's card: a quotation and one thing to do, one a day for the
           year. Under the principle you chose, above the slots you work in. */}
-      <DailyCard {...dailyCardFor(today)} />
+      <DailyCard key={today} n={dailyCardFor(today).n} />
 
       <FocusSlots
         focus={focus}
