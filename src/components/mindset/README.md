@@ -7,7 +7,7 @@ through the callbacks it is handed.
 | Change | File |
 |---|---|
 | The big opening statement, its meta row, the empty state | `LeadingPrinciple.tsx` |
-| Today's card: quotation, source, Try today | `DailyCard.tsx` |
+| Today's card: quotation, source, Try today; ‹ ›, All 365 sheet, Today's card | `DailyCard.tsx` |
 | The 365 cards, their order, which card a date gets | `lib/mindsetDaily/` (one file per theme) |
 | The 100 principles (54 of them, incl. Leadership and Self-development, in `lib/mindsetLibraryMore.ts`) | `lib/mindset.ts` |
 | Slot layout, the cue textarea, Clear, Mark practised | `FocusSlots.tsx` |

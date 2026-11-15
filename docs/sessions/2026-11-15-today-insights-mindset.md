@@ -1,8 +1,8 @@
 # 2026-11-15: Today said once, Insights in two columns, a year of Mindset cards
 
 Written to be read cold: what shipped, what was measured, what the owner
-said, and what is still open. PRs #570–#583. **Production is at #583**
-(`index-7rjXFzie.js`, checked against a local build after the deploy).
+said, and what is still open. PRs #570–#587. **Production is at #586**
+(`index-vD7WmtKN.js`, checked against a local build after the deploy).
 
 ## The asks, in the owner's words
 
@@ -18,6 +18,9 @@ said, and what is still open. PRs #570–#583. **Production is at #583**
   and development".
 - "Complete all the pending tasks", then "deploy this and start the
   documentation".
+- On the desktop bar "Sat, Nov 14 · 3 lines today": "add this to the top of
+  the cards for Today only, why one more bar".
+- "Mindset does not have all the 365 cards, check and fix this."
 
 ## What shipped
 
@@ -33,12 +36,15 @@ said, and what is still open. PRs #570–#583. **Production is at #583**
 | #580 | Phone copy: "50+" → "50 or more", " + " → "and" | plain tests 17 |
 | #581 | Interval timer on a short screen keeps every control on it | Save 645–689 → 607–651 in a 664px viewport |
 | #582 | COD-575: the a11y gate opens three sheets on every phone page | 101 → 135 scans, 34 sheets, 0 serious |
+| #585 | Today: the date stepper and status line are one row on the cards; no bar above the page (replaces #573's header slot) | 1.27 screens; no bar |
+| #586 | Mindset: every card reachable — ‹ ›, All 365 (a sheet of every card), Today's card | sheet lists 365 rows, axe 0, desktop and phone |
 
 ## The shapes, as they are now
 
 **Today.**
-- One date per device. Desktop: the page header's stepper ("‹ Sat, Nov 14 ›"),
-  with the day's status line beside it (`shell/barSlot.ts` `headerSlot`). The
+- One date per device. Desktop: one row at the top of the cards — the stepper
+  ("‹ Sat, Nov 14 ›"), then the day's status line (`DayMasthead`).
+  `PageHeader` draws no bar for Today unless the rail is hidden. The
   masthead's dateline is `sr-only` at every width.
 - A phone's Today logs today: no day picker. Backfilling is Plan and the log
   pages.
@@ -56,7 +62,8 @@ said, and what is still open. PRs #570–#583. **Production is at #583**
 
 **Mindset.**
 - `DailyCard` under the leading principle: a quotation (and its source, when
-  documented), then "Try today", one thing under 15 minutes.
+  documented), then "Try today", one thing under 15 minutes. ‹ › step a card
+  (wrapping), "All 365" lists every card in a sheet, "Today's card" returns.
 - `lib/mindsetDaily/`: four theme files (leadership 92, growth 91, habits 91,
   resilience 91) dealt in turn. Day N of the year gets card N; a leap day
   wraps to card 1.
@@ -76,6 +83,12 @@ said, and what is still open. PRs #570–#583. **Production is at #583**
   app's own words with an empty `by` rather than kept under a guessed name.
 - **`categoryCounts` asserted a literal 9.** Adding two categories failed it;
   it now reads the category count.
+- **Two wrong shapes for Today's date before the right one.** #573 moved the
+  status line into the page header, which was still a bar; the owner wanted no
+  bar at all, and #585 put both on the cards.
+- **365 cards with one reachable.** The data test counted 365 and passed while
+  the page offered no control; the owner found it. A count test is not a
+  reachability test — #586's test picks a card from the list.
 - **The first deploy-then-check read the old bundle.** The alias served the
   previous build for a few seconds (edge cache HIT); a second request got the
   new one. Check twice before calling a deploy wrong.
