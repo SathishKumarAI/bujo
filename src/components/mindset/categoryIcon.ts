@@ -1,5 +1,5 @@
 import {
-  Crosshair, Hourglass, NotePencil, Shield, TrendUp, Wind, HandFist, ListChecks, Users,
+  Crosshair, Hourglass, NotePencil, Shield, TrendUp, Wind, HandFist, ListChecks, Users, Flag, GraduationCap,
   type Icon,
 } from '@/components/icons'
 import type { MindsetCategory } from '../../lib/mindset'
@@ -34,6 +34,8 @@ import type { MindsetCategory } from '../../lib/mindset'
  * | Confidence | HandFist | posture, the thing you can change directly |
  * | Discipline | ListChecks | the default you designed |
  * | Connection | Users | other people |
+ * | Leadership | Flag | setting the direction others follow |
+ * | Self-development | GraduationCap | learning on purpose |
  *
  * `Target` is deliberately NOT used for Focus: Goals owns it app-wide, and two
  * sections sharing a glyph is worse than either having none.
@@ -48,6 +50,8 @@ export const CATEGORY_ICON: Record<MindsetCategory, Icon> = {
   Confidence: HandFist,
   Discipline: ListChecks,
   Connection: Users,
+  Leadership: Flag,
+  'Self-development': GraduationCap,
 }
 
 /** Falls back rather than throwing: a journal can hold a category this build

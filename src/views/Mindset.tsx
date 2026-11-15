@@ -5,6 +5,8 @@ import { Page } from '../components/shell/Page'
 import { LeadingPrinciple } from '../components/mindset/LeadingPrinciple'
 import { PrincipleSpotlight } from '../components/mindset/PrincipleSpotlight'
 import { FocusSlots } from '../components/mindset/FocusSlots'
+import { DailyCard } from '../components/mindset/DailyCard'
+import { dailyCardFor } from '../lib/mindsetDaily'
 import { PracticeBand } from '../components/mindset/PracticeBand'
 import { LibraryBar } from '../components/mindset/LibraryBar'
 import { LibraryList } from '../components/mindset/LibraryList'
@@ -90,6 +92,10 @@ export function Mindset() {
         principle={focus[0] ? principleById(focus[0].principleId) : undefined}
         daysPracticed={focus[0] ? daysPracticed(log, focus[0].principleId) : 0}
       />
+
+      {/* Today's card: a quotation and one thing to do, one a day for the
+          year. Under the principle you chose, above the slots you work in. */}
+      <DailyCard {...dailyCardFor(today)} />
 
       <FocusSlots
         focus={focus}

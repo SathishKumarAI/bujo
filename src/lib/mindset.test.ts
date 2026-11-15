@@ -12,8 +12,8 @@ import { MINDSET_CATEGORIES, MINDSET_LIBRARY, principleById } from './mindset'
  */
 describe('MINDSET_LIBRARY', () => {
   it('holds every principle the page groups', () => {
-    expect(MINDSET_LIBRARY.length).toBe(46)
-    expect(MINDSET_CATEGORIES.length).toBe(9)
+    expect(MINDSET_LIBRARY.length).toBe(100)
+    expect(MINDSET_CATEGORIES.length).toBe(11)
   })
 
   it('gives every principle a category the library groups by', () => {
@@ -42,8 +42,15 @@ describe('MINDSET_LIBRARY', () => {
     // The first seven categories were written for an athlete. These two carry
     // the job-holder and PhD-student framing; losing them to a merge would be
     // invisible on screen — the page would simply show seven filters again.
-    expect(MINDSET_LIBRARY.filter((p) => p.category === 'Deep work').length).toBe(5)
+    expect(MINDSET_LIBRARY.filter((p) => p.category === 'Deep work').length).toBe(9)
     expect(MINDSET_LIBRARY.filter((p) => p.category === 'Craft & scholarship').length).toBe(6)
     expect(principleById('write-to-think')?.title).toBe('Write to find out what you think')
+  })
+
+  it('carries the leadership and self-development shelves', () => {
+    // Added 2026-11-14 in their own file; a merge that dropped the spread in
+    // MINDSET_LIBRARY would take 54 principles with it and fail nothing else.
+    expect(MINDSET_LIBRARY.filter((p) => p.category === 'Leadership').length).toBe(22)
+    expect(MINDSET_LIBRARY.filter((p) => p.category === 'Self-development').length).toBe(16)
   })
 })

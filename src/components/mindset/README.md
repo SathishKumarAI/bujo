@@ -7,9 +7,12 @@ through the callbacks it is handed.
 | Change | File |
 |---|---|
 | The big opening statement, its meta row, the empty state | `LeadingPrinciple.tsx` |
+| Today's card: quotation, source, Try today | `DailyCard.tsx` |
+| The 365 cards, their order, which card a date gets | `lib/mindsetDaily/` (one file per theme) |
+| The 100 principles (54 of them, incl. Leadership and Self-development, in `lib/mindsetLibraryMore.ts`) | `lib/mindset.ts` |
 | Slot layout, the cue textarea, Clear, Mark practised | `FocusSlots.tsx` |
 | The 12-week grid, the category-balance bars | `PracticeBand.tsx` |
-| Search field, category filters, "N of 26 shown" | `LibraryBar.tsx` |
+| Search field, category filters, "N of 100 shown" | `LibraryBar.tsx` |
 | Grouped principle rows, Add / In focus, no-match line | `LibraryList.tsx` |
 | Which principles are visible, the focus cap, the full-slots toast | `views/Mindset.tsx` |
 | Rule weights, cell padding, eyebrow and statement type | `components/mod/` |
