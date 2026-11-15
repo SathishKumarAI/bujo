@@ -4,6 +4,8 @@
  * static content; the chosen focuses + notes live in JournalData.mindsetFocus.
  */
 
+import { MORE_PRINCIPLES } from './mindsetLibraryMore'
+
 export interface MindsetPrinciple {
   id: string
   title: string
@@ -36,17 +38,22 @@ export const MINDSET_MAX_FOCUS = 3
  * skills. `Focus & presence` is attention inside a moment and `Deep work` is
  * attention across a week — the moves are not the same. `Craft & scholarship`
  * is the work itself: writing, reading, drafting, recording.
+ *
+ * `Leadership` and `Self-development` came with 54 more principles (owner,
+ * 2026-11-14: "more practical, leadership and development"), which live in
+ * `mindsetLibraryMore.ts` and are merged below.
  */
 export const MINDSET_CATEGORIES = [
   'Focus & presence', 'Deep work', 'Craft & scholarship', 'Resilience',
   'Growth mindset', 'Composure', 'Confidence', 'Discipline', 'Connection',
+  'Leadership', 'Self-development',
 ] as const
 
 /** The category names, as a type — so a map keyed by category (the icon
  *  registry) fails to compile when a category is added and not handled. */
 export type MindsetCategory = (typeof MINDSET_CATEGORIES)[number]
 
-export const MINDSET_LIBRARY: MindsetPrinciple[] = [
+const CORE: MindsetPrinciple[] = [
   // Focus & presence
   { id: 'present', title: 'Work on what is in front of you', why: 'Attention spent on an outcome you cannot touch yet is attention taken from the step that would get you there.', category: 'Focus & presence' },
   { id: 'single-task', title: 'One thing at a time', why: 'Two tasks held at once are not two halves of your attention. Each keeps paying the cost of reloading the other.', category: 'Focus & presence' },
@@ -103,5 +110,7 @@ export const MINDSET_LIBRARY: MindsetPrinciple[] = [
   { id: 'ask-early', title: 'Ask at two hours, not two weeks', why: 'The question that feels embarrassing today is cheap; the same question in a month is expensive.', category: 'Connection' },
   { id: 'manage-up', title: 'Bring a recommendation', why: 'Arrive with the options and your pick — it turns a request into a decision.', category: 'Connection' },
 ]
+
+export const MINDSET_LIBRARY: MindsetPrinciple[] = [...CORE, ...MORE_PRINCIPLES]
 
 export const principleById = (id: string) => MINDSET_LIBRARY.find((p) => p.id === id)

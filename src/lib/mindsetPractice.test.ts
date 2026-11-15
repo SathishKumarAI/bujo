@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { MINDSET_CATEGORIES } from './mindset'
 import { categoryCounts, currentStreak, daysPracticed, daysWithMarks, marksByDay, moodContrast, practiceData } from './mindsetPractice'
 
 const T = '2026-08-16'
@@ -53,7 +54,7 @@ describe('daysPracticed', () => {
 describe('categoryCounts', () => {
   it('returns every category, including the ones at zero', () => {
     const rows = categoryCounts({ process: [T] })
-    expect(rows).toHaveLength(9)
+    expect(rows).toHaveLength(MINDSET_CATEGORIES.length)
     expect(rows.find((r) => r.name === 'Connection')).toEqual({ name: 'Connection', count: 0, share: 0 })
   })
 
