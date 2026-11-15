@@ -1,6 +1,6 @@
 import { MagnifyingGlass, Minus, Sparkle, TrendDown, TrendUp, Trophy, Warning } from '@/components/icons'
 import { Icon as AppIcon } from '@/components/Icon'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useJournal } from '../store'
 import { TrackerVisuals } from '../components/trackers/TrackerVisuals'
 import { Card, Empty, Input, Segmented } from '../components/ui'
@@ -8,13 +8,10 @@ import { Button } from '../components/ui/button'
 import { cat, onRaised } from '../lib/colors'
 import { plain } from '../lib/plain'
 import { FlatCards } from '../components/ui/flatCards'
-import { currentStreak, search, taskCompletion } from '../lib/stats'
+import { search } from '../lib/stats'
 import { insights, weeklyDigest, digestRangeLabel, momentumIndicator } from '../lib/correlations'
-import { weeklyRadar } from '../lib/viz'
-import { pace } from '../lib/pace'
 import { coachDigest } from '../lib/coach'
-import { PageLayout, SectionRail, StatBar } from '../components/page'
-import { MasonryGrid } from '../components/shell/CardGrid'
+import { PageLayout, SectionRail } from '../components/page'
 import { useNav } from '../components/shell/nav'
 import { useCursor } from '../components/shell/cursor'
 import { prettyDay, todayISO} from '../lib/date'
@@ -66,8 +63,6 @@ export function Insights() {
      nothing has two meanings for one control. */
   const [active, setActive] = useState<Domain | null>(DOMAINS[0])
 
-  const streak = currentStreak(data)
-  const tasks = taskCompletion(data)
   const allResults = search(data, q)
   const kinds = ['all', ...new Set(allResults.map((r) => r.kind))]
   const matching = kind === 'all' ? allResults : allResults.filter((r) => r.kind === kind)
@@ -76,23 +71,6 @@ export function Insights() {
   const digest = weeklyDigest(data)
   const coach = coachDigest(data)
   const momentum = momentumIndicator(data)
-
-  // The four figures the retired Stats page carried in its own stat bar, read
-  // off the same helpers it used rather than averaged a second time here.
-  const radar = weeklyRadar(data)
-  const radarAt = (axis: string) => radar.find((r) => r.axis === axis)?.value
-  const left = pace(data)
-  /* Days in the current month, so "left · this month" has a denominator. From
-     the journal's own today rather than `new Date()` — the app lets you move
-     the day you are looking at, and a progress bar that disagreed with the
-     date in the header would be its own small bug. */
-  const monthDays = useMemo(() => {
-    const [yy, mm] = todayISO().split('-').map(Number)
-    return new Date(yy, mm, 0).getDate()
-  }, [])
-  /* Null rather than zero when the week has too little mood logged to average.
-     `radarAt` returns null for that case and the old call site swallowed it. */
-  const mood7 = radarAt('Mood') ?? null
 
   /* A query crosses domains. Searching for "sleep debt" while the rail sits
      on Records must not return nothing — the search is how you find a card
@@ -124,7 +102,10 @@ export function Insights() {
     ...stats.cards,
     digest: (<Card band title="Weekly digest" subtitle={digestRangeLabel(digest.from, digest.to)}>
   <ul className="space-y-1.5 text-body">
-    {digest.lines.map((l) => (
+    {/* Avg mood is Momentum's Mood tile, with its own direction, one card
+        down. The digest keeps it only when Momentum has too few days to
+        draw one. */}
+    {digest.lines.filter((l) => l.label !== 'Avg mood' || momentum.length === 0).map((l) => (
       <li key={l.label} className="flex items-center justify-between gap-2">
         <span className="text-fg-2">{l.label}</span>
         <strong className="text-fg-1">{phone ? plain(l.value.replace(/ → from /, ' steady from ')) : l.value}</strong>
@@ -168,7 +149,9 @@ export function Insights() {
       ))}
     </ul>
   )}
-  {coach.insight && (
+  {/* The coach's correlation is one of Patterns' rows, word for word; it
+      stays only when there is no Patterns card to carry it. */}
+  {coach.insight && found.length === 0 && (
     <p className="mt-3 border-t border-line pt-3 text-body text-fg-1">
       <span className="mr-1.5 rounded px-1.5 py-0.5 text-label" style={{ background: cat('surface0'), color: coach.insight.strength === 'strong' ? cat('mauve') : cat('subtext0') }}>
         r={coach.insight.r}
@@ -276,64 +259,15 @@ export function Insights() {
       /* Stacked: zone 3 is a full-width grid of read-backs. There is no narrow
          form here to justify the 62/38 split. */
       stacked
-      zone1={phone ? undefined : (
-        /* FOUR facts, and the cap is load-bearing rather than stylistic:
-            `StatBar` slices to four and warns only in DEV, so the fifth is
-            dropped on the floor of a production build with nothing on screen
-            to say so. Merging two pages' bars gave seven candidates and the
-            first draft passed five — the rendered-output diff is what caught
-            it, not the build.
-
-            The three that did not make it are all still on this page: mood,
-            sleep and habits are the week radar's own axes, and the entry count
-            is in Lifetime. A stat bar is the figures you would otherwise go
-            looking for, not a summary of the page under it. */
-        <StatBar
-          facts={[
-            /* ── Three of these four have a range, and one does not ────────
-               A streak has no denominator — there is no "out of" a run of
-               days, and drawing one would invent a target nobody set. It
-               stays a plain figure, which is the rule working rather than the
-               rule being skipped: a number gets a shape when it has something
-               to compare against, and not otherwise. */
-            { label: 'current streak', value: `${streak}d`, onClick: () => nav('trackers') },
-            {
-              label: 'tasks done',
-              value: `${tasks.pct}%`,
-              amount: tasks.done,
-              of: tasks.total,
-              tone: 'blue' as const,
-              onClick: () => nav('today'),
-            },
-            {
-              label: 'mood · 7d',
-              /* `?? 0` was printing a zero for "not enough days to average",
-                 which is the exact mistake CLAUDE.md records costing a trend
-                 two months of phantom failure. An em dash says nobody has
-                 told us yet; zero says you felt nothing. */
-              value: mood7 == null ? '—' : `${mood7}/10`,
-              amount: mood7,
-              of: mood7 == null ? null : 10,
-              tone: 'green' as const,
-            },
-            /* The one fact here that is not a record: everything else on this
-               page is over, and this is what is left of the month. Shown
-               against the month's own length, so "18d" reads as how much
-               runway rather than as a bare count. */
-            {
-              label: 'left · this month',
-              value: `${left.month.left}d`,
-              amount: monthDays - left.month.left,
-              of: monthDays,
-              tone: 'mauve' as const,
-            },
-          ]}
-        />
-      )}
-      /* Not on a phone: three of the four figures (streak, tasks, mood) are
-         the Weekly digest's first three rows, which also say what changed.
-         Measured at 390px, the same numbers twice, a screen apart. */
-      zone2={<>
+      /* No stat bar. Its streak, tasks and 7-day mood were the Weekly
+         digest's first three rows, a card below — and the digest also says
+         which way each moved. "Left this month" is Plan's. Measured at 1440:
+         the same three numbers twice in the first screen (owner, 2026-11-14:
+         "content is duplicated"). */
+      zone2={<div className="grid items-start gap-4 sm:gap-5 lg:grid-cols-2">
+      {/* Side by side on a desktop: each is a short card, and stacked they
+          were two full-width bands, the review 44% full and the search box
+          380px wide in a 1134px card. */}
       <WeeklyReview />
 
       <Card band title="Find & filter" subtitle="One query over the journal and over this page">
@@ -414,7 +348,7 @@ export function Insights() {
           </div>
         )}
       </Card>
-      </>}
+      </div>}
       zone3={
         <>
           {/* ZONE 3 · the six domains the registry names, in its order, one
@@ -486,9 +420,16 @@ export function Insights() {
                     <p className="text-label text-fg-2">{DOMAIN_BLURB[d]}</p>
                     <span className="num ml-auto text-label text-fg-3">{ids.length}</span>
                   </div>
-                  <MasonryGrid>
-                    {ids.map((c) => <div key={c.id} data-card={c.id}>{all[c.id]}</div>)}
-                  </MasonryGrid>
+                  {/* TWO COLUMNS AT THE PANE'S WIDTH. `MasonryGrid` asks for a
+                      64rem container before its second column, and beside an
+                      11rem rail this pane is 902px at 1440 — so every one of
+                      28 cards was drawn 902px wide, one per row (Mood & sleep
+                      5.3 screens). 52rem is two ~440px columns here. */}
+                  <div className="@container">
+                    <div className="columns-1 gap-5 @min-[52rem]:columns-2 [&>*]:mb-5 [&>*]:break-inside-avoid">
+                      {ids.map((c) => <div key={c.id} data-card={c.id}>{all[c.id]}</div>)}
+                    </div>
+                  </div>
                 </section>
               )
             })
