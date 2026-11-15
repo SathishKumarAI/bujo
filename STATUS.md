@@ -1,13 +1,36 @@
 # STATUS
 
-**Stopped:** 2026-11-14, after #576, **deployed**: bujo-journal.vercel.app
-serves `index-o2kuvru8.js`, the same bundle as a local build of #576. COD-590
-(every phone page as cards) and COD-630 (exercise card, Hand, timers, no tab
-bar on a workout day, plan as lines) are done. Session record:
-`docs/sessions/2026-11-14-phone-cards-and-workout-day.md`.
+**Stopped:** 2026-11-15, main at #582, **production at #576**
+(`index-o2kuvru8.js`). #577–#582 are merged and NOT deployed: the deploy
+command was refused by this session's permission check. Deploy with
+`! bash scripts/ship.sh --deploy-only`, then
+`npm i -D --no-save playwright @axe-core/playwright`, then check the live
+bundle against `.vercel/output/static/index.html`.
 
-**Next:** COD-575 (a11y gate scans phone-page sheets). COD-631: `api/` typecheck errors seen only in
-`vercel build`. Ask before taking the tab bar off any page beyond the three workout days.
+**Next:** nothing queued. Open question for the owner: take the tab bar
+off any page beyond the three workout days? A Mindset card has no "done
+today" tick; ask before adding one (it needs storage).
+
+## 2026-11-15: pending items closed (#578–#582)
+
+| PR | what | measured |
+|---|---|---|
+| #578 | Mindset: a card a day (365, `lib/mindsetDaily/`), library 46 → 100 (Leadership, Self-development) | quotes attributed only where documented; 53 cross-file repeats replaced; desktop 1.4 → 1.6 screens |
+| #579 | COD-631: `api/sync.test.ts` was deployed as a function; now `_sync.test.ts`; `process` typed | `vercel build`: 3 TS errors → 0; functions feedback + sync |
+| #580 | phone copy: "50+" → "50 or more", " + " → "and" | plain tests 17 |
+| #581 | timer on a short screen: Save 645–689 → 607–651 in 664px | iPhone 13 Pro, rest phase |
+| #582 | COD-575: a11y opens 3 sheets per phone page, armed on zero | 101 → 135 scans, 34 sheets, 0 serious |
+
+Trap: **a deploy reinstalls `node_modules` under a running dev server**,
+and Vite then answers `504 (Outdated Optimize Dep)` and the page is blank.
+Restart the dev server after `ship.sh`; it is not the change.
+
+## 2026-11-14: Today one date, Insights two columns (#572–#576)
+
+Today: one date (top bar), no repeated habit count, no week rings or status
+strip on desktop, status line in the desktop top bar, 56px habit cards.
+Insights: two columns beside the rail (Mood & sleep 5.27 → 3.17 screens),
+stat bar and repeated figures gone. Mindset library opens on one shelf.
 
 ## 2026-11-14: workout days without the tab bar, Log at the end; timer push (#565)
 
