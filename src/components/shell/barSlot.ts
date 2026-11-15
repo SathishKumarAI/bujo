@@ -12,9 +12,6 @@ import { useSyncExternalStore } from 'react'
  *
  * - `barSlot`: the phone bar's gap between title and Quick add (COD-537);
  *   `DayStrip` draws its day pill there.
- * - `headerSlot`: the desktop page header's space beside the date stepper;
- *   Today's status line draws there (owner, 2026-11-14: "include this into
- *   the top bar, why waste space").
  */
 function slotStore() {
   let slot: HTMLElement | null = null
@@ -32,4 +29,3 @@ function slotStore() {
 }
 
 export const [setBarSlot, useBarSlot] = slotStore()
-export const [setHeaderSlot, useHeaderSlot] = slotStore()

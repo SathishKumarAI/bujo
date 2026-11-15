@@ -1,8 +1,7 @@
 import { NotePencil, PencilSimple } from '@/components/icons'
 import { Icon } from '@/components/Icon'
 import { useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { useHeaderSlot } from '../../components/shell/barSlot'
+import { DateNav } from '../../components/shell/topbar/DateNav'
 import { useJournal } from '../../store'
 import { addDays, fromISODay, isFutureDay, todayISO } from '../../lib/date'
 import { Card, Empty, Input } from '../../components/ui'
@@ -74,7 +73,6 @@ export function DayMasthead({
   // `floor`: across a spring-forward boundary the span is 213.96 days, and
   // flooring that printed Aug 2 as № 213 instead of 214.
   const pageNo = Math.round((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86_400_000)
-  const slot = useHeaderSlot()
   const phone = useDevice() === 'mobile'
 
   // One sentence about where the day stands. An empty page is an invitation,
@@ -108,13 +106,21 @@ export function DayMasthead({
     </>
   )
 
-  // IN THE TOP BAR ON A DESKTOP. The page header there held only the date
-  // stepper and left ~1100px of its 60px band empty, while this status line
-  // took a band of its own under it (owner, 2026-11-14: "include this into
-  // the top bar, why waste space"). With the shell's slot present the line
-  // portals beside the stepper and the page keeps only its (sr-only) heading.
-  // A phone has no room in its bar, and `right` (surface tabs) needs the band.
-  if (slot && !phone && !right) return <>{heading}{createPortal(status, slot)}</>
+  // ONE ROW AT THE TOP OF THE CARDS ON A DESKTOP: the date stepper, then
+  // where the day stands. It was a page-header bar holding only the stepper
+  // and the status line (#573), and before that two bands; the owner,
+  // 2026-11-15: "add this to the top of the cards for Today only, why one
+  // more bar". `PageHeader` draws no bar for Today, so this is the only date.
+  // A phone has no stepper here (it logs today), and `right` needs the band.
+  if (!phone && !right) {
+    return (
+      <header className="day-masthead mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line pb-2">
+        {heading}
+        <DateNav view="today" mode="day" />
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">{status}</div>
+      </header>
+    )
+  }
 
   return (
     <header className="day-masthead mb-4 border-b-2 border-line pb-3">
