@@ -33,10 +33,12 @@ export function Mindset() {
   const [query, setQuery] = useState('')
   const focus = useMemo(() => data.mindsetFocus ?? [], [data.mindsetFocus])
   const phone = useDevice() === 'mobile'
-  // A phone opens the library on ONE shelf — the leading principle's — not
-  // all 46 principles stacked (11.3 phone screens, COD-468). `All` is one tap.
+  // The library opens on ONE shelf — the leading principle's — not all 46
+  // principles stacked: 11.3 phone screens (COD-468), and on a desktop 3.7
+  // screens, the only page over budget in a 2026-11-14 sweep, nine shelves
+  // of a catalogue under the three bands you came for. `All` is one tap.
   const [filter, setFilter] = useState(() =>
-    phone ? (principleById(focus[0]?.principleId ?? '')?.category ?? MINDSET_LIBRARY[0].category) : 'All')
+    principleById(focus[0]?.principleId ?? '')?.category ?? MINDSET_LIBRARY[0].category)
 
   const today = todayISO()
   const log = data.mindsetPractice ?? {}
