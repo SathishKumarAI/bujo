@@ -9,6 +9,8 @@
  * - "5× a week" becomes "5 times a week"; a score "7/10" becomes "7 of 10"
  *   (a date's "11/13/2026" is left alone)
  * - a trend arrow ↑ / ↓ becomes "up" / "down"; a "±" before a spread goes
+ * - "50+" becomes "50 or more"; a joining " + " becomes "and" (a signed
+ *   "+0.3" is left alone: a plus before a digit is a sign, not a word)
  */
 export function plain(s: string): string {
   return s
@@ -19,6 +21,8 @@ export function plain(s: string): string {
     .replace(/↑\s*/g, 'up ')
     .replace(/↓\s*/g, 'down ')
     .replace(/±/g, '')
+    .replace(/(\d)\+/g, '$1 or more')
+    .replace(/\s+\+\s+/g, ' and ')
     .replace(/(\d)\s*[–-]\s*(\d)/g, '$1 to $2')
     .replace(/\s*[—·]\s*/g, ', ')
     .replace(/\s*→\s*/g, ' to ')
