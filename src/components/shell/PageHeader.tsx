@@ -1,6 +1,5 @@
 import { RailToggle } from './RailToggle'
 import { DateNav } from './topbar/DateNav'
-import { setHeaderSlot } from './barSlot'
 import { useHideOnScroll } from './useHideOnScroll'
 import { VIEW_CHROME, type ViewId } from './viewChrome'
 
@@ -102,7 +101,10 @@ export function PageHeader({
    * announce, and "it looks empty" is not a reason to make it structurally
    * emptier.
    */
-  const carriesAControl = railHidden || !!chrome.dateNav
+  // Today draws its own date stepper at the top of its cards, beside the
+  // day's status line (owner, 2026-11-15: "add this to the top of the cards
+  // for Today only, why one more bar"), so it needs no bar for it.
+  const carriesAControl = railHidden || (!!chrome.dateNav && view !== 'today')
   if (!carriesAControl) {
     return (
       // NOT `app-header`. `useHeaderHeight` sums every element with that
@@ -204,11 +206,6 @@ export function PageHeader({
           <DateNav view={view} mode={chrome.dateNav} />
         </div>
       )}
-
-      {/* The rest of the bar, for the page to say where the day stands
-          (Today portals its status line here — `barSlot.ts`). Empty, it
-          takes the width it always left unused and draws nothing. */}
-      <div ref={setHeaderSlot} className="flex min-w-0 flex-1 items-baseline justify-between gap-x-4" />
 
       {/* ── The 81% ──────────────────────────────────────────────────────
           Measured at 1707 on Insights before this: the strip is 1489 x 48,
