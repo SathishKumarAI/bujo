@@ -1,8 +1,10 @@
 # STATUS
 
-**Stopped:** 2026-11-15, after #583, **deployed**: bujo-journal.vercel.app
-serves `index-7rjXFzie.js`, the same bundle as a local build of #583, and
-`/api/sync.test` answers 404. Session record:
+**Stopped:** 2026-11-15, after #586, **deployed**: bujo-journal.vercel.app
+serves `index-vD7WmtKN.js`, the same bundle as a local build of #586 (the
+edge served the previous build for one request after the deploy). #585:
+Today's date and status are one row on the cards, no bar. #586: all 365
+Mindset cards reachable (‹ ›, All 365, Today's card). Session record:
 `docs/sessions/2026-11-15-today-insights-mindset.md`.
 
 **Next:** nothing queued. Open question for the owner: take the tab bar
